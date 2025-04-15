@@ -1,0 +1,165 @@
+= Numbers
+
+== Links
+* https://www.baeldung.com/category/java/java-numbers
+* https://docs.vultr.com/java/examples
+
+
+== FINDING THE DIVISORS OF A NUMBER
+
+== List All Factors of a Number
+
+=== Links
+* https://www.baeldung.com/java-list-factors-integer
+* https://www.geeksforgeeks.org/find-all-factors-of-a-natural-number-in-sorted-order/
+* https://www.scaler.com/topics/factors-of-a-number-in-java/
+
+Before we start writing the Java code, let’s understand what an integer’s factors are.
+
+**Given an integer _n_, the integer _i_ is _n_‘s factor if it can completely divide the number _i_.** Completely divisible here means when we divide _n_ by _i,_ we get zero as the remainder.
+
+A few examples may explain it quickly:
+
+*   _n = 10_, its factors: _1, 2, 5,_ and _10_
+*   _n = 13_, its factors: _1_ and _13_
+*   _n = 1_, _n_ has only one factor: _1_
+*   _n = 0_, zero has no factor
+
+As the example shows, usually, an integer _n_‘s factors always contain _1_ and _n_, even if _n_ is a prime number, for example, _13_. However, **zero is a special integer. It has no factor.**
+
+
+Now that we understand the concept of factors, let’s create a Java program to find all the factors of a given integer.
+
+For simplicity, we’ll use unit test assertions to verify if our solution works as expected.
+
+=== Creating a Method to Find All Factors of an Integer
+
+The most straightforward way to find all the factors of an integer _n_ is by **looping from 1 to _n_ and testing which number can completely divide _n_**. We can store those numbers that can completely divide _n_ in a _Set_. When the looping finishes, this _Set_ will hold all the factors of _n_.
+
+Implementing this idea in Java isn’t a challenging job for us:
+
+    static Set<Integer> getAllFactorsVer1(int n) {
+        Set<Integer> factors = new HashSet<>();
+        for (int i = 1; i <= n; i++) {
+            if (n % i == 0) {
+                factors.add(i);
+            }
+        }
+        return factors;
+    }
+    
+
+Next, let’s write some tests to check if our method works as expected. First, let’s create a _Map_ to prepare some numbers to test and their expected factors:
+
+if (typeof window.freestar !== 'undefined' && typeof window.freestar.queue !== 'undefined') { freestar.config.enabled\_slots.push({ placementName: "baeldung\_leaderboard\_mid\_2", slotId: "baeldung\_leaderboard\_mid\_2" }); }
+
+    final static Map<Integer, Set<Integer>> FACTOR_MAP = ImmutableMap.of(
+        0, ImmutableSet.of(),
+        1, ImmutableSet.of(1),
+        20, ImmutableSet.of(1, 2, 4, 5, 10, 20),
+        24, ImmutableSet.of(1, 2, 3, 4, 6, 8, 12, 24),
+        97, ImmutableSet.of(1, 97),
+        99, ImmutableSet.of(1, 3, 9, 11, 33, 99),
+        100, ImmutableSet.of(1, 2, 4, 5, 10, 20, 25, 50, 100)
+    );
+    
+
+Now, for each number in the _FACTOR\_MAP_ above, we call the _getAllFactorsVer1()_ method that we’ve implemented to see if it can find the desired factors:
+
+    FACTOR_MAP.forEach((number, expected) -> assertEquals(expected, FactorsOfInteger.getAllFactorsVer1(number)));
+
+The test passes if we run it. So, the method solves the problem, great!
+
+Sharp eyes may spot that we named the method with _Ver1._ Usually, it implies we’ll introduce different versions in the tutorial. In other words, the solution still has room for improvement.
+
+Next, let’s see how to optimize the version 1 implementation.
+
+=== Optimization – Version 2
+
+Let’s review the primary logic in the method:
+
+if (typeof window.freestar !== 'undefined' && typeof window.freestar.queue !== 'undefined') { freestar.config.enabled\_slots.push({ placementName: "baeldung\_leaderboard\_mid\_3", slotId: "baeldung\_leaderboard\_mid\_3" }); }
+
+    for (int i = 1; i <= n; i++) {
+       if (n % i == 0) {
+           factors.add(i);
+       }
+    }
+
+As the code above shows, we’ll execute the _n % i_ calculation _n_ times. Now, if we examine the factors of an integer, we’ll see that **factors always come in pairs**. Let’s take _n =100_ as an example to understand this factor characteristic:
+
+       1    2    4    5    10    20    25    50    100
+       │    │    │    │    |      │     │     │     │
+       │    │    │    │  [10,10]  │     │     │     │
+       │    │    │    │           │     │     │     │
+       │    │    │    └──[5, 20] ─┘     │     │     │
+       │    │    │                      │     │     │
+       │    │    └───────[4, 25]────────┘     │     │
+       │    │                                 │     │
+       │    └────────────[2, 50]──────────────┘     │
+       │                                            │
+       └─────────────────[1, 100]───────────────────┘
+    
+
+As we’ve seen, all factors of _100_ are in pairs. Therefore, **if we’ve found one factor _i_ of _n_, we can get the paired one _i’= n/i_**. That is to say, we don’t need to loop _n_ times. Instead, **we check from 1 to the square root of the number _n_ and find all _i_ and _i’_ pairs.** In this way, given _n=100_, we loop only ten times.
+
+Next, let’s optimize our version 1 method:
+
+    static Set<Integer> getAllFactorsVer2(int n) {
+        Set<Integer> factors = new HashSet<>();
+        for (int i = 1; i <= Math.sqrt(n); i++) {
+            if (n % i == 0) {
+                factors.add(i);
+                factors.add(n / i);
+            }
+        }
+        return factors;
+    }
+    
+
+As the code above shows, we’ve used the _Math.sqrt()_ method from the Java standard library to [calculate the square root of _n_](/java-find-if-square-root-is-integer).
+
+Now, let’s test our second version’s implementation with the same testing data:
+
+    FACTOR_MAP.forEach((number, expected) -> assertEquals(expected, FactorsOfInteger.getAllFactorsVer2(number)));
+
+If we run the test, it passes. So the optimized version 2 works as expected.
+
+We’ve successfully reduced the factor determination times from _n_ to _n_‘s square root. It’s a significant improvement. However, there is still room for further optimization. So, next, let’s analyze it further.
+
+=== Further Optimization – Version 3
+
+First, let’s do some simple math analysis.
+
+if (typeof window.freestar !== 'undefined' && typeof window.freestar.queue !== 'undefined') { freestar.config.enabled\_slots.push({ placementName: "baeldung\_incontent\_1", slotId: "baeldung\_incontent\_1" }); }
+
+As we know, the given integer _n_ can be either even or odd. **If _n_ is an even number, we cannot predicate whether its factors are even or odd.** For example, 20’s factors are 1, 2, 4, 5, 10, and 20. So there are even and odd numbers.
+
+However, **if _n_ is an odd number, all its factors must be odd numbers too**. For example, 99’s factors are 1, 3, 9, 11, 33, and 99. Therefore, all of them are odd numbers.
+
+So, we can adjust the loop’s increment step depending on whether _n_ is odd. **As our loop begins from _i = 1_, if we’re given an odd number, we can set the increment _step = 2_ to skip checks on all even numbers.**
+
+Next, let’s implement this idea in version 3:
+
+    static Set<Integer> getAllFactorsVer3(int n) {
+        Set<Integer> factors = new HashSet<>();
+        int step = n % 2 == 0 ? 1 : 2;
+        for (int i = 1; i <= Math.sqrt(n); i += step) {
+            if (n % i == 0) {
+                factors.add(i);
+                factors.add(n / i);
+            }
+        }
+        return factors;
+    }
+    
+
+With this optimization, if _n_ is an even number, the loop gets executed _sqrt(n)_ times, the same as version 2.
+
+However, **if _n_ is an odd integer, the loop gets executed _sqrt(n)/2_ times in total.**
+
+Finally, let’s test our version 3 solution:
+
+    FACTOR_MAP.forEach((number, expected) -> assertEquals(expected, FactorsOfInteger.getAllFactorsVer3(number)));
+
+The test passes if we give it a run. So, it does the job correctly.

@@ -1,0 +1,289 @@
+= What is API Gateway exactly? Spring Cloud Gateway?
+:figures: 04-gateway/articles/article02
+
+Source: https://medium.com/@mehdiyevilkin/what-is-api-gateway-exactly-spring-cloud-gateway-3c43b269e3ab
+
+[Ilkin Mehdiyev](/@mehdiyevilkin?
+
+Mar 3, 2024
+
+== What is an API Gateway?
+
+An application programming interface (API) gateway functions as a reverse proxy to receive all API calls, aggregates the services needed to fulfill them, and returns the appropriate result. All that clients must know is how to get to the API gateway. The API gateway provides a consistent and steady point of access, regardless of the offline status or instability of the backend services.
+
+An API gateway not only services requests but also provides functionality to return requested data as the client's needs. Before forwarding an API request to the API endpoint for processing, an API gateway can apply the necessary pre and/or post-processing filters such as Single Sign-On (SSO), rate limiting, request validation, and tracing. An API gateway offers all these features and more, making APIs easier to maintain, secure, and design and use. At the end of the day, an API gateway simplifies external access and reduces communication complexity between microservices by acting as a single point of entry for several backend APIs.
+
+== Simple Example for API Gateway
+
+The below diagram shows a simple and common way to use an API gateway:
+image::{figures}/image.png[alt text]
+
+API GW Example
+
+Let's break down this graph. The client wants to get all his Orders from the service and requests */getOrder* API. Client only knows this '`/getOrder`' and does not have any idea and access to all the rest services.
+
+First of all, we need to authenticate the user, let's think that we are using JWT for authentication. As soon as API GW receives the request(/getOrder), it tries to find the user and authenticate it to find whether the user has access to the specified API or not. So we are getting a JWT token from the +
+header in API GW, and Requesting to AUTH service. AUTH service will decode JWT and request USER info, at the end of the auth flow, the AUTH service will return user access from the AUTH service and if the user has it, user info from the USER service. The second step will be returning the real requested data to the client, which is '`/getOrder`'. API GW starts to communicate to the ORDER service and returns the requested data. +
+Even though we have communicated with *API GW, AUTH, USER, and ORDER* services separately. The user is only aware of 1 endpoint and does not have any idea of what or how we authenticate and return data. As from this example, API GW is a single point of entry for the client.
+
+== Spring Cloud Gateway
+
+As the number of Microservices grows, the need for creating a gateway also increases. Modern Spring Cloud project also introduced an API gateway solution for the Spring echo system, https://spring.io/projects/spring-cloud-gateway[Spring Cloud Gateway]:
+
+____
+_This project provides libraries for building an API Gateway on top of Spring WebFlux or Spring WebMVC. Spring Cloud +
+Gateway aims to provide a simple, yet effective way to route to APIs and provide cross-cutting concerns to them such +
+as security, monitoring/metrics, and resiliency._
+____
+
+This project is not only used for Gateway but also as a BFF framework(Backend for Frontend). It operates on a non-blocking API model and is built on Spring 5, Spring Boot 2, and Project Reactor / Webflux.
+
+____
+_This project provides an API Gateway built on top of the Spring Ecosystem, including Spring 5, Spring Boot 2 and +
+Project Reactor._
+____
+
+Due to reactivity, it comes with Netty instead of Tomcat as a web server. In some cases, it might create ambiguity/issues when used with other Spring services.
+
+Even though this project focuses on the reactive server, there's an option to include a Servlet-based MVC and a non-reactive version of https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway-server-mvc.html[this project].
+
+Spring Cloud GW provides all the necessary tools from out-of-box to create a GW. We have 2 options for creating and managing our Gateway. +
+Java API and Dynamic Routing. Yes, this project not only provides Java APIs for creating our gateway with Java code but also we can create everything that we did with Java API with a simple YAML file. with this magic, we even do not have to know JAVA or SPRING to some extent. Let us continue with the above example.
+
+== API GW example with Spring Cloud Gateway
+
+What we will try to build is a simple Order and Product microservices, we will focus on 2 APIs: */getProducts* and *makeOrder*
+image::{figures}/image-1.png[alt text]
+Spring API GW Example
+
+We have 2 microservices *Orders* and *Products*, and 2 API endpoints respectively: */orders and /products*. The client is aware of 2 APIs: *orders/makeOrder and products/getProducts*.
+
+== JAVA API
+
+Let's start with Gateway. First, we will build with a Java API approach. Gateway is a lightweight, reactive(Netty-based), and simple Java app. Gateway consists of *routes*, *predicates,* and *filters* to customize these routes.
+
+We create a custom Config class to apply our customizations. The project provides us with a special Bean -- *RouteLocator* to easily configure all incoming HTTP requests. This will be our main entry point for request locating.
+
+[,java]
+----
+@Bean
+    public RouteLocator gatewayRoutes(RouteLocatorBuilder routeLocatorBuilder) {
+        return routeLocatorBuilder
+                .routes()
+                .route(
+                        ConfigurationConstants.AUTH\_SERVICE\_ID,
+                        getRoute(ConfigurationConstants.AUTH\_SERVICE\_ROOT, msAuthRoot))
+                .route(
+                        ConfigurationConstants.PRODUCT\_SERVICE\_ID,
+                        getRoute(ConfigurationConstants.PRODUCTS\_SERVICE\_ROOT, msProductRoot))
+                .route(
+                        ConfigurationConstants.ORDER\_SERVICE\_ID,
+                        getRoute(ConfigurationConstants.ORDERS\_SERVICE\_ROOT, msOrderRoot))
+                .build();
+    }
+----
+
+When we are building RoutLocate we are providing the *route()* method, which will accept ID for the route and a Function to apply all necessary changes to the route. Below is a custom method to make it easier and more reusable route function.
+
+[,java]
+----
+private Function<PredicateSpec, Buildable<Route>> getRoute(String root, String uri) {
+        return r ->
+                r.path(root.concat("/\*\*"))
+                        .filters(filterSpec -> getGatewayFilterSpec(filterSpec, root))
+                        .uri(uri);
+    }
+
+ private GatewayFilterSpec getGatewayFilterSpec(GatewayFilterSpec f, String serviceUri) {
+        return f.rewritePath(
+                        serviceUri.concat("(?<segment>.\*)"), API\_V1.concat(serviceUri).concat("${segment}"))
+                .filter(jwtAuthenticationFilter);
+    }
+----
+
+What we are passing to this routing method is root (e,g /products) and actual URI (e,g localhost:8082). What it means, when the Client executes an API call to any endpoint(let's assume our /products/getProducts) with '`/products`' root, first we are concatenating the path from the root (we are getting everything after the root which is '`/getProducts`') and we are replacing the root with our internal API which is (e,g localhost:8082).
+
+So when we finished the request, client root + '`/products/getProducts`' became internal server root + '`/api/v1/products/getProducts`'.
+
+The final version of the Config class:
+
+[,java]
+----
+@Slf4j
+@RequiredArgsConstructor
+@Configuration
+public class GatewayConfig {
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Value("${ms.product.root}")
+    private String msProductRoot;
+
+    @Value("${ms.auth.root}")
+    private String msAuthRoot;
+
+    @Value("${ms.order.root}")
+    private String msOrderRoot;
+
+    @Bean
+    public RouteLocator gatewayRoutes(RouteLocatorBuilder routeLocatorBuilder) {
+        return routeLocatorBuilder
+                .routes()
+                .route(
+                        ConfigurationConstants.AUTH\_SERVICE\_ID,
+                        getRoute(ConfigurationConstants.AUTH\_SERVICE\_ROOT, msAuthRoot))
+                .route(
+                        ConfigurationConstants.PRODUCT\_SERVICE\_ID,
+                        getRoute(ConfigurationConstants.PRODUCTS\_SERVICE\_ROOT, msProductRoot))
+                .route(
+                        ConfigurationConstants.ORDER\_SERVICE\_ID,
+                        getRoute(ConfigurationConstants.ORDERS\_SERVICE\_ROOT, msOrderRoot))
+                .build();
+    }
+    private Function<PredicateSpec, Buildable<Route>> getRoute(String root, String uri) {
+        return r ->
+                r.path(root.concat("/\*\*"))
+                        .filters(filterSpec -> getGatewayFilterSpec(filterSpec, root))
+                        .uri(uri);
+    }
+    private GatewayFilterSpec getGatewayFilterSpec(GatewayFilterSpec f, String serviceUri) {
+        return f.rewritePath(
+                        serviceUri.concat("(?<segment>.\*)"), API\_V1.concat(serviceUri).concat("${segment}"))
+                .filter(jwtAuthenticationFilter);
+    }
+}
+----
+
+That's it, this is pretty much how we handle the Gateway mechanism with Spring Cloud Gateway. But from the graph and API gateway section, we also discussed Authentication. We will create a JwtAuthenticationFilter, we will mock it instead of applying real implementation. before we rewrite our HTTP path, we can apply as many custom filters as we want.
+
+This is simply a reactive WebClient-based Auth implementation, To apply a Gateway filter we need to implement a specific interface, *GatewayFilter*.
+
+[,java]
+----
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter implements GatewayFilter, Ordered {
+  @Value("${security.auth.url}")
+  private String authServiceBase;
+
+  @Value("${security.auth.introspect-api}")
+  private String authServiceIntrospect;
+
+  @Override
+  public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+    ServerHttpRequest request = exchange.getRequest();
+      WebClient webClient = WebClient.builder().baseUrl(authServiceBase).build();
+      return webClient
+          .get()
+          .uri(authServiceIntrospect)
+          .retrieve()
+          .bodyToMono(Boolean.class)
+          .flatMap(
+              credentials -> {
+                log.info("Starting authentication, ACCESS: {}", credentials);
+                return chain.filter(exchange);
+              })
+          .onErrorResume(
+              ex -> onError(exchange, "Failed to authenticate token.", HttpStatus.UNAUTHORIZED));
+  }
+  private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus httpStatus) {
+    log.error("ERROR ON CALL: {}", err);
+    exchange.getResponse().setStatusCode(httpStatus);
+    exchange.getResponse().getHeaders().set(HttpHeaders.CONTENT\_TYPE, "text/plain");
+    return exchange
+        .getResponse()
+        .writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(err.getBytes())));
+  }
+
+  @Override
+  public int getOrder() {
+    return -1;
+  }
+----
+
+So what is happening, basically, in every Client call, we are always adding this JwtFilter, as we are doing in traditional SpringSecurity. In this API call, we are calling the Auth microservice with WebClient, for the simplicity we are just returning a '`true`' as access granted in every request, this is the AuthController:
+
+[,java]
+----
+@Slf4j
+@RestController
+@RequestMapping("/api/v1/auth")
+public class AuthController {
+    @GetMapping("/introspect")
+    public ResponseEntity<Boolean> hasAccess(){
+        log.info("Starting to AUTH process...");
+        return ResponseEntity.ok(Boolean.TRUE);
+    }
+}
+----
+
+We have Custom Routing, Flexible and reactive authentication, and a lightweight Spring app. We have implemented our drawing into code.
+
+== Dynamic Routing
+
+I have mentioned a dynamic way to create these routers as well. It compiles to the same Java code, but this is the simple version of our routing class as a dynamic version:
+
+[,java]
+----
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      routes:
+        - id: order-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/orders/\*\*
+          metadata:
+            response-timeout: 200
+            connect-timeout: 200
+        - id: product-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/product/\*\*
+          metadata:
+            response-timeout: 400
+            connect-timeout: 400
+----
+
+From the above YAML file, we can see we have created 2 routes, for each route we are giving uri and Predicate which will be listened to capture requests. This Predicate can be customized based on app needs, or we can listen to query params as well. We can add metadata, I have added custom response and connect/timeout parameters for each Route in the example. This is just one of the Predicate/Filters, there's much more such as custom Circuit Breaker, Caching (With Redis as well), fallback URI, route-based Load Balancing, etc. Please check the official Spring documentation for the full details.
+
+Results of our Gateway:
+
+Internal *products* endpoint: localhost:8082/api/v1/products/getProducts
+image::{figures}/image-2.png[alt text]
+
+Internal *orders* endpoint: localhost:8083/api/v1/orders/makeOrder
+image::{figures}/image-3.png[alt text]
+
+== Conclusion
+
+In this article, we talked about what is API Gateway, what is the common use case and why we need it. We talked about a modern Spring Cloud project -- Spring Cloud Gateway, which provides a simple, easy-to-use, and customizable way to create our Gateway.
+
+API gateway is a single point of entry for our application and all microservices. It makes not only routing easier but also makes a single point for a common request/response model for the client. We can authenticate/validate our requests before routing them to our microservices, with that our services load will be much less, and they won't accept unrelated requests anymore. We can also include CircuitBreaker patterns and prevent API abuse for our endpoint, also Caching is a commonly used way for Gateways and much more.
+
+Nevertheless, we must not forget that, by introducing a Gateway, whether Spring Cloud or not, we are introducing an additional layer between the Client and our APIs, so with that, we have some tradeoffs as well, such as, we will get some response time gain due to an additional HTTP layer. As I mentioned, Gateway is a single point of entry, so it means we are creating a single point of failure as well, In case of Gateway is down, regardless of our other services, we will be unavailable at all. So Gateway becomes additional responsibility for the server.
+
+If we need to add custom filters to our routes, customize our routes, already have Spring ecosystem, and If APIs require more precise control API Gateway and Spring Cloud Gateway are very good choices and easy to pick up.
+
+The example project presented here can be found in +
+my https://github.com/ilkin0/spring-cloud-gateway-tutorial[GitHub repository].
+
+Local version
+
+https://github.com/galkzaz/what-is-api-gateway-exactly-spring-cloud-gateway
+
+Microservices
+
+Spring Boot
+
+Api Gateway
+
+Spring Cloud Gateway
+
+Spring Framework
+
+Api Management
+
+Architecture

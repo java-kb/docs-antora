@@ -1,0 +1,1375 @@
+= Spring Security
+:figures: 11-development/02-spring/09-internals/spring-security
+
+The o.s.web.filter.DelegatingFilterProxy class is a Servlet Filter
+provided by Spring Web that will delegate all work to a Spring bean from
+the ApplicationContext root, which must implement
+jakarta.servlet.Filter. Since, by default, the bean is looked up by
+name, using the <filter-name> value, we must ensure we use
+springSecurityFilterChain as the value of <filter-name>.
+
+image::{figures}/media/image14.png[]
+
+The pseudocode for how o.s.web.filter.DelegatingFilterProxy works for
+our web.xml file can be found in the following code snippet:
+
+[,java]
+----
+  // DelegatingFilterProxy Pseudo Code
+  public void doFilter(ServletRequest request,
+    ServletResponse response,
+    FilterChain chain) {
+
+    Filter delegate = getFilterBean(someBeanName);
+    delegate.doFilter(request, response);
+  }
+----
+
+== FilterChainProxy class
+
+When working in conjunction with Spring Security,
+o.s.web.filter.DelegatingFilterProxy will delegate to the o.s.s.web.FilterChainProxy interface of Spring
+Security. The FilterChainProxy class allows Spring Security to
+conditionally apply any number of Servlet Filters to the Servlet Request
+
+The pseudocode for how FilterChainProxy works is as follows:
+
+[,java]
+----
+public class FilterChainProxy implements Filter {
+  void doFilter**(request, response, filterChain) {
+  // lookup all the Filters for this request*\
+  List\<Filter\> delegates = lookupDelegates(request,response)
+  //invoke each filter unless the delegate decided to stop
+  for delegate in delegates { if continue processing\
+    delegate.doFilter(request,response,filterChain)\
+  }
+
+  // if all the filters decide it is ok allow the
+
+  // rest of the application to run if continue processing
+
+  filterChain.doFilter(request,response) }
+
+}
+----
+
+Bellow figure shows the big picture of the main actors (components) in the Spring Security architecture and the relationships among them
+image::{figures}/image.png[alt text]
+Figure shows that
+
+. The authentication filter delegates the authentication request to the authentication manager, and based on the response, it configures the security context.
+. The authentication manager uses the authentication provider to process
+authentication.
+. The authentication provider implements the authentication logic.
+. The user details service implements user management responsibility, which the
+authentication provider uses in the authentication logic.
+. The password encoder implements password management, which the authenti-
+cation provider uses in the authentication logic.
+. The security context keeps the authentication data after the authentication process. The security context will hold the data until the action ends. Usually, in a thread-per-request app, that means until the app sends a response back to the
+client.
+
+== Spring Boot Autoconfiguration
+
+=== Customization
+
+Customizer is a contract you implement to define the customization for either Spring Security element you configure: the authentication, the authorization, or particular protection mechanisms such as CSRF or CORS.
+
+Customizer is a functional interface (so we can use lambda expressions to implement it), and the withDefaults() implementation that does nothing:
+
+[,java]
+----
+@FunctionalInterface
+public interface Customizer<T> {
+ void customize(T t);
+ static <T> Customizer<T> withDefaults() {
+ return (t) -> {
+ };
+ }
+}
+----
+
+=== SecurityAutoConfiguration
+
+With spring boot default configuration, the app has two different authentication
+mechanisms in place: HTTP Basic and Form Login, including a username and a password, when you start the application.
+Spring Boot also chooses an authentication method when configuring the defaults:
+HTTP Basic access authentication. It's the most straightforward access authentication method. Basic authentication only requires the client to send a username and a password through the HTTP Authorization header. In the value of the header, the client attaches the prefix Basic, followed by the Base64 encoding of the string that contains the username and password, separated by a colon (:).
+https://github.com/spring-projects/spring-boot/blob/main/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/security/servlet/SecurityAutoConfiguration.java[[https://github.com/spring-projects/spring-boot/blob/main/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/security/servlet/SecurityAutoConfiguration.java\]{.underline}]
+
+=== SpringBootWebSecurityConfiguration
+
+A default implementation of an Authentication-
+Provider uses the default implementations provided for the UserDetailsService
+and the PasswordEncoder. Implicitly, your application secures all the endpoints.
+https://github.com/spring-projects/spring-boot/blob/main/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/security/servlet/SpringBootWebSecurityConfiguration.java
+
+https://github.com/spring-projects/spring-boot/blob/main/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/security/DefaultWebSecurityCondition.java[[https://github.com/spring-projects/spring-boot/blob/main/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/security/DefaultWebSecurityCondition.java\]{.underline}]
+
+https://github.com/spring-projects/spring-boot/blob/main/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/security/ConditionalOnDefaultWebSecurity.java[[https://github.com/spring-projects/spring-boot/blob/main/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/security/ConditionalOnDefaultWebSecurity.java\]{.underline}]
+
+=== UserDetailsServiceAutoConfiguration
+
+the default implementation provided by Spring Boot registers the default credentials in the internal memory of the application. These default credentials are "`user`" with a default password that's a universally unique identifier (UUID). The default password is generated randomly when the Spring context is loaded (at the app startup). At this time, the application writes the password to the console where you can see it.
+https://github.com/spring-projects/spring-boot/blob/main/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/security/servlet/UserDetailsServiceAutoConfiguration.java[[https://github.com/spring-projects/spring-boot/blob/main/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/security/servlet/UserDetailsServiceAutoConfiguration.java\]{.underline}]
+
+=== PasswordEncoder
+
+the PasswordEncoder is mandatory for the Basic authentication flow. The simplest implementation manages the passwords in plain text and doesn't encode these.PasswordEncoder exists together with the default UserDetailsService. When we replace the default implementation of the UserDetailsService, we must also specify
+a PasswordEncoder.
+
+== Configuration
+
+=== EnableWebSecurity
+
+https://github.com/spring-projects/spring-security/blob/main/config/src/main/java/org/springframework/security/config/annotation/web/configuration/EnableWebSecurity.java[[https://github.com/spring-projects/spring-security/blob/main/config/src/main/java/org/springframework/security/config/annotation/web/configuration/EnableWebSecurity.java\]{.underline}]
+
+=== EnableGlobalAuthentication
+
+https://github.com/spring-projects/spring-security/blob/main/config/src/main/java/org/springframework/security/config/annotation/authentication/configuration/EnableGlobalAuthentication.java[[https://github.com/spring-projects/spring-security/blob/main/config/src/main/java/org/springframework/security/config/annotation/authentication/configuration/EnableGlobalAuthentication.java\]{.underline}]
+
+== Filters
+
+Each filter has an order number, which determines the order in which
+filters are applied to a request. You can add custom filters along with
+the filters provided by Spring Security.
+
+=== SecurityWebFiltersOrder
+
+=== Practice: Custom Filter
+
+== BasicAuthenticationFilter
+
+image::{figures}/media/image19.png[]
+
+https://github.com/spring-projects/spring-security/blob/main/web/src/main/java/org/springframework/security/web/authentication/AuthenticationFilter.java[[https://github.com/spring-projects/spring-security/blob/main/web/src/main/java/org/springframework/security/web/authentication/AuthenticationFilter.java\]{.underline}]
+
+image::{figures}/media/image22.png[]
+
+=== AuthenticationManager
+
+AuthenticationManager serves as the API specifying how authentication is
+conducted by Spring Security's Filters. The resulting authentication is
+subsequently established on SecurityContextHolder by the invoking
+controller (i.e., Spring Security's Filters instances).
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/authentication/AuthenticationManager.java[[https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/authentication/AuthenticationManager.java\]{.underline}]
+
+=== ProviderManager
+
+ProviderManager stands out as the frequently employed realization of
+AuthenticationManager.
+
+It delegates responsibilities to a list of AuthenticationProvider
+instances. Each
+
+AuthenticationProvider possesses the capability to express whether
+authentication should
+
+succeed, fail, or delegate the decision-making to a subsequent
+AuthenticationProvider
+
+image:./media/image2.png[]
+In the event that none of the configured
+AuthenticationProvider instances can authenticate,
+
+the authentication process results in a ProviderNotFoundException. This
+particular
+
+AuthenticationException signifies that the ProviderManager lacked
+configuration to
+
+support the specific authentication type provided to it.
+
+Additionally, ProviderManager enables the configuration of an optional
+parent
+
+AuthenticationManager. This parent AuthenticationManager is consulted
+when no
+
+AuthenticationProvider is able to execute authentication. The parent can
+take on any form
+
+of AuthenticationManager, with ProviderManager frequently being the
+chosen type.
+
+By default, ProviderManager attempts to remove any sensitive credential
+information from the
+
+Authentication object returned upon a successful authentication request.
+This precautionary measure ensures that sensitive details, such as passwords, are not
+stored in the HttpSession for longer than necessary.
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/authentication/ProviderManager.java[[https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/authentication/ProviderManager.java\]{.underline}]
+
+=== AuthenticationProvider
+
+In practical terms, every AuthenticationProvider is equipped to carry
+out a distinct authentication method. For instance, one
+AuthenticationProvider may validate a username/password, while another
+is capable of authenticating a SAML Assertion.
+
+Before Spring Security can invoke the authenticate method, the supports
+method must return true for the Authentication class that will be passed
+in.
+When a user authenticates, Spring Security submits an Authentication
+object to AuthenticationProvider with the information provided by the
+user. The current UsernamePasswordAuthentication object only contains a
+username and password field.
+
+The authenticate method accepts an Authentication object as an argument
+that represents an
+
+authentication request. In practical terms, it is the input from the
+user that we need to attempt to validate. If authentication fails, the
+method should throw an o.s.s.core.AuthenticationException exception. If
+authentication succeeds, it should return an Authentication object that
+contains the proper GrantedAuthority objects for the user. The returned
+Authentication object will be set on SecurityContextHolder. If
+authentication cannot be determined, the method
+
+should return null.
+
+It is possible to inject multiple instances of AuthenticationProviders
+into ProviderManager.
+
+Each AuthenticationProvider is responsible for a specific form of
+authentication. For instance,
+
+DaoAuthenticationProvider is designed for username/password-based
+authentication, while
+
+JwtAuthenticationProvider specializes in authenticating JSON Web Tokens.
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/authentication/AuthenticationProvider.java[[https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/authentication/AuthenticationProvider.java\]{.underline}]
+
+==== Username/Password Authentication
+
+The AuthenticationProvider is the element responsible for executing the
+authentication process and utilizes the UserDetailsService to gather
+user details. It invokes the loadUserByUsername(String username) method
+to locate the user based on their username.
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/authentication/dao/AbstractUserDetailsAuthenticationProvider.java[[https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/authentication/dao/AbstractUserDetailsAuthenticationProvider.java\]{.underline}]
+
+===== DaoAuthenticationProvider
+
+image::{figures}/media/image12.png[]
+
+=== UserDetails
+
+For Spring Security, a user definition should fulfill the UserDetails contract. The UserDetails contract represents the user as understood by Spring Security.
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/core/userdetails/UserDetails.java
+
+[,java]
+----
+public interface UserDetails extends Serializable {
+
+	/**
+	 * Returns the authorities granted to the user. Cannot return <code>null</code>.
+	 * @return the authorities, sorted by natural key (never <code>null</code>)
+	 */
+	Collection<? extends GrantedAuthority> getAuthorities();
+
+	/**
+	 * Returns the password used to authenticate the user.
+	 * @return the password
+	 */
+	String getPassword();
+
+	/**
+	 * Returns the username used to authenticate the user. Cannot return
+	 * <code>null</code>.
+	 * @return the username (never <code>null</code>)
+	 */
+	String getUsername();
+
+	/**
+	 * Indicates whether the user's account has expired. An expired account cannot be
+	 * authenticated.
+	 * @return <code>true</code> if the user's account is valid (ie non-expired),
+	 * <code>false</code> if no longer valid (ie expired)
+	 */
+	default boolean isAccountNonExpired() {
+		return true;
+	}
+
+	/**
+	 * Indicates whether the user is locked or unlocked. A locked user cannot be
+	 * authenticated.
+	 * @return <code>true</code> if the user is not locked, <code>false</code> otherwise
+	 */
+	default boolean isAccountNonLocked() {
+		return true;
+	}
+
+	/**
+	 * Indicates whether the user's credentials (password) has expired. Expired
+	 * credentials prevent authentication.
+	 * @return <code>true</code> if the user's credentials are valid (ie non-expired),
+	 * <code>false</code> if no longer valid (ie expired)
+	 */
+	default boolean isCredentialsNonExpired() {
+		return true;
+	}
+
+	/**
+	 * Indicates whether the user is enabled or disabled. A disabled user cannot be
+	 * authenticated.
+	 * @return <code>true</code> if the user is enabled, <code>false</code> otherwise
+	 */
+	default boolean isEnabled() {
+		return true;
+	}
+
+}
+----
+
+=== GrantedAuthority
+
+Spring Security represents the actions that a user can do with the GrantedAuthority interface. We often call these authorities, and a user
+has one or more of them.
+
+the actions granted for a user are called authorities.The authorities represent what the user can do in your application.
+
+the GrantedAuthority interface represents a privilege granted to the user. A user must have at least one authority.
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/core/GrantedAuthority.java
+
+[,java]
+----
+public interface GrantedAuthority extends Serializable {
+
+	String getAuthority();
+
+}
+----
+
+=== UserDetailsService
+
+The UserDetailsService is only responsible for retrieving the
+user by username. This action is the only one needed by the framework to complete authentication. The UserDetailsManager adds behavior that refers to adding, modifying, or deleting the user, which is a required functionality in most applications.
+image::{figures}/image-2.png[alt text]
+The UserDetailsService retrieves a user's details by searching for the user by name. The user is characterized by the UserDetails contract. Each user possesses one or more authorities, which are depicted by the GrantedAuthority interface. For incorporating operations such as create, delete, or modify password for a user, the UserDetailsManager contract, which expands on the UserDetailsService, is used to include these functionalities.
+image::{figures}/image-3.png[alt text]
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/core/userdetails/UserDetailsService.java
+
+[,java]
+----
+public interface UserDetailsService {
+	UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
+}
+----
+
+=== UserDetailsManager
+
+This interface extends and adds more methods to the UserDetailsService
+contract. Spring Security needs the UserDetailsService contract to do the authenti-
+cation. But generally, in applications, there is also a need for managing users. Most of
+the time, an app should be able to add new users or delete existing ones. In this case,
+we implement a more particular interface defined by Spring Security, UserDetails-
+Manager. It extends UserDetailsService and adds more operations that we need to
+implement:
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/provisioning/UserDetailsManager.java
+
+[,java]
+----
+public interface UserDetailsManager extends UserDetailsService {
+
+	/**
+	 * Create a new user with the supplied details.
+	 */
+	void createUser(UserDetails user);
+
+	/**
+	 * Update the specified user.
+	 */
+	void updateUser(UserDetails user);
+
+	/**
+	 * Remove the user with the given login name from the system.
+	 */
+	void deleteUser(String username);
+
+	/**
+	 * Modify the current user's password. This should change the user's password in the
+	 * persistent user repository (database, LDAP etc).
+	 * @param oldPassword current password (for re-authentication if required)
+	 * @param newPassword the password to change to
+	 */
+	void changePassword(String oldPassword, String newPassword);
+
+	/**
+	 * Check if a user with the supplied login name exists in the system.
+	 */
+	boolean userExists(String username);
+
+}
+----
+
+==== InMemoryUserDetailsManager
+
+The InMemoryUserDetailsManager is actually a UserDetailsManager.
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/provisioning/InMemoryUserDetailsManager.java
+
+[,java]
+----
+public class InMemoryUserDetailsManager implements UserDetailsManager, UserDetailsPasswordService {
+
+	protected final Log logger = LogFactory.getLog(getClass());
+
+	private final Map<String, MutableUserDetails> users = new HashMap<>();
+
+	private SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder
+		.getContextHolderStrategy();
+
+	private AuthenticationManager authenticationManager;
+
+	public InMemoryUserDetailsManager() {
+	}
+
+	public InMemoryUserDetailsManager(Collection<UserDetails> users) {
+		for (UserDetails user : users) {
+			createUser(user);
+		}
+	}
+
+	public InMemoryUserDetailsManager(UserDetails... users) {
+		for (UserDetails user : users) {
+			createUser(user);
+		}
+	}
+
+	public InMemoryUserDetailsManager(Properties users) {
+		Enumeration<?> names = users.propertyNames();
+		UserAttributeEditor editor = new UserAttributeEditor();
+		while (names.hasMoreElements()) {
+			String name = (String) names.nextElement();
+			editor.setAsText(users.getProperty(name));
+			UserAttribute attr = (UserAttribute) editor.getValue();
+			Assert.notNull(attr,
+					() -> "The entry with username '" + name + "' could not be converted to an UserDetails");
+			createUser(createUserDetails(name, attr));
+		}
+	}
+
+	private User createUserDetails(String name, UserAttribute attr) {
+		return new User(name, attr.getPassword(), attr.isEnabled(), true, true, true, attr.getAuthorities());
+	}
+
+	@Override
+	public void createUser(UserDetails user) {
+		Assert.isTrue(!userExists(user.getUsername()), "user should not exist");
+
+		if (user instanceof MutableUserDetails mutable) {
+			this.users.put(user.getUsername().toLowerCase(), mutable);
+		}
+		else {
+			this.users.put(user.getUsername().toLowerCase(), new MutableUser(user));
+		}
+	}
+
+	@Override
+	public void deleteUser(String username) {
+		this.users.remove(username.toLowerCase());
+	}
+
+	@Override
+	public void updateUser(UserDetails user) {
+		Assert.isTrue(userExists(user.getUsername()), "user should exist");
+
+		if (user instanceof MutableUserDetails mutable) {
+			this.users.put(user.getUsername().toLowerCase(), mutable);
+		}
+		else {
+			this.users.put(user.getUsername().toLowerCase(), new MutableUser(user));
+		}
+	}
+
+	@Override
+	public boolean userExists(String username) {
+		return this.users.containsKey(username.toLowerCase());
+	}
+
+	@Override
+	public void changePassword(String oldPassword, String newPassword) {
+		Authentication currentUser = this.securityContextHolderStrategy.getContext().getAuthentication();
+		if (currentUser == null) {
+			// This would indicate bad coding somewhere
+			throw new AccessDeniedException(
+					"Can't change password as no Authentication object found in context " + "for current user.");
+		}
+		String username = currentUser.getName();
+		this.logger.debug(LogMessage.format("Changing password for user '%s'", username));
+		// If an authentication manager has been set, re-authenticate the user with the
+		// supplied password.
+		if (this.authenticationManager != null) {
+			this.logger.debug(LogMessage.format("Reauthenticating user '%s' for password change request.", username));
+			this.authenticationManager
+				.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(username, oldPassword));
+		}
+		else {
+			this.logger.debug("No authentication manager set. Password won't be re-checked.");
+		}
+		MutableUserDetails user = this.users.get(username);
+		Assert.state(user != null, "Current user doesn't exist in database.");
+		user.setPassword(newPassword);
+	}
+
+	@Override
+	public UserDetails updatePassword(UserDetails user, String newPassword) {
+		String username = user.getUsername();
+		MutableUserDetails mutableUser = this.users.get(username.toLowerCase());
+		mutableUser.setPassword(newPassword);
+		return mutableUser;
+	}
+
+	@Override
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		UserDetails user = this.users.get(username.toLowerCase());
+		if (user == null) {
+			throw new UsernameNotFoundException(username);
+		}
+		if (user instanceof CredentialsContainer) {
+			return user;
+		}
+		return new User(user.getUsername(), user.getPassword(), user.isEnabled(), user.isAccountNonExpired(),
+				user.isCredentialsNonExpired(), user.isAccountNonLocked(), user.getAuthorities());
+	}
+
+	/**
+	 * Sets the {@link SecurityContextHolderStrategy} to use. The default action is to use
+	 * the {@link SecurityContextHolderStrategy} stored in {@link SecurityContextHolder}.
+	 *
+	 * @since 5.8
+	 */
+	public void setSecurityContextHolderStrategy(SecurityContextHolderStrategy securityContextHolderStrategy) {
+		Assert.notNull(securityContextHolderStrategy, "securityContextHolderStrategy cannot be null");
+		this.securityContextHolderStrategy = securityContextHolderStrategy;
+	}
+
+	public void setAuthenticationManager(AuthenticationManager authenticationManager) {
+		this.authenticationManager = authenticationManager;
+	}
+----
+
+==== JdbcUserDetailsManager
+
+The JdbcUserDetailsManager class manages users in an SQL database. It connects to the database directly through JDBC. This way, the JdbcUserDetailsManager is independent of any other framework or specification related to database connectivity.
+
+image::{figures}/media/image6.png[The Spring Security authentication flow. Here we use a JdbcUserDetailsManager as our
+UserDetailsService component. The JdbcUserDetailsManager uses a database to manage users.
+]
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/provisioning/JdbcUserDetailsManager.java
+
+TODO Add refernce to custom providers examples spring-security-tutorials05-custom-authenticationprovider
+
+=== PasswordEncoder
+
+The PasswordEncoder does two things:
+
+. Encodes a password (usually using an encryption or a hashing algorithm)
+. Verifies if the password matches an existing encoding
+
+https://github.com/spring-projects/spring-security/blob/main/crypto/src/main/java/org/springframework/security/crypto/password/PasswordEncoder.java[[https://github.com/spring-projects/spring-security/blob/main/crypto/src/main/java/org/springframework/security/crypto/password/PasswordEncoder.java\]{.underline}]
+
+==== NoOpPasswordEncoder
+
+Managing passwords in cleartext is what the instance of NoOpPasswordEncoder is precisely
+
+https://github.com/spring-projects/spring-security/blob/main/crypto/src/main/java/org/springframework/security/crypto/password/NoOpPasswordEncoder.java[[https://github.com/spring-projects/spring-security/blob/main/crypto/src/main/java/org/springframework/security/crypto/password/NoOpPasswordEncoder.java\]{.underline}]
+
+==== StandardPasswordEncoder
+
+Uses SHA-256 to hash the password
+
+https://github.com/spring-projects/spring-security/blob/main/crypto/src/main/java/org/springframework/security/crypto/password/StandardPasswordEncoder.java
+
+==== DelegatingPasswordEncoder
+
+return new DelegatingPasswordEncoder("bcrypt", encoders);
+
+https://github.com/spring-projects/spring-security/blob/main/crypto/src/main/java/org/springframework/security/crypto/password/DelegatingPasswordEncoder.java[[https://github.com/spring-projects/spring-security/blob/main/crypto/src/main/java/org/springframework/security/crypto/password/DelegatingPasswordEncoder.java\]{.underline}]
+
+https://github.com/spring-projects/spring-security/blob/main/crypto/src/main/java/org/springframework/security/crypto/factory/PasswordEncoderFactories.java[[https://github.com/spring-projects/spring-security/blob/main/crypto/src/main/java/org/springframework/security/crypto/factory/PasswordEncoderFactories.java\]{.underline}]
+
+=== SecurityContext
+
+Once the AuthenticationManager completes the authentication process
+successfully, it stores the Authentication instance for the rest of the
+request.The instance storing the Authentication object is called the
+security context.
+
+Spring Security provides quite a few different methods for
+authenticating a user. However, the net result is that Spring Security
+will populate o.s.s.core.context.SecurityContext with
+o.s.s.core.Authentication. The Authentication object represents all the
+information we gathered at the time of authentication (username,
+password, roles, and so on). The SecurityContext interface is then set
+on the o.s.s.core.context.SecurityContextHolder interface.
+
+This means that Spring Security and developers can use
+SecurityContextHolder to obtain information about the currently
+logged-in user. An example of obtaining the current username is
+illustrated as follows:
+
+image::{figures}/media/image7.png[]
+
+https://github.com/spring-projects/spring-security/blob/3b9a2c3def8592f176194d77587d8d4bb9504db2/web/src/main/java/org/springframework/security/web/authentication/AuthenticationFilter.java[[https://github.com/spring-projects/spring-security/blob/3b9a2c3def8592f176194d77587d8d4bb9504db2/web/src/main/java/org/springframework/security/web/authentication/AuthenticationFilter.java\]{.underline}]
+
+[,java]
+----
+public class AuthenticationFilter extends OncePerRequestFilter {
+
+	private SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder
+		.getContextHolderStrategy();
+
+	private RequestMatcher requestMatcher = AnyRequestMatcher.INSTANCE;
+
+  //..
+
+	private void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
+			Authentication authentication) throws IOException, ServletException {
+		SecurityContext context = this.securityContextHolderStrategy.createEmptyContext();
+		context.setAuthentication(authentication);
+		this.securityContextHolderStrategy.setContext(context);
+		this.securityContextRepository.saveContext(context, request, response);
+		this.successHandler.onAuthenticationSuccess(request, response, chain, authentication);
+	}
+
+}
+----
+
+[,java]
+----
+public interface SecurityContext extends Serializable {
+
+	/**
+	 * Obtains the currently authenticated principal, or an authentication request token.
+	 * @return the <code>Authentication</code> or <code>null</code> if no authentication
+	 * information is available
+	 */
+	Authentication getAuthentication();
+
+	/**
+	 * Changes the currently authenticated principal, or removes the authentication
+	 * information.
+	 * @param authentication the new <code>Authentication</code> token, or
+	 * <code>null</code> if no further authentication information should be stored
+	 */
+	void setAuthentication(Authentication authentication);
+
+}
+----
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/core/context/SecurityContextImpl.java[[https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/core/context/SecurityContextImpl.java\]{.underline}]
+
+The Authentication interface in Spring Security serves dual purposes:
+
+* It acts as input for AuthenticationManager, supplying the user's
++
+____
+provided credentials for authentication. In this context, the
+method isAuthenticated() returns false.
+____
+
+* It serves as a representation of the presently authenticated user,
++
+____
+retrievable from the SecurityContext.
+____
+
+Key components within the Authentication interface include the
+following:
+
+* Principal: This identifies the user, often represented as an
++
+____
+instance of UserDetails, especially in username/password
+authentication.
+____
+
+* Credentials: This typically encompasses a password. In many
++
+____
+instances, this information is
+____
+
+____
+cleared post-authentication to prevent inadvertent leakage.
+____
+
+* Authorities: This comprises GrantedAuthority instances denoting
++
+____
+high-level permissions
+____
+
+____
+granted to the user. Examples include roles and scopes.
+____
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/core/Authentication.java[[https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/core/Authentication.java\]{.underline}]
+
+=== SecurityContextHolder
+
+SecurityContextHolder is where Spring Security stores the details of who
+is authenticated. It contains the SecurityContext.
+
+image::{figures}/media/image8.png[]
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/core/context/SecurityContextHolder.java[[https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/core/context/SecurityContextHolder.java\]{.underline}]
+
+Spring Security offers three strategies to manage the SecurityContext
+with an object in the role of a manager. It's named the
+SecurityContextHolder
+
+https://github.com/spring-projects/spring-security/blob/3b9a2c3def8592f176194d77587d8d4bb9504db2/core/src/main/java/org/springframework/security/core/context/SecurityContextHolder.java#L219[[https://github.com/spring-projects/spring-security/blob/3b9a2c3def8592f176194d77587d8d4bb9504db2/core/src/main/java/org/springframework/security/core/context/SecurityContextHolder.java#L219\]{.underline}]
+
+https://github.com/spring-projects/spring-security/blob/3b9a2c3def8592f176194d77587d8d4bb9504db2/core/src/main/java/org/springframework/security/core/context/SecurityContextHolder.java#L80[[https://github.com/spring-projects/spring-security/blob/3b9a2c3def8592f176194d77587d8d4bb9504db2/core/src/main/java/org/springframework/security/core/context/SecurityContextHolder.java#L80\]{.underline}]
+
+[,java]
+----
+	private static void initializeStrategy() {
+		if (MODE_PRE_INITIALIZED.equals(strategyName)) {
+			Assert.state(strategy != null, "When using " + MODE_PRE_INITIALIZED
+					+ ", setContextHolderStrategy must be called with the fully constructed strategy");
+			return;
+		}
+		if (!StringUtils.hasText(strategyName)) {
+			// Set default
+			strategyName = MODE_THREADLOCAL;
+		}
+		if (strategyName.equals(MODE_THREADLOCAL)) {
+			strategy = new ThreadLocalSecurityContextHolderStrategy();
+			return;
+		}
+		if (strategyName.equals(MODE_INHERITABLETHREADLOCAL)) {
+			strategy = new InheritableThreadLocalSecurityContextHolderStrategy();
+			return;
+		}
+		if (strategyName.equals(MODE_GLOBAL)) {
+			strategy = new GlobalSecurityContextHolderStrategy();
+			return;
+		}
+		// Try to load a custom strategy
+		try {
+			Class<?> clazz = Class.forName(strategyName);
+			Constructor<?> customStrategy = clazz.getConstructor();
+			strategy = (SecurityContextHolderStrategy) customStrategy.newInstance();
+		}
+		catch (Exception ex) {
+			ReflectionUtils.handleReflectionException(ex);
+		}
+	}
+----
+
+. *MODE_THREADLOCAL*--Allows each thread to store its own details
++
+____
+in the security
+____
+
+____
+context. In a thread-per-request web application, this is a common
+approach, as each request has an individual thread. +
+it is also the default for managing the security context used by
+Spring Security. With this strategy, Spring Security uses ThreadLocal
+to manage the context. ThreadLocal is an implementation provided by
+the JDK. This implementation works as a collection of data but ensures
+that each thread of the application can only see the data stored in
+its dedicated part of the collection. This way, each request has
+access to its security context. No thread will have access to
+another's ThreadLocal. That means that in a web application, each
+request can see only its own security context. We could say that this
+is also what you generally want to have for a backend web application
+
+From Figure, Each request (A, B, and C) has its own allocated thread
+(T1, T2, and T3), so each request only sees the details stored in its
+own security context. However, this also means that if a new thread is
+created (for example, when an asynchronous method is called), the new
+thread will have its own security context as well. The details from
+the parent thread (the original thread of the request) are not copied
+to the security context of the new thread.
+
+image::{figures}/media/image23.png[]
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/core/context/ThreadLocalSecurityContextHolderStrategy.java[[https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/core/context/ThreadLocalSecurityContextHolderStrategy.java\]{.underline}]
+____
+
+____
+}
+____
+
+. *MODE_INHERITABLETHREADLOCAL*--Similar to MODE_THREADLOCAL, but
++
+____
+it also
+____
+
+____
+instructs Spring Security to copy the security context to the next
+thread in case of
+
+an asynchronous method. This way, we can say that the new thread
+running the
+
+\@Async method inherits the security context. The \@Async annotation
+is used with
+
+methods to instruct Spring to call the annotated method on a separate
+thread.
+____
+
+. *MODE_GLOBAL*--Makes all the threads of the application see the
++
+____
+same security
+____
+
+____
+context instance
+____
+
+SecurityContextRepository
+
+https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/core/context/ListeningSecurityContextHolderStrategy.java[[https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/core/context/ListeningSecurityContextHolderStrategy.java\]{.underline}]
+
+=== Basic Authentication
+
+=== Form Based Authentication
+
+the formLogin() method instructed Spring Security to use o.s.s.web.authentication.UsernamePasswordAuthenticationFilter to act as a login controller. The filter's job is to perform the following tasks:
+
+* Obtain a username and password from the HTTP request.
+* Create a UsernamePasswordAuthenticationToken object with the information
+obtained from the HTTP request.
+* Request that Spring Security validates UsernamePasswordAuthenticationToken.
+* If the token is validated, it will set the authentication returned to it on SecurityContext
+Holder
+
+https://github.com/spring-projects/spring-security/blob/main/web/src/main/java/org/springframework/security/web/authentication/UsernamePasswordAuthenticationFilter.java
+
+[,java]
+----
+@Override
+	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
+			throws AuthenticationException {
+		if (this.postOnly && !request.getMethod().equals("POST")) {
+			throw new AuthenticationServiceException("Authentication method not supported: " + request.getMethod());
+		}
+		String username = obtainUsername(request);
+		username = (username != null) ? username.trim() : "";
+		String password = obtainPassword(request);
+		password = (password != null) ? password : "";
+		UsernamePasswordAuthenticationToken authRequest = UsernamePasswordAuthenticationToken.unauthenticated(username,
+				password);
+		// Allow subclasses to set the "details" property
+		setDetails(request, authRequest);
+		return this.getAuthenticationManager().authenticate(authRequest);
+	}
+----
+
+=== Practice: Create multitenant security Authentication
+
+maybe your application uses a random identifier for authentication, or perhaps
+it is a multitenant application and requires a username, password, and domain. In the following section,
+we will update CalendarUserAuthenticationProvider to support multiple domains.
+
+When a user authenticates, Spring Security submits an Authentication object to
+AuthenticationProvider with the information provided by the user. The current
+UsernamePasswordAuthentication object only contains a username and password field.
+Create a DomainUsernamePasswordAuthenticationToken object that contains a domain
+field
+
+[,java]
+----
+public final class DomainUsernamePasswordAuthenticationToken extends
+		UsernamePasswordAuthenticationToken {
+	/**
+	 * The Domain.
+	 */
+	private final String domain;
+
+	/**
+	 * Instantiates a new Domain username password authentication token.
+	 *
+	 * @param principal   the principal
+	 * @param credentials the credentials
+	 * @param domain      the domain
+	 */
+// used for attempting authentication
+	public DomainUsernamePasswordAuthenticationToken(String
+			principal, String credentials, String domain) {
+		super(principal, credentials);
+		this.domain = domain;
+	}
+
+	/**
+	 * Instantiates a new Domain username password authentication token.
+	 *
+	 * @param principal   the principal
+	 * @param credentials the credentials
+	 * @param domain      the domain
+	 * @param authorities the authorities
+	 */
+	// used for returning to Spring Security after being authenticated
+	public DomainUsernamePasswordAuthenticationToken(CalendarUser
+			principal, String credentials, String domain,
+			Collection<? extends GrantedAuthority> authorities) {
+		super(principal, credentials, authorities);
+		this.domain = domain;
+	}
+
+	/**
+	 * Gets domain.
+	 *
+	 * @return the domain
+	 */
+	public String getDomain() {
+		return domain;
+	}
+}
+----
+
+[,java]
+----
+@Component
+public class CustomUserAuthenticationProvider implements AuthenticationProvider {
+
+	/**
+	 * The constant logger.
+	 */
+	private static final Logger logger = LoggerFactory
+			.getLogger(CustomUserAuthenticationProvider.class);
+
+	private final UserService userService;
+
+	@Autowired
+	public CustomUserAuthenticationProvider(UserService userService) {
+		if (userService == null) {
+			throw new IllegalArgumentException("userService cannot be null");
+		}
+		this.userService = userService;
+	}
+
+	@Override
+	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+		DomainUsernamePasswordAuthenticationToken token = (DomainUsernamePasswordAuthenticationToken) authentication;
+		String userName = token.getName();
+		String domain = token.getDomain();
+		String email = userName + "@" + domain;
+
+		CustomUser = userService.findUserByEmail(email);
+		logger.info("Custom: {}", user);
+
+		if (user == null) {
+			throw new UsernameNotFoundException("Invalid username/password");
+		}
+		String password = user.getPassword();
+		if (!password.equals(token.getCredentials())) {
+			throw new BadCredentialsException("Invalid username/password");
+		}
+		Collection<? extends GrantedAuthority> authorities = SecurityUtils.createAuthorities(user);
+		logger.info("authorities: {}", authorities);
+		return new DomainUsernamePasswordAuthenticationToken(user, password, domain, authorities);
+	}
+
+	@Override
+	public boolean supports(Class<?> authentication) {
+		return DomainUsernamePasswordAuthenticationToken.class.equals(authentication);
+	}
+}
+----
+
+Adding domain to the login page
+
+[,html]
+----
+ <form class="form-horizontal" method="POST" th:action="@{/login}">
+        <div class="alert alert-danger" th:if="${param.error != null}">
+            <strong>Failed to login.</strong>
+            <span th:if="${session[SPRING_SECURITY_LAST_EXCEPTION] != null}"
+                  th:text="${session[SPRING_SECURITY_LAST_EXCEPTION].message}">Invalid credentials</span>
+        </div>
+        <div class="alert alert-success" th:if="${param.logout != null}">
+            You have been logged out.
+        </div>
+        <fieldset>
+            <legend>Login Form</legend>
+            <div class="mb-3">
+                <label class="form-label" for="username">Username</label>
+                <input autofocus="autofocus" class="form-control" id="username"
+                       name="username"
+                       type="text"/>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="password">Password</label>
+                <input class="form-control" id="password" name="password"
+                       type="password"/>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="domain">Domain</label>
+                <input class="form-control" id="domain" name="domain" type="text"/>
+            </div>
+
+            <div class="mb-3">
+                <input class="btn btn-primary" id="submit" name="submit" type="submit"
+                       value="Login"/>
+            </div>
+        </fieldset>
+    </form>
+----
+
+We will need to extend UsernamePasswordAuthenticationFilter to leverage our newly created
+DoainUsernamePasswordAuthenticationToken object
+
+[,java]
+----
+public final class DomainUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+
+	/**
+	 * Instantiates a new Domain username password authentication filter.
+	 *
+	 * @param authenticationManager the authentication manager
+	 */
+	public DomainUsernamePasswordAuthenticationFilter(final AuthenticationManager authenticationManager) {
+		super.setAuthenticationManager(authenticationManager);
+	}
+
+	public Authentication attemptAuthentication
+			(HttpServletRequest request, HttpServletResponse response) throws
+			AuthenticationException {
+		if (!request.getMethod().equals("POST")) {
+			throw new AuthenticationServiceException
+					("Authentication method not supported: "
+							+ request.getMethod());
+		}
+		String username = obtainUsername(request);
+		String password = obtainPassword(request);
+		String domain = request.getParameter("domain");
+		// authRequest.isAuthenticated() = false since no
+		//authorities are specified
+		DomainUsernamePasswordAuthenticationToken authRequest
+				= new DomainUsernamePasswordAuthenticationToken(username,
+				password, domain);
+		setDetails(request, authRequest);
+		return this.getAuthenticationManager()
+				.authenticate(authRequest);
+	}
+}
+----
+
+Updating our configuration
+
+[,java]
+----
+@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authManager) throws Exception {
+		http.authorizeHttpRequests( authz> authz
+						.requestMatchers("/login/*").permitAll()
+						.requestMatchers("/logout").permitAll()
+						.requestMatchers("/signup/*").permitAll()
+						.requestMatchers("/errors/**").permitAll())
+
+				.exceptionHandling(exceptions> exceptions
+						.accessDeniedPage("/errors/403")
+						.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login/form")))
+				.logout(form> form
+						.logoutUrl("/logout")
+						.logoutSuccessUrl("/login/form?logout")
+						.permitAll())
+				// Add custom DomainUsernamePasswordAuthenticationFilter
+				.addFilterAt(domainUsernamePasswordAuthenticationFilter(authManager), UsernamePasswordAuthenticationFilter.class);
+
+		http.securityContext(securityContext> securityContext.requireExplicitSave(false));
+		http.headers(headers> headers.frameOptions(FrameOptionsConfig::disable));
+		return http.build();
+	}
+
+	@Bean
+	public DomainUsernamePasswordAuthenticationFilter domainUsernamePasswordAuthenticationFilter(AuthenticationManager authManager) {
+		DomainUsernamePasswordAuthenticationFilter dupaf = new
+				DomainUsernamePasswordAuthenticationFilter(authManager);
+		dupaf.setFilterProcessesUrl("/login");
+		dupaf.setUsernameParameter("username");
+		dupaf.setPasswordParameter("password");
+		dupaf.setAuthenticationSuccessHandler(new SavedRequestAwareAuthenticationSuccessHandler() {
+			setDefaultTargetUrl("/default");
+		});
+		dupaf.setAuthenticationFailureHandler(new SimpleUrlAuthenticationFailureHandler() {
+			setDefaultFailureUrl("/login/form?error");
+		});
+		dupaf.afterPropertiesSet();
+		return dupaf;
+	}
+----
+
+=== Practice: support both the HTTP Basic and the form-based login methods
+
+[,java]
+----
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity
+ http)
+
+throws Exception {
+http.formLogin(c->
+
+c.successHandler(authenticationSuccessHandler)
+.failureHandler(authenticationFailureHandler)
+
+);
+
+http.httpBasic(Customizer.withDefaults());
+http.authorizeHttpRequests(c-> c.anyRequest().authenticated());
+return http.build();
+
+ }
+----
+
+=== Practice: Obtaining the SecurityContext from the SecurityContextHolder
+
+[,java]
+----
+@RestController
+public class HelloController {
+
+ //Method 1
+
+@GetMapping("/hello")
+public String hello() {
+ SecurityContext context = SecurityContextHolder.getContext();
+ Authentication auth = context.getAuthentication();
+return "Hello!" + auth.getName();
+ }
+
+ // Method 2
+@GetMapping("/hello1")
+public String hello1(Authentication a) {
+return "Hello, " + a.getName() + "!";
+ }
+ }
+----
+
+=== Practice: Using a holding strategy for asynchronous calls
+
+if you make the endpoint asynchronous. The thread that executes the
+method is no longer the same thread that serves the request.This is
+because the method now executes on another thread that does not inherit
+the security context. For this reason, the Authorization object is null
+and, in the context of the presented code, causing a
+NullPointerException.
+
+In this case, you could solve the problem by using the
+MODE_INHERITABLETHREADLOCAL strategy. This can be set either by calling
+the SecurityContextHolder.setStrategyName() method or by using the
+system property spring.security.strategy. By setting this strategy, the
+framework knows to copy the details of the original thread of the
+request to the newly created thread of the asynchronous method
+
+=== Practice: Obtaining the SecurityContext from Managed Thread
+
+If your code starts new threads without the framework knowing about
+them(self-managed),No specific strategy of the SecurityContextHolder
+offers you a solution to self managed threads. In this case, you need to
+take care of the security context propagation
+
+*Sol1: use the DelegatingSecurityContextRunnable to decorate the tasks
+you want to execute on a separate thread*
+
+*Sol2: Forwarding the security context with
+DelegatingSecurityContextExecutorService*
+
+##
+
+== AuthorizationFilter
+
+once the application ends the authentication flow, it delegates the
+request to an authorization filter. The filter allows or rejects the
+request based on the configured authorization rules
+
+image::{figures}/media/image20.png[]
+
+=== GrantedAuthority
+
+A user possesses one or more authorities (permissible actions).
+Throughout the authentication phase, the UserDetailsService retrieves
+comprehensive details about the user, encompassing their authorities.
+Following a successful authentication, the application employs these
+authorities, as depicted by the GrantedAuthority interface, to carry out
+authorization
+
+image::{figures}/media/image9.png[]
+
+when using the authorities() method, include the ROLE_ prefix. When
+using the roles() method, do not include the ROLE_ prefix.
+
+=== Practice: Restricting access for all endpoints based on user authorities
+
+=== Practice: Restricting access for all endpoints based on user roles
+
+== CSRF Filter
+
+CSRF is enabled by default in Spring Security.
+
+The starting point of CSRF protection is a filter in the filter chain
+called Csrf-Filter. The CsrfFilter intercepts requests and allows all
+those that use these HTTP methods: GET, HEAD, TRACE, and OPTIONS. For
+all other requests, the filter expects to receive a header containing a
+token. If this header does not exist or contains an incorrect token
+value, the application rejects the request and sets the response status
+to HTTP 403 Forbidden.
+
+image::{figures}/media/image1.png[]
+
+https://github.com/spring-projects/spring-security/blob/main/web/src/main/java/org/springframework/security/web/csrf/CsrfFilter.java[[https://github.com/spring-projects/spring-security/blob/main/web/src/main/java/org/springframework/security/web/csrf/CsrfFilter.java\]{.underline}]
+
+=== CsrfTokenRepository
+
+The CsrfFilter uses a component named CsrfTokenRepository to manage the
+CSRF token values that generate new tokens, store tokens, and eventually
+invalidate these. By default, the CsrfTokenRepository stores the token
+on the HTTP session and generates the tokens as random string values.
+
+=== HttpSessionCsrfTokenRepository
+
+the CsrfFilter adds the generated CSRF token to the attribute of the
+HTTP request named _csrf
+
+== OAuth2
+
+For the resource server, like any other authentication approach, you
+need to change the authentication provider if you want to customize how
+the authentication works.In the case of a resource server, Spring
+Security allows you to plug into the configuration a component named the
+authentication manager resolver. This component allows the app execution
+to decide which authentication manager to call. This way, you can
+delegate the authentication to any custom authentication manager that
+can use a custom authentication provider.
+
+=== Spring LDAP authentication
+
+There are the following three basic
+steps to the LDAP authentication process:
+
+. Authenticate the credentials supplied by the user against the LDAP directory.
+. Determine the GrantedAuthority object that the user has, based on their information
+in LDAP.
+. Pre-load information from the LDAP entry for the user into a custom UserDetails object
+for further use by the application.
+
+For the first step, authentication against the LDAP directory, a custom authentication provider
+is wired into AuthenticationManager. The o.s.s.ldap.authentication.
+LdapAuthenticationProvider interface takes the user's provided credentials and verifies
+them against the LDAP directory, as illustrated in the following diagram
+image::{figures}/image.png[alt text]
+We can see that the o.s.s.ldap.authentication.LdapAuthenticator interface
+defines a delegate to allow the provider to make the authentication request in a customizable way. The
+implementation that we've implicitly configured to this point, o.s.s.ldap.authentication.
+BindAuthenticator, attempts to use the user's credentials to bind (log in) to the LDAP server
+as if it were the user themselves making a connection. For an embedded server, this is sufficient for
+our authentication needs; however, external LDAP servers may be stricter, and in these, users may
+not be allowed to bind to the LDAP directory
+
+the search is performed under an LDAP
+context created by the credentials specified in the DefaultSpringSecurityContextSource
+reference's baseDn attribute. With an embedded server, we don't use this information, but with an
+external server reference, unless baseDn is supplied, anonymous binding is used. Retaining some
+control over the public availability of information in the directory is very common for organizations
+that require valid credentials to search an LDAP directory, and as such, baseDn will be almost always
+required in real-world scenarios. The baseDn attribute represents the full DN of a user with valid
+access to bind the directory and perform searches
+
+=== Spring Security OAuth 2 Authorization Server
+
+=== Spring Security OAuth 2 Resource Server
+
+=== Spring Security OAuth 2 Client
+
+the provider's details
+
+* ClientRegistration--This object is used to define the details the
++
+____
+client needs to use the authorization server (credentials,
+redirect URI, authorization URI, etc.).
+____
+
+* ClientRegistrationRepository--This contract is implemented to
++
+____
+define the logic that retrieves the client registrations. You, for
+example, can implement a client registration repository to tell
+your app to get the client registrations from a database or a
+custom vault.
+____
+
+==== Third Party Providers
+
+Spring Security considers the following providers as well
+known:Google,GitHub,Okta,Facebook
+
+Spring Security pre configures the details for these providers in the
+*CommonOAuth-2Provider class*
+
+image::{figures}/media/image21.png[]
+
+=== Practice: Employing two distinct authorization servers
+
+If you want your app to use multiple authorization servers all using
+JWTs, Spring Security even provides an out-of-the-box authentication
+manager resolver imple-mentation. For such a case, you only need to plug
+in the JwtIssuer-AuthenticationManagerResolver custom implementation
+that Spring Security provides.
+
+Let's consider the following scenario: you need your resource server to
+work with both JWT and opaque tokens with two different authorization
+servers. Say your resource server discriminates the requests based on
+the value of a "type" parameter. If the "type" parameter's value is
+"jwt", the resource server must authenticate the request with an
+authorization server using JWT access tokens; otherwise, it uses an
+authorization server with opaque access tokens.
+
+image:./media/image15.png[]
+##
+
+== Spring Security Reactive
+
+an *AuthenticationWebFilter* intercepts the HTTP request. This filter
+delegates the authentication responsibility to an authentication
+manager. The authentication manager implements the
+*ReactiveAuthenticationManager* contract. Unlike non-reactive apps, we
+don't have authentication providers. The
+*ReactiveAuthenticationManager* directly implements the authentication
+logic.
+
+image::{figures}/media/image5.png[]
+
+Spring Security offers us a different implementation of the context
+holder for reactive apps,
+
+*ReactiveSecurityContextHolder*. We use this to work with the
+SecurityContext in a reactive app
+
+Once the *ReactiveAuthenticationManager* successfully authenticates
+the request, it returns the Authentication object to the filter. The
+filter stores the *Authentication* instance in the
+*SecurityContext*.
+
+image::{figures}/media/image3.png[]
+
+== AuthorizationWebFilter
+
+After the authentication process successfully ends, another filter,
+named *AuthorizationWebFilter*, intercepts the request. This filter
+delegates the authorization responsibility to a
+*ReactiveAuthorizationManager*
+
+image::{figures}/media/image16.png[]

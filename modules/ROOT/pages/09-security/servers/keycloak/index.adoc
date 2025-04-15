@@ -1,0 +1,115 @@
+= Keycloak
+:figures: 09-security/servers/keycloak
+
+== Installing and running Keycloak
+
+=== Development
+
+==== Using Docker
+
+*run for the first time*
+
+[,console]
+----
+docker run -d --name Keycloak1 -p 8080:8080 \
+        -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin \
+        quay.io/keycloak/keycloak:24.0.5 \
+        start-dev --import-realm
+----
+
+*import config*
+
+[,console]
+----
+docker run -d --name Keycloak1 -p 8080:8080 \
+        -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin \
+        -v ./docker/keycloak/export:/opt/keycloak/data/import \
+        quay.io/keycloak/keycloak:24.0.5 \
+        start-dev --import-realm
+----
+
+*start container*
+
+[,console]
+----
+docker start Keycloak1
+----
+
+==== Kubernetes
+
+==== Using the Keycloak Kubernetes Operator
+
+==== Locally
+
+On Linux or macOS, start Keycloak with the following command:
+
+[,console]
+----
+export KEYCLOAK_ADMIN=admin
+export KEYCLOAK_ADMIN_PASSWORD=admin
+cd $KC_HOME
+bin/kc.sh start-dev
+----
+
+on Windows, execute the following command:
+
+[,console]
+----
+set KEYCLOAK_ADMIN=admin
+set KEYCLOAK_ADMIN_PASSWORD=admin
+cd %KC_HOME%
+bin\kc.bat start-dev
+----
+
+=== Production
+
+== Configuration
+
+== Clients
+
+* *Valid redirect URIs*: This value is very important in an OpenID Connect authorization
+code flow when a client-side application is used. A client-side application is not able to
+have any credentials as they would be visible to end users of the application. To prevent
+any malicious applications from being able to masquerade as the real application, the
+valid redirect URIs instruct Keycloak to only redirect the user to a URL that matches a valid
+redirect URI. In this case, since the value is set to http://localhost:8000/, an application
+hosted on http://attacker.com would not be able to authenticate.
+* *Valid post redirect URIs*: This is the same as the previous value, but for logout requests
+rather than login requests, as it is fairly common for an application to have different
+redirect URIs for login and logout. Keycloak supports adding a special post redirect URI
+with the value +, which results in permitting all valid redirect URIs as post redirect URIs.
+* *Web origins*: This option registers the valid web origins of the application for Cross-Or-
+igin Resource Sharing (CORS) requests. To obtain tokens from Keycloak, the frontend
+application has to send an AJAX request to Keycloak, and browsers do not permit an AJAX
+request from one web origin to another, unless CORS is used. Keycloak supports adding
+a special web origin with the value +, which results in permitting all valid redirect URIs
+as web origins.
++
+== Usage
++
+*ID token:*
+
+The ID token is used by the application to establish the identity of the authenticated user.
+
+* *exp*: This is the date and time the token expires in seconds since 01/01/1970 00:00:00 UTC
+(often referred to as Unix or Epoch time).
+* *iss*: This is the issuer of the token, which you may notice is the URL of the Keycloak realm.
+* *sub*: This is the unique identifier of the authenticated user.
+* *name*: This is the first name and last name of the authenticated user.
+* *preferred_username*: This is the username of the authenticated user. You should avoid this as a key for the user as it may be changed, and may even refer to a different user in the future. Instead, always use the sub field for the user key.
+
+*Access Token*
+
+* *allowed-origins*: This is a list of permitted web origins for the application. The backend
+service can use this field when deciding whether web origins should be permitted for
+CORS requests.
+* *realm_access*: This contains a list of global realm roles. It is the intersection between the
+roles granted to the user, and the roles the client has access to.
+* *resource_access*: This contains a list of client roles.
+* *scope*: Scopes can be used both to decide what fields (or claims) to include in the token
+and by backends to decide what APIs the token can access.
+
+== Examples
+
+* https://github.com/security-kb/keycloak-nodejs-quickstart[Keycloak Nodejs Quickstart]
+* https://github.com/spring-kb/spring-cloud-gateway-oidc-tokenrelay[Spring Cloud Gateway with OpenID Connect and Token Relay]

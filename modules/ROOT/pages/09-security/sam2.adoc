@@ -1,0 +1,2 @@
+= SAML 2.0
+:figures: 09-security

@@ -1,0 +1,5 @@
+= Spring Logging
+:figures: 11-development/02-spring/06-logging
+
+== Examples
+* https://github.com/spring-kb/logging-spring-rabbitmq-logging[A Simple Solution for Log Centralization Using Spring and RabbitMQ]

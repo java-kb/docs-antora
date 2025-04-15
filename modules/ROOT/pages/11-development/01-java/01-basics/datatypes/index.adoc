@@ -1,0 +1,81 @@
+= Data Types
+:figures: 11-development/01-java/01-basics/datatypes
+
+== Primitive Data Types
+
+image::{figures}/Primitive Data Types.png[Primitive Data Types]
+image::{figures}/Summary of Primitive Data Types.png[Summary of Primitive Data Types]
+
+* Primitive data values are not objects, but each primitive data type has a corresponding wrapper class that can be used to represent a primitive value as an object
+
+== Conversions
+
+=== Widening Primitive Conversions
+
+For the primitive data types, the value of a narrower data type can be converted to
+a value of a wider data type
+
+image::{figures}/Widening Primitive Conversions.png[Widening Primitive Conversions]
+
+* Widening primitive conversions are usually done implicitly, whereas narrowing
+primitive conversions usually require a cast
+* Regardless of any loss of magnitude or
+precision, widening and narrowing primitive conversions never result in a runtime
+exception.
+
+[,java]
+----
+long year = 2020; // (1) Implicit widening: long <----- int, assigned 2020L
+int pi = (int) 3.14; // (2) Narrowing requires cast: int <----- double, assigned 3
+----
+
+=== Widening and Narrowing Reference Conversions
+
+Conversions up the type hierarchy are called widening reference conversions (also called upcasting). Such a conversion converts from a subtype to a supertype:
+
+[,java]
+----
+Object obj = "Upcast me"; // (1) Widening: Object <----- String
+----
+
+Conversions down the type hierarchy represent narrowing reference conversions (also
+called downcasting):
+
+[,java]
+----
+String str = (String) obj; // (2) Narrowing requires cast: String <----- Object
+----
+
+A subtype is a narrower type than its supertype in the sense that it is a specialization
+of its supertype
+
+Widening reference conversions are usually done implicitly, whereas narrowing
+reference conversions usually require a cast.
+
+Widening reference conversions do not require any runtime checks and never result in an exception during execution. narrowing reference conversions require a runtime check and can throw a ClassCastException if the conversion is not legal.
+
+=== Boxing and Unboxing Conversions
+
+A boxing conversion converts the value of a primitive type to a corresponding value
+of its wrapper type, and an unboxing conversion converts the value of a wrapper
+type to a value of its corresponding primitive type.
+
+Both boxing and unboxing conversion are applied implicitly in the right context, but the wrapper classes also provide the static method valueOf() to explicitly box a primitive value in a wrapper object, and the method primitiveTypeValue() to explicitly unbox the value in a
+wrapper object as a value of primitiveType.
+
+Unboxing a wrapper reference that has the null value results in a NullPointer-
+Exception
+
+[,java]
+----
+// We say that the int value 10 has beenboxed in an object of the wrapper type Integer.
+// This implicit boxing conversion is also called autoboxing.
+Integer iRef = 10; // (1) Implicit boxing: Integer <----- int
+// An explicit boxing by the valueOf() method of the wrapper classes is used to box a double value.
+Double dRef = Double.valueOf(3.14); // (2) Explicit boxing: Double <----- double
+
+// Implicit unboxing is applied to unbox the value in the Integer object
+int i = iRef; // (3) Implicit unboxing: int <----- Integer
+// and explicit unboxing is applied by calling the doubleValue() method of the Double class
+double d = dRef.doubleValue(); // (4) Explicit unboxing: double <----- Double
+----

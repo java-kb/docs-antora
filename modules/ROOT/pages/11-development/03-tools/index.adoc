@@ -1,0 +1,45 @@
+= Tools
+:figures: 11-development/03-tools
+
+== Generating a server certificate
+
+[,bash]
+----
+keytool -genkey -alias jbcpcalendar -keypass changeit -keyalg RSA \
+-keystore tomcat.keystore
+Enter keystore password: changeit
+Re-enter new password: changeitWhat is your first and last name?
+[Unknown]: localhost
+What is the name of your organizational unit? [Unknown]: JBCP Calendar
+What is the name of your organization? [Unknown]: JBCP
+What is the name of your City or Locality? [Unknown]: Anywhere What is
+the name of your State or Province? [Unknown]: UT
+What is the two-letter country code for this unit? [Unknown]: US
+Is CN=localhost, OU=JBCP Calendar, O=JBCP, L=Anywhere, ST=UT, C=US
+correct? [no]: yes
+----
+
+Most of the values are self-explanatory, but you will want to ensure that the answer to What is your
+first and last name? is the host that you will be accessing your web application from. This is necessary
+to ensure that the SSL handshake will succeed.
+
+You should now have a file in the current directory named tomcat.keystore. You can view its
+
+[,bash]
+----
+contents using the following command from within the same directory:
+keytool -list -v -keystore tomcat.keystore Enter keystore password:
+changeit
+Keystore type: JKS Keystore provider: SUN
+...
+Alias name: jbcpcalendar
+...
+Owner: CN=localhost, OU=JBCP Calendar, O=JBCP, L=Anywhere, ST=UT, C=US
+Issuer: CN=localhost, OU=JBCP Calendar, O=JBCP, L=Anywhere, ST=UT,
+C=US
+----
+
+== Maven Enforcer Plugin
+Preventing Conflicts with the Dependencies
+
+https://maven.apache.org/enforcer/maven-enforcer-plugin/usage.html

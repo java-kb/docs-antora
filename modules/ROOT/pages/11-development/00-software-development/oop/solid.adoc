@@ -1,0 +1,18 @@
+= SOLID
+:figures: 11-development/00-software-development/oop
+
+== Single responsibility
+
+== Open--closed
+
+== Liskov substitution
+
+== Interface segregation
+
+=== Real World Examples
+
+* In Spring Security ,As part of user management, we use the *UserDetailsService* and *UserDetailsManager* interfaces. The UserDetailsService is only responsible for retrieving the user by username. This action is the only one needed by the framework to complete authentication. The UserDetailsManager adds behavior that refers to adding, modifying, or deleting the user, which is a required functionality in most applications. The separation between the two contracts is an excellent example of the interface segregation principle. Separating the interfaces allows for better flexibility because the framework doesn't force you to implement behavior if your app doesn't need it. If the app only
+needs to authenticate the users, then implementing the UserDetailsService con-
+tract is enough to cover the desired functionality. To manage the users, UserDetailsService and the UserDetailsManager components need a way to represent them.
+
+== Dependency inversion

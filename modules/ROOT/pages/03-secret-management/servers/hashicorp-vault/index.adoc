@@ -1,0 +1,6 @@
+= HashiCorp Vault
+:figures: 03-secret-management/servers/hashicorp-vault
+
+== Integration with Spring Cloud
+
+https://docs.spring.io/spring-cloud-config/reference/server/environment-repository/vault-backend.html

@@ -1,0 +1,43 @@
+= Cloud Native by Paul Fremantle
+:figures: 01-system-design/architecture/cloud-native/articles/article01
+
+_Source: http://pzf.fremantle.org/2010/05/cloud-native.html_
+
+Together with Sanjiva and the rest of the WSO2 architecture team, I've been thinking a lot about what it means for applications and middleware to work well in a cloud environment - on top of an Infrastructure-as-a-Service such as Amazon EC2, Eucalyptus, or Ubuntu Enterprise Cloud.
+One of our team - Lavi - has a great analogy. Think of a 6-lane freeway/motorway/autobahn as the infrastructure. Before the autobahn existed there were forms of transport optimized first to dirt tracks and then to simple tarmac roads. The horse-drawn cart is optimized to a dirt track. On an autobahn it works - but it doesn't go any faster than on a dirt track. A Ford Model T can go faster, but it can't go safely at autobahn speeds: even if it could accelerate to 100mph it won't steer well enough at that speed or brake quickly enough.
+
+Similarly, existing applications taken and run in a cloud environment may not fully utilize that environment. Even if systems can be clustered they may not be able to dynamically change the cluster size (elasticity). Its not just acceleration, but braking as well! We believe there are a set of these technical attributes that software needs to take account of to work well in a cloud environment. In other words - what do middleware and applications have to do to be Cloud Native.
+
+Here are the attributes that we think are the core of "Cloud Native":
+Distributed / dynamically wired
+
+In order for an application to work in a cloud environment the system must be inherently distributed by nature to support operating in a cloud. What does this mean? It must be able to have multiple nodes running concurrently that share a configuration and share any session state, as well as logging to a central log, not just dumping log files onto a local disk. Another way of putting this is that it is clusterable. There are different degrees of this: from systems that cluster up to tens of machines all the way to shared-nothing architectures that cluster to thousands or millions of nodes.
+
+Of course its not enough to think of a single application here either. Cloud applications are not just going to be written in a single language on a single platform in a single runtime. The result is that applications are going to have to be dynamically wired: not just able to find their session state and logger but also able to find the latest version of a remote service and use it, without being restarted, and without any limits to where that service has moved to.
+
+== Elastic
+
+If a system is distributed then it can be made to be elastic. This seems to be the attribute of cloud native that everyone thinks of first. The system should be able to scale down as well as up, based on load. The cluster has to be dynamic and a controller must be using policies to decide when to scale up and when to scale down. In order to be elastic, the controller needs to understand the underlying Infrastructure-as-a-Service (IaaS) and be able to call APIs to start and stop machine images.
+
+== Multi-tenant
+
+A cloud native application or middleware needs to be able to support multiple isolated tenants within the system. This is the ability of Software-as-a-Service to handle multiple departments or companies at once. This compares to running multiple copies of an application each in a Virtual Machine (VM). There are two main reasons why multi-tenancy is much better than just VMs. The first benefit is economics: a tenant has a minor overhead (usually just a row in a database). A whole VM is costly: it uses a lot more memory and resources, there may be license issues, and its hugely more complex to manage 1000 copies of an application than one single multi-tenant application with 1000 tenants. The second reason multi-tenancy is important is because it enables:
+
+== Self-service
+
+Self-service provisioning and management are key to getting the most out of a cloud system. If I can have an elastic tenant to myself that's cool. But if I rely on an administrator to set it up, configure it and manage it, then that isn't Software, Platform or Infrastructure "as-a-Service". It hasn't bought me faster time to market. Self-service applies at all levels - at the infrastructure level, self-service means managing your own VMs. At the platform level, self-service means managing and deploying production applications and middleware. At the software level, self-service means creating and managing your own tenant in an application.
+
+== Granularly metered and billed
+
+One essential point of cloud is pay-per-use. But that has to be granular. Pay-per-year just is not the same as pay-per-hour. Even in a private cloud, metering is essential. In a multi-tenant, elastic environment, creating a new tenant (e.g. a new app server, a new accounting system, a new CRM) is (almost) incrementally free until the point at which that tenant is used. In a normal system model the cost of creating and provisioning a system is so large (think of the meetings!) that it usually obscures the first year's running costs. In a self-service, multi-tenant, elastic system the actual usage is the real cost. Therefore understanding, metering, and monitoring that usage is essential.
+
+== Incrementally deployed and tested
+
+Applications running in the cloud need to be updated, just as any other application. But experience with our customers shows that they need to do clever things to handle new versions in a highly-scalable high-volume environment. Our largest customers typically have systems set up where they can incrementally deploy a new version of a system - side-by-side with the old one. Even once a new version is fully unit and system tested, there may be a desire to test the new version "in place" in the live cloud environment. Switching over traffic between versions is not just a binary decision - you may want to try the new version with 5% of your live load.
+
+This list aims to characterize the real challenges in making software properly adapted to a cloud environment. I had a lot more to say about each point, but I wanted to keep this to-the-point.
+
+I strongly believe that it is only once a system really implements these attributes that it starts to give the full benefits of running in a cloud. And the benefits of "Cloud-Native" systems are immense: better utilization of resources, faster provisioning, better governance. Its probably a whole 'nother blog post to go into the full benefits of having cloud native software!
+
+Have we missed any attributes? Please feel free to comment - and please post a trackback if you write a response.
+Posted 28th May 2010 by Anonymous

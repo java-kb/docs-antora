@@ -1,0 +1,9 @@
+name: mykb
+version: ~
+title: My Knowledgebase  
+nav:
+- modules/ROOT/nav.adoc
+asciidoc:
+  attributes:
+    icondir: icons
+    #imagesdir: modules/ROOT/images

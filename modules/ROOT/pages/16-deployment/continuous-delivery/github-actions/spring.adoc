@@ -1,0 +1,2 @@
+= GitHub Actions
+:figures: 16-deployment/continuous-delivery/github-actions

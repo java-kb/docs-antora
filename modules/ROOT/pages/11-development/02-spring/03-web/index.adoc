@@ -1,0 +1,74 @@
+= Spring Framework Web
+:figures: 11-development/02-spring/03-web
+
+== Configuring the embedded Tomcat
+
+With Spring Boot, you can configure an embedded web server in two ways:
+
+. through properties
+. in a WebServerFactoryCustomizer bean.
+
+=== Using properties
+
+==== HTTP PORT
+
+By default, the embedded server is listening on port 8080. That is fine as long as you
+are working with only one application. If you run more Spring applications during
+development, which is usually the case with cloud native systems, you'll want to specify
+a different port number for each application using the server.port property.
+
+==== CONNECTION TIMEOUT
+
+The server.tomcat.connection-timeout property defines a limit for how much time
+Tomcat should wait between accepting a TCP connection from a client and actually
+receiving the HTTP request. It helps prevent denial-of-service (DoS) attacks where a
+connection is established, Tomcat reserves a thread to handle the request, and the
+request never comes. The same timeout is used to limit the time spent reading the
+HTTP request body when there is one.
+
+The default value is 20s (20 seconds), which is probably too much for a standard
+cloud native application. In the context of highly distributed systems in the cloud, we
+probably don't want to wait more than a couple of seconds and risk a cascading failure
+due to a Tomcat instance hanging for too long. Something like 2s would be better.
+You can also use the server.tomcat.keep-alive-timeout property to configure how
+long to keep a connection open while waiting for new HTTP requests.
+
+==== THREAD POOL
+
+Tomcat has a pool of threads that process requests, following the thread-per-request
+model. The number of available threads will determine how many requests can be
+handled simultaneously. You can configure the maximum number of request process-
+ing threads through the server.tomcat.threads.max property. You can also define
+the minimum number of threads that should always be kept running (server.tomcat
+.threads.min-spare), which is also how many threads are created at startup.
+
+Determining the best configuration for a thread pool is complicated, and there's
+no magic formula for computing it. Resource analysis, monitoring, and many trials
+are usually necessary to find a suitable configuration. The default thread pool can
+grow up to 200 threads and has 10 worker threads always running, which are good
+starting values in production. In your local environment, you might want to lower
+those values to optimize resource consumption, since it increases linearly with the
+number of threads.
+
+[,yml]
+----
+server:
+    port: 9001
+    tomcat:
+        connection-timeout: 2s
+        keep-alive-timeout: 15s
+        threads:
+            max: 50
+            min-spare: 5
+----
+
+== Run
+
+*Configure HTTPS for your endpoints.*
+
+[,console]
+----
+server.ssl.key-store-type=PKCS12
+server.ssl.key-store=classpath:certificate.p12
+server.ssl.key-store-password=12345
+----

@@ -1,0 +1,18 @@
+= Memento(Snapshot)
+:figures: 11-development/00-software-development/design-patterns/behavioral/memento
+
+The Gang of Four describes the purpose of the Visitor pattern as follows:
+
+____
+Capture and externalize the internal state of an object without violating its encapsulation, so that the object can later be restored to that state..
+____
+
+== Identification
+
+== Usage examples
+
+== JDK
+
+== Examples
+
+https://github.com/java-kb/design_patterns

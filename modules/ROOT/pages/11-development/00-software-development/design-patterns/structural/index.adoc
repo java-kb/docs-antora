@@ -1,0 +1,6 @@
+= Structural Design Patterns
+:figures: 11-development/00-software-development/design-patterns/structural
+
+== Examples
+
+https://github.com/java-kb/design_patterns

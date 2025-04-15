@@ -1,0 +1,53 @@
+= Java Tricks
+:figures: 11-development/01-java
+
+== Basic Elements, Primitive Data Types, and Operators
+
+*_The assignment statement is an expression statement, which means that application
+of the binary assignment operator returns the value of the expression on the right-hand side_*
+
+[,java]
+----
+int j, k;
+j = 10; // (1) j gets the value 10, which is returned
+k = j; // (2) k gets the value of j, which is 10, and this value is returned
+
+System.out.println(j = 10); // j gets the value 10, which is printed.
+
+k = j = 10; // (k = (j = 10))
+
+Pizza pizzaOne, pizzaTwo;
+pizzaOne = pizzaTwo = new Pizza("Supreme"); // Aliases
+----
+
+[,java]
+----
+int[] a = {10, 20, 30, 40, 50}; // An array of int (§3.9, p. 119)
+int index = 4;
+a[index] = index = 2; // (1)
+----
+
+The evaluation proceeds as follows:
+
+* a[index] = index = 2; // array index has higher precedence over =
+* a[4] = index = 2;
+* a[4] = (index = 2); // index gets the value 2. = is right associative.
+* a[4] = 2; // The value of a[4] is changed from 50 to 2.
+
+*_Boxing and unboxing in an assignment context:_*
+
+[,java]
+----
+Boolean boolRef = true; // Boxing.
+Byte bRef = 2; // Constant in range: narrowing, then boxing.
+// Byte bRef2 = 257; // Constant not in range. Compile-time error!
+short s = 10; // Narrowing from int to short.
+// Integer iRef1 = s; // short not assignable to Integer.
+Integer iRef3 = (int) s; // Explicit widening with cast to int and boxing
+boolean bv1 = boolRef; // Unboxing.
+byte b1 = bRef; // Unboxing.
+int iVal = bRef; // Unboxing and widening.
+Integer iRefVal = null; // Always allowed.
+// int j = iRefVal; // NullPointerException at runtime.
+if (iRef3 != null) iVal = iRef3; // Avoids exception at runtime.
+----

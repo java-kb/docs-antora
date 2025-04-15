@@ -1,0 +1,2 @@
+= Secret Management Servers
+:figures: 03-secret-management/servers

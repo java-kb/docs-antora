@@ -1,0 +1,138 @@
+= Testing Http Requests
+:figures: 19-tools
+
+== http
+
+=== Install
+
+sudo apt install httpie
+
+=== Usage
+
+==== Get
+
+[,bash]
+----
+http :8080/get
+----
+
+==== Post
+
+[,bash]
+----
+http POST :8000/post hello=world
+----
+
+[,bash]
+----
+http --ignore-stdin POST :8000/attempts factorA=15 factorB=20 userAlias=test-gamification-service-down guess=300
+----
+
+==== Put
+
+==== Delete
+
+[,bash]
+----
+http DELETE http://localhost:8090/delete
+----
+
+==== Authenticate
+
+[,bash]
+----
+http -a username:password pie.dev/basic-auth/username/password
+----
+
+==== Headers
+
+[,bash]
+----
+http pie.dev/headers User-Agent:Bacon/1.0 'Cookie:valued-visitor=yes;foo=bar' \
+    X-Foo:Bar Referer:https://httpie.org/
+----
+
+[,bash]
+----
+http :8080/headers Host:www.myhost.org
+----
+
+==== Repeat
+
+[,bash]
+----
+for i in {1..10}; do http --ignore-stdin POST :8000/attempts factorA=15 factorB=20 userAlias=test-gamification-service-down guess=300; done
+----
+
+== curl
+
+=== Install
+
+=== Usage
+
+Skip testing the authenticity of the certificate
+
+[,bash]
+----
+curl -k -u user:pass https://localhost:8080/hello
+----
+
+==== Get
+
+[,bash]
+----
+curl http://localhost:8080/get
+----
+
+==== Post
+
+[,bash]
+----
+http POST :8000/post hello=world
+----
+
+[,bash]
+----
+http --ignore-stdin POST :8000/attempts factorA=15 factorB=20 userAlias=test-gamification-service-down guess=300
+----
+
+==== Put
+
+==== Delete
+
+[,bash]
+----
+http DELETE http://localhost:8090/delete
+----
+
+==== Authenticate
+
+[,bash]
+----
+curl -u user:335cb4b4-4020-4b71-967f-8bf921ab45c4 http://localhost:8080/hello
+----
+
+[,bash]
+----
+curl -v -H "Authorization: Basic $(echo -n user:335cb4b4-4020-4b71-967f-8bf921ab45c4 | base64)" localhost:8080/hello
+----
+
+==== Headers
+
+[,bash]
+----
+http pie.dev/headers User-Agent:Bacon/1.0 'Cookie:valued-visitor=yes;foo=bar' \
+    X-Foo:Bar Referer:https://httpie.org/
+----
+
+[,bash]
+----
+http :8080/headers Host:www.myhost.org
+----
+
+==== Repeat
+
+[,bash]
+----
+for i in {1..10}; do http --ignore-stdin POST :8000/attempts factorA=15 factorB=20 userAlias=test-gamification-service-down guess=300; done
+----

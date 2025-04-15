@@ -1,0 +1,157 @@
+= Service Discovery Libraries
+:figures: 07-discovery/libraries
+
+== Spring Cloud Consul
+
+== Usage
+
+*Service: Adding the Spring Cloud Consul Discovery Dependency in Maven*
+
+[,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <properties>
+        <spring-cloud.version>2023.0.2</spring-cloud.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-consul-discovery</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+</project>
+----
+
+*Service: Specify Application name*
+
+----
+spring.application.name=multiplication
+----
+
+[,yml]
+----
+spring:
+  application:
+    name: gateway
+----
+
+*Gateway: Configure Service Discovery and Load Balancing in the Gateway*
+
+All you need to do to take advantage of these new patterns is add some configuration
+to the application.yml file. We divide the changes into three groups.
+
+* Global settings: Name the application and make sure you use the
+Spring Cloud load balancer implementation. Besides, you'll add a
+configuration parameter to instruct the service discovery client to
+retrieve only the healthy services.
+* Routing configuration: Instead of using explicit hosts and ports,
+switch to service names with a URL pattern that also enables load
+balancing
+* Resilience: In case the gateway fails to proxy a request to a service, you
+want it to retry a few times. We elaborate on this topic in a bit.
+
+[,yml]
+----
+server:
+  port: 8000
+#spring.config.import: "optional:consul:"
+spring:
+  application:
+    name: gateway
+    # the Gateway microservice connects to Consul to find the available instances of other microservices and their network locations. Then,
+    # it balances the load based on a simple round-robin algorithm included in Spring Cloud load balancer
+    loadbalancer:
+      # Since  Netflix’s Ribbon in maintenance mode, let’s discard that option and choose the Spring’s load balancer implementation
+      ribbon:
+        enabled: false
+      consul:
+        enabled: true
+      discovery:
+        # instruct the service discovery client to retrieve only the healthy services
+        # With the query-passing parameter set to true, the Spring implementation will use
+        # the Consul API with a filter to retrieve only those services that have a passing health check
+        query-passing: true
+        # Given that you added the Consul starter, the Gateway service is also registering itself
+        # in Consul. That is not strictly necessary since other services won’t call the gateway, but
+        # it’s still useful to check its status. Alternatively, you could set the configuration parameter
+        # spring.cloud.consul.discovery.register to false to keep using the service discovery
+        # client features but disable the registration of the Gateway service.
+        register: true
+    gateway:
+      routes:
+        #Any request to or under http://localhost:8000/attempts will
+        #be proxied to the Multiplication microservice, deployed locally
+        #at http://localhost:8080/. The same will happen to other
+        #API contexts located in the same microservice, like challenges
+        #and users.
+        - id: multiplication
+          # Instead of using explicit hosts and ports, switch to service names with a URL pattern that also enables load balancing.
+          # Since you added the Consul client, the application will use the Service API to resolve the service name, multiplication, to the available
+          # instances. The lb:// prefix tells Spring that it should use the load balancer.
+          #The ReactiveLoadBalancerClientFilter looks for a URI in the exchange attribute named ServerWebExchangeUtils.GATEWAY_REQUEST_URL_ATTR.
+          #If the URL has a lb scheme (such as lb://myservice), it uses the Spring Cloud ReactorLoadBalancer to resolve the name (myservice in this example)
+          #to an actual host and port and replaces the URI in the same attribute. The unmodified original URL is appended to the list in the
+          #ServerWebExchangeUtils.GATEWAY_ORIGINAL_REQUEST_URL_ATTR attribute
+          uri: lb://multiplication/
+          predicates:
+            - Path=/challenges/**,/attempts/**,/users/**
+        # Requests to http://localhost:8000/leaders will be translated to
+        # requests to the Gamification microservice, which uses the same host
+        # (localhost) but the port 8081
+        - id: gamification
+          uri: lb://gamification/
+          predicates:
+            - Path=/leaders
+      globalcors:
+        # append some CORS configuration for the UI to be allowed to make requests from its origin
+        cors-configurations:
+          "[/**]":
+            allowedOrigins: http://localhost:3000,http://localhost:8100
+            allowedHeaders: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - OPTIONS
+      default-filters:
+        # the Retry GatewayFilter intercepts error responses and transparently retries the request again. When combined with a load balancer,
+        # this means the request will be proxied to the next instance, so you get a nice resilience
+        # pattern (retry) easily. You configure this filter to make three retries maximum for the
+        # HTTP methods you’re using, which is more than enough to cover most failure situations.
+        # If all the retries fail, the gateway returns an error response to the client (service
+        # unavailable) because it can’t proxy the request
+        - name: Retry
+          args:
+            retries: 3
+            methods: GET,POST
+----
+
+== Examples
+
+* https://github.com/spring-kb/baeldung-spring-cloud-consul[Quick Guide to Spring Cloud Consul]
+* https://github.com/spring-kb/spring-boot-microservices-with-consul-spring-cloud-gateway-and-docker[Spring Boot Microservices with Consul, Spring Cloud Gateway and Docker])
++
+== Samples
+* https://github.com/books-java/Learn-Microservices-with-Spring-Boot-3[Multiplication Microservices Example]

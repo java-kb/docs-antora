@@ -1,0 +1,50 @@
+= Definitions
+:figures: 21-definitions
+
+== bare metal installation
+
+A "`bare metal install`" means you are installing to a hard drive or SSD and using the actual hardware. That's opposed to installing into a VHD in a virtual machine with abstracted and emulated hardware. In neither case are you saving any storage space
+
+== Eventual consistency
+
+Eventual consistency is a consistency model used in distributed computing to achieve high availability that informally guarantees that, if no new updates are made to a given data item, eventually all accesses to that item will return the last updated value. Eventual consistency, also called optimistic replication.
+Eventually-consistent services are often classified as providing BASE semantics (basically-available, soft-state, eventual consistency), in contrast to traditional ACID (atomicity, consistency, isolation, durability:
+
+* Basically available: reading and writing operations are available as much as possible (using all nodes of a database cluster), but might not be consistent (the write might not persist after conflicts are reconciled, and the read might not get the latest write)
+* Soft-state: without consistency guarantees, after some amount of time, we only have some probability of knowing the state, since it might not yet have converged
+* Eventually consistent: If we execute some writes and then the system functions long enough, we can know the state of the data; any further reads of that data item will return the same value
+
+== Fault Tolerance
+
+Fault tolerance is the ability of a system to maintain proper operation despite failures or faults in one or more of its components. This capability is essential for high-availability, mission-critical, or even life-critical systems.
+
+Fault tolerance specifically refers to a system's capability to handle faults without any degradation or downtime. In the event of an error, end-users remain unaware of any issues. Conversely, a system that experiences errors with some interruption in service or graceful degradation of performance is termed 'resilient'. In resilience, the system adapts to the error, maintaining service but acknowledging a certain impact on performance.
+Fault tolerance means that a system can continue to operate and provide service even if something goes wrong.
+
+== Idempotent
+
+In computing, an operation is idempotent if it can be called more than once without different outcomes.
+
+== Lexical Token
+
+A lexical token is a sequence of characters that can be treated as a unit in the grammar of the programming languages.
+Example of tokens:
+
+* Type token (id, number, real, . . . )
+* Punctuation tokens (IF, void, return, . . . )
+* Alphabetic tokens (keywords)
++
+----
+Keywords; Examples-for, while, if etc.
+Identifier; Examples-Variable name, function name, etc.
+Operators; Examples '+', '++', '-' etc.
+Separators; Examples ',' ';' etc
+----
++
+Example of Non-Tokens:
+
+* Comments, preprocessor directive, macros, blanks, tabs, newline, etc.
+
+== Resilience
+
+Resilience in microservices refers to an application's ability to withstand failures, stay available, and deliver consistent performance in distributed environments

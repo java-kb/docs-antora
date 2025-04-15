@@ -1,0 +1,13 @@
+= Grafana Loki
+:figures: 13-logging/servers/loki
+
+== Integration with Spring
+
+== Examples
+
+* https://github.com/spring-kb/logging-spring-loki-grafana[Simple project to log using loki and grafana]
+* https://github.com/spring-kb/logging-baeldung-spring-boot-loki-grafana[Logging in Spring Boot With Loki]
+* {blank}
++
+== Samples
+* https://github.com/books-java/Learn-Microservices-with-Spring-Boot-3[Multiplication Microservices Example]

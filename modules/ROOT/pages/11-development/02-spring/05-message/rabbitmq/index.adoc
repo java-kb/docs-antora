@@ -1,0 +1,23 @@
+= Spring RabbitMQ
+:figures: 11-development/02-spring/05-message/rabbitmq
+
+To use the AMQP and RabbitMQ features in Spring Boot applications.
+
+[,xml]
+----
+<dependencies>
+    <!-- ... existing dependencies -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-amqp</artifactId>
+    </dependency>
+</dependencies>
+----
+
+== Examples
+* https://github.com/spring-kb/logging-spring-rabbitmq-logging[A Simple Solution for Log Centralization Using Spring and RabbitMQ]
++
+== Samples
++
+TODO Add Multiplication Microservices Example to github
+* https://github.com/books-java/Learn-Microservices-with-Spring-Boot-3[Multiplication Microservices Example]

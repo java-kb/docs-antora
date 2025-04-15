@@ -1,0 +1,23 @@
+= Java
+:figures: 11-development/01-java
+
+== Control Flow
+
+=== Switch
+
+Summary of the switch Statement and the switch Expression
+
+[cols=3*]
+|===
+| Notation
+| The switch statement
+| The switch expression
+
+| The colon (:) notation: > case label: statements
+| * Executes statements associated with the matching case label. * Fall-through can occur. * No compile-time check for exhaustiveness. * Only break and return statements allowed to control fall-through. ```java switch (selector_expression) { // Switch block with statement groups defined using colon notation: case CC: statements case CC1: case CC2: \... case CCn: statements case CC3, CC4, \..., CCm: statements \... default: \... } ```
+| * Executes statements associated with the matching case label, but must have a yield statement to return a value. * Fall-through can occur. * Compile-time check for exhaustiveness. * No break or return statement allowed.
+
+| The arrow (\->) notation: > case label \-> action
+| * Action associated with a switch rule can be an expression statement, can be a block, or can throw an exception. * Mutually exclusive switch rules: no fall- through can occur. * No compile-time check for exhaustiveness. * break and return statements allowed.
+| * Action associated with a switch rule can be any expression, can be a block, or can throw an exception. * Mutually exclusive switch rules: no fall-through can occur. * Compile-time check for exhaustiveness. * No break or return statement allowed. * Must return a value that is either the value of a stand-alone expression or the value of the expression in a yield statement that can occur as the last statement in a block.
+|===

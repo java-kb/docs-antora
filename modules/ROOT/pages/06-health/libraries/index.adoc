@@ -1,0 +1,43 @@
+= Health Check Libraries
+:figures: 06-health/libraries
+
+== Spring Boot Actuator
+
+Spring Boot provides an out-of-the-box
+solution to make your microservices report their health status: Spring Boot Actuator.
+Actually, that's not the only feature that Actuator contains; it can also expose other
+endpoints to access different data about your application, like the configured loggers,
+HTTP traces, audit events, and so on. It can even open a management endpoint that
+allows you to shut down the application.
+
+Actuator endpoints can be enabled or disabled independently, and they're available
+not only via web interface but also through Java Management eXtensions (JMX). The default configuration
+exposes only two endpoints:
+
+* info:
+The first one is intended to provide general
+information about the application that you can enrich using contributors (https://docs.
+spring.io/spring-boot/docs/current/reference/html/actuator.html#actuator.
+endpoints.info.auto-configured-info-contributors)
+* health:
+The health endpoint is the
+one we're interested in for now. It outputs the status of your application, and to resolve
+it, it uses health indicators (https://docs.spring.io/spring-boot/docs/current/
+reference/html/actuator.html#actuator.endpoints.health).
++
+== Usage
++
+To add the actuator to a Maven-based project, add the following starter dependency:
+
+[,xml]
+----
+<dependencies>
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-actuator</artifactId>
+	</dependency>
+</dependencies>
+----
+
+The default configuration exposes the health and info web endpoints on the
+/actuator context.

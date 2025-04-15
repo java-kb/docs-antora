@@ -1,0 +1,61 @@
+= Security
+:figures: 21-definitions
+
+== Java KeyStore
+
+A Java KeyStore (JKS) is a repository of security certificates -- either authorization certificates or public key certificates -- plus corresponding private keys, used for instance in TLS encryption.
+
+In IBM WebSphere Application Server and Oracle WebLogic Server, a file with extension jks serves as a keystore.
+
+The Java Development Kit maintains a CA keystore file named cacerts in folder jre/lib/security. JDKs provide a tool named keytool[1] to manipulate the keystore. keytool has no functionali
+A database containing keys is called the Java Keystore. These keys, also known as certificates, are usually used in the code of Java. In the Java code, these certificates and the Keystore that contains them are applied for making secure connections and are generally stored in several formats. The following class represents the Java Keystore -KeyStore(java.security.KeyStore).
+
+The following keys are held in a Java Keystore -
+
+* Private keys
+* Certificates and Public keys
+* Secret keys
+
+Private keys
+
+Private keys in Java Keystore are used to set up an SSL server to enable asymmetric encryption.
+
+Public keys
+
+Public keys in Java Keystore are also used to enable asymmetric encryption. Usually, a public key corresponds to a private key, and this makes a key pair.
+
+Certificates
+
+A file or document that is used to identify the identity of a device, organization, or person which claims to own a public key. The verifying party usually digitally signs this certificate as a form of proof.
+
+Secret keys
+
+Whenever a secure connection is made, a symmetrical key is set up. This symmetrical encryption is a secret key. These are lesser in number than the public and private keys. ty to extract the private key out of the keystore, but this is possible with third-party tools like jksExportKey, CERTivity,[2] Portecle[3] and KeyStore Explorer.
+
+== SSL Passthrough
+
+The action of transmitting data to a server via a load balancer without decrypting the same is called SSL passthrough. Generally, the SSL termination process or the decryption process occurs at the load balancer, and then the data in plain format is transmitted to the webserver.
+
+== Authentication
+
+Authentication is the process of determining whether someone or something is, in fact, who or what it says it is
+
+== Authorization
+
+Authorization is the process of giving someone the ability to access a digital resource. To keep sensitive information protected, you should limit user access to only the resources that they need.
+
+== Single-factor Authentication (SFA)
+
+Requires users to provide one verifiable credential to access online resources.
+
+== Two-factor Authentication (2FA)
+
+Requires users to provide two verifiable credentials to access online resources.
+
+== Multi-factor authentication (MFA)
+
+Requires users to provide at least two verifiable credentials to access online resources.
+
+== FIDO
+
+FIDO (Fast IDentity Online) is a set of open, standardized authentication protocols intended to ultimately eliminate the use of passwords for authentication. Passwords are costly to manage and a known security risk because they are easily compromised.

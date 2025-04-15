@@ -1,0 +1,24 @@
+= Gateway Servers
+:figures: 04-gateway/Servers
+
+== Spring Cloud Gateway
+
+For the gateway pattern, Spring Cloud offers two options
+
+* Spring Cloud Netflix(In maintenance mode)
+* Spring Cloud Gateway
+
+== Nginx
+
+A powerful and lightweight web server, reverse proxy, and load balancer. Its high performance
+and low resource usage makes it an excellent choice as a reverse proxy in front of microservices for load balancing, SSL termination,caching and serving static content.
+
+== HAProxy
+
+is an open-source loadbalancer and proxy server that provides high availability for TCP-and HTTP-based applications. It also improves the performance
+and reliability of applications by distributing network traffic acrossmany servers.
+
+== Kong Gateway
+
+is a lightweight, cloudnative, fast, and flexible distributed API gateway. It is built on the NGINX platform, and you can extend it through modules and
+plugins to deliver advanced features like advanced security, traffic management, observability, and administration. It is available in both open-source and enterprise versions to cater to the different needs of small to large organizations.

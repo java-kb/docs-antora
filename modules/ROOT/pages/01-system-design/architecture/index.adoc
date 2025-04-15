@@ -1,0 +1,63 @@
+= Architecture
+:figures: 01-system-design/architecture
+
+== Software architecture styles
+
+Numerous businesses are acquiring computational capabilities from online cloud service platforms
+and embracing a primary reliance on the cloud for the development of most applications. This shift
+has prompted a transformation in the design of applications.
+
+image::{figures}/image.png[alt text]
+
+=== Monolithic architecture
+
+A traditional architecture where the entire application is constructed as a unified and closely
+integrated entity.
+While it is easy to develop and deploy initially, scaling and maintaining it can pose challenges as the
+project expands.
+
+=== N-Tier architecture (layered architecture)
+
+N-tier architecture, also known as a hierarchical structure with distinct layers, refers to a design
+approach for software systems that organizes the application into multiple layers, typically four:
+Presentation, Business, Persistence, and Data. This architectural model is commonly employed in
+enterprise applications to enhance maintainability by compartmentalizing and promoting modular
+development. Each layer has specific responsibilities.
+The Model-View-Controller (MVC) software design pattern separates an application into three
+interconnected components: Model (data and business logic), View (user interface), and Controller
+(handles user input and updates the Model and View accordingly).
+This segmentation facilitates scalability, ease of maintenance, and flexibility in adapting to changing
+business requirements.
+
+=== SOA
+
+The service-oriented pattern, also known as Service-Oriented Architecture (SOA), is an architectural
+style that structures a software application as a collection of loosely coupled and independently
+deployable services.
+Before SOA came into use in the late 1990s, connecting an application to services housed in another
+system was a complex process involving point-to-point integration.
+
+=== Microservices architecture
+
+Microservices derive from SOA, but SOA is different from microservices.
+This architecture involves fragmenting the application into small, autonomous services that communicate
+via APIs. It provides scalability, flexibility, and simplified maintenance, but introduces challenges in
+handling distributed systems complexities.
+
+== Cloud-native
+
+the term cloud-native is too ambitious, and sometimes confusing in our
+opinion. It's being used to pack a bunch of buzzwords and techniques across multiple
+aspects of software development: microservices, event-driven, continuous deployment,
+infrastructure-as-code, automation, containers, cloud solutions, and so on.
+
+The problem with cloud-native as a broad-scope classification of applications is that
+it can lead people to think they need all the included patterns and methodologies to
+achieve the aimed target. Microservices? Sure, it's the new standard. Event-driven? Why
+not? Infrastructure as code? Go for it. It looks like only if you can check all the boxes, can
+you say you create cloud-native applications. All these patterns and techniques offer
+benefits, but do you need all of them for your service or product? Maybe not. You can
+build a well-structured monolith, make a container out of it, and deploy it to the cloud
+in minutes. On top of that, you can automate all the processes to build the monolith
+and take it to production. Is that a cloud-native nonolith? You won't find that definition
+anywhere, but that doesn't mean it's not a proper solution for your specific case.

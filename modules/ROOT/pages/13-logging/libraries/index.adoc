@@ -1,0 +1,188 @@
+= Logging  Libraries
+:figures: 13-logging/libraries
+
+== Logback
+
+Logback is a logging framework for Java that implements SL4J (Simple Logging Facade for Java).
+Given that this tool is driven by an external configuration file, you don't need to modify the code in your applications.
+
+In Logback, the piece of logic that writes a log line to the specific destination is called
+an appender. This logging library includes some built-in appenders to print messages
+to the console (ConsoleAppender) or files (FileAppender and RollingFileAppender).
+You didn't need to configure them because Spring Boot includes some default Logback
+configuration within its dependencies and also sets up the printed message patterns.
+
+=== Integerate with RabbitMQ
+
+Spring AMQP provides a Logback AMQP logging appender
+that does exactly what you need: it takes each log line and produces a message to a given
+exchange in RabbitMQ, with a format and some extra options that you can customize.
+
+*Prepare the Logback configuration*
+
+spring Boot allows you to extend the defaults by creating a file named logback-spring.xml in the application resources folder (src/main/resources), which will be picked up
+automatically upon application initialization
+
+logback-spring.xml
+
+[,xml]
+----
+<configuration>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+
+    <springProperty scope="context" name="rabbitMQHost" source="spring.rabbitmq.host"/>
+
+    <appender name="AMQP"
+              class="org.springframework.amqp.rabbit.logback.AmqpAppender">
+        <layout>
+            <pattern>%d{HH:mm:ss.SSS} [%t] %logger{36} - %msg</pattern>
+        </layout>
+
+        <applicationId>multiplication</applicationId>
+        <host>${rabbitMQHost:-localhost}</host>
+        <routingKeyPattern>%property{applicationId}.%p</routingKeyPattern>
+        <exchangeName>logs.topic</exchangeName>
+        <generateId>true</generateId>
+        <charset>UTF-8</charset>
+        <durable>true</durable>
+        <declareExchange>true</declareExchange>
+        <deliveryMode>PERSISTENT</deliveryMode>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="AMQP" />
+    </root>
+</configuration>
+----
+
+* applicationId: Set it to the application name so you can distinguish
+the source when you aggregate logs.
+* host: This is the host where RabbitMQ is running. Since it can be
+different per environment, you'll connect this value to the
+spring.rabbitmq.host Spring property. Spring allows you to do this
+via the springProperty tag. You give this Logback property a name,
+rabbitMQHost, and you use the ${rabbitMQHost:-localhost} syntax
+to either use the property value if it's set or use the default localhost
+(defaults are set with the :- separator).
+* routingKeyPattern: This is the routing key per message, which you
+set to a concatenation of the applicationId and level (notated with
+%p) for more flexibility if you want to filter on the consumer side.
+* exchangeName: Specify the name of the exchange in RabbitMQ to
+publish messages. It'll be a topic exchange by default, so you can call
+it logs.topic.
+* declareExchange: Set it to true to create the exchange if it's not
+there yet.
+* durable: Also set this to true so the exchange survives server restarts.
+* deliveryMode: Make it PERSISTENT so log messages are stored until
+they're consumed by the aggregator.
+* generateId: Set it to true so each message will have a unique
+identifier.
+* charset: It's a good practice to set it to UTF-8 to make sure all parties
+use the same encoding.
+
+*Consuming Logs and Printing Them*
+
+*Using Spring boot*
+
+You need a Spring Boot configuration class to declare the exchange, the queue where
+you want to consume the messages from, and the binding object to attach the queue
+to the topic exchange with a binding key pattern to consume all of them containing the special character (#)
+
+AMQPConfiguration.java
+
+[,java]
+----
+
+import org.springframework.amqp.core.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class AMQPConfiguration {
+
+    @Bean
+    public TopicExchange logsExchange() {
+        return ExchangeBuilder.topicExchange("logs.topic")
+                .durable(true)
+                .build();
+    }
+    @Bean
+    public Queue logsQueue() {
+        return QueueBuilder.durable("logs.queue").build();
+    }
+    @Bean
+    public Binding logsBinding(final Queue logsQueue,
+                               final TopicExchange logsExchange) {
+        return BindingBuilder.bind(logsQueue)
+                .to(logsExchange).with("#");
+    }
+
+}
+----
+
+The next step is to create a simple service with the @RabbitListener that maps
+the logging level of the received messages, passed as a RabbitMQ message header, to a
+logging level in the Logs microservice, using the corresponding log.info(),
+log.error(), or log.warn(). Note that you use the @Header annotation here to extract
+AMQP headers as method arguments. You also use a logging Marker to add the
+application name (appId) to the log line without needing to concatenate it as part of the message
+
+LogsConsumer.java
+
+[,java]
+----
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.stereotype.Service;
+
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
+
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
+@Service
+public class LogsConsumer {
+    @RabbitListener(queues = "logs.queue")
+    public void log(final String msg,
+                    @Header("level") String level,
+                    @Header("amqp_appId") String appId) {
+        Marker marker = MarkerFactory.getMarker(appId);
+        switch (level) {
+            case "INFO" -> log.info(marker, msg);
+            case "ERROR" -> log.error(marker, msg);
+            case "WARN" -> log.warn(marker, msg);
+        }
+    }
+}
+----
+
+Finally, customize the log output produced by this new microservice. Since it'll
+aggregate multiple logs from different services, the most relevant property is the
+application name. You must override the Spring Boot defaults this time and define a
+simple format in a logback-spring.xml file for the CONSOLE appender that outputs the
+marker, the level, and the message
+logback-spring.xml
+
+[,xml]
+----
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                [%-15marker] %highlight(%-5level) %msg%n
+            </Pattern>
+        </layout>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>
+----
+
+== Examples
+* https://github.com/spring-kb/logging-spring-rabbitmq-logging[A Simple Solution for Log Centralization Using Spring and RabbitMQ]
+* https://github.com/spring-kb/logging-spring-loki-grafana[Simple project to log using loki and grafana]
+* https://github.com/spring-kb/logging-baeldung-spring-boot-loki-grafana[Logging in Spring Boot With Loki]

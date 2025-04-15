@@ -1,0 +1,45 @@
+= Deployment
+:figures: 16-deployment
+
+Continuous delivery is a holistic approach for quickly, reliably, and safely delivering high-quality software.
+
+== Deployment pipeline
+
+The primary pattern for adopting such an approach is the deployment pipeline, which goes from code commit to releasable software. It should be automated as much as possible, and it should represent the only path to production.
+
+*key stages in a deployment pipeline:*
+
+=== Commit stage
+
+After a developer commits new code to the mainline, this stage
+goes through build, unit tests, integration tests, static code analysis, and packaging. At the end of this stage, an executable application artifact is published to an artifact repository. It is a release candidate. For example, it can be a JAR artifact published to a Maven repository or a container image published to a
+container registry. This stage supports the continuous integration practice.
+It's supposed to be fast, possibly under five minutes, to provide developers
+with fast feedback about their changes and allow them to move on to the
+next task.
+
+the first few steps in the commit stage
+image::{figures}/image.png[The first part of the commit stage in a deployment pipeline]
+
+* After a developer pushes new code to the mainline
+* the commit stage starts by checking out the source code from the repository. The starting point is always a commit to the main branch.
+* Following continuous integration practices, we'll aim to work in
+small steps and integrate our changes with the main branch multiple times a day(continuously).
+* Next, the pipeline can perform several types of static code analysis. For this example, vulnerability scanning, static code analysis to identify security issues and check compliance with specific coding standards (code linting).
+* Finally, the pipeline builds the application and runs automated tests. In the commit stage, we include technically focused tests that don't require deploying the entire application. These are unit tests and often integration tests. If the integration tests take too long, it's better to move them to the acceptance stage to keep the commit stage fast.
++
+=== Acceptance stage
++
+The publication of a new release candidate to the artifact repository triggers this stage, which consists of:
+* deploying the application to  production-like environments and
+* running additional tests to increase the confidence about its releasability. The tests that run in the acceptance stage are usually slow, but we should strive to keep the whole deployment pipeline execution to under one hour. Examples of tests included in this stage are
+ ** functional acceptance tests
+ ** non-functional acceptance tests, such as performance tests,security tests, and compliance tests.
+ ** If necessary, this stage can also include manual tasks like exploratory and usability tests.
+
+At the end of this stage, the release candidate is ready to be deployed to production at any time. If we are still not confident about it, this stage is missing some tests.
+
+=== Production stage
+
+After a release candidate has gone through the commit and
+acceptance stages, we are confident enough to deploy it to production. This stage is triggered manually or automatically, depending on whether the organization has decided to adopt a continuous deployment practice. The new release candidate is deployed to a production environment using the same deployment scripts employed (and tested) in the acceptance stage. Optionally, some final automated tests can be run to verify that the deployment was successful.

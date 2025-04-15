@@ -1,0 +1,115 @@
+= Check if a String Is a Palindrome
+
+A palindrome is a word, phrase, number, or other sequences of characters which reads the same backward as forward, such as “madam” or “racecar”.
+
+== Simple Approach
+
+We can simultaneously start iterating the given string forward and backward, one character at a time. If the there is a match the loop continues; otherwise, the loop exits:
+
+    public boolean isPalindrome(String text) {
+        String clean = text.replaceAll("\\s+", "").toLowerCase();
+        int length = clean.length();
+        int forward = 0;
+        int backward = length - 1;
+        while (backward > forward) {
+            char forwardChar = clean.charAt(forward++);
+            char backwardChar = clean.charAt(backward--);
+            if (forwardChar != backwardChar)
+                return false;
+        }
+        return true;
+    }
+
+== Reversing the String
+
+There are a few different implementations that fit this use case: we can make use of the API methods from StringBuilder and StringBuffer classes when checking for palindromes, or we can reverse the String without these classes.
+
+Let’s take a look at the code implementations without the helper APIs first:
+
+    public boolean isPalindromeReverseTheString(String text) {
+        StringBuilder reverse = new StringBuilder();
+        String clean = text.replaceAll("\\s+", "").toLowerCase();
+        char[] plain = clean.toCharArray();
+        for (int i = plain.length - 1; i >= 0; i--) {
+            reverse.append(plain[i]);
+        }
+        return (reverse.toString()).equals(clean);
+    }
+
+In the above snippet, we simply iterate the given String from the last character and append each character to the next character, all the way through to the first character thereby reversing the given String.
+
+Finally, we test for equality between the given String and reversed String.
+
+The same behavior could be achieved using API methods.
+
+Let’s see a quick demonstration:
+
+    public boolean isPalindromeUsingStringBuilder(String text) {
+        String clean = text.replaceAll("\\s+", "").toLowerCase();
+        StringBuilder plain = new StringBuilder(clean);
+        StringBuilder reverse = plain.reverse();
+        return (reverse.toString()).equals(clean);
+    }
+
+    public boolean isPalindromeUsingStringBuffer(String text) {
+        String clean = text.replaceAll("\\s+", "").toLowerCase();
+        StringBuffer plain = new StringBuffer(clean);
+        StringBuffer reverse = plain.reverse();
+        return (reverse.toString()).equals(clean);
+    }
+
+In the code snippet, we invoke the reverse() method from the StringBuilder and StringBuffer API to reverse the given String and test for equality.
+== Using Stream API
+
+We can also use an IntStream to provide a solution:
+
+    public boolean isPalindromeUsingIntStream(String text) {
+        String temp  = text.replaceAll("\\s+", "").toLowerCase();
+        return IntStream.range(0, temp.length() / 2)
+        .noneMatch(i -> temp.charAt(i) != temp.charAt(temp.length() - i - 1));
+    }
+
+In the snippet above, we verify that none of the pairs of characters from each end of the String fulfills the Predicate condition.
+== Using Recursion
+
+Recursion is a very popular method to solve these kinds of problems. In the example demonstrated we recursively iterate the given String and test to find out whether it’s a palindrome or not:
+
+    public boolean isPalindromeRecursive(String text){
+        String clean = text.replaceAll("\\s+", "").toLowerCase();
+        return recursivePalindrome(clean,0,clean.length()-1);
+    }
+
+    private boolean recursivePalindrome(String text, int forward, int backward) {
+        if (forward == backward) {
+            return true;
+        }
+        if ((text.charAt(forward)) != (text.charAt(backward))) {
+            return false;
+        }
+        if (forward < backward + 1) {
+            return recursivePalindrome(text, forward + 1, backward - 1);
+        }
+
+        return true;
+    }
+
+== Check if a String Can Become a Palindrome by Rearranging
+
+We’ll now check if we can rearrange a String so that it becomes a palindrome.
+
+For instance, the String kkaay is an anagram of the palindrome kayak. The characteristics of a palindrome are that its first element is the same as its last element, its second element is the same as its penultimate element, and so on. The only possible character without a pair is the middle character if the String is of odd length.
+
+In a nutshell, the number of occurrences of every character in a palindrome is even except for at most one character:
+
+    boolean hasPalindromePermutation(String text) {
+        long charsWithOddOccurrencesCount = text.chars()
+            .boxed()
+            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+            .values()
+            .stream()
+            .filter(count -> count % 2 != 0)
+            .count();
+        return charsWithOddOccurrencesCount <= 1;
+    }
+
+In this code, we use the chars() method to convert the String into a stream of characters. Working with the integer representation is good enough for us because we don’t care about the concrete value. Then, we use Collectors.groupingBy() to get a map whose keys are the integer representations of the String characters, and the values are the number of occurrences of the character. Lastly, we remove all the even occurrence counts and finally check that there’s at most one odd occurrence count.

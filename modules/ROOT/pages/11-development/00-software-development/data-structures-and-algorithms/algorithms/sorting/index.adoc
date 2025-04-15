@@ -1,0 +1,101 @@
+= Sorting Algorithms
+:figures: 11-development/00-software-development/data-structures-and-algorithms/algorithms/sorting
+
+All sorting algorithms accept a list of elements and return them ordered. The main
+difference between each algorithm is the manner in which the sorting is done.
+
+== Bubble Sorting
+
+Bubble sorting works by swapping adjacent elements. This pushes the sorted elements toward the end of the list.
+
+== Pseudocode
+
+----
+bubbleSort(array)
+ n = length(array)
+    for (k = 1 until n)
+        for (j = 0 until n - 1)
+        if(array[j] > array[j + 1])
+            swap(array, j, j + 1)
+----
+
+Where swap function in switches the values of the two array pointers j and j+1 using a temporary variable.
+
+The algorithm involves three simple
+tasks, which involves repeatedly stepping through the list to sort, comparing adjacent
+elements, and swapping them around if the first element is bigger than the second.
+
+To guarantee that our list is sorted, we need to do (n - 1) passes on the list, n being the
+length of our array. We will show why (n - 1) passes are needed in the next section, but this
+is the main reason why bubble sort has a runtime complexity of O(n2), since we're
+processing n elements for n - 1 times.
+
+== Complexity
+
+|Code                                              |No of operations|SubTotal|Total     |
+|:---------------------------------|:----------|:---|:------|
+|for (int i = 1; i < numbers.length; i{pp}) {        |4               |     |          |
+|                                                  |                |4    |4__(n-1)   |
+|    for (int j = 0; j < numbers.length - 1; j{pp}) {|4               |     |          |
+|        if (numbers[j] > numbers[j + 1]) {        |4               |     |          |
+|            int temp = numbers[j];                |2               |     |          |
+|            numbers[j] = numbers[j + 1];          |3               |     |          |
+|            numbers[j + 1] = temp;                |1               |     |          |
+|        }
+|    }
+|                                                  |                |14   |(n-1)__((n-1)_14)|
+|}
+|                                                  |                |     |4_(n-1)+(n-1)__((n-1)__14)|
+|                                                  |                |     |14n{caret}2-24n+10|
+*runtime complexity of O(n{caret}2),*
+
+== Code
+
+=== Java
+
+[,java]
+----
+public void sort(int[] numbers) {
+    for (int i = 1; i < numbers.length; i++) {
+        for (int j = 0; j < numbers.length - 1; j++) {
+            if (numbers[j] > numbers[j + 1]) {
+                int temp = numbers[j];
+                numbers[j] = numbers[j + 1];
+                numbers[j + 1] = temp;
+            }
+        }
+    }
+}
+----
+
+== Improving Bubble Sorting
+
+There are two main techniques we can adopt to improve the performance of bubble sort. It's
+important to realize that although both of these strategies improve the overall performance
+of bubble sort in the average case; in the worst case, the algorithm still has the same poor
+runtime complexity of O(n²).
+
+=== Improvement1
+
+The first small enhancement we can make to the original bubble sort is to make use of the
+fact that a sorted "bubble" is building at the end of the list. With every pass we make,
+another item is added at the end portion of this bubble. This is the reason why (n - 1) passes
+are needed.
+image::{figures}/image.png[alt text]
+We can use this fact so we don't try to sort the elements inside this bubble. We can do this
+by slightly modifying our Java code, as shown in Snippet 2.3. In the inner loop, instead of
+processing until the end of the list, we can stop just before the sorted bubble, until
+numbers.length - i.
+
+[,java]
+----
+for (int i = 1; i < numbers.length; i++) {
+    for (int j = 0; j < numbers.length - i; j++) {
+        if (numbers[j] > numbers[j + 1]) {
+            int temp = numbers[j];
+            numbers[j] = numbers[j + 1];
+            numbers[j + 1] = temp;
+        }
+    }
+}
+----

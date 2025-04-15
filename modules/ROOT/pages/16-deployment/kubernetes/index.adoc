@@ -1,0 +1,73 @@
+= Kubernetes
+:figures: 16-deployment/kubernetes
+
+*Kubernetes* (often shortened as K8s) is an open source container orchestrator hosted by the CNCF.it's an open source system for automating
+the deployment, scaling, and management of containerized applications (https://
+kubernetes.io).
+
+When using a container topology, you need a machine with a container runtime.
+With Kubernetes, however, you switch to an orchestration topology, meaning that you
+need a cluster. A Kubernetes cluster is a set of worker machines (nodes) that run containerized applications. Every cluster has at least one worker node.
+
+A Kubernetes cluster comprises machines called worker nodes on which your con-
+tainerized applications are deployed. They provide capacity such as CPU, memory,
+network, and storage so that the containers can run and connect to a network.
+
+The control plane is the container orchestration layer that manages the worker
+nodes. It exposes the API and interfaces to define, deploy, and manage the life cycle
+of containers. It offers all the essential elements that implement the typical features of an orchestrator, like cluster management, scheduling, and health monitoring.
+
+kubectl is a CLI client, which communicates with the control plane to perform some operations on the worker nodes. A client doesn't interact with the worker nodes directly.
+image::{figures}/image.png[Kubernetes’ main components are the API, the control plane, and the worker nodes]
+
+* Pod--The smallest deployable unit, which can include one or more containers.
+A Pod usually contains only one of your applications. It might also include extra
+containers supporting the primary application (such as containers providing
+additional functionality like logging or administrative tasks to run during the
+initialization step). Kubernetes manages Pods rather than containers directly.
+* Deployment--A Deployment informs Kubernetes about the desired deployment
+state for your application. For each instance, it creates a Pod and keeps it
+healthy. Among other things, a Deployment allows you to manage Pods as a set.
+* Service--A Deployment (a set of Pods) can be exposed to other nodes in the
+cluster or outside by defining a Service that also takes care of balancing the load
+between Pod instances.
+
+When you want to run a new application, you can define a resource manifest, a file that
+describes the desired state for the application. For example, you might specify that it
+should be replicated five times and exposed to the outside world through port 8080.
+Resource manifests are usually written using YAML. You can then use the kubectl cli-
+ent to ask the control plane to create the resources described by the manifest. In the
+end, the control plane processes the request using its internal components and cre-
+ates the resources in the worker nodes. The control plane still relies on a container
+registry to fetch the image defined in the resource manifest. The workflow, again, is
+shown in above figure.
+
+== Useful Kubernetes CLI commands for managing Pods, Deployments, and Services
+
+|===
+| Kubernetes CLI command | What it does
+
+| kubectl get deployment
+| Shows all Deployments
+
+| kubectl get pod
+| Shows all Pods
+
+| kubectl get svc
+| Shows all Services
+
+| kubectl logs +++<pod_id>++++++</pod_id>+++
+| Shows the logs for the given Pod
+
+| kubectl delete deployment +++<name>++++++</name>+++
+| Deletes the given Deployment
+
+| kubectl delete pod +++<name>++++++</name>+++
+| Deletes the given Pod
+
+| kubectl delete svc +++<service>++++++</service>+++
+| Deletes the given Service
+
+| kubectl port-forward svc +++<service>++++++<host-port>+++:+++<cluster-port>++++++</cluster-port>++++++</host-port>++++++</service>+++
+| Forwards traffic from your local machine to within the cluster
+|===

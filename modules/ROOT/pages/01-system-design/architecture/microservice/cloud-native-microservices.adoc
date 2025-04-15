@@ -1,0 +1,42 @@
+= Cloud Native Microservices
+:figures: 01-system-design/architecture/microservice
+
+there are tools to manage and orchestrate the different components across a cluster of
+servers, either in your own hardware or in the cloud. The most popular alternatives work
+at the container level or the application level.
+
+No matter what option you choose to deploy your microservices, you should respect
+some good practices to make sure they'll work properly in the cloud (well, ideally, in any
+environment): data-layer isolation, stateless logic, scalability, resilience, simple logging,
+and so on.
+
+== Container Platforms
+
+Container platforms like *Kubernetes* (https://kubernetes.io/),
+*Apache Mesos* (https://mesos.apache.org/), and *Docker Swarm* (https://docs
+.docker.com/engine/swarm/). In these platforms, you deploy containers either directly
+or by using wrapping structures with extra configuration intended for the specific tool.
+
+These platforms usually integrate patterns that should be already familiar to you.
+
+== Application Platforms
+
+Application runtime platforms offers an even higher level of abstraction. Basically, you can write your code, build a .jar
+file, and then push it directly to an environment, making it ready for use. The application platform takes care of everything else: containerizing the app (if needed), running it
+on a cluster node, providing load balancing and routing, securing the access, and so on. These platforms can even aggregate logs and provide other tools such as message
+brokers and databases-as-a-service.
+
+On this level, you can find solutions like *Heroku* or *CloudFoundry*. There are alternatives for you to manage these platforms in your own servers, but the most
+popular options are the cloud-provided solutions. The reason is that you can put your
+product or service alive in just a few minutes, without taking care of many of the pattern implementations or infrastructure aspects.
+
+== Cloud Providers
+
+Cloud solutions such as AWS (https://aws.amazon.com), Google (https://cloud.google.com/),
+Azure (https://azure.microsoft.com/), OpenShift (https://www.redhat.com/en/
+technologies/cloud-computing/openshift), and so on. Many of these also offer
+implementations for the patterns : gateway, service discovery, centralized logs, containerization, and so on.
+
+Furthermore, they usually provide a managed Kubernetes service too. That means
+that, if you prefer to work at a container platform level, you can do that without needing
+to set up this platform manually.

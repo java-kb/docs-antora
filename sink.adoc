@@ -1,0 +1,79 @@
+* *Method Security* - `AuthorizationManager#check` is deprecated in favor of `AuthorizationManager#authorize`.
+This is primarily to allow the return type to be an interface instead of a concrete class.
+If you are invoking `AuthorizationManager#check`, please invoke `AuthorizationManager#authorize` instead.
++
+Relatedly, `AuthorizationEventPublisher#publishEvent` that takes an `AuthorizationDecision` is deprecated in favor of a method of the same name that takes an `AuthorizationResult` interface instead.
+
+
+[source,java]
+----
+private static class MyCustomConverter
+    extends AbstractOAuth2AuthorizationGrantRequestEntityConverter<OAuth2AuthorizationCodeGrantRequest> {
+	@Override
+    protected MultiValueMap<String, String> createParameters
+            (OAuth2AuthorizationCodeGrantRequest request) {
+		MultiValueMap<String, String> parameters = super.createParameters(request);
+		parameters.add("custom", "value");
+		return parameters;
+    }
+}
+----
+
+[tabs]
+======
+Java::
++
+[source,java,role="primary"]
+----
+SecurityContext context = SecurityContextHolder.createEmptyContext(); // <1>
+Authentication authentication =
+    new TestingAuthenticationToken("username", "password", "ROLE_USER"); // <2>
+context.setAuthentication(authentication);
+
+SecurityContextHolder.setContext(context); // <3>
+----
+
+Kotlin::
++
+[source,kotlin,role="secondary"]
+----
+val context: SecurityContext = SecurityContextHolder.createEmptyContext() // <1>
+val authentication: Authentication = TestingAuthenticationToken("username", "password", "ROLE_USER") // <2>
+context.authentication = authentication
+
+SecurityContextHolder.setContext(context) // <3>
+----
+======
+
+<1> We start by creating an empty `SecurityContext`.
+You should create a new `SecurityContext` instance instead of using `SecurityContextHolder.getContext().setAuthentication(authentication)` to avoid race conditions across multiple threads.
+<2> Next, we create a new <<servlet-authentication-authentication,`Authentication`>> object.
+Spring Security does not care what type of `Authentication` implementation is set on the `SecurityContext`.
+Here, we use `TestingAuthenticationToken`, because it is very simple.
+A more common production scenario is `UsernamePasswordAuthenticationToken(userDetails, password, authorities)`.
+<3> Finally, we set the `SecurityContext` on the `SecurityContextHolder`.
+Spring Security uses this information for xref:servlet/authorization/index.adoc#servlet-authorization[authorization].
+
+[NOTE]
+====
+Some users might be concerned that the storage format is provided for a potential hacker.
+This is not a concern because the storage of the password does not rely on the algorithm being a secret.
+Additionally, most formats are easy for an attacker to figure out without the prefix.
+For example, BCrypt passwords often start with `$2a$`.
+====
+
+[WARNING]
+====
+Reverting to `NoOpPasswordEncoder` is not considered to be secure.
+You should instead migrate to using `DelegatingPasswordEncoder` to support secure password encoding.
+====
+
+|===
+| Build Tool | Version
+
+| Maven
+| 3.6.3 or later
+
+| Gradle
+| Gradle 7.x (7.6.4 or later) or 8.x (8.4 or later)
+|===

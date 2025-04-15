@@ -1,0 +1,4 @@
+= Secret Management  Libraries
+:figures: 03-secret-management/libraries
+
+##

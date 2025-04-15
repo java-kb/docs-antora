@@ -1,0 +1,44 @@
+= OAuth 2
+:figures: 09-security
+
+OAuth 2.0 is a protocol for authorization, it does not cover authentication.
+
+There are four roles defined in OAuth 2.0:
+
+* *Resource owner*: This is typically the end user that owns the resources an application
+wants to access.
+* *Resource server*: This is the service hosting the protected resources.
+* *Client*: This is the application that would like to access the resource.
+* *Authorization server*: This is the server issuing access to the client, which is the role of Keycloak,Openam,etc.
+
+== OAuth 2 Flows(Grant Types)
+
+In an OAuth 2.0 protocol flow, the client requests access to a resource on behalf of a resource owner from the authorization server. The authorization server issues limited access to the resource in the form of an access token. After receiving the access token, the client can access the resource at the resource server by including the access token in the request.
+
+There are two client types, which are confidential and public clients.
+
+* Confidential clients are applications such as server-side web applications that are able to safely store credentials, which they can use to authenticate with the authorization server.
+* Public clients, on the other hand, are client-side applications that are not able to safely store credentials.
+
+As public clients are not able to authenticate with the authorization server, there are two safeguards in place:
+
+* The authorization server will only send the authorization code to an application hosted on a pre-configured URL, in the form of a previously registered redirect URI.
+* Proof Key for Code Exchange (PKCE, RFC 7636), which is an extension to OAuth 2.0, prevents anyone that intercepts an authorization code from exchanging it for an access token.
+
+Depending on the application type and use case, there are a number of different flows that can be used. To help you decide what flow type you should use for your application, you can use the following simple formula:
+
+* If the application accesses the resource on behalf of itself (the application is the resource owner), use the Client Credentials flow.
+* If the application runs on a device without a browser or is input-constrained, use the Device flow. This could, for example, be a smart TV where it would be difficult for the user to enter the username and password.
+* If none of the preceding conditions are applicable, use the authorization code flow.
+
+== Tokens
+
+as the resource servers are  able to directly read the value of the access token,
+they do not always have to make a request to the OAuth 2.0 token introspection endpoint, or the OpenID Connect UserInfo endpoint. This potentially eliminates two additional requests to Aauth2 server for a request to the resource server, reducing latency as well as significantly reducing the number of requests to server.
+
+When a resource server receives an access token, it is able to verify the token in the following ways:
+
+* Retrieving the JWKS URL from the OpenID Connect Discovery endpoint(the OpenID Connect Discovery endpoint advertises an endpoint where the JSON Web Key Set (JWKS) can be retrieved, as well as what signing and encryption mechanisms from the JWA specification are supported).
+* Downloading the public signing keys for the OP from the JWKS URL endpoint. These are
+typically cached/stored at the Resource Server.
+* Verifying the signature of the token using the public signing keys from the OP.

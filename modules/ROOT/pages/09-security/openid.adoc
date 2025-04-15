@@ -1,0 +1,29 @@
+= OpenID Connect
+:figures: 09-security
+
+While OAuth 2.0 is a protocol for authorization, it does not cover authentication. OpenID Connect builds on top of OAuth 2.0 to add an authentication layer.
+
+OpenID Connect defines a number of roles involved in the protocol:
+
+* *End User*: This is the equivalent of the resource owner in OAuth 2.0. It is, of course, the human being that is authenticating.
+* *Relying Party (RP)*: A somewhat confusing term for the application that would like to authenticate the end user. It is called the RP as it is a party that relies on the OpenID Provider (OP) to verify the identity of the user.
+* *OpenID Provider (OP)*: The identity provider that is authenticating the user, which is the role of Keycloak.
+
+In an OpenID Connect protocol flow, the Relying Party (RP) requests the identity of the end user from the OpenID Provider (OP). As it builds on top of OAuth 2.0 at the same time as the identity of the user is requested, it can also obtain an access token.
+
+OpenID Connect utilizes the Authorization Code grant type from OAuth 2.0. The main difference is that the client includes *scope=openid* in the initial request, which makes it an authentication request, rather than an authorization request.
+
+While OAuth 2.0 calls the different flows grant types, OpenID Connect refers to them as flows.
+
+There are two flows in OpenID Connect that you should care about:
+
+* *Authorization code flow:* This uses the same flow as the OAuth 2.0 Authorization Code grant type and returns an authorization code like OAuth 2.0, which can be exchanged for an ID token, an access token, and a refresh token.
+* *Hybrid flow*: In the Hybrid flow, the ID token is returned from the initial request alongside an authorization code.
+
+OpenID Connect does not define equivalents to the Client Credential flow and the Device flow. This makes sense as neither of these flows requires authenticating users, instead just granting access to a service.
+
+OpenID Connect has two additional concepts on top of OAuth 2.0.
+
+* It clearly specifies the format of the ID token by leveraging the JWT specification, which, unlike the access token in OAuth 2.0, is not opaque. It has a well-specified format, and the values (called claims) within the token can
+be directly read by the client. This allows the clients to discover information about the authenticated user in a standard way.
+* In addition, it defines a *userinfo* endpoint, which can be invoked with an access token and returns the same standard claims as found in the ID token.

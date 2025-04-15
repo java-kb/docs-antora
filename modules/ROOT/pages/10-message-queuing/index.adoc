@@ -1,0 +1,6 @@
+= Message Queuing
+:figures: 10-message-queuing
+
+== Examples
+
+* https://github.com/spring-kb/logging-spring-rabbitmq-logging[A Simple Solution for Log Centralization Using Spring and RabbitMQ]

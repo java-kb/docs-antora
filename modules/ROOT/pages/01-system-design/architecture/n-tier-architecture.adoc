@@ -1,0 +1,15 @@
+= N-Tier architecture (layered architecture)
+:figures: 01-system-design/architecture
+
+N-tier architecture, also known as a hierarchical structure with distinct layers, refers to a design
+approach for software systems that organizes the application into multiple layers, typically four:
+Presentation, Business, Persistence, and Data. This architectural model is commonly employed in
+enterprise applications to enhance maintainability by compartmentalizing and promoting modular
+development. Each layer has specific responsibilities.
+
+The Model-View-Controller (MVC) software design pattern separates an application into three
+interconnected components: Model (data and business logic), View (user interface), and Controller
+(handles user input and updates the Model and View accordingly).
+
+This segmentation facilitates scalability, ease of maintenance, and flexibility in adapting to changing
+business requirements.

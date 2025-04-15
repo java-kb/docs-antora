@@ -1,0 +1,22 @@
+= Design Patterns Structure
+:figures: 11-development/00-software-development/design-patterns
+
+== Creational Design Patterns
+
+=== Singleton
+
+image::{figures}/creational/singleton/article01/singleton-structure.png[alt text]
+
+=== Abstract Factory
+
+image::{figures}/creational/abstract-factory/article01/abstract-factory-structure.png[alt text]
+
+== Behavioral Design Patterns
+
+=== Visitor
+
+image::{figures}/behavioral/visitor/articles/article01/visitor-structure.png[Structure of the Visitor design pattern]
+
+=== Memento
+
+image::{figures}/behavioral/memento/articles/article01/memento-structure.png[Structure of the Memento design pattern]

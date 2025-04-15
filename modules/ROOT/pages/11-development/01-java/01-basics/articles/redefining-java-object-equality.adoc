@@ -1,0 +1,193 @@
+= Redefining Java Object Equality
+:figures: 11-development/01-java/01-basics/articles
+
+_Source: https://dzone.com/articles/redefining-java-object-equality_
+
+*Object equality is often a hot topic for assessing concepts and one of the pillars of how many of the implementations of Collection Frameworks work. Learn more.*
+
+== Equality in Java
+
+https://dzone.com/articles/object-identity-and-equality-in-java[Object equality] is often a hot topic for assessing concepts and one of the pillars (the other is- `hashCode()`) of how many of the implementations of https://dzone.com/articles/an-introduction-to-the-java-collections-framework[Collection Frameworks] work. We check equality by providing our own implementation for  the method `public boolean``java.lang.Object#equals(java.lang.Object other)`. According to https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)[Oracle documentation], the following mandates should be adhered to:
+
+* It is *reflexive*: For any non-null reference value `x`, `x.equals(x)` should return `true`.
+* It is *symmetric*: For any non-null reference values `x` and `y`, `x.equals(y)` should return `true` if and only if `y.equals(x)` returns `true`.
+* It is *transitive*: For any non-null reference values `x`, `y`, and `z`, if `x.equals(y)` returns `true` and `y.equals(z)` returns `true`, then `x.equals(z)` should return `true`.
+* It is *consistent*: For any non-null reference values `x` and `y`, multiple invocations of `x.equals(y)` consistently return `true` or consistently return `false`, provided no information used in `equals` comparisons on the objects are modified.
+* For any non-null reference value `x`, `x.equals(null)` should return `false`.
+
+*Please note* that there exist a few more related to using it along with `hashCode()`, but we do not discuss them here for brevity, assuming the readers are already aware of them.
+
+== Reference Equality or Content Equality?
+
+The term "equality" can itself be ambiguous, since we can either talk about reference equality or be interested in content equality. Let us illustrate both with a simple example. However, the reader may choose to skip this section and jump into the main topic of discussion at one's own discretion. 
+
+Assume a class (POJO),  `LaptopCharger`:
+
+[,java]
+----
+
+    package com.yourcompany.model;
+
+    /**
+     * An AC-to-DC converter LaptopCharger
+     *
+     */
+    public class LaptopCharger {
+        private String manufacturer;
+    	private int wattage; // Consumption: Volt times Amp.
+    	private float outputCurrent; // output Amp.
+    	private float outputVoltage; // output Volt
+    	private double price;
+    	private String connectorJackType; // E.g. USB-C, pin etc.
+
+    	// Setters and Getters follow here
+
+    }
+----
+
+Note that we did not override any method of `java.lang.Object` (which, is inherited by any https://dzone.com/articles/understanding-classes-in-java-part-1[Java class]); the default implementations, therefore, apply here.  
+
+The below code snippet outputs `false false`: 
+
+[,java]
+----
+    LaptopCharger charger_A = new LaptopCharger(65, 3.25f, 19.0f, 100, "usb-c");
+    LaptopCharger charger_B =new LaptopCharger(65, 3.25f, 19.0f, 100, "usb-c");
+    boolean refEqulas=charger_A==charger_B;
+    boolean equals=charger_A.equals(charger_B);
+    System.out.println(refEqulas+" "+equals);
+----
+
+We see that reference equality is the default return value of the `equals` method. However, consider that Bob was searching a popular e-commerce site for a charger for his laptop. His laptop requires a 65-watt/19.8Volt type-C charger, but he finds that the one given by his laptop manufacturer is not going to reach him anytime soon. He, therefore, searches for a close alternative. The meaning of equality, in this case, is content equality as shown below:
+
+[,java]
+----
+@Override
+public boolean equals(Object obj) {
+    if (null == obj)
+        return false;
+    if (obj == this)
+        return true;
+    if (!(obj instanceof LaptopCharger))
+        return false;
+    LaptopCharger other = (LaptopCharger) obj;
+
+    return this.wattage == other.wattage && this.outputCurrent == otheroutputCurrent
+            && this.connectorJackType.equals(this.connectorJackType);
+}
+----
+
+The output is: `false true`.
+
+However, the `equals` method can be overridden if these conditions are met:
+
+. The code, i.e. `LaptopCharger` is open to us. 
+. This logic is accepted across the business domain.
+
+Otherwise, we can use https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Objects.html#compare(T,T,java.util.Comparator)[Objects.compare(..)] somewhat like the following: +
+_(Important note: Unless we are certain about ordering the objects, it may be against the prescribed contract to use `Comprator<T>` for just checking content equality.)_
+
+[,java]
+----
+Comparator<LaptopCharger> specificationComparator=(x,y)->{
+        if(x.wattage == y.wattage && x.outputCurrent == y.outputCurrent
+                && x.connectorJackType.equals(y.connectorJackType)) return 0;
+        else return 1;
+};
+
+int t=Objects.compare(charger_A, charger_B, specificationComparator);
+
+System.out.println(t);
+----
+
+== How Much Equal Is an Object to Another?: Degree of Equality
+
+So far, we talked about content equality and it was all in black and white. However, what if we needed to check the degree of equality beyond just _false_ and _true_? To elaborate on this point, let us assume the following fields:
+
+. Equality of `wattage`, `outputCurrent`, and `outputVoltage` 
+. Equality of charger connectivity : `connectorJackType` 
+. Brand:  `manufacturer` 
+. Price of the item 
+
+Hypothetical business requirements are: 
+
+* If all 4 points above are the same, we consider 100% equality. 
+* [2] must be the same.
+* A small variation in output current and voltage may be permissible. (*Alert*: in real life, this may not be the best practice!) 
+* The manufacturer of the charger is not required to be the same as the laptop's but is recommended to be.
+* Price: Customers always hunt for low prices, discounts, and of course, value for money! A small compromise for a few other constraints is granted.
+
+Restricting the discussion to https://dzone.com/articles/title-exploring-exciting-new-features-in-java-17-w[Java SE 17], we can address this scenario using third-party libraries like https://github.com/intuit/fuzzy-matcher[Fuzzy-Matcher], etc. 
+
+However, would this not just be great if Java itself handled this by using a utility method in https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Objects.html[java.util.Objects]? Note that it does not until this version. I just wish it were a part of Java SE and here itself! Below is a small and coarse prototype to illustrate what would have been good to have:
+
+[,java]
+----
+/**
+* @param t1
+* @param t2
+* @param fuzzyComparator
+* @return R  the result. No type is enforced to provide more flexibility
+*/
+public static <T, R> R fuzzyEquals(T t1, T t2, BiFunction<? super T, ? super T, R> fuzzyComparator) {
+    return fuzzyComparator.apply(t1, t2);
+}
+----
+
+The first two parameters are of  type `T` and last one, the comparator itself is a `BiFunction<? super T, ? super T, R>`. 
+
+In this example, I did not enforce a return type for the method, leveraging the power of generics and functional programming to provide more flexibility. This eliminates the need for a strict return type such as `double` as well as a dedicated functional interface like `FuzzyComprator` which would otherwise have looked somewhat like this:
+
+[,java]
+----
+@FunctionalInterface
+public interface Comparator<T>{
+// other stuff like static, default methods etc.
+
+    double  compare(T o1, T o2)
+
+}
+----
+
+Below is a simple illustration using it:
+
+[,java]
+----
+    BiFunction<LaptopCharger, LaptopCharger, OptionalDouble> mySimpleFuzzyCompartor = (x, y) -> {
+
+    			if (x.connectorJackType.equals(y.connectorJackType)) {
+    				if (x.wattage == y.wattage && x.outputCurrent == y.outputCurrent
+    						&& x.manufacturer.equals(y.manufacturer) && x.price == y.price)
+    					return OptionalDouble.of(1.0D); // Full match
+
+    				if (x.wattage == y.wattage && x.outputCurrent == y.outputCurrent
+    						&& x.manufacturer.equals(y.manufacturer))
+    					return OptionalDouble.of(1.0 - (x.price - y.price) / x.price);// Price based match
+
+    				if (x.wattage == y.wattage && x.outputCurrent == y.outputCurrent)
+    					return OptionalDouble.of(1.0 - 0.2 - (x.price - y.price) / x.price); //
+    				if (x.wattage == y.wattage && Math.abs(x.outputCurrent - y.outputCurrent) < 0.15)
+    					return OptionalDouble
+    							.of(1.0 - 0.2 - Math.abs((x.outputCurrent - y.outputCurrent) / x.outputCurrent));
+    				return OptionalDouble.empty();
+    			} else {
+    				return OptionalDouble.empty();
+    			}
+    		};
+
+
+
+
+    OptionalDouble fuzzyEquals = fuzzyEquals(charger_A, charger_B, mySimpleFuzzyCompartor);
+
+
+    System.out.println(fuzzyEquals);
+----
+
+We used `OptionalDouble` as the return type of the `fuzzyEquals`. 
+
+Readers are strongly encouraged to introduce the method, `fuzzyEquals`, in `java.util.Objects` and use it and get it benchmarked. Once we have that satisfactory, Collection Frameworks might be made to undergo relevant contract upgradation to strongly support beyond-the-Boolean comparison! 
+
+Functional programming Java (programming language) Object (computer science) Data Types
+
+Opinions expressed by DZone contributors are their own.

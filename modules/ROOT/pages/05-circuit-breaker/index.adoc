@@ -1,0 +1,20 @@
+= Circuit Breaker
+:figures: 05-circuit-breaker
+
+There might be cases where you don't want to keep trying
+future requests to a given service after you know it's failing. By doing that, you can
+save time wasted in response timeouts and alleviate potential congestion of the
+target service. This is especially useful for external service calls when there are no
+other resilience mechanisms in place like the service registry with health checks.
+For these scenarios, you can use a circuit breaker. The circuit is closed when
+everything works fine. After a configurable number of request failures, the circuit
+becomes open. Then, the requests are not even tried, and the circuit breaker
+implementation returns a predefined response. Now and then, the circuit may
+switch to half-open to check again if the target service is working. In that case,
+the circuit will transition to close. If it's still failing, it goes back to the open state.
+
+== Libraries
+
+=== Resilience4j
+
+=== spring-cloud-starter-circuitbreaker-reactor-resilience4j

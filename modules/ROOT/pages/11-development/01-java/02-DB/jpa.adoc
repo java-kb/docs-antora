@@ -1,0 +1,100 @@
+= Java DB JPA
+
+== Declaring Entities in Various Databases
+[cols="a,a,a"]
+|===
+|JPA |MongoDB |Neo4j
+|
+[source,java]
+----
+@Entity
+@Table(name = "currency")
+public class Currency 
+{
+    @Id
+    @GeneratedValue
+    (strategy = GenerationType.SEQUENCE)
+    private Long id;
+    @Column(name = "decimal_places", length = 5)
+    private String decimalPlaces; 
+    //Other attributes and set/get
+}
+----
+|
+[source,java]
+----
+@Document(
+collection="currency)
+public class Currency {
+    @Id
+    private Long id;
+    @Field("decimal_places")
+    private String decimalPlaces;
+    //Other attributes and set/get
+}
+----
+|
+[source,java]
+----
+@NodeEntity 
+public class Currency 
+{
+    @GraphId
+    private Long id;
+    private String decimalPlaces;
+    //Other attributes and set/get
+}
+----
+|=== 
+
+== Declaring Relationships Among Objects in a Database
+[cols="a,a,a"]
+|===
+|JPA |MongoDB |Neo4j
+|
+[source,java]
+----
+@Entity
+@Table(name = country")
+public class Country {
+    @Id
+    @GeneratedValue
+    (strategy =  GenerationType.SEQUENCE)
+    private Long id;
+
+    @OneToMany
+    private 
+    List<Currency> currencies;
+    //Other attributes and set/get
+}
+----
+|
+[source,java]
+----
+@Document(
+collection="currency)
+public class Currency {
+    @Id
+    private Long id;
+    @Field("decimal_places")
+    private String decimalPlaces;
+    private List<Currency> currencies;
+    //Other attributes and set/get
+}
+----
+|
+[source,java]
+----
+@NodeEntity 
+public class Currency 
+{
+    @GraphId
+    private Long id;
+    private String decimalPlaces;
+    
+    @RelatedTo( type = "has", direction = Direction.OUTGOING)
+    private List<Currency> currencies;
+    //Other attributes and set/get
+}
+----
+|=== 

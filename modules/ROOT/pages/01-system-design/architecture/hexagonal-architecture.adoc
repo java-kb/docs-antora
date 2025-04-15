@@ -1,0 +1,8 @@
+= Hexagonal architecture
+
+https://alistair.cockburn.us/hexagonal-architecture/
+https://en.wikipedia.org/wiki/Hexagonal_architecture_(software)
+https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html
+https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/hexagonal-architecture.html#:~:text=The%20hexagonal%20architecture%20pattern%2C%20which,or%20user%20interfaces%20(UIs).
+https://www.baeldung.com/hexagonal-architecture-ddd-spring
+https://github.com/SvenWoltmann/hexagonal-architecture-java

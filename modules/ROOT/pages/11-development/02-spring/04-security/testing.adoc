@@ -1,0 +1,378 @@
+= Testing Spring Security
+:figures: 11-development/02-spring/04-security
+
+it makes sense to test authorization and authentication separately. Usually, an app has one way to authenticate users but might expose dozens of endpoints for which authorization is configured differently. That's why you test authentication separately with a handful of tests and then implement these individually for each authorization configuration for the endpoints. It's a loss of execution time to repeat authentication for each endpoint tested, as long as the logic doesn't change.
+
+== Setup
+
+[,xml]
+----
+<dependency>
+    <groupId>org.springframework.security</groupId>
+    <artifactId>spring-security-test</artifactId>
+    <scope>test</scope>
+</dependency>
+----
+
+[,java]
+----
+@SpringBootTest
+/*
+ * Enables Spring Boot to autoconfigure MockMvc. As a consequence, an object of type
+ * MockMvc is added to the Spring context.
+ */
+@AutoConfigureMockMvc
+public class MainTests {
+    // Injects the MockMvc object that we use to test the endpoint
+    @Autowired
+    private MockMvc mvc;
+}
+----
+
+[,java]
+----
+@Test
+@DisplayName("Test calling /hello endpoint without authentication returns unauthorized.")
+public void helloUnauthenticated() throws Exception {
+    mvc.perform(get("/hello"))
+            .andExpect(status().isUnauthorized());
+}
+----
+
+== Using mock users for tests
+
+To validate the behavior of calling API endpoint with an authenticated user, we use the @WithMockUser annotation. By adding this annotation above the test method, we instruct Spring to set up a SecurityContext that contains a UserDetails implementation instance. It's basically skipping authentication. Now calling the endpoint behaves as if the user defined by the @WithMockUser annotation successfully authenticated
+
+[,java]
+----
+@Test
+@DisplayName("Test calling /hello endpoint authenticated with a mock user returns ok.")
+@WithMockUser
+public void helloAuthenticated() throws Exception {
+    mvc.perform(get("/hello"))
+            .andExpect(content().string("Hello!"))
+            .andExpect(status().isOk());
+}
+----
+
+If we need to use a specific name or give the user specific roles or authorities to implement the test
+
+[,java]
+----
+@Test
+@WithMockUser(username = "mary")
+public void helloAuthenticated1() throws Exception {
+    mvc.perform(get("/hello1"))
+            .andExpect(content().string("Hello, mary!"))
+            .andExpect(status().isOk());
+}
+----
+
+An alternative approach to creating a mock user is using a Request-
+PostProcessor. We can provide a RequestPostProcessor the with() method, as . The class SecurityMockMvcRequestPostProcessors provided by
+Spring Security offers us lots of implementations for RequestPostProcessor, which
+helps us cover various test scenarios.
+
+[,java]
+----
+@Test
+@DisplayName("Test calling /hello endpoint authenticated with a real user returns ok.")
+public void helloAuthenticatedWithUser() throws Exception {
+    mvc.perform(get("/hello")
+            .with(user("mary")))
+            .andExpect(content().string("Hello!"))
+            .andExpect(status().isOk());
+}
+----
+
+== Testing with users from a UserDetailsService
+
+This approach is an alternative to creating a mock user. The difference is that this time, instead of creating a fake user, we need to get the user from a given UserDetailsService. You use this approach if you want to also test integration with the data source from where your app loads the user details.
+
+[,java]
+----
+@Test
+@DisplayName("Test calling /hello endpoint authenticated returns ok.")
+@WithUserDetails("john")
+public void helloAuthenticatedWithUserDetails() throws Exception {
+    mvc.perform(get("/hello"))
+            .andExpect(status().isOk());
+}
+----
+
+== Testing method security
+
+instead of using MockMvc, you directly inject from the context the bean defining the method you need to test.
+
+the three scenarios we test:
+
+. Calling the method without an authenticated user, the method should throw
+AuthenticationException.
+. Calling the method with an authenticated user that has an authority different than the expected one (write), the method should throw AccessDeniedException.
+. Calling the method with an authenticated user that has the expected authority
+returns the expected result.
+
+We don't configure MockMvc anymore because we don't need to call an endpoint.
+Instead, we directly inject the NameService instance to call the tested method. We use the @WithMockUser annotation
+
+[,java]
+----
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import com.laurentiuspilca.ssia.services.NameService;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@SpringBootTest
+public class TestingMethodSecurityTests {
+    @Autowired
+    private NameService nameService;
+
+    @Test
+    @DisplayName("When the method is called without an authenticated user, " +
+            "it throws AuthenticationException")
+    void testNameServiceWithNoUser() {
+        assertThrows(AuthenticationException.class,
+                () -> nameService.getName());
+    }
+
+    @Test
+    @WithMockUser(authorities = "read")
+    @DisplayName("When the method is called with an authenticated user having a wrong authority, " +
+            "it throws AccessDeniedException")
+    void testNameServiceWithUserButWrongAuthority() {
+        assertThrows(AccessDeniedException.class,
+                () -> nameService.getName());
+    }
+
+    @Test
+    @WithMockUser(authorities = "write")
+    @DisplayName("When the method is called with an authenticated user having a correct authority, " +
+            "it returns the expected result")
+    void testNameServiceWithUserButCorrectAuthority() {
+        var result = nameService.getName();
+
+        assertEquals("Fantastico", result);
+    }
+}
+----
+
+== Testing authentication
+
+When testing authentication, the test implementation requests work like normal client requests and goes through the full Spring Security flow. This way, you can also test, for example, your custom AuthenticationProvider objects.
+
+Using the httpBasic() request postprocessor, we instruct the test to execute the
+authentication. This way, we validate the behavior of the endpoint when authenticating using either valid or invalid credentials
+
+[,java]
+----
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+public class TestingAuthenticationTests {
+    @Autowired
+    private MockMvc mvc;
+
+    @Test
+    @DisplayName("Test calling /hello endpoint authenticating with valid credentials returns ok.")
+    public void helloAuthenticatingWithValidUser() throws Exception {
+        mvc.perform(get("/hello")
+                .with(httpBasic("john", "12345")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Test calling /hello endpoint authenticating with wrong credentials returns unauthorized.")
+    public void helloAuthenticatingWithInvalidUser() throws Exception {
+        mvc.perform(get("/hello")
+                .with(httpBasic("mary", "12345")))
+                .andExpect(status().isUnauthorized());
+    }
+}
+----
+
+*Testing form login authenticatin*
+
+[,java]
+----
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.web.servlet.MockMvc;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+public class TestingFormLoginTests {
+    @Autowired
+    private MockMvc mvc;
+
+    @Test
+    @DisplayName("Authenticating with wrong user")
+    public void loggingInWithWrongUser() throws Exception {
+        mvc.perform(formLogin()
+                .user("mary").password("12345"))
+                .andExpect(unauthenticated());
+    }
+
+    @Test
+    @DisplayName("Logging in authenticating with valid user and correct authority")
+    public void loggingInWithCorrectAuthority() throws Exception {
+        mvc.perform(formLogin()
+                .user("john").password("12345"))
+                .andExpect(redirectedUrl("/"))
+                .andExpect(status().isFound())
+                .andExpect(authenticated());
+    }
+}
+----
+
+== Testing  OAuth 2/OpenID
+
+*Non-opaque JWTs*
+
+[,java]
+----
+@SpringBootTest
+@AutoConfigureMockMvc
+class ApplicationTests {
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void demoEndpointSuccessfulAuthenticationTest() throws Exception {
+        mockMvc.perform(
+        get("/demo").with(jwt().authorities(() -> "read"))))
+        .andExpect(status().isOk());
+    }
+}
+----
+
+*Opaque JWTs*
+
+[,java]
+----
+@SpringBootTest
+@AutoConfigureMockMvc
+class ApplicationTests {
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void demoEndpointSuccessfulAuthenticationTest() throws Exception {
+        mockMvc.perform(
+        get("/demo").with(opaqueToken().authorities(() -> "read"))))
+        .andExpect(status().isOk());
+    }
+}
+----
+
+== Testing CSRF configurations
+
+[,java]
+----
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+public class TestingCSRConfigurationsTests {
+    @Autowired
+    private MockMvc mvc;
+
+    @Test
+    @DisplayName("Call endpoint /hello using GET")
+    @WithMockUser
+    public void testHelloGET() throws Exception {
+        mvc.perform(get("/hello"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Call endpoint /hello using POST without providing the CSRF token")
+    @WithMockUser
+    public void testHelloPOST() throws Exception {
+        mvc.perform(post("/hello"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Call endpoint /hello using POST providing the CSRF token")
+    @WithMockUser
+    public void testHelloPOSTWithCSRF() throws Exception {
+        mvc.perform(post("/hello").with(csrf()))
+                .andExpect(status().isOk());
+    }
+}
+----
+
+== Testing CORS configurations
+
+When writing tests for the CORS policies, all we need to do is make sure that these
+headers (and maybe other CORS-related headers, depending on the complexity of
+your configurations) exist and have the correct values
+
+[,java]
+----
+@SpringBootTest
+@AutoConfigureMockMvc
+public class MainTests {
+    @Autowired
+    private MockMvc mvc;
+
+    @Test
+    public void testCORSForTestEndpoint() throws Exception {
+        mvc.perform(options("/test")
+            .header("Access-Control-Request-Method", "POST")
+            .header("Origin", "http://www.example.com")
+        )
+        .andExpect(header().exists("Access-Control-Allow-Origin"))
+        .andExpect(header().string("Access-Control-Allow-Origin", "*"))
+        .andExpect(header().exists("Access-Control-Allow-Methods"))
+        .andExpect(header().string("Access-Control-Allow-Methods", "POST"))
+        .andExpect(status().isOk());
+    }
+}
+----
+
+== Examples
+
+* {blank}
+
+== Samples
+
+*

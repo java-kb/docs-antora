@@ -1,0 +1,54 @@
+= Spring Debugging
+:figures: 11-development/02-spring/08-development
+
+== Debugging Standard Java
+
+== Debugging Spring Boot containers
+
+you need to instruct the JVM inside the container to listen for debug connections on a specific port
+
+=== Docker
+
+=== Buildpacks
+
+The container image produced by Paketo Buildpacks supports dedicated environment variables for running the application in debug mode (BPL_DEBUG_ENABLED and BPL_DEBUG_PORT). Then you
+need to expose the debug port outside the container so that your IDE can reach it.
+
+[,yml]
+----
+    ports:
+      - 8888:8888
+      - 9888:9888
+    environment:
+      # Buildpacks environment variable to enable debug through a socket on port 9888
+      - BPL_DEBUG_ENABLED=true
+      - BPL_DEBUG_PORT=9888
+----
+
+== Configure IDE's
+
+=== VScode
+
+*.vscode/launch.json*
+
+[,json]
+----
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Attach to local Catalog Service",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": "8001",
+
+        }
+    ]
+}
+----
+
+=== IntelliJ IDEA
+
+`-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8001`
+
+image::{figures}/configure-debug-intellij-idea.png[alt text]

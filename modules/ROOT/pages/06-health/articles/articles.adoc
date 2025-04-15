@@ -1,0 +1,2 @@
+= Health Check Articles
+:figures: 06-health/articles

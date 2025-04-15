@@ -1,0 +1,2 @@
+= Load Balancing Articles
+:figures: 08-load-balancing/articles

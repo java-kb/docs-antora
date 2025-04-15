@@ -1,0 +1,821 @@
+= Object Oriented Programming
+:figures: 20-Interviews/01-java
+
+. *What are the four principles of OOP?*+++<details>++++++<summary>+++Answer+++</summary>+++
+
+The four principles of Object-Oriented Programming (OOP) are:
+
+* *Encapsulation*: This refers to the practice of hiding the internal
+ workings of an object and exposing only the necessary functionality.
+ The data and behaviour of an object are encapsulated within the
+ object, and can only be accessed through well-defined interfaces.
+* *Inheritance*: Inheritance allows objects to inherit properties and
+ behaviours from other objects. Inheritance allows for the creation of
+ hierarchical relationships between classes, with parent classes
+ passing down their characteristics to their child classes.
+* *Polymorphism*: Polymorphism refers to the abilit y of objects to
+ take on many forms, and is achieved through the use of inheritance,
+ allows for greater flexibilit y and reuse of code.
+* *Abstraction*: Abstraction refers to the process of identifying
+ common patterns and extracting essential features of objects,
+ creating classes from these patterns. Abstraction allows for the
+ creation of higher-level concepts that can be used in multiple
+ contexts, and can simplif y complex systems.+++</details>+++
+. *What is the difference between an abstract class and an interface?*+++<details>++++++<summary>+++Answer+++</summary>+++
+
+|===
+| Feature | Abstract Class | Interface |
+
+| Purpose
+| Partial abstraction,
+| shared implementation Complete abstraction, contract
+|
+
+| Methods
+| Can have abstract and non-abstract methods
+| Traditionally only abstract methods
+| (can have default and static methods in Java 8+)
+
+| Inheritance
+| Supports single
+| inheritance Supports multiple inheritance
+|
+
+| Variables
+| Can have static, non-static, final, non-final
+| Only static final variables
+|
+
+| Implementation
+| Subclass must implement all abstract methods
+| Implementing class must provide code for all methods
+|
+
+| Instantiation
+| Cannot be instantiated directly
+| Cannot be instantiated directly
+|
+
+| Constructors
+| Can have constructors
+| Cannot have constructors
+|
+
+| Main method
+| Can have a main
+| method Cannot have a main method
+|
+|===
+
+*When to Use:*
+
+*Abstract classes:*
+
+* When you have some common implementation to share among subclasses.
+* When you want to enforce a hierarchy and prevent direct instantiation of the base class.
+* When you need to control access to members using access modifiers.
+
+*Interfaces:*
+
+* When you want to define a contract that multiple unrelated classes can implement.
+* When you want to achieve loose coupling between classes.
+* When you need to support multiple inheritance.+++</details>+++
+. *What is the use of constructor in an abstract class?*+++<details>++++++<summary>+++Answer+++</summary>+++
+
+While abstract classes cannot be instantiated directly, their
+ constructors play a crucial role in object initialization within
+ inheritance hierarchies. Here are the key purposes of constructors in
+ abstract classes:
+
+* Initializing Member Variables:
+* Abstract classes often have member variables that need to
+ be initialized for proper object state. Constructors perform
+ this initialization, ensuring consistent setup for all
+ subclasses.
+* Example: An abstract Shape class might have a color
+ property initialized in its constructor.
+* Enforcing Inv ariants and Constraints:
+* Constructors can enforce rules and constraints that must
+ hold true for all objects in the hierarchy. This ensures data
+ integrity and validity.
+* Example: A BankAccount abstract class might require a
+ non-negative initial balance in its constructor.
+* Shared Initialization Logic:
+* Common initialization steps for all subclasses can be
+ consolidated in the abstract class constructor, reducing
+ code duplication.
+* Example: An Employee abstract class might initialize a
+ hireDate property in its constructor, shared by all
+ employee types.
+* Controlling Instantiation:
+* Constructors can be made private or protected to control
+ how subclasses are created, ensuring they are instantiated
+ through specific mechanisms or helper methods.
+* Example: A Singleton abstract class might have a private
+ constructor to enforce a single instance.
+* Calling Superclass Constructors:
+* Subclasses must call their superclass constructor (implicitly
+ or explicitly) during their own construction. This ensures
+ proper initialization of inherited state.
+* Example: A SavingsAccount subclass must call the
+ BankAccount constructor to initialize shared account
+ properties.
+
+Key Points:
+
+* Abstract class constructors are not used for object creation
+ directly, but they are invoked when a subclass object is
+ created.
+* They ensure consistent initialization and enforce class
+ invariants, promoting code reusabilit y and maintainability.
+* Understanding constructor behaviour in abstract classes is
+ essential for effective object-oriented design.+++</details>+++
+. *What is abstraction, and what are its advantages?*+++<details>++++++<summary>+++Answer+++</summary>+++
+
+(Concrete class doing the same what is the advantage over concrete class?)
+ Abstraction is a fundamental concept in programming and many
+ other fields. In simplest terms, it's the act of focusing on the
+ essential details of something while hiding awa y the unnecessary
+ complexity . Here's a breakdown of abstraction in programming:
+
+*What is it?*
+
+* Abstraction allows you to break down complex systems
+ into smaller, easier-to-understand pieces.
+* You define interfaces or classes that expose only the
+ relevant functionalities, hiding the inner workings.
+* This lets you work with the system at a higher level,
+ without getting bogged down in the low-level details.
+ *Think of it this way:*
+* Imagine a car. You don't need to understand the intricate
+ mechanics of the engine to drive it. You just need to know
+ how to steer, accelerate, and brake.
+* Similarly, when using an abstraction in programming, you
+ don't need to know how it works internally. You simply call
+ its functions or methods and interact with it at a higher
+ level.
+
+*Advantages of abstraction:*
+
+* Reduced complexity: It makes your code easier to
+ understand, write, and maintain by breaking down large
+ problems into smaller, more manageable chunks.
+* Increased productivity: You can focus on the logic and
+ functionalit y of your program without getting bogged
+ down in implementation details.
+* Improved reusability: Abstracted components can be used
+ in multiple parts of your program, reducing code
+ duplication and promoting modularity.
+* Enhanced readability: Code becomes more concise and
+ less cluttered, making it easier for others to understand
+ and collaborate on.
+* Flexibility and adaptability: Abstractions allow you to
+ change the underlying implementation without affecting
+ the code that uses them.
+
+*Here are some specific examples of abstraction in programming:*
+
+* Functions: They hide the implementation details of a
+ specific task and provide a simple interface for other parts
+ of your program to interact with.
+* Classes: They bundle related data and functionality,
+ making it easier to manage and reuse complex data
+ structures.
+* Libraries and frameworks: They provide pre-built
+ abstractions for common tasks, saving you time and effort.+++</details>+++
+. *What is the difference between abstraction and encapsulation?*+++<details>++++++<summary>+++Answer+++</summary>+++
+
+* *Abstraction:*
+ ** Focus: What the object does, hiding implementation  details.
+ ** Goal: Simplif ying complex systems by exposing only essential features.
+ ** Mechanisms: Abstract classes, interfaces, functions.
+* *Encapsulation:*
+ ** Focus: How the object's data and behavior are bundled together.
+ ** Goal: Protecting data integrity and controlling access.
+ ** Mechanisms: Access modifiers (public, private, protected), getters and setters.
+* *Key Differences:*
+ ** Scope: Abstraction operates at a higher level, focusing on the overall design and interface. Encapsulation works at the object level, managing internal data and implementation.
+ ** Purpose: Abstraction aims to simplif y complexity and promote reusability . Encapsulation aims to protect data and manage dependencies.
+ ** Implementation: Abstraction is often achieved through abstract classes or interfaces. Encapsulation is typically implemented using access modifiers and methods to control access to data.+++</details>+++
+. *What is the difference between Abstraction and polymorphism?*+++<details>++++++<summary>+++Answer+++</summary>+++
+
+* *Abstraction*
+ ** Focus: Hides the internal complexity of an object,
+exposing only the essential features and functionalities
+that users need to interact with.
+ ** Think of it as: A map that shows the important landmarks
+of a city without getting bogged down in the details of
+every street and alleyway.
+ ** *Benefits:*
+ ** Simplifies code by reducing cognitive load and making it
+ easier to understand.
+ ** Promotes code reusabilit y by focusing on general
+ functionalities that can be applied in diff erent contexts.
+ ** Improves maintainability by making it easier to change the
+ implementation details without affecting the code that
+ uses the abstraction.
+ ** *Mechanisms:*
+ ** Abstract classes: Define a blueprint for subclasses with
+ shared functionality and abstract methods that must be
+ implemented.
+ ** Interfaces: Specify contracts that classes must adhere to,
+ defining methods without implementation.
+ ** Functions: Hide the internal logic of a specific task,
+ providing a simple interface for other parts of the program
+ to interact with.
+* *Polymorphism*
+ ** Focus: Enables an object to exhibit diff erent behaviors
+depending on its actual type at runtime.
+Think of it as: A chameleon that can change its color to
+blend in with its surroundings.
+ ** *Benefits:*
+ ** Makes code more flexible and adaptable by allowing
+ diff erent objects to respond diff erently to the same
+ message.
+ ** Promotes code reusabilit y by enabling generic functions
+ and methods that can work with diff erent types of objects.
+ ** Improves maintainabilit y by making it easier to add new
+ types of objects without modifying existing code.
+ ** *Mechanisms:*
+ ** Method overloading: Allows a class to define multiple
+ methods with the same name but diff erent parameter
+ types or numbers.
+ ** Method overriding: Allows subclasses to provide their own
+ implementation of a method inherited from a superclass.
+ ** Interfaces: Can define abstract methods with common
+ behavior that diff erent classes can implement in their own
+ way.
+
+|===
+| Feature | Abstraction | Polymorphism
+
+| Focus
+| What an object does
+| How an object behaves
+
+| Goal
+| Simplify complexity , hide internal details
+| Provide flexibility , adapt behavior based on type
+
+| Mechanisms
+| Abstract classes, interfaces,Functions
+| Method overloading,overriding, interfaces
+
+| Benefits
+| Reduced complexity , improved reusability , maintainability
+| Increased flexibility,adaptability , reusability
+|===
+
++++</details>+++
+. *What is the difference between Inheritance and Composition?*+++<details>++++++<summary>+++Answer+++</summary>+++
+
+* *Inheritance*
++
+allows a class (called a subclass) to inherit properties
+  and behaviors from another class (called a superclass). The subclass
+  can then add or modify these properties and behaviors as needed.
+  It's useful for creating hierarchies of related classes and sharing
+  code and functionality.
++
+For example, if we have an Animal class, a Mammal class, and a Cat
+  class, the Cat class can inherit properties and behaviors from both
+  Animal and Mammal classes while adding its own specific methods.
+
+ ** *Benefits:*
+ ** Promotes code reuse by sharing common functionalities
+ among related classes.
+ ** Provides code organization by structuring classes in a
+ hierarchy.
+ ** Enables specialization by adding specific features to
+ subclasses.
+
+* *Composition*
++
+allows a class to be composed of other objects. This
+ means that a class can have references to other objects as its
+ properties and use them to delegate tasks or behaviors. It's useful
+ for creating complex objects from simpler ones and enabling
+ dynamic composition at runtime.
+ For instance, a Car class can be composed of objects such as an
+ Engine, Wheels, Seats, etc. The Car class can then utilize these
+ objects to perform various tasks.
+
+ ** *Benefits:*
+ ** Loose coupling between classes -- changes in one class
+ usually don't affect the other.
+ ** Greater flexibilit y -- allows using functionalities from any
+ class, not just parent-child hierarchy.
+ ** Promotes modularity and code clarity.
+
+|Feature |Inheritance|Composition|
+ |:-----|:-----|:-----|
+ |Relationship |"is-a" |"has-a"|
+ |Implementation|Subclasses inherit from superclass|Member variables hold other objects|
+ |Benefits|Code reuse, organization,specialization|Loose coupling, flexibility,modularity|
+ |Drawbacks|Tight coupling, limited flexibility,duplication|Complexity , lifecycle management|+++</details>+++
+. *What are Composition and Aggregation with examples?*+++<details>++++++<summary>+++Answer+++</summary>+++
+
+Composition and aggregation are two types of object-oriented programming concepts that describe the relationship between objects.
+
+* *Composition* is a strong type of association where an object is made
+up of one or more objects of other classes. For example, a car is
+composed of various parts such as wheels, engine, transmission, etc.
+The car class has an object of the wheel class, engine class, and
+transmission class as its member variables.
+* *Aggregation*  is a weak type of association where an object
+contains a reference to one or more objects of other classes. For
+example, a university class has a collection of student classes as its
+member variable. The student class has an object of the university
+class as its member variable.+++</details>+++
+. *What is aggregation, composition, and inheritance?*+++<details>++++++<summary>+++Answer+++</summary>+++
+
+To check if the current code contains examples of aggregation,
+composition, and inheritance, you need to look for the relevant
+syntax and usage patterns in the code.
+
+Here are some pointers for identifying these concepts in code:
+
+* *Inheritance*: Look for classes that extend or inherit from other
+classes. This is typically indicated by the extends keyword in Java,
+for example: public class Car extends Vehicle {...}. Inheritance is
+used to create a hierarchy of classes where subclasses inherit
+properties and methods from their parent classes.
+* *Composition*: Look for objects that contain other objects as instance
+variables. This is typically indicated by object instantiation within
+another object's constructor, for example:
+
+[,java]
+----
+  public class Person {
+  private Job job;
+  public Person(Job job) {
+  this.job = job;
+  }
+  }
+----
+
+Composition is used to build complex objects by combining simpler
+  objects.
+  Aggregation: Look for objects that have references to other
+  objects as instance variables, but do not own or create them. This is
+  typically indicated by a "has-a" relationship between objects,
+  for example:
+
+[,python]
+----
+  public class University {
+  private List<Studentstudents;
+  public University(List<Studentstudents) {
+  this.students = students;
+  }
+  }
+----
+
+Aggregation is used to represent relationships between objects
+  without tightly coupling them together.+++</details>+++
+. *Can you explain multilevel inheritance in Java?*+++<details>++++++<summary>+++Answer+++</summary>+++
+
+Multilevel inheritance is a type of inheritance in object-oriented
+programming (OOP) where a derived class (subclass) is created from
+another derived class, which itself was derived from a base class
+(superclass).
+
+In multilevel inheritance, each derived class inherits the
+characteristics of the class above it in the hierarchy. This means that
+a subclass not only has all the features of its immediate superclass,
+but also those of all its ancestors up the hierarchy chain.
+ Here's an example to illustrate multilevel inheritance:
+
+[,java]
+----
+  class Animal {
+         oid eat() {
+  System.out.println("Eating...");
+   
+  }
+  class Dog extends Animal {
+    oid bark() {
+  System.out.println("Barking...");
+   
+  }
+  class Bulldog extends Dog {
+  void guard() {
+  System.out.println("Guarding...");
+  }
+  }
+----
+
+In this example, Animal is the base class, Dog is a derived class from
+Animal, and Bulldog is a derived class from Dog.
+Animal has a single method eat(). Dog inherits eat() from Animal
+and adds a new method bark(). Bulldog inherits both eat() and
+bark() from Dog and adds a new method guard().
+Now, an instance of Bulldog can access all the methods of its
+immediate superclass (Dog), as well as all the methods of its
+ancestor superclass (Animal). For example:
+
+[,java]
+----
+  Bulldog bulldog = new Bulldog();
+  bulldog.eat();  // output: Eating...
+  bulldog.bark(); // output: Barking...
+  bulldog.guard(); // output: Guarding...
+----
+
+This example demonstrates how multilevel inheritance can be used
+to create a hierarchy of classes that inherit and extend behavior
+fr om each other. However, it is important to use inheritance
+judiciously to avoid creating overly complex and tightly-coupled class
+hierarchies.+++</details>+++
+. *When do you use encapsulation and abstraction in your project?*+++<details>++++++<summary>+++Answer+++</summary>+++
+
+Encapsulation and abstraction are two important concepts in object-
+oriented programming, and they are used in diff erent ways in
+diff erent parts of a project.
+
+*Encapsulation* is used to protect the internal state of an object and
+to control how other objects can access or modify that state. It is
+typically used in data modelling, where we define classes that
+represent real-world entities and their properties.
+
+For example, if we were building a system to manage a library, we
+might define a Book class that has properties like title, author, and
+isbn. We would use encapsulation to ensure that these properties
+are not accessible or modifiable from outside the Book class, except
+through carefully designed methods like getTitle() and setAuthor().
+
+*Abstraction*, on the other hand, is used to hide the implementation
+details of a class or component and to present a simpler, higher-level
+interface to other parts of the system. It is typically used in system
+design and architecture, where we define components and their
+interfaces.
+
+For example, if we were building a web application, we might define
+a UserService component that provides methods for creating,
+updating, and retrieving user accounts. We would use abstraction to
+ensure that other components in the system do not need to know
+how the UserService is implemented, but can simply use its interface
+to perform the necessary actions.
+
+In general, encapsulation and abstraction are used together in
+object-oriented programming to create robust, maintainable, and
+scalable systems. Encapsulation is used to protect the internal state
+of objects and to control how other objects can access or modify
+that state, while abstraction is used to hide the implementation
+details of components and to present a simpler, higher-level interface
+to other parts of the system.+++</details>+++
+. *How do you achieve encapsulation?*+++<details>++++++<summary>+++Answer+++</summary>+++
+
+Encapsulation is achieved in Java through the use of access
+modifiers and getter and setter methods.
+
+Access modifiers control the visibility of variables and
+methods in a class. There are three access modifiers in Java:
+public, private, and protected.
+
+* *Public*: Public variables and methods can be accessed from
+anywhere in the program.
+* *Private*: Private variables and methods can only be accessed within
+the same class.
+* *Protected*: Protected variables and methods can be accessed within
+the same class, and by subclasses and classes in the same package.
+
+By default, if you don't specify an access modifier, the variable or
+method is considered to have "package" or "default" access, which
+means it can be accessed within the same package.
+
+Here's an example of how to use access modifiers to achieve
+encapsulation:
+
+[,java]
+----
+  public class Person {
+  private String name;
+  private int age;
+  public String getName() {
+       return name;
+  }
+  public void setName(String name) {
+  this.name = name;
+  }
+  public int getAge() {
+  return age;
+  }
+  public void setAge(int age) {
+  if (age < 0) {
+  throw new IllegalArgumentException("Age cannot be
+  negative");
+  }
+  this.age = age;
+  }
+  }
+----
+
+In this example, the Person class has two private variables, name
+and age. These variables are not directly accessible from outside the
+class, which means that other classes cannot modify or access them
+directly.
+
+To allow other classes to access these variables, we provide public
+getter and setter methods for name and age. The getter methods
+allow other classes to retrieve the values of these variables, while
+the setter methods allow other classes to modify their values.
+
+Note that we can also add validation logic to the setter methods to
+ensure that the values being set are valid. In this example, the
+setAge method throws an exception if the age is negative.
+
+By using access modifiers and getter and setter methods, we can
+achieve encapsulation in Java. This allows us to protect the data and behavior of our objects and prevent other objects from accessing or
+modifying them directly, which makes our code more robust and
+maintainable.+++</details>+++
+. *Given the following class declarations:*
++
+[,java]
+----
+ // Classes
+ class Foo {
+ private int i;
+ public void f() { /* ... */ }
+ public void g() { /* ... */ }
+ }
+ class Bar extends Foo {
+ public int j;
+ public void g() { /* ... */ }
+ }
+ public class Main {
+ public static void main(String[] args) {
+ Foo a = new Bar();
+ Bar b = new Bar()
+ // (1) INSERT STATEMENT HERE
+ }
+ }
+----
++
+Which of the following statements can be inserted at (1) without causing a compile-time error?
++
+Select the two correct answers.
++
+(a) b.f();
++
+(b) a.j = 5;
++
+(c) a.g();
++
+(d) b.i = 3;+++<details>++++++<summary>+++Answer+++</summary>+++
+
+(a) and (c)
+
+Bar is a subclass of Foo that overrides the method g().
+
+The statement a.j = 5 is not legal, since the member j in the class Bar cannot be accessed through a Foo reference.
+
+The statement b.i = 3 is not legal either, since the private member i cannot be accessed from outside of the class Foo.+++</details>+++
+
+. *Given the following code:*
++
+[,java]
+----
+ class A {
+ void doIt() {}
+ }
+ class B extends A {
+ void doIt() {}
+ }
+ class C extends B {
+ void doIt() {}
+ void callUp() {
+ // (1) INSERT EXPRESSION HERE
+ }
+ }
+----
++
+insert the expression that would call the doIt() method in A.
+ Select the one correct answer.
++
+(a) doIt();
++
+(b) super.doIt();
++
+(c) super.super.doIt();
++
+(d) this.super.doIt();
++
+(e) A.this.doIt();
++
+(f) ((A) this).doIt();
++
+(g) It is not possible.+++<details>++++++<summary>+++Answer+++</summary>+++
+
+(g)
+
+It is not possible to invoke the doIt() method in A from an instance method in class C. The method in C needs to call a method in a superclass two levels up in the inheritance hierarchy.
+
+The super.super.doIt() strategy will not work, since super is a keyword and cannot be used as an ordinary reference, nor accessed like a field.
+
+If the member to be accessed had been a field or a static method, the solution would be to cast the this reference to the class of the field and use the resulting referenceto access the field, as illustrated in (f). Field access is determined by the declared type of the reference, whereas the instance method to execute is determined by the actual type of the object denoted by the reference at runtime.+++</details>+++
+
+. *What would be the result of compiling and running the following program?*
++
+[,java]
+----
+ class A {
+     int max(int x, int y) { (x>y) ? x : y; }
+ }
+ class B extends A {
+     int max(int x, int y) { return super.max(y, x) - 10; }
+ }
+ class C extends B {
+     int max(int x, int y) { return super.max(x+10, y+10); }
+ }
+ public class UserClass {
+     public static void main(String[] args) {
+         B b = new C();
+         System.out.println(b.max(13, 29));
+     }
+ }
+----
++
+Select the one correct answer.
++
+(a) The code will fail to compile.
++
+(b) The code will compile, but it will throw an exception at runtime.
++
+(c) The code will compile and print 13 at runtime.
++
+(d) The code will compile and print 23 at runtime.
++
+(e) The code will compile and print 29 at runtime.
++
+(f) The code will compile and print 39 at runtime.+++<details>++++++<summary>+++Answer+++</summary>+++ `(e)` The code will compile without errors. None of the calls to a max() method are ambiguous. When the program is run, the main() method will call the max() method on the C object referred to by the reference b with the parameters 13 and 29.This method will call the max() method in B with the parameters 23 and 39. The max() method in B will in turn call the max() method in A with the parameters 39 and 23. The max() method in A will return 39 to the max() method in B. The max() method in B will return 29 to the max() method in C. The max() method in C will return 29 to the main() method.+++</details>+++
+
+. *What would be the result of compiling and running the following program?*
++
+[,java]
+----
+ class Vehicle {
+ static public String getModelName() { return "Volvo"; }
+ public long getRegNo() { return 12345; }
+ }
+ class Car extends Vehicle {
+ static public String getModelName() { return "Toyota"; }
+ public long getRegNo() { return 54321; }
+ }
+ public class TakeARide {
+ public static void main(String[] args) {
+ Car c = new Car();
+ Vehicle v = c;
+ System.out.println("|" + v.getModelName() + "|" + c.getModelName() +
+ "|" + v.getRegNo() + "|" + c.getRegNo() + "|");
+ }
+ }
+----
++
+Select the one correct answer.
++
+(a) The code will fail to compile.
++
+(b) The code will compile and print |Toyota|Volvo|12345|54321| at runtime.
++
+(c) The code will compile and print |Volvo|Toyota|12345|54321| at runtime.
++
+(d) The code will compile and print |Toyota|Toyota|12345|12345| at runtime.
++
+(e) The code will compile and print |Volvo|Volvo|12345|54321| at runtime.
++
+(f) The code will compile and print |Toyota|Toyota|12345|12345| at runtime.
++
+(g) The code will compile and print |Volvo|Toyota|54321|54321| at runtime.+++<details>++++++<summary>+++Answer+++</summary>+++
+
+`(g)`
+
+In the class Car, the static method getModelName() hides the static method of the
+ same name in the superclass Vehicle. In the class Car, the instance method get-
+ RegNo() overrides the instance method of the same name in the superclass Vehicle.
+ The declared type of the reference determines the method to execute when a static
+ method is called, but the actual type of the object at runtime determines the
+ method to execute when an overridden method is called.+++</details>+++
+
+. *Which constructors can be inserted at (1) in MySub without causing a compile-time error?*
++
+[,java]
+----
+ class MySuper {
+ int number;
+ MySuper(int i) { number = i; }
+ }
+ class MySub extends MySuper {
+ int count;
+ MySub(int count, int num) {
+ super(num);
+ this.count = count;
+ }
+ // (1) INSERT CONSTRUCTOR HERE
+ }
+----
++
+Select the one correct answer.
++
+(a) MySub() {}
++
+(b) MySub(int count) { this.count = count; }
++
+(c) MySub(int count) { super(); this.count = count; }
++
+(d) MySub(int count) { this.count = count; super(count); }
++
+(e) MySub(int count) { this(count, count); }
++
+(f) MySub(int count) { super(count); this(count, 0); }+++<details>++++++<summary>+++Answer+++</summary>+++
+
+`(e)`
+
+The class MySuper does not have a no-argument constructor. This means that con-
+ structors in subclasses must explicitly call the superclass constructor and provide
+ the required parameters. The supplied constructor accomplishes this by calling
+ super(num) in its first statement. Additional constructors can accomplish this either
+ by calling the superclass constructor directly using the super() call, or by calling
+ another constructor in the same class using the this() call which in turn calls the
+ superclass constructor. (a) and (b) are not valid, since they do not call the super-
+ class constructor explicitly. (d) fails, since the super() call must always be the first
+ statement in the constructor body. (f) fails, since the super() and this() calls cannot
+ be combined.+++</details>+++
+
+. *Which of the following statements is true?*
++
+Select the one correct answer.
++
+(a) A super() or this() call must always be provided explicitly as the first state-
+ ment in the body of a constructor.
++
+(b) If both a subclass and its superclass do not have any declared constructors,
+ the implicit default constructor of the subclass will call super() when run.
+ (c) If neither super() nor this() is specified as the first statement in the body of a
+ constructor, this() will implicitly be inserted as the first statement.
++
+(d) If super() is the first statement in the body of a constructor, this() can be
+ declared as the second statement.
++
+(e) Calling super() as the first statement in the body of a constructor of a subclass
+ will always work, since all superclasses have a default constructor.+++<details>++++++<summary>+++Answer+++</summary>+++
+
+`(b)`
+
+In a subclass without any declared constructors, the implicit default constructor
+ will call super().
+
+Use of the super() and this() statements is not mandatory as long
+ as the superclass has a no-argument constructor.
+
+If neither super() nor this() is
+ declared as the first statement in the body of a constructor, then the default super()
+ will implicitly be the first statement.
+
+A constructor body cannot have both a super() and a this() statement.
+
+Calling super() will not always work, since a
+ superclass might not have a no-argument constructor.+++</details>+++
+
+. *What will the following program print when run?*
++
+[,java]
+----
+ public class MyClass {
+ public static void main(String[] args) {
+ B b = new B("Test");
+ }
+ }
+ class A {
+ A() { this("1", "2"); }
+ A(String s, String t) { this(s + t); }
+ A(String s) { System.out.println(s); }
+ }
+ class B extends A {
+ B(String s) { System.out.println(s); }
+ B(String s, String t) { this(t + s + "3"); }
+ B() { super("4"); };
+ }
+----
++
+Select the one correct answer.
+ (a) It will just print Test.
+ (b) It will print Test followed by Test.
+ (c) It will print 123 followed by Test.
+ (d) It will print 12 followed by Test.
+ (e) It will print 4 followed by Test.+++<details>++++++<summary>+++Answer+++</summary>+++
+
+`(d)`
+
+The program will print 12 followed by Test. When the main() method is executed,
+ it will create a new instance of B by passing "Test" as an argument. This results in
+ a call to the constructor of B that has one String parameter. The constructor does
+ not explicitly call any superclass constructor nor any overloaded constructor in B
+ using a this() call, but instead the no-argument constructor of the superclass A is
+ called implicitly. The no-argument constructor of A calls the constructor in A that
+ has two String parameters, passing it the argument list ("1", "2"). This constructor
+ calls the constructor with one String parameter, passing the argument "12". This
+ constructor prints the argument, after implicitly invoking the no-argument con-
+ structor of the superclass Object. Now the execution of all the constructors in A is
+ completed, and execution continues in the constructor of B. This constructor now
+ prints the original argument "Test" and returns to the main() method.+++</details>+++

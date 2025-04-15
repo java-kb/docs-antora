@@ -1,0 +1,82 @@
+= String
+:figures: 11-development/01-java/01-basics
+
+`https://docs.oracle.com/javase/8/docs/api/java/lang/String.html`
+
+When you create a string literal, the JVM (Java virtual machine) checks for the presence of that string in something called the “string constant pool.” If that string exists in the pool, then Java simply returns a reference to the pooled instance; otherwise, a new string instance is created (and it’s also placed in the pool).
+
+When you initialize two variables with the same string, they occupy the same memory location. When you use the new operator, the two variables will occupy different memory locations.
+
+[source,java,attributes]
+----
+// str1 and str2 occupy different memory locations
+str1 = new String("My name is John Smith");
+str2 = new String("My name is John Smith");
+
+// str3 and str4 occupy the same memory location
+str3 = "My name is Jane Andrews";
+str4 = "My name is Jane Andrews";
+----
+
+== Equality Of Strings
+Unlike other languages, the “==” operator does not determine whether or not two strings are identical: this operator only determines if two variables are referencing the same memory location. The equals() method will compare the content of two strings whereas == operator matches the object or reference of the strings.
+
+[source,java,attributes]
+----
+import java.io.IOException;
+
+public class EqualStrings
+{
+   public static void main(String[] args) throws IOException
+   {
+      String str1 = "Pizza";
+      String str2 = "Pizza";
+
+      if (str1.equals(str2))
+      {
+         System.out.println("str1 and str2: equal values");
+      }
+
+      if (str1 == str2)
+      {
+         System.out.println("str1 and str2: equal references");
+      }
+
+      System.out.println("");
+
+      String str3 = "Pasta";
+      String str4 = new String("Pasta");
+
+      if (str3.equals(str4))
+      {
+         System.out.println("str3 and str4: equal values");
+      }
+      else
+      {
+         System.out.println("str3 and str4: unequal values");
+      }
+      if (str3 == str4)
+      {
+         System.out.println("str3 and str4: equal references");
+      }
+      else
+      {
+         System.out.println("str3 and str4: unequal references");
+      }
+   }
+}
+----
+output:
+[source,console,attributes]
+----
+str1 and str2: equal values
+str1 and str2: equal references
+
+str3 and str4: equal values
+str3 and str4: unequal references
+----
+
+In order to determine whether or not two strings are identical in Java, use the compareTo(str) method
+
+== SEARCHING FOR A SUBSTRING IN JAVA
+use the indexOf() method to determine whether or not a string is a substring of another string

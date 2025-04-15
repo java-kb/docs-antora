@@ -1,0 +1,2 @@
+= Secret Management Article 1
+:figures: 03-secret-management/articles/article01

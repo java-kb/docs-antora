@@ -1,0 +1,2 @@
+= Service Discovery Articles
+:figures: 07-discovery/articles

@@ -1,0 +1,186 @@
+= Spring Testing
+:figures: 11-development/02-spring/09-internals/spring-test
+
+== SpringBootTest
+
+Spring Boot offers a *@SpringBootTest* annotation that you can use on a
+test class to bootstrap an application context automatically when running tests. The
+configuration used to create the context can be customized if needed. Otherwise, the
+class annotated with @SpringBootApplication will become the configuration source
+for component scanning and properties, including the usual auto-configuration pro-
+vided by Spring Boot.
+
+When working with web applications, you can run tests on
+
+* a mock web environment
+* or a running server. You can configure that by defining a value for the webEnvironment attribute that the @SpringBootTest annotation provides
+
+When using a mock web environment, you can rely on the *MockMvc* object to send
+HTTP requests to the application and check their results. For environments with a
+running server, the TestRestTemplate utility lets you perform REST calls to an application running on an actual server. By inspecting the HTTP responses, you can verify that he API works as intended.
+
+|Web environment option| Description|
+|:--------------|:--------|
+|MOCK                  |Creates a web application context with a mock Servlet container. This is the default option.|
+|RANDOM_PORT           | Creates a web application context with a Servlet container listening on a random port.|
+|DEFINED_PORT          | Creates a web application context with a Servlet container listening on the port defined through the server.port property.|
+|NONE                  | Creates an application context without a Servlet container.|
+|                      |            |
+
+
+link:https://github.com/spring-projects/spring-boot/blob/main/spring-boot-project/spring-boot-test/src/main/java/org/springframework/boot/test/context/SpringBootTest.java[SpringBootTest.java]
+
+[,java]
+----
+@BootstrapWith(SpringBootTestContextBootstrapper.class)
+@ExtendWith(SpringExtension.class)
+public @interface SpringBootTest {
+
+	/**
+	 * Alias for {@link #properties()}.
+	 * @return the properties to apply
+	 */
+	@AliasFor("properties")
+	String[] value() default {};
+
+	/**
+	 * Properties in form {@literal key=value} that should be added to the Spring
+	 * {@link Environment} before the test runs.
+	 * @return the properties to add
+	 */
+	@AliasFor("value")
+	String[] properties() default {};
+
+	/**
+	 * Application arguments that should be passed to the application under test.
+	 * @return the application arguments to pass to the application under test.
+	 * @see ApplicationArguments
+	 * @see SpringApplication#run(String...)
+	 * @since 2.2.0
+	 */
+	String[] args() default {};
+
+	/**
+	 * The <em>component classes</em> to use for loading an
+	 * {@link org.springframework.context.ApplicationContext ApplicationContext}. Can also
+	 * be specified using
+	 * {@link ContextConfiguration#classes() @ContextConfiguration(classes=...)}. If no
+	 * explicit classes are defined the test will look for nested
+	 * {@link Configuration @Configuration} classes, before falling back to a
+	 * {@link SpringBootConfiguration @SpringBootConfiguration} search.
+	 * @see ContextConfiguration#classes()
+	 * @return the component classes used to load the application context
+	 */
+	Class<?>[] classes() default {};
+
+	/**
+	 * The type of web environment to create when applicable. Defaults to
+	 * {@link WebEnvironment#MOCK}.
+	 * @return the type of web environment
+	 */
+	WebEnvironment webEnvironment() default WebEnvironment.MOCK;
+
+	/**
+	 * The type of main method usage to employ when creating the {@link SpringApplication}
+	 * under test.
+	 * @return the type of main method usage
+	 * @since 3.0.0
+	 */
+	UseMainMethod useMainMethod() default UseMainMethod.NEVER;
+
+	/**
+	 * An enumeration web environment modes.
+	 */
+	enum WebEnvironment {
+
+		/**
+		 * Creates a {@link WebApplicationContext} with a mock servlet environment if
+		 * servlet APIs are on the classpath, a {@link ReactiveWebApplicationContext} if
+		 * Spring WebFlux is on the classpath or a regular {@link ApplicationContext}
+		 * otherwise.
+		 */
+		MOCK(false),
+
+		/**
+		 * Creates a web application context (reactive or servlet based) and sets a
+		 * {@code server.port=0} {@link Environment} property (which usually triggers
+		 * listening on a random port). Often used in conjunction with a
+		 * {@link LocalServerPort @LocalServerPort} injected field on the test.
+		 */
+		RANDOM_PORT(true),
+
+		/**
+		 * Creates a (reactive) web application context without defining any
+		 * {@code server.port=0} {@link Environment} property.
+		 */
+		DEFINED_PORT(true),
+
+		/**
+		 * Creates an {@link ApplicationContext} and sets
+		 * {@link SpringApplication#setWebApplicationType(WebApplicationType)} to
+		 * {@link WebApplicationType#NONE}.
+		 */
+		NONE(false);
+
+		private final boolean embedded;
+
+		WebEnvironment(boolean embedded) {
+			this.embedded = embedded;
+		}
+
+		/**
+		 * Return if the environment uses an {@link ServletWebServerApplicationContext}.
+		 * @return if an {@link ServletWebServerApplicationContext} is used.
+		 */
+		public boolean isEmbedded() {
+			return this.embedded;
+		}
+
+	}
+
+	/**
+	 * Enumeration of how the main method of the
+	 * {@link SpringBootConfiguration @SpringBootConfiguration}-annotated class is used
+	 * when creating and running the {@link SpringApplication} under test.
+	 *
+	 * @since 3.0.0
+	 */
+	enum UseMainMethod {
+
+		/**
+		 * Always use the {@code main} method. A failure will occur if there is no
+		 * {@link SpringBootConfiguration @SpringBootConfiguration}-annotated class or
+		 * that class does not have a main method.
+		 */
+		ALWAYS,
+
+		/**
+		 * Never use the {@code main} method, creating a test-specific
+		 * {@link SpringApplication} instead.
+		 */
+		NEVER,
+
+		/**
+		 * Use the {@code main} method when it is available. If there is no
+		 * {@link SpringBootConfiguration @SpringBootConfiguration}-annotated class or
+		 * that class does not have a main method, a test-specific
+		 * {@link SpringApplication} will be used.
+		 */
+		WHEN_AVAILABLE
+
+	}
+
+}
+----
+
+// Loads a full Spring web application context and a Servlet container listening on a random port
+
+[,java]
+----
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class CatalogServiceApplicationTests {
+
+	@Autowired
+	private WebTestClient webTestClient;
+}
+----

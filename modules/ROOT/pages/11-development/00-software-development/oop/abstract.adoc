@@ -1,0 +1,310 @@
+= Abstract Classes and Methods
+:figures: 11-development/00-software-development/oop
+
+The keyword abstract is used in the following contexts in Java:
+
+* Declaring abstract classes
++
+[,java]
+====
+abstract class AbstractClass {
+
+	public void foo(){
+		System.out.println("AbstractClass");
+	}
+	
+}
+====
+
+* Declaring  abstract methods in classes, in interfaces, and in enum types
++
+[,java]
+====
+abstract class AbstractClass {
+	abstract public void foo();
+}
+abstract interface AbstractInterface {
+	abstract public void foo();
+}
+enum EnumA {
+	abstract public String foo();
+}
+====
+
+== Abstract Classes
+
+A _concrete_ class is one that defines, by virtue of its public methods, a _contract_ for ser- vices it guarantees its clients and provides the _implementation for all the methods_ nec- essary to fulfill that contract. Clients can readily instantiate a concrete class and use its objects.
+
+In certain cases, a class might want to define the contract for the services, but only provide _partial implementation_ for its contract. Such a design decision might be nec- essary if the abstraction the class represents is so general that certain aspects need to be specialized by subclasses to be of practical use, but at the same time guarantee
+
+that these  _will_ be implemented by the subclasses. This design strategy can be implemented by using _abstract classes_. Clients cannot instantiate an abstract class, but now its concrete subclasses must be instantiated to provide the necessary objects.
+
+The class  Vehicle might be declared as an  abstract class with a partially imple- mented  contract  to  represent  the  general  abstraction  of  a  vehicle,  as  creating instances of the class would not make much sense. Its non-abstract subclasses, like Car or Bus, would then provide the implementation necessary to fulfill the contract of the superclass Vehicle, making the abstraction more concrete and useful.
+
+The  Java  SE  Platform  API  contains  many  abstract  classes.  The  abstract  class java.lang.Number is the superclass of wrapper classes that represent numeric values as objects (§8.3, p. 434). The Java Collections Framework makes heavy use of abstract classes in implementing commonly used collection data structures (§15.1, p. 783).
+
+== Declaring an abstract Class
+
+* An abstract class is declared with the modifier  abstract in its class header. the class Light at (1) is declared as an abstract class. It also declares an abstract method energyCost() at (2), which has no method body and is essentially a method header.
++
+[,java]
+----
+  abstract class Light {                                 // (1) Abstract class   //...
+
+      // Abstract instance method:
+      protected abstract double energyCost(int noOfHours) throws InvalidHoursException;  // (2) Method header                                 // No method body
+
+  }
+----
+
+* If a class has one or more abstract methods, it must be declared as abstract, as it is _incomplete_. In above code, if the abstract keyword is omitted from the header of the class  Light at (1), the compiler will issue an error, as the class declares an abstract method and is therefore incomplete.
+
+Like a normal class, an abstract class can declare class members, constructors, and initializers. The abstract class Light in Example 5.8 declares three instance fields one non-zero argument constructor and  three instance methods in addition to the abstract method at (2).
+
+A class that is declared absract cannot be instantiated, regardless of whether it has abstract methods or not.
+
+Light porchLight = new Light(21, true, "Porch");    // (5) Compile-time error!
+
+The UML class diagram for the inheritance relationship in Example 5.8 is depicted in Figure 5.3. Note that an abstract class name and an abstract method name are shown in _italics_ to distinguish them from concrete classes and methods.
+
+*Figure 5.3* Class Diagram for Example 5.8
+
+|===
+| Light
+
+| -noOfWatts:int -indicator:boolean -location:String
+| +switchOn():void +switchOff():void +isOn():boolean #energyCost():double
+|===
+
+//image::{figures}/Aspose.Words.a511c493-68cc-40b5-85ed-f3a54815e2e1.017.png[]
+
+|===
+| TubeLight
+
+| -tubeLength:int -tubeDiameter:int
+| +energyCost():double
+|===
+
+Extending an abstract Class
+
+A class might choose the design strategy with abstract methods to dictate certain behavior, but allow its subclasses the freedom to provide the relevant implemen- tation. An abstract class forces its subclasses to provide the subclass-specific func- tionality stipulated by its abstract methods, which is needed to fully implement its abstraction. In other words, subclasses of the abstract class have to take a stand and provide implementations of any inherited abstract methods before objects can be created. In Example 5.8, since the class Light is abstract, it forces its _concrete_ (i.e., non-abstract)  subclass  to  provide  an  implementation  for  the  abstract  method energyCost(). The concrete subclass TubeLight provides an implementation for this
+
+method at (3).
+
+class TubeLight extends Light {
+
+`  `// ...
+
+`  `// Implementation of the abstract method from the superclass.   @Override public double energyCost(int noOfHours) {      // (3)     return  0.15 * noOfHours;
+
+`  `}
+
+}
+
+Creating an object of a subclass results in the fields of all its superclasses, whether these classes are abstract or not, to be created and initialized that is, they _exist_ in the subclass object. As with normal classes, the inheritance relationship between classes allows references of the abstract superclass type to be declared and used to refer to objects of their subclasses that is, these references exhibit polymorphic behavior (p. 278).
+
+In Example 5.8, the class Factory creates an instance of the subclass TubeLight at (6). The  private fields declared in the  abstract superclass  Light can be accessed
+
+indirectly by invoking the  public methods it provides on objects of the subclass TubeLight. The subclass reference cellarLight is used to invoke public methods in the superclass in the following code:
+
+TubeLight cellarLight = new TubeLight(18, true, "Cellar", 590, 26);  // (6) cellarLight.switchOff();                      // Method in superclass System.out.println(cellarLight.isOn());       // Method in superclass: false
+
+The subclass reference cellarLight of course can be used to invoke subclass-specific methods, as shown at (7).
+
+System.out.printf("Energy cost ($): %2.2f%n",
+
+`    `cellarLight.energyCost(40));              // (7) Using subclass reference
+
+References of an abstract superclass can be declared and assigned reference values of its subclass objects, as shown at (8). Superclass references can be used to manip- ulate subclass objects, as shown at (9), where the  energyCost() method from the subclass TubeLight is executed.
+
+Light nightLight = new TubeLight(15, false, "Bedroom", 850, 15);     // (8) System.out.printf("Energy cost ($): %2.2f%n",
+
+`    `nightLight.energyCost(30));             // (9) Using superclass reference                                             // Invokes method in subclass
+
+`                                            `// Requires throws clause at (4)
+
+Note that using the subclass reference cellarLight at (7) to invoke the method ener- gyCost() cannot throw a checked exception, as readily seen from its declaration in the subclass TubeLight. However, using the superclass reference nightLight at (9) to invoke the method energyCost() can throw a checked exception, as seen from the method declaration in the superclass Light. At compile time, only the static type of the reference is known, namely Light, and the method  energyCost() in this class throws a checked  InvalidHoursException (§7.2, p. 374). The  throws clause in the main() method at (4) specifies this exception otherwise, the code will not compile.
+
+In the code below, the class AbstractArt at (2) must be declared as abstract as it does not implement the abstract method paint() from its superclass Art at (1).
+
+abstract class Art { abstract void paint(); }            // (1) Abstract class
+
+abstract class AbstractArt extends Art {}                // (2) Must be abstract
+
+class MinimalistArt extends AbstractArt {                // (3) Concrete class   @Override void paint() { System.out.println(":-)"); }  // (4) Concrete method }
+
+abstract class PostModernMinimalistArt
+
+`                                 `extends MinimalistArt { // (5) Abstract class   @Override void paint() { System.out.println(":-("); }  // (6) Concrete method                                                          //     overrides (4) }
+
+class ArtsyFartsy extends PostModernMinimalistArt {}     // (7) Concrete class
+
+Analogous to a normal class, an abstract class can only extend a single non-final class that can be either concrete or abstract. In the code above, the abstract class AbstractArt at (2) extends the abstract class Art, and the abstract class PostModern- MinimalistArt at (5) extends the concrete class MinimalistArt.
+
+A non-final concrete class, which by definition has no abstract methods, can be _considered_ _incomplete_ by declaring it as abstract. The PostModernMinimalistArt class at (5) is declared abstract and considered incomplete, even though it is concrete. It cannot be instantiated. However, its subclass ArtsyFartsy at (7) is a concrete class, as it inherits the concrete method paint() from its abstract superclass PostModern- MinimalistArt.
+
+A class cannot be declared both final and abstract that would be a contradiction in terms: A final class cannot be extended, but an abstract class is incomplete or considered to be incomplete and must be extended.
+
+An abstract class should not be used to implement a class that cannot be instanti- ated. The recommended practice is to only provide a zero-argument constructor that is private, thus making sure that it is never invoked in the class.
+
+In many ways abstract classes and interfaces are similar, and interfaces can be used with advantage in many cases. However, if private state should be maintained with instance members, then  abstract classes are preferred, as interfaces do not have any notion of state.
+
+Analogous to a normal class, an abstract class can implement multiple interfaces (p. 240). ![ref7]
+
+*Example 5.8* Using Abstract Classes
+
+// File: Factory.java
+
+// Checked exceptions:
+
+class InvalidHoursException extends Exception {}
+
+class NegativeHoursException extends InvalidHoursException {} class ZeroHoursException extends InvalidHoursException {}
+
+abstract class Light {                                     // (1) Abstract class   // Fields:
+
+`  `private int     noOfWatts;       // Wattage
+
+`  `private boolean indicator;       // On or off
+
+`  `private String  location;        // Placement
+
+`  `// Non-zero argument constructor:
+
+`  `Light(int noOfWatts, boolean indicator, String location) {     this.noOfWatts = noOfWatts;
+
+`    `this.indicator = indicator;
+
+`    `this.location  = location;
+
+`  `}
+
+`  `// Instance methods:
+
+`  `public void switchOn()  { indicator = true; }
+
+`  `public void switchOff() { indicator = false; }   public boolean isOn()   { return indicator; }
+
+`  `// Abstract instance method:
+
+`  `protected abstract double energyCost(int noOfHours)      // (2) Method header       throws InvalidHoursException;                        // No method body
+
+} //______________________________________________________________________________ class TubeLight extends Light {
+
+`  `// Instance fields:
+
+`  `private int tubeLength;                                  // millimeters
+
+`  `private int tubeDiameter;                                // millimeters
+
+`  `// Non-zero argument constructor
+
+`  `TubeLight(int noOfWatts, boolean indicator, String location,
+
+`            `int tubeLength, int tubeDiameter) {
+
+`    `super(noOfWatts, indicator, location);  // Calling constructor in superclass.     this.tubeLength = tubeLength;
+
+`    `this.tubeDiameter = tubeDiameter;
+
+`  `}
+
+`  `// Implementation of the abstract method from the superclass.
+
+`  `@Override public double energyCost(int noOfHours) {      // (3)
+
+`    `return  0.15 * noOfHours;
+
+`  `}
+
+} //______________________________________________________________________________ public class Factory {
+
+`  `public static void main(String[] args) throws InvalidHoursException {  // (4) //  Light porchLight = new Light(21, true, "Porch");    // (5) Compile-time error!     TubeLight cellarLight = new TubeLight(18, true, "Cellar", 590, 26);  // (6)
+
+`    `cellarLight.switchOff();
+
+`    `System.out.println(cellarLight.isOn());        // false
+
+`    `System.out.printf("Energy cost ($): %2.2f%n",
+
+`        `cellarLight.energyCost(40));               // (7) Using subclass reference     Light nightLight = new TubeLight(15, false, "Bedroom", 850, 15);     // (8)
+
+`    `System.out.printf("Energy cost ($): %2.2f%n",
+
+`        `nightLight.energyCost(30));             // (9) Using superclass reference                                                 // Invokes method in subclass
+
+`                                                `// Requires throws clause in (4)   }
+
+}
+
+Output from the program:
+
+false
+
+Energy cost ($): 6.00 Energy cost ($): 4.50![ref3]
+
+5.5: FINAL DECLARATIONS 233
+
+Abstract Methods in Classes
+
+In this subsection we discuss in more detail declaring and overriding  abstract methods in classes.
+
+Declaring an abstract Method
+
+An abstract method in an abstract class has the following syntax:
+
+_access_modifier_ abstract _return_type_ _method_name_ (_formal_parameter_list_)
+
+`                                                                                   `_throws_clause_;
+
+An abstract method does not have an implementation; that is, no method body is defined for an abstract method, and only the _method header_ is provided in the class declaration.  The  keyword  abstract  is  mandatory  in  the  header  of  an  abstract method declared in a class. Its class is then incomplete and must be explicitly declared  as  abstract.  Subclasses  of  an  abstract  class  must  then  override  the abstract method to provide the method implementation; otherwise, they must also
+
+be declared as abstract.
+
+Overriding an abstract Method
+
+When overriding an abstract method from the superclass, the notation @Override should always be used in the overriding method in the subclass. The compiler will issue an error if the override criteria are not satisfied.
+
+The accessibility of an  abstract method declared in a top-level class cannot be private, as subclasses would not be able to override the method and provide an implementation. Thus an abstract method in a top-level class can only have public, protected, or package accessibility.
+
+In Example 5.8, the abstract instance method in the abstract superclass Light has the following declaration:
+
+protected abstract double energyCost(int noOfHours)      // (2) Method header     throws InvalidHoursException;                        // No method body
+
+It has protected access and has type double as the return type. Its method signature is energyCost(int), and it throws the checked InvalidHoursException.
+
+The implementation of the abstract method in the subclass TubeLight has the fol- lowing declaration:
+
+@Override public double energyCost(int noOfHours) {      // (3)   return  0.15 * noOfHours;
+
+}
+
+It has public access and has type double as the return type. Its method signature is energyCost(int), and it has no throws clause. Widening the access to public access and throwing no checked exceptions are allowed according to the override criteria.
+
+Since an abstract method must be overridden to provide an implementation, only an instance method can be declared as abstract. Since static methods cannot be
+
+overridden, declaring an abstractstatic method makes no sense, and the compiler will report an error.
+
+An abstract method can be overloaded just like a normal method. The following method declaration in either the superclass or the subclass overloads the method named energyCost, as it has a different signature: energyCost().
+
+public double energyCost() {          // Overloaded   return 1.75;
+
+}
+
+If an attempt to override or overload an abstract method fails, the compiler will issue an error. If either of these two methods is declared in a subclass of the Light class, the compiler will issue an error.
+
+@Override
+
+double energyCost(int numOfHours) {   // Not overridden! Narrows accessibility!   return 2.0 * numOfHours;
+
+}
+
+public Double energyCost(int numOfHours) {  // Not overloaded! Duplicate method!   return 3.5 * numOfHours;
+
+}
+
+An abstract method or a non-final concrete method in a class can be overridden by an abstract method in a subclass. This is governed by the same rules for method overriding.
+
+A method cannot be both  final and  abstract that would be a contradiction in terms: A  final method cannot be overridden, but an  abstract method must be overridden to provide an implementation.
+
+For  a  discussion  of  abstract  methods  in  top-level  interfaces,  see  §5.6,  p. 240. Abstract methods can also be declared in an enum type, if the enum type contains constant-specific class bodies that implement these methods (p. 294).

@@ -1,0 +1,24 @@
+= LDAP
+:figures: 12-db/ldap
+
+== Example of LDAP directory structure
+
+We'll illustrate a  sample LDAP schema with a screenshot from the Apache Directory Server example directory:
+image::{figures}/image.png[alt text]
+Starting at a particular user entry for uid=admin1@example.com (highlighted in the preceding  screenshot), we can infer the organizational membership of admin1 by starting at this node in the tree  and moving upward. We can see that the user aeinstein is a member of the users *organizational unit (ou=users)*, which itself is a part of the example.com domain (the abbreviation dc shown  in the preceding screenshot stands for domain component).
+
+Preceding this are the organizational elements (DIT and Root DSE) of the LDAP tree itself, which  don't concern us in the context of Spring Security. The position of the user aeinstein in the LDAP  hierarchy is semantically and definitively meaningful--you can imagine a much more complex  hierarchy easily illustrating the organizational and departmental boundaries of a huge organization.
+
+The complete top-to-bottom path formed by walking down the tree to an individual leaf node forms a  string composed of all intervening nodes along the way, as with the node path of admin1, as follows:
+
+____
+uid=admin1,ou=users,dc=example,dc=com
+____
+
+The preceding node path is unique and is known as a node's *Distinguished Name (DN)*. The DN is  akin to a database primary key, allowing a node to be uniquely identified and located in a complex  tree structure. We'll see a node's DN used extensively throughout the authentication and searching  process with Spring Security LDAP integration.
+
+Note that there are several other users listed at the same level of organization as admin1. All of these users are assumed to be within the same organizational position as admin1. Although this example organization is relatively simple and flat, the structure of LDAP is arbitrarily flexible, with many levels of nesting and logical organization possible.
+
+== References
+
+. https://www.zytrax.com/books/ldap/[LDAP for Rocket Scientists]

@@ -1,0 +1,150 @@
+= Facade Design Pattern
+:figures: 11-development/00-software-development/design-patterns/creational/facade
+
+The Gang of Four describes the purpose of the "`Prototype`" pattern as follows:
+
+____
+Provide a unifed interface to a set of interfaces of a subsystem. The facade class defnes an
+abstract interface that simplifes the use of the subsystem.
+____
+
+The facade belongs to the structure patterns; it describes how you can access a compli-
+cated or complex subsystem in an uncomplicated way.
+
+The advantage of the facade is obvious: access is simplifed, the dependency of
+client and subsystem is loosened. This avoids client code breaking when the subsystem
+is changed or replaced. It is even possible to replace a complete subsystem.
+
+== Identification
+
+== Relations with others
+
+=== Law of Demeter
+
+Law of Demeter(http://prinzipien-der-softwaretechnik.blogspot.com/2013/06/das-gesetz-von-
+demeter.html):  says -- in short -- that objects should limit
+their communication to close friends. The facade shows you one way to make this happen
+as easily as possible. So what exactly does Demeter's Law say? Objects should only com-
+municate with close friends. Close friends are:
+
+* Attributes and methods of its own object, that is, everything called this,
+* Methods of objects passed as parameters,
+* Methods of objects that the method itself creates,
+* Global objects.
+
+If you look at the travel example(https://github.com/java-kb/design_patterns/blob/main/src/main/java/me/study/designpatterns/creational/facade/examples/example01_manage_trip), you can see that the client only needs to
+access one friend -- the facade. The facade gives the client the option of not having to deal
+with strangers, i.e. additional classes. The facade is an illustrative example of the realiza-
+tion of the principle.
+
+== Analogy
+
+* Imagine that you have a complex or complicated system -- for example, an SLR camera.
+When you take a portrait, you want the depth of feld to cover only a small area. You open
+the aperture as wide as possible, so choose a small f-number. This allows more light to fall
+on the flm or the processor. To prevent the image from becoming too bright, you need to
+reduce the exposure time.
++
+Maybe you don't want to take a portrait later, but a landscape. There, the depth of feld
+  should be as large as possible; you select a large f-stop number and thereby close the aper-
+  ture. Now there is less light reaching the processor, so you have to increase the exposure
+  time. However, the exposure time cannot be increased indefnitely; experience shows that
+  a picture can only be taken handheld if the exposure time is shorter than 1/focal length. If
+  the exposure time is longer, you run the risk of blurring the image. So you need to increase
+  the flm speed, the ISO number.
++
+Does that sound complicated? I think it is! And most camera manufacturers see it the
+  same way. Modern compact cameras, but also (digital) SLR cameras, come with scene
+  programs. All you have to do is tell the camera: "`I want to take a portrait!`" or: "`I want to
+  take landscapes!`". The camera automatically sets the aperture and exposure time so that
+  the result is optimal.
++
+This actually explains the principle of the facade: You have a complicated or complex
+  system. To make it easier for you to access the system, a facade is created. As a user or photographer, you no longer need to concern yourself with the details. It should be enough
+  that you tell the facade -- the subject program "`Portrait`" -- what you want to have. The "`how`"
+  is realized by the facade. You will still have access to the individual components of the system:
+  you do not have to use the facade, you can still set the aperture and exposure time manually.
+
+== Usage examples
+
+== JDK
+
+* javax.swing.JOptionPane.showConfrmDialog
+The Swing convenience class JOptionPane is a facade for dialog windows. With its static methods (showMessageDialog(), showInputDialog() etc.) it provides the client with a simple interface for creating dialog windows. The client does not need to know about the Swing components used (JDialog, JRootPane, Frame), layout managers (BorderLayout), listeners (Windowlistener, Actionlistener) and utility classes (SunToolkit, SwingUtilities, UIManager, Math).
++
+JOptionPane class brings various static methods that you can pass different parameters to in order to confgure the dialog. Consider the following lines of code.
++
+image::{figures}/API Doc of the JOptionPane Class.png[API Doc of the JOptionPane Class]
++
+[,java]
+----
+  String question = “Do you like design patterns?“;
+  String title = “A matter of conscience“;
+  javax.swing.JOptionPane.showConfirmDialog(null, question,
+  title, javax.swing.JOptionPane.YES_NO_OPTION,
+  javax.swing.JOptionPane.QUESTION_MESSAGE);
+----
++
+https://github.com/openjdk/jdk/blob/master/src/java.desktop/share/classes/javax/swing/JOptionPane.java
++
+[,java]
+----
+  public static int showConfirmDialog(Component parentComponent,
+      Object message, String title, int optionType,
+      int messageType, Icon icon) throws HeadlessException {
+      return showOptionDialog(parentComponent, message, title, optionType,
+                              messageType, icon, null, null);
+  }
+----
++
+[,java]
+----
+  public static int showOptionDialog(Component parentComponent,
+      Object message, String title, int optionType, int messageType,
+      Icon icon, Object[] options, Object initialValue)
+      throws HeadlessException {
+      JOptionPane             pane = new JOptionPane(message, messageType,
+                                                     optionType, icon,
+                                                     options, initialValue);
+
+      pane.setInitialValue(initialValue);
+      pane.setComponentOrientation(((parentComponent == null) ?
+          getRootFrame() : parentComponent).getComponentOrientation());
+
+      int style = styleFromMessageType(messageType);
+      JDialog dialog = pane.createDialog(parentComponent, title, style);
+
+      pane.selectInitialValue();
+      dialog.show();
+      dialog.dispose();
+
+      Object        selectedValue = pane.getValue();
+
+      if (parentComponent != null) {
+          parentComponent.revalidate();
+          parentComponent.repaint();
+      }
+
+      if(selectedValue == null)
+          return CLOSED_OPTION;
+      if(options == null) {
+          if(selectedValue instanceof Integer)
+              return ((Integer)selectedValue).intValue();
+          return CLOSED_OPTION;
+      }
+      for(int counter = 0, maxCounter = options.length;
+          counter < maxCounter; counter++) {
+          if(options[counter].equals(selectedValue))
+              return counter;
+      }
+      return CLOSED_OPTION;
+  }
+----
++
+== Spring
+
+* {blank}
++
+== Examples
++
+https://github.com/java-kb/design_patterns

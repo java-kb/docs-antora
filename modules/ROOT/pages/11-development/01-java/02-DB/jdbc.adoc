@@ -1,0 +1,12 @@
+= Java DB JDBC
+
+== JDBC URL by Database
+[cols="1,1"]
+|===
+|Database |JDBC URL
+|PostgreSQL |jdbc:postgresql://host:port/database?properties
+|SQL Server |jdbc:sqlserver://[serverName[\instanceName][:portNumber]][;property=
+value[;property=value]]
+|Oracle |jdbc:oracle:thin:[<user>/<password>]@//<host>[:<port>]/<service>
+|MYSQL |jdbc:mysql://host:port/database?properties
+|=== 

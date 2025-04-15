@@ -1,0 +1,2 @@
+= Configuration Articles
+:figures: 02-configuration/articles

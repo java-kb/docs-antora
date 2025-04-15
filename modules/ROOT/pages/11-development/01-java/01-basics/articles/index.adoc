@@ -1,0 +1,2 @@
+= Java Articles
+:figures: 11-development/01-java/01-basics/articles

@@ -1,0 +1,2 @@
+= Modular monolithic application
+:figures: 01-system-design/architecture

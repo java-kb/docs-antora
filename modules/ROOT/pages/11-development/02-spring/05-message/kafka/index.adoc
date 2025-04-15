@@ -1,0 +1,8 @@
+= Spring Kafka
+:figures: 11-development/02-spring/05-message/kafka
+
+== Samples
+
+TODO Add support for kafka to Multiplication Microservices Example
+
+* https://github.com/books-java/Learn-Microservices-with-Spring-Boot-3[Multiplication Microservices Example]

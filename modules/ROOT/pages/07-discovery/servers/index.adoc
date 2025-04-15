@@ -1,0 +1,2 @@
+= Service Discovery Servers
+:figures: 07-discovery/servers

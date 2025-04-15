@@ -1,0 +1,44 @@
+= Service Discovery
+:figures: 07-discovery
+
+The service discovery pattern consists of two main concepts.
+
+* The service registry:
+A central place with a list of available services,
+the address where they're located, and some extra metadata like their
+name. It may contain entries for different services, but also multiple
+instances of the same service. In the last case, clients accessing
+the registry can obtain a list of available instances by querying a
+service alias. For example, various instances of the Multiplication
+microservice can register with the same alias, multiplication. Then,
+when querying that value, all instances are returned.
+* The registrar:
+The logic in charge of registering the service instance at
+the registry. It can be an external running process observing the state
+of your microservice, or it can be embedded in the service itself as a
+library, like it'll be this case.
+image::{figures}/image.png[alt text]
+
+== Client-side discovery
+
+Other services may query a given service name from the registry, retrieve a list, and
+then decide which instance to call. This technique is known as client-side discovery,
+and it implies that clients are aware of the service registry and perform load balancing
+themselves. Note that, by client, we mean an application, microservice, browser, and so
+on, that wants to perform an HTTP call to another service
+image::{figures}/image-1.png[alt text]
+
+== Server-side discovery
+
+On the other side, server-side discovery abstracts all this logic from the clients by
+providing a unique address, known in advance, where callers can find a given service.
+When they make the request, it's intercepted by a load balancer, which is aware of the
+registry. This balancer will proxy the request to one of the replicas
+image::{figures}/image-2.png[alt text]
+
+Typically, in a microservices architecture, you'll see either both approaches
+combined or just server-side discovery. Client-side discovery doesn't work well when
+the API clients are outside your system, because you shouldn't require external clients to
+interact with a service registry and do load balancing themselves. Normally, the gateway
+takes this responsibility. Therefore, your API gateway will be connected to the service
+registry and will include a load balancer to distribute the load across the instances.

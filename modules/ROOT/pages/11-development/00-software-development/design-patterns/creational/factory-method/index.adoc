@@ -1,0 +1,38 @@
+= Factory Method
+:figures: 11-development/00-software-development/design-patterns/creational/factory-method
+
+The Gang of Four describes the purpose of the "`Factory Method`" pattern as follows:
+
+____
+Defne a class interface with operations to create an object, but let subclasses decide which
+class the object to be created is from. Factory methods allow a class to delegate object cre-
+ation to subclasses.
+____
+
+*Factory method* is a creational design pattern which solves the problem of creating product objects without specifying their concrete classes.
+
+The Factory Method defines a method, which should be used for creating objects instead of using a direct constructor call (new operator). Subclasses can override this method to change the class of objects that will be created.
+
+== Identification
+
+Factory methods can be recognized by creation methods that construct objects from concrete classes. While concrete classes are used during the object creation, the return type of the factory methods is usually declared as either an abstract class or an interface.
+
+== Usage examples
+
+== JDK
+
+The Factory Method pattern is widely used in Java code. It's very useful when you need to provide a high level of flexibility for your code.
+
+The pattern is present in core Java libraries:
+
+* java.util.Calendar#getInstance()
+* java.util.ResourceBundle#getBundle()
+* java.text.NumberFormat#getInstance()
+* java.nio.charset.Charset#forName()
+* java.net.URLStreamHandlerFactory#createURLStreamHandler(String) (Returns different singleton objects, depending on a protocol)
+* java.util.EnumSet#of()
+* javax.xml.bind.JAXBContext#createMarshaller() and other similar methods.
+
+== Examples
+
+https://github.com/java-kb/design_patterns

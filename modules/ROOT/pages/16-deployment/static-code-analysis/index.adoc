@@ -1,0 +1,8 @@
+= Static Code Analysis
+:figures: 16-deployment/static-code-analysis
+
+After a developer pushes new code to the mainline, the commit stage starts by check-
+ing out the source code from the repository. The starting point is always a commit to
+the main branch.
+
+Next, the pipeline can perform several types of static code analysis such as vulnerability scanning, identify security issues and check compliance with specific coding standards (code linting).

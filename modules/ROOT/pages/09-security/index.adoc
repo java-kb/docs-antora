@@ -1,0 +1,92 @@
+= Security
+:figures: 09-security
+
+== Security Standards and rules
+== Encoding vs. encrypting vs. hashing
+*Encoding* refers to any transformation of a given input. For example, if we have a function x that reverses a string, function x -> y applied to ABCD produces DCBA.
+
+*Encryption* is a particular type of encoding in which, to obtain the output, we provide both the input value and a key. The key makes it possible to choose afterward who should be able to reverse the function (obtain the input from the output). The simplest form of representing encryption as a function is
+(x, k) -> y
+where x is the input, k is the key, and y is the result of the encryption. This way, an individual who knows the key can use a known function to obtain the input from the output
+(y, k) -> x. We call this reverse function decryption. If the key used for encryption is the same as the one used for decryption, we usually call it a symmetric key.
+If we have two different keys for encryption ((x, k1) -> y) and decryption ((y, k2) -> x), then we say that the encryption is done with asymmetric keys. Then (k1, k2) is called a key pair. The key used for encryption, k1, is also referred to as the public key, while k2 is known as the private key. This way, only the owner of the private key can decrypt the data.
+
+*Hashing* is a particular type of encoding, except the function is only one way. That is, from an output y of the hashing function, you cannot get back the input x. However, there should always be a way to check if an output y corresponds to an input x so we can understand the hashing as a pair of functions for encoding and matching. If hashing is x -> y, then we should also have a matching function (x,y) -> boolean.
+Sometimes, the hashing function could also use a random value added to the input: (x, k) -> y. We refer to this value as the salt. The salt makes the function stronger, enforcing the difficulty of applying a reverse function to obtain the input from the result.
+
+____
+TODO Read Payment Card Industry Data Security Standard
+____
+
+____
+TODO Read Health Insurance Privacy and Accountability Act (HIPAA)
+____
+
+the *Payment Card Industry Data Security Standard (PCI DSS)* and *the Health Insurance
+Privacy and Accountability Act (HIPAA)* privacy rules, both standards are intended to
+ensure the safety of specific sensitive information (such as credit card and medical information)
+through a combination of process and software controls.
+
+Many other industries and countries have similar rules about sensitive or Personally Identifiable
+Information (PII). Failure to follow these standards is not only bad practice but also something
+that could expose you or your company to significant liability (not to mention bad press) in
+the event of a security breach.
+
+== Security Audits
+
+Typically, the goal of security audits is to provide management or clients with the assurance that basic
+secure development practices have been followed to ensure the integrity and safety of the customer's
+data and system functions. Depending on the industry the software is targeted at, the auditor may
+also test it using industry-specific standards or compliance metrics.
+
+Third-party security specialists are often hired by companies (or their partners or customers) to audit
+the effectiveness of their software security through a combination of white hat hacking, source code
+review, and formal or informal conversations with application developers and architects.
+
+White hat hacking or ethical hacking is done by professionals who are hired to instruct companies
+on how to protect themselves better, rather than with the intent to be malicious.
+
+== Authentication
+
+Authentication identifies who is attempting to request a resource. You may be familiar with authentication in your daily online and offline life, in very different
+contexts, as follows:
+
+* *Credential-based authentication*: When you log in to your web-based email account, you most likely provide your username and password.
+The email provider matches your username with a known user in its database and verifies that your password matches what they have on
+record. These credentials are what the email system uses to validate that you are a valid user of the system
+* *Two-factor authentication*
+* *Hardware authentication*
+
+Typically, a software system will be divided into two high-level realms, such as unauthenticated (or anonymous) and authenticated
+image::{figures}/image.png[ High-level realms in a software system]
+Application functionality in the anonymous realm is the functionality that is independent of a user's identity (think of a welcome page for an online application). Anonymous areas do not do the following:
+
+* Require a user to log in to the system or otherwise identify themselves to be usable
+* Display sensitive information, such as names, addresses, credit cards, and orders
+* Provide functionality to manipulate the overall state of the system or its data
+
+== Authorization
+
+*Authorization* uses the information that was validated during authentication to determine whether access should be granted to a particular resource. Built around
+the authorization model for the application, authorization partitions the application functionality and data so that the availability of these items can be controlled by matching the combination of privileges, functionality, and data to users.
+
+*A secured resource* may be any aspect of the system that should be conditionally available based on the authority of the user.
+Secured resources of a web-based application could be individual web pages, entire portions of the website, or portions of individual pages. Conversely, secured business resources might be method calls on classes or individual business objects.
+
+Authorization typically involves the following two separate aspects that combine to describe the accessibility of the secured system:
+
+* The first is the mapping of an authenticated principal to one or more authorities (often called roles). For example, a casual user of your website might be viewed as having visitor authority, while a site administrator might be assigned administrative authority.
+* The second is the assignment of authority checks to secured resources in the system. This is typically done when the system is developed, either through an explicit declaration in code or through configuration parameters. For example, the screen that allows for the viewing of other users`' events should be made available only to those users with administrative authority.
+
+== Database credential security
+
+database credentials typically refer to the information required to establish
+a connection between aى application and a database. These credentials include the following:
+
+* Username: The username or user ID associated with the database account that the  application uses to connect.
+* Password: The corresponding password for the specified username, providing authentication for access to the database.
+* Database URL: The URL that specifies the location and details of the database. It includes information such as the host, port, and database name.
+
+== Transport-level protection
+
+SSL protection ensures that communication between the browser client and the web application server is secure against many kinds of tampering and snooping.
