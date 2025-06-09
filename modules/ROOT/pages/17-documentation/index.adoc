@@ -1,0 +1,17 @@
+= documentation
+:figures: 17-documentation
+
+== Documenting APIs
+Documenting APIs is an essential task when you’re following the API-first approach.
+In the Spring ecosystem, there are two main options:
+
+* Spring provides a Spring REST Docs project (https://spring.io/projects/spring
+-restdocs) that helps you document REST APIs via test-driven development
+(TDD), resulting in high-quality and maintainable documentation. The resulting
+documentation is aimed at people, relying on formats like Asciidoc or Mark-
+down. If you’d like to obtain an OpenAPI representation as well, you can check
+the restdocs-api-spec community-driven project to add OpenAPI support to
+Spring REST Docs (https://github.com/ePages-de/restdocs-api-spec).
+* The springdoc-openapi community-driven project helps automate the gener-
+ation of API documentation according to the OpenAPI 3 format (https://
+springdoc.org).

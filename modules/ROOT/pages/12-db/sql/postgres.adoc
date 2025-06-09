@@ -1,7 +1,8 @@
 = Postgres
 :figures: 12-db/sql
 
-== Running a PostgreSQL Database
+== Self-Managed
+=== Running a PostgreSQL Database
 
 Run PostgreSQL as a Docker container
 
@@ -15,6 +16,24 @@ docker run -d \
     -p 5432:5432 \
     postgres:14.12
 ----
+
+stop the container
+[,bash]
+----
+docker stop polar-postgres 
+----
+start it again with 
+[,bash]
+----
+docker start polar-postgres. 
+----
+If you want to
+start over, you can remove the container with 
+[,bash]
+----
+docker rm -fv polar-postgres
+----
+and create it again with the previous docker run command. 
 
 === Database Commands
 
@@ -50,3 +69,10 @@ From within the PSQL console, you can also fetch all the data stored in the `boo
 ----
 select * from book;
 ----
+
+== Cloud Based
+=== Azure Database for PostgreSQL
+=== Amazon RDS for PostgreSQL
+=== Google Cloud SQL for PostgreSQL
+=== Alibaba Cloud ApsaraDB RDS for PostgreSQL
+=== DigitalOcean PostgreSQL

@@ -1,21 +1,28 @@
-= DB
+= Persisting and managing data
 :figures: 12-db
 
-== In Brief
+Application services, which should be stateless to play well in a cloud environment. However, most applications are useless if they don’t store any state or data somewhere. 
 
 * The state is everything that should be preserved when shutting down a service
 and spinning up a new instance.
 * Data services are the stateful components of a cloud native architecture, requir-
-ing storage technologies to persist the state.
+ing storage technologies to persist the state, they can be data stores like PostgreSQL, Cassandra, and Redis, or they can be messaging systems like RabbitMQ and Apache Kafka.
+* For each cloud native application you design, you should consider the most suitable storage type for the data it will produce. 
 * Using data services in the cloud is challenging because it's a dynamic environment.
  Some issues to consider when choosing a data service are scalability, resilience,
 performance, and compliance with specific regulations and laws.
 * You can use data services that are offered and managed by your cloud provider
 or manage your own, either relying on virtual machines or containers.
-+
+* The difference between application and data services can also be visualized in
+terms of the three basic building blocks of cloud infrastructure: compute, storage, and
+network. As shown in figure 5.1, application services use computing and networking
+resources because they are stateless. On the other hand, data services are stateful and
+require storage to persist the state.
+
+
 == Choosing a Database
-+
-requirements of project, such as
+requirements of project, such as:
+
 * the availability,
 * volume of data,
 * expected traffic,
@@ -110,7 +117,24 @@ agement and can ensure compliance with the applicable regulations.
 
 == Categories of data services for the cloud
 
-Data services can be managed by you (as containers or on virtual machines) or by the cloud
-provider. In the first case you can use more traditional services, and in the second, you can also access multiple
-services built specifically for the cloud by the provider.
+Data services can be managed by you (as containers or on virtual machines) or by the cloud provider. In the first case you can use more traditional services, and in the second, you can also access multiple services built specifically for the cloud by the provider.
+
+You can find industry-standard services like PostgreSQL, Redis, and MariaDB.
+Some cloud providers even offer enhancements on top of them, optimized for scalabil-
+ity, availability, performance, and security. For example, should you need a relational
+database, you could use Amazon Relational Database Service (RDS), Azure Database, or
+Google Cloud SQL.
+
+Cloud providers also offer new types of data services specifically built for the cloud
+and exposing their own unique APIs. For instance, Google BigQuery is a serverless
+data warehouse solution with a particular focus on high scalability. Another example
+is the extremely fast, non-relational database Cosmos DB offered by Azure.
+
+The other option is to manage data services yourself, increasing the complexity for
+you, but giving you more control over the solution. You can choose to use a more
+traditional setup based on virtual machines, or you could use containers and take
+advantage of the lessons you’ve learned managing cloud native applications. Using
+containers will allow you to manage all the services in your system through a unified
+interface, such as Kubernetes, handling both compute and storage resources and
+reducing costs. 
 image::{figures}/image.png[alt text]

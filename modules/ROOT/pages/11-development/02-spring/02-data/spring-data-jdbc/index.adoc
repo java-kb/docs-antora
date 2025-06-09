@@ -5,6 +5,120 @@ Spring Data JDBC encourages working with immutable entities. Using Java records 
 model entities is an excellent choice, since they're immutable by design and expose
 an all-args constructor that the framework can use to populate objects.
 
+== Enabling and configuring JDBC 
+. Add dependencies
+  dependencies {
+  ...
+  implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+  runtimeOnly 'org.postgresql:postgresql'
+  }
+
+  <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jdbc</artifactId>
+  </dependency>
+  <dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+    <scope>runtime</scope>
+  </dependency>
+
+. Configuring the connection to a database using JDBC
+
+  spring:
+    datasource:
+      username: user
+      password: password
+      url: jdbc:postgresql://localhost:5432/polardb_catalog
+      hikari:
+        # The maximum time (ms) to spend waiting to get a connection from the pool
+        connection-timeout: 2000 #ms
+        # The maximum number of connections HikariCP will keep in the pool
+        maximum-pool-size: 5
+
+== Defining persistent entities with Spring Data
+Depending on the business domain and its complexity, you might
+want to distinguish the domain entity from the persistent entity, making the domain
+layer utterly independent of the persistence layer. If you’d like to explore how to
+model that scenario, I recommend referring to domain-driven design and hexagonal
+architecture principles.
+
+Spring Data JDBC encourages working with immutable entities. Using Java records to
+model entities is an excellent choice, since they’re immutable by design and expose
+an all-args constructor that the framework can use to populate objects.
+
+A persistent entity must have a field that acts as the identifier for the object, which
+will translate to the primary key in the database. You can mark a field as an identifier
+with the @Id annotation (from the org.springframework.data.annotation pack-
+age). The database is responsible for generating a unique identifier for each created
+object automatically.
+
+Some domaind like books are uniquely identified by an ISBN, which we can call a natural
+key (or business key) for the domain entity. We could decide to use it also as the
+primary key or introduce a technical key (or surrogate key). There are pros and
+cons to both approaches. We can chose to use a technical key to make it easier to
+manage and to decouple domain concerns from persistence implementation
+details.
+
+[source,java,attributes]
+----
+import java.time.Instant;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
+
+public record Book(
+
+        @Id Long id,
+
+        @NotBlank(message = "The book ISBN must be defined.") @Pattern(regexp = "^([0-9]{10}|[0-9]{13})$", message = "The ISBN format must be valid.") String isbn,
+
+        @NotBlank(message = "The book title must be defined.") String title,
+
+        @NotBlank(message = "The book author must be defined.") String author,
+
+        @NotNull(message = "The book price must be defined.") @Positive(message = "The book price must be greater than zero.") Double price,
+
+        String publisher,
+
+        @CreatedDate Instant createdDate,
+
+        @LastModifiedDate Instant lastModifiedDate,
+
+        @Version int version
+
+) {
+    // For convenience, let’s add a static factory method to the Book record for
+    // building an object by passing only the business fields.
+
+    public static Book of(String isbn, String title, String author, Double price, String publisher) {
+        return new Book(null, isbn, title, author, price, publisher, null, null, 0);
+    }
+
+}
+----
+
+== Optimistic locking
+It’s also OK when a single user updates an existing Entity object in isolation. But what happens if the same entity
+is updated by multiple users concurrently? Spring Data JDBC supports optimistic locking
+to address that concern. Users can read data concurrently. When a user attempts an
+update operation, the application checks if there has been any change since the last
+read. If there was, the operation is not performed, and an exception is thrown. The
+check is based on a numeric field that starts counting from 0 and automatically
+increases at every update operation. You can mark such a field with the @Version
+annotation (from the org.springframework.data.annotation package).
+
+When the @Id field is null and the @Version field is 0, Spring Data JDBC assumes
+it’s a new object. Consequently, it relies on the database to generate an identifier
+when inserting the new row in the table. When values are provided, it expects to find
+the object in the database already and to update it.
 == Enabling and configuring JDBC auditing
 
 When persisting data, it's useful to know the creation date for each row in a table and
@@ -90,7 +204,7 @@ Spring Data JDBC supports this option only for read operations.
   boolean existsByIsbn(String isbn);
 ----
 
-== DEFINING TRANSACTIONAL CONTEXTS
+== Defining transactional contexts
 
 The repositories provided by Spring Data come configured with transactional con-
 texts for all the operations. For example, all methods in CrudRepository are transac-

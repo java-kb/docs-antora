@@ -1,13 +1,15 @@
 = Cloud Native Development
 :figures: 01-system-design/architecture/cloud-native
 
-== 12 Factors
+== 15 Factors
 
 The 12 defines best practices for building web applications with the
 following characteristics: * Suitable to be deployed on cloud platforms
 * Scalable by design * Portable across systems * Enablers of continuous
 deployment and agility
 
+The 15-Factor methodology identifies development principles for building applications that offer maximum portability across execution environments, are suitable to be deployed on cloud platforms, can be scaled, guarantee environment
+parity between development and production, and enable continuous delivery.
 ____
 TODO Add doc from https://12factor.net/
 ____
@@ -32,17 +34,27 @@ A cloud native application should consist of a single codebase tracked
 in a version control system like Git. Each codebase must produce
 immutable artifacts, called builds, that can be deployed to multiple
 environments. 
-image::{figures}/image-7.png[Each application has its codebase, from
-which immutable builds are produced and then deployed to the appropriate
-environments without changes to the code.]
 
-anything environment-specific
-like configuration must be outside of the application codebase. In case
-of code that’s needed by more than one application, you should either
+image::{figures}/image-7.png[Each application has its codebase, from which immutable builds are produced and then deployed to the appropriate environments without changes to the code.]
+
+anything environment-specific like configuration must be outside of the application codebase. 
+
+In case of code that’s needed by more than one application, you should either
 turn it into an independent service or into a library that you can
 import into the project as a dependency. You should carefully evaluate
 the latter option to prevent the system from becoming a distributed
 monolith.
+
+Thinking about how your code is organized into codebases and repos-
+itories can help you focus more on the system architecture and identify those
+parts that might actually stand on their own as independent services. If this is
+done correctly, the codebase’s organization can favor modularity and loose
+coupling.
+
+According to the 15-Factor methodology, each codebase should be mapped to an
+application, but nothing is said about repositories. You can decide to track each code-
+base in a separate repository or in the same one. Both options are used in the cloud
+native business. 
 
 == 2 API first
 
@@ -105,6 +117,26 @@ The only implicit dependencies an application can have on the
 surrounding environment are the language runtime and the dependency
 manager tool. This means that private dependencies should be resolved
 via the dependency manager.
+
+How you manage dependencies for your applications is relevant because it affects
+their reliability and portability. 
+
+In the Java ecosystem, the two most used tools for
+dependency management are Gradle and Maven. Both provide the functionality to
+declare dependencies in a manifest and download them from a central repository.
+The reason for listing all the dependencies your project needs is to ensure that you do
+not depend on any implicit library leaking from the surrounding environment.
+
+Both Gradle and Maven offer a feature to run the tool
+from a wrapper script named gradlew or mvnw that you can include in your codebase.
+For example, rather than running a Gradle command like gradle build (which
+assumes you have Gradle installed on your machine), you can run ./gradlew build.
+The script invokes the specific version of the build tool defined in the project. If the
+build tool is not present yet, the wrapper script will download it first and then run the
+command. Using the wrapper, you can ensure that all team members and automated
+tools building the project use the same Gradle or Maven version. When you’re gener-
+ating a new project from Spring Initializr, you’ll also get a wrapper script that’s ready
+to use, so you don’t need to download or configure anything.
 
 == 4 Design, build, release, run
 
@@ -206,14 +238,18 @@ username, and a password.
 
 Environment parity is about keeping all your environments as similar as
 possible. In reality, there are three gaps that this factor tries to
-address: * Time gap—The period between a code change and its deployment
+address: 
+
+* Time gap—The period between a code change and its deployment
 can be quite large. The methodology strives to promote automation and
 continuous deployment to reduce the period between when a developer
-writes code to when it’s deployed in production. * People gap—Developers
+writes code to when it’s deployed in production. 
+* People gap—Developers
 build applications, and operators manage their deployment in production.
 This gap can be resolved by embracing a DevOps culture, improving
 collaboration between developers and operators, and embracing the "`you
-build it, you run it`" philosophy. * Tools gap—One of the main
+build it, you run it`" philosophy. 
+* Tools gap—One of the main
 differences between environments is how backing services are handled.
 For example, developers might use the H2 database in their local
 environment but PostgreSQL in production. In general, the same type and

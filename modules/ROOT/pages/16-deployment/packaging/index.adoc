@@ -1,2 +1,25 @@
 = Packaging
 :figures: 16-deployment/packaging
+
+ Cloud native applications should
+be self-contained and not dependent on a server being available in the execution envi-
+ronment. Instead, the necessary server capabilities are included in the application
+itself. Spring Boot offers built-in server functionality that helps you remove the exter-
+nal dependency and make the application standalone. Spring Boot comes bundled
+with a preconfigured Tomcat server, but it’s possible to replace it with Undertow, Jetty,
+or Netty.
+
+ In the JVM ecosystem, cloud native applications are
+packaged as JAR artifacts. Since they are self-contained, they can run as standalone
+Java applications with no external dependency apart from the JVM. Spring Boot is
+flexible enough to allow both JAR and WAR types of packaging. Still, for cloud native
+applications, you’ll want to use self-contained JARs, also called fat-JARs or uber-JARs,since they contain the application itself, the dependencies, and the embedded server.
+
+The embedded servers used for cloud native applications usually comprise a web
+server component and an execution context to make a Java web application interact
+with the web server. For example, Tomcat contains a web server component (Coyote)
+and an execution context based on the Java Servlet API, usually called the Servlet con-
+tainer (Catalina)
+
+On the
+other hand, application servers are not recommended for cloud native applications.

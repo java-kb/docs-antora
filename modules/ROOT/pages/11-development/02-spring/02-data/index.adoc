@@ -1,13 +1,24 @@
 = Spring Data
 :figures: 11-development/02-spring/02-data
 
-== In Brief
-
 Spring Data provides common abstractions and patterns for accessing data,
 making it straightforward to navigate the different modules dedicated to rela-
 tional and non-relational databases.
 
+image::{figures}/interaction between an application using Spring Data and a database.png[A driver configures the connection between the application and the database. Entities 
+represent domain objects and can be stored and retrieved through a repository]
+
 * The main elements in Spring Data are database drivers, entities, and repositories.
+** Entities represent domain objects and can be stored and retrieved through a repository
+(Java Database Connectivity API) in imperative/blocking applications or an
+R2DBC driver in reactive/non-blocking applications. For non-relational data-
+bases, each vendor has its own dedicated solution.
+** Entities—Domain objects that are persisted in a database. They must contain a
+field to uniquely identify each instance (a primary key) and can use dedicated
+annotations to configure the mapping between Java objects and database entries.
+** Repositories—The abstractions used for data storage and retrieval. Spring Data
+provides basic implementations, which are further extended by each module to
+provide features specific to the database in use.
 * Spring Data JDBC is a framework that supports integrating Spring applications
 with relational databases relying on a JDBC driver.
 * Entities represent domain objects and can be managed by Spring Data JDBC as
@@ -63,6 +74,38 @@ You should considering your requirements, and then deciding which module suits t
 
 * Hibernate, the foundation for Spring Data JPA, offers automatically generating schemas from the entities defined in Java.
 
+== Connection pooling
+Opening and closing database connections are relatively expensive operations, so you
+don’t want to do that every time your application accesses data. The solution is connec-
+tion pooling: the application establishes several connections with the database and
+reuses them, rather than creating new ones for each data access operation. This is a
+considerable performance optimization.
+
+Spring Boot uses HikariCP for connection pooling, and you can configure it from
+the application.yml file. You want to configure at least a connection timeout
+(spring.datasource.hikari.connection-timeout) and a maximum number of con-
+nections in the pool (spring.datasource.hikari.maximum-pool-size), because these
+both affect application resilience and performance. As you saw for the Tomcat thread
+pool, multiple factors influence which values you should use. As a starting point, you
+can refer to the HikariCP analysis of pool sizing (https://github.com/brettwooldridge/
+HikariCP/wiki/About-Pool-Sizing).
+
+Configuring the connection pool to interact with the database
+
+[source,yml,attributes]
+----
+spring:
+datasource:
+    username: user
+    password: password
+    url: jdbc:postgresql://localhost:5432/polardb_catalog
+    hikari:
+    # The maximum time (ms) to spend waiting to get a connection from the pool
+    connection-timeout: 2000 #ms
+    # The maximum number of connections HikariCP will keep in the pool
+    maximum-pool-size: 5
+----
+
 == Testing data persistence with Spring and Testcontainers
 
 Testcontainers (https://testcontainers.org) is a Java library for testing. It supports
@@ -106,6 +149,4 @@ following configuration.
          url: jdbc:tc:postgresql:14.12:///
 ----
 +
-When the integration profile is
-enabled, Spring Boot will use the PostgreSQL container instantiated by Testcontain-
-ers.
+When the integration profile is enabled, Spring Boot will use the PostgreSQL container instantiated by Testcontainers.

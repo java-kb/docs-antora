@@ -1,0 +1,183 @@
+= Spring Unit Testing
+:figures: 11-development/02-spring/07-testing
+
+In Spring, unit tests aren't required to load the Spring application context, and
+they don't rely on any Spring library. On the other hand, integration tests need a
+Spring application context to run.
+
+Unit tests are not aware of Spring and don't rely on any Spring library. They are
+intended to test the behavior of single components as isolated units. Any dependency
+at the edge of the unit is mocked to keep the test shielded from external components.
+
+Writing unit tests for Spring applications is no different from writing them for any
+other Java application. By default, any Spring
+project created from Spring Initializr contains the spring-boot-starter-test depen-
+dency, which imports testing libraries like JUnit 5, Mockito, and AssertJ into the project. So we're all set for writing unit tests.
+
+Unit tests are not aware of Spring and don’t rely on any Spring library. They are
+intended to test the behavior of single components as isolated units. Any dependency
+at the edge of the unit is mocked to keep the test shielded from external components.
+
+By default, any Spring project created from Spring Initializr contains the spring-boot-starter-test dependency, which imports testing libraries like JUnit 5, Mockito, and AssertJ into the project. So we’re all set for writing unit tests.  
+
+unit tests includes:
+
+== business logic of an application 
+== validation logic
+[source,java,attributes]
+----
+import java.time.Instant;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
+
+public record Book(
+
+        @Id Long id,
+
+        @NotBlank(message = "The book ISBN must be defined.") @Pattern(regexp = "^([0-9]{10}|[0-9]{13})$", message = "The ISBN format must be valid.") String isbn,
+
+        @NotBlank(message = "The book title must be defined.") String title,
+
+        @NotBlank(message = "The book author must be defined.") String author,
+
+        @NotNull(message = "The book price must be defined.") @Positive(message = "The book price must be greater than zero.") Double price,
+
+        String publisher,
+
+        @CreatedDate Instant createdDate,
+
+        @LastModifiedDate Instant lastModifiedDate,
+
+        @Version int version
+
+) {
+
+    public static Book of(String isbn, String title, String author, Double price, String publisher) {
+        return new Book(null, isbn, title, author, price, publisher, null, null, 0);
+    }
+
+}
+----
+[source,java,attributes]
+----
+package com.polarbookshop.catalogservice.domain;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class BookValidationTests {
+
+    private static Validator validator;
+
+    @BeforeAll
+    static void setUp() {
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
+    }
+
+    @Test
+    void whenAllFieldsCorrectThenValidationSucceeds() {
+        var book = Book.of("1234567890", "Title", "Author", 9.90, "Polarsophia");
+        Set<ConstraintViolation<Book>> violations = validator.validate(book);
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void whenIsbnNotDefinedThenValidationFails() {
+        var book = Book.of("", "Title", "Author", 9.90, "Polarsophia");
+        Set<ConstraintViolation<Book>> violations = validator.validate(book);
+        assertThat(violations).hasSize(2);
+        List<String> constraintViolationMessages = violations.stream()
+                .map(ConstraintViolation::getMessage).collect(Collectors.toList());
+        assertThat(constraintViolationMessages)
+                .contains("The book ISBN must be defined.")
+				.contains("The ISBN format must be valid.");
+    }
+
+    @Test
+    void whenIsbnDefinedButIncorrectThenValidationFails() {
+        var book = Book.of("a234567890", "Title", "Author", 9.90, "Polarsophia");
+        Set<ConstraintViolation<Book>> violations = validator.validate(book);
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage())
+				.isEqualTo("The ISBN format must be valid.");
+    }
+
+    @Test
+    void whenTitleIsNotDefinedThenValidationFails() {
+        var book = Book.of("1234567890", "", "Author", 9.90, "Polarsophia");
+        Set<ConstraintViolation<Book>> violations = validator.validate(book);
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage())
+                .isEqualTo("The book title must be defined.");
+    }
+
+    @Test
+    void whenAuthorIsNotDefinedThenValidationFails() {
+        var book = Book.of("1234567890", "Title", "", 9.90, "Polarsophia");
+        Set<ConstraintViolation<Book>> violations = validator.validate(book);
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage())
+                .isEqualTo("The book author must be defined.");
+    }
+
+    @Test
+    void whenPriceIsNotDefinedThenValidationFails() {
+        var book = Book.of("1234567890", "Title", "Author", null, "Polarsophia");
+        Set<ConstraintViolation<Book>> violations = validator.validate(book);
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage())
+                .isEqualTo("The book price must be defined.");
+    }
+
+    @Test
+    void whenPriceDefinedButZeroThenValidationFails() {
+        var book = Book.of("1234567890", "Title", "Author", 0.0, "Polarsophia");
+        Set<ConstraintViolation<Book>> violations = validator.validate(book);
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage())
+                .isEqualTo("The book price must be greater than zero.");
+    }
+
+    @Test
+    void whenPriceDefinedButNegativeThenValidationFails() {
+        var book = Book.of("1234567890", "Title", "Author", -9.90, "Polarsophia");
+        Set<ConstraintViolation<Book>> violations = validator.validate(book);
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage())
+                .isEqualTo("The book price must be greater than zero.");
+    }
+
+    @Test
+    void whenPublisherIsNotDefinedThenValidationSucceeds() {
+        Book book = Book.of("1234567890", "Title", "Author", 9.90,null);
+        Set<ConstraintViolation<Book>> violations = validator.validate(book);
+        assertThat(violations).isEmpty();
+    }
+
+}
+----
+      
+
+== data access logic
+== service logic        
+== controller logic

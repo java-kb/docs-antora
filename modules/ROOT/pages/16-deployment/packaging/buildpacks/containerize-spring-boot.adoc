@@ -1,7 +1,10 @@
-= Containerize Spring Boot
+= Containerize Spring Boot Using Buildpacks
 :figures: 16-deployment/packaging/buildpacks
 
-Cloud Native Buildpacks has been integrated natively in the Spring Boot Plugin for both Gradle and Maven, so you're not required to install the dedicated Buildpacks CLI (pack).
+Cloud Native Buildpacks has been integrated natively in the Spring Boot Plugin for both Gradle and Maven, so you're not required to install the dedicated Buildpacks CLI (pack). This means that you can containerize your Spring Boot applications without
+downloading any additional tools, providing any extra dependencies, or writing a
+Dockerfile.
+
 
 The Spring Boot Plugin adopts the Paketo Buildpacks builder, an implementation of the Cloud Native Buildpacks specification that provides support for many types of applications, including Java and Spring Boot ones (https://paketo.io).
 

@@ -1,0 +1,119 @@
+= Spring Rest API
+:figures: 11-development/02-spring/03-web
+
+After implementing the business logic, we can expose the use cases through a REST
+API. 
+
+== Data validation and error handling
+As a general rule, before saving any data, you should always validate the content, both
+for data consistency and security reasons. 
+
+Java Bean Validation is a popular specification for expressing constraints and valida-
+tion rules on Java objects via annotations. Spring Boot provides a convenient starter
+dependency containing the Java Bean Validation API and its implementation(spring-boot-starter-validation).
+[source,java,attributes]
+----
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Positive;
+public record Book (
+ @NotBlank(message = "The book ISBN must be defined.")
+ @Pattern( 
+ regexp = "^([0-9]{10}|[0-9]{13})$",
+ message = "The ISBN format must be valid."
+ )
+ String isbn, 
+
+ @NotNull(message = "The book price must be defined.")
+ @Positive( 
+ message = "The book price must be greater than zero."
+ )
+ Double price
+----
+
+The annotations from the Java Bean Validation API define the constraints, but they
+are not enforced yet. We can instruct Spring to validate the Book object in the Book-
+Controller class by using the @Valid annotation whenever a @RequestBody is speci-
+fied as a method argument.
+[source,java,attributes]
+----
+@PostMapping
+@ResponseStatus(HttpStatus.CREATED)
+public Book post(@Valid @RequestBody Book book) {
+ return bookService.addBookToCatalog(book);
+}
+----
+When building an API, it’s
+good to consider which types of errors it can throw, since they are just as important as
+the domain data. When it’s a REST API, you want to ensure that the HTTP response
+uses a status code that best fits the purpose and includes a meaningful message to
+help the client identify the problem.
+
+To handle errors for a REST API, we can use the standard Java exceptions and rely
+on a @RestControllerAdvice class to define what to do when a given exception is
+thrown. It’s a centralized approach that allows us to decouple the exception handling
+from the code throwing the exception. 
+[source,java,attributes] 
+----
+@RestControllerAdvice
+public class BookControllerAdvice {
+ @ExceptionHandler(BookNotFoundException.class)
+    // Defines the status code for the HTTP response created when the exception is
+    // thrown
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    String bookNotFoundHandler(BookNotFoundException ex) {
+        // The message that will be included in the HTTP response body
+        return ex.getMessage();
+    }
+
+    @ExceptionHandler(BookAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    String bookAlreadyExistsHandler(BookAlreadyExistsException ex) {
+        return ex.getMessage();
+    }
+
+    // Handles the exception thrown when the Book validation fails
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        // Collects meaningful error messages about which Book fields were invalid
+        // instead of returning an empty message
+        var errors = new HashMap<String, String>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        return errors;
+    }
+
+----
+
+==  Evolving APIs for future requirements
+In a distributed system, we need a plan to evolve APIs so we don’t break the functionality
+of other applications. This is a challenging task because we want independent applica-
+tions, but they probably exist to provide services to other applications, so we are some-
+what limited in the number of changes we can make independently of the clients.
+
+The best approach is to make backward-compatible changes to the API. For exam-
+ple, we can add an optional field to the Book object without affecting the clients of the
+Catalog Service application.
+
+=== Using API versioning
+When breaking changes are necessary, you can use API versioning. The version might be part of the endpoint itself, like /v2/books. Or it
+might be specified as an HTTP header. This system helps prevent existing clients from
+breaking, but they will have to update their interface to match the new API version
+sooner or later, meaning that coordination is needed.
+
+=== Using HATEOAS
+A different approach focuses on making the REST API client as resilient to API
+changes as possible. The solution is to use the hypermedia aspect of the REST architec-
+ture, This hypermedia aspect is also called HATEOAS (Hypermedia as the Engine of
+Application State). REST APIs can return the object requested
+along with information about where to go next and links to perform related operations.
+The beauty of this feature is that the links are only shown when it makes sense to fol-
+low them, providing information about when to go.
+
+Spring provides the Spring HATEOAS project to add
+hypermedia support to a REST API.

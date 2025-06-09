@@ -1,50 +1,45 @@
 = Spring Cloud Config Server
 :figures: 02-configuration/servers
 
-With system environment variables(!()[/docs/docs/11-development/02-spring/01-core/config-and-profiles.html#configuring-an-application-through-environment-variables]), you can externalize your application's configuration and follow the 15-Factor methodology. However, there are some issues they cannot handle:
-
-* Configuration data is as important as the application code, so it should be handled with the same care and attention, starting from its persistence. Where
-should you store configuration data?
-* Environment variables don't provide granular access control features. How can
-you control access to configuration data?
-* Configuration data will evolve and require changes, just like application code.
-How should you keep track of the revisions to configuration data? How should
-you audit the configuration used in a release?
-* After changing your configuration data, how can you make your application
-read it at runtime without requiring a full restart?
-* When the number of application instances increases, it can be challenging to
-handle configuration in a distributed fashion for each instance. How can you
-overcome such challenges?
-* Neither Spring Boot properties nor environment variables support configuration
-encryption, so you can't safely store passwords. How should you manage secrets?
-
-The Spring ecosystem offers many options to address those issues. We can categorize
+The Spring ecosystem offers many options to externalize configuration. We can categorize
 them into three groups.
 
 * *Configuration services*--The Spring Cloud project provides modules you can
 use to run your own configuration services and configure your Spring Boot
 applications.
- ** *Spring Cloud Alibaba* provides a configuration service using Alibaba Nacos
+* *Spring Cloud Alibaba* provides a configuration service using Alibaba Nacos
 as the data store.
- ** *Spring Cloud Config* provides a configuration service backed by a pluggable
+* *Spring Cloud Config* provides a configuration service backed by a pluggable
 data source, such as a Git repository, a data store, or HashiCorp Vault.
- ** *Spring Cloud Consul* provides a configuration service using HashiCorp Con-
+* *Spring Cloud Consul* provides a configuration service using HashiCorp Con-
 sul as the data store.
- ** *Spring Cloud Vault* provides a configuration service using HashiCorp Vault
+* *Spring Cloud Vault* provides a configuration service using HashiCorp Vault
 as the data store.
- ** *Spring Cloud Zookeeper* provides a configuration service using Apache Zoo-
+* *Spring Cloud Zookeeper* provides a configuration service using Apache Zoo-
 keeper as the data store.
 * *Cloud vendor services*--If you run your applications on a platform provided by a
 cloud vendor, you might consider using one of their configuration services.
 Spring Cloud provides integration with the main cloud vendor configuration
 services that you can use to configure your Spring Boot applications.
- ** *Spring Cloud AWS* provides integration with AWS Parameter Store and AWS
+* *Spring Cloud AWS* provides integration with AWS Parameter Store and AWS
 Secrets Manager.
- ** *Spring Cloud Azure* provides integration with Azure Key Vault.
- ** *Spring Cloud GCP* provides integration with GCP Secret Manager.
-* *Cloud platform services*--When running your applications on a Kubernetes platform, you can seamlessly use *ConfigMaps* and Secrets to configure Spring Boot.
+* *Spring Cloud Azure* provides integration with Azure Key Vault.
+* *Spring Cloud GCP* provides integration with GCP Secret Manager.
+* *Cloud platform services*--When running your applications on a Kubernetes platform, you can seamlessly use ConfigMaps and Secrets to configure Spring Boot.
+
+Your choice of configuration service will depend on your infrastructure and requirements. For example, suppose you’re running your workloads
+on Azure already, and you need a GUI to manage configuration data. In that
+case, it might make sense to use Azure Key Vault rather than running a configuration service yourself. If you want to version-control your configuration
+data with Git, Spring Cloud Config or Kubernetes ConfigMaps and Secrets
+would be a better choice. You might even compromise and use a managed
+Spring Cloud Config service offered by vendors like Azure or VMware Tanzu.
 
 The configuration server pattern for Spring is the Spring Cloud Config Server project. This is a native implementation included in the Spring Cloud family, which allows you to keep a set of configuration files distributed in folders and exposed via a REST API
+
+Spring Cloud Config Server is a project that lets you set up a configuration server
+with minimal effort. It’s a standard Spring Boot application with specific properties
+that enable the configuration server functionality and the Git repository as the con-
+figuration data backend. 
 
 On the client side, the projects using this dependency access the config server and request the corresponding configuration resources, depending on their active profiles. The only drawback of this solution is that you need to create another microservice to act as the configuration server and expose the centralized files.
 
@@ -87,8 +82,7 @@ Spring Cloud Config provides server and client-side support for externalized con
 The library relies on three parameters to identify which property file to
 use to configure a specific application:
 
-* \{application}--The name of the application as defined by the spring
-.application.name property.
+* \{application}--The name of the application as defined by the spring.application.name property.
 * \{profile}--One of the active profiles defined by the spring.profiles.active
 property.
 * \{label}--A discriminator defined by the specific configuration data repository.
@@ -104,8 +98,23 @@ Depending on your needs, you can organize the folder structure using different c
 * /application-\{profile}.yml
 * /application.yml
 
-Spring Cloud Config Server will always return the properties from the most specific path, using the application name, active
+For each application, you can either use property files named after the application itself
+and placed in the root folder (e.g., /catalog-service.yml or /catalog-service-prod.yml) or
+use the default naming and put them in a subfolder named after the application (e.g.,
+/catalog-service/application.yml or /catalog-service/application-prod.yml).
+
+You can also put application.yml or application-{profile}.yml files in the root folder
+to define default values for all applications. They can be used as a fallback whenever
+there is no more specific property source. Spring Cloud Config Server will always
+return the properties from the most specific path, using the application name, active
 profiles, and Git labels.
+
+The label concept is particularly interesting when using Git as the backend for the
+config server. For example, you could create long-lived branches of your config repo
+for different environments or short-lived branches while testing specific features.
+Spring Cloud Config Server can use the label information to return the correct con-
+figuration data from the right Git branch, tag, or commit ID.
+
 
 == Rest Endpoints
 
@@ -120,10 +129,53 @@ different combinations of the \{application}, \{profile}, and \{label} parameter
 
 image::{figures}/image-1.png[alt text]
 
+== Configuration
+=== Server Configs
+* *spring.cloud.config.server.git.timeout*
+
+scaling the Config Service is not enough. Since it’s using a remote Git
+repository as the configuration data backend, you’ll need to make that interaction
+more resilient too. First, you can define a timeout to prevent the config server from
+waiting too long to establish a connection with the remote repository. You can do so
+with the spring.cloud.config.server.git.timeout property.
+
+* *spring.cloud.config.server.git.clone-on-start*
+
+Spring Cloud Config is implemented to clone the remote repository locally upon
+the first request for configuration data. I recommend using the spring.cloud.config.server.git.clone-on-start property so that the repo clone happens at startup.
+Even though it makes the startup phase a bit slower, it makes your deployment fail
+faster if there’s any difficulty communicating with the remote repository, rather than
+waiting for the first request to find out that something is wrong. Also, it makes the first
+request from a client faster.
+
+* *spring.cloud.config.server.git.force-pull*
+
+When a local copy of the repository is created successfully, there’s a chance the
+local repo may get changed independently of the remote repo. You can ensure your
+config server always uses the same data that’s defined in the remote repository by set-
+ting the spring.cloud.config.server.git.force-pull property so that a fresh copy
+is pulled whenever the local copy is corrupted, and any local changes are discarded.
+
+* *spring.cloud.config.server.git.basedir*
+
+By default, the local repository is cloned in a folder with a random name. If needed,
+you can control where it is cloned through the spring.cloud.config.server.git.basedir property.
+
+=== Client Configs
+* spring.cloud.config.request-connect-timeout
+
+You can use the spring.cloud.config.request-connect-timeout property to control the time limit for establishing a connection with the config server. 
+
+* spring.cloud.config.request-read-timeout
+
+The spring.cloud.config.request-read-timeout property lets you limit the time spent reading configuration data from the server.
+
 == Making the configuration server resilient
 
 Spring Cloud Config is implemented to clone the remote repository locally upon
-the first request for configuration data. The local copy of the repository improves the config server's fault tolerance because it ensures it can return configuration data to the client applications even if the communication with the remote repository is temporarily failing
+the first request for configuration data. The local copy of the repository improves the config server's fault tolerance because it ensures it can return configuration data to the client applications even if the communication with the remote repository is temporarily failing (for example, if GitHub is down or there’s a problem with the network). However, if the config server
+hasn’t cloned the repository locally yet, there’s no fallback in place. That’s why it’s bet-
+ter to fail fast at startup and investigate the issue right away.
 
 to ensure it's highly available:
 
@@ -186,11 +238,20 @@ Spring Cloud Config gives you the possibility to refresh configuration in client
 they will reload the parts affected by the configuration change.
 
 . Using /actuator/refresh
- image::{figures}/image-2.png[alt text]
- This functionality is one of those administrative processes described by the 15-Factor methodology. In this case, the strategy adopted for managing the process was to embed it in the applications themselves, with the ability to activate it by calling a specific HTTP endpoint.
++
+This a simple refresh option consisting of sending a special
+POST request to a running Catalog Service instance to trigger the reloading of the con-
+figuration data that has changed (hot reload)
++
+This functionality is one of those administrative processes described by the 15-Factor methodology. In this case, the strategy adopted for managing the process was to embed it in the applications themselves, with the ability to activate it by calling a specific HTTP endpoint.
++
+In production, you’ll probably want a more automated and efficient
+way of refreshing configuration than explicitly triggering each application
+instance.
 +
 you can send a POST request to a client application through a specific endpoint that will trigger a RefreshScopeRefreshedEvent inside the application context.
  You can rely on the Spring Boot Actuator project to expose the refresh endpoint by adding a new dependency
+  image::{figures}/image-2.png[alt text]
 +
 [,xml]
 ----
@@ -225,6 +286,7 @@ figure a webhook that notifies the config server automatically whenever new
 changes are pushed to the repository. In turn, the config server can notify all
 client applications through a message broker like RabbitMQ, using Spring
 Cloud Bus.
+
 *TODO: Add this features*
 
 Spring Cloud Config has a few features for encrypting properties containing
@@ -269,21 +331,11 @@ server.port: 8888
 spring.cloud.config.server.git.uri: file://${user.home}/config-repo
 ----
 
-Below are the ways to access the configurations from the config server.
-
-* /\{application}/\{profile}[/\{label}]
-* /\{application}-\{profile}.yml
-* /\{label}/\{application}-\{profile}.yml
-* /\{application}-\{profile}.properties
-* /\{label}/\{application}-\{profile}.properties
-+
 === Client
-+
 Add maven package
 
 [source,xml]
 ----
-
 <dependency>
 <groupId>
 org.springframework.boot

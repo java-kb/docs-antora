@@ -1,7 +1,10 @@
 = Cloud Native Buildpacks
 :figures: 16-deployment/packaging/buildpacks
 
-Cloud Native Buildpacks (https://buildpacks.io) transform your application source code into images that can run on any cloud.
+Cloud Native Buildpacks (https://buildpacks.io), a project initiated
+by Heroku and Pivotal and now hosted by the CNCF. It provides a high-level abstraction for automatically transforming application source code into container images instead of using a low-level Dockerfile.
+
+Cloud Native Buildpacks transform your application source code into images that can run on any cloud.
 
 Cloud Native Buildpacks provide a different approach, focusing on consistency, security, performance, and governance. As a developer, you get a tool that automatically builds a production-ready OCI image from your application source code without having to write a Dockerfile. As an operator, you get a tool that defines, controls, and secures application artifacts within the entire organization.
 

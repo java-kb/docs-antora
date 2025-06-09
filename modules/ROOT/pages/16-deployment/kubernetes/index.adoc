@@ -5,6 +5,15 @@
 the deployment, scaling, and management of containerized applications (https://
 kubernetes.io).
 
+When you are working with containers in Docker, your deployment
+target is a machine. In the example from the previous section, it was your computer.
+In other scenarios it might be a virtual machine (VM). In any case, it’s about deploy-
+ing containers to a specific machine. However, when it comes to deploying containers
+without downtime, scaling them by leveraging the cloud’s elasticity, or connecting
+them across different hosts, you’ll need something more than a container engine.
+Instead of deploying to a specific machine, you are deploying to a cluster of machines,
+and Kubernetes, among other things, manages a cluster of machines for you
+
 When using a container topology, you need a machine with a container runtime.
 With Kubernetes, however, you switch to an orchestration topology, meaning that you
 need a cluster. A Kubernetes cluster is a set of worker machines (nodes) that run containerized applications. Every cluster has at least one worker node.

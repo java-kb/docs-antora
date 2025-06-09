@@ -5,10 +5,10 @@ GitHub Actions is a platform built into GitHub that lets you automate software w
 
 A workflow is an automated process. Each workflow
 listens to specific events that trigger its execution.
-
-Workflows should be defined in a .github/workflows folder in a GitHub repository
-root, and they should be described following the YAML format provided by GitHub
-Actions.
+For example, a workflow can be triggered by a code commit, a pull request, or a
+scheduled time. Workflows can also be triggered manually by a user.
+Workflows are defined in YAML files and can be stored in the .github/workflows folder of a GitHub repository. They can be used to build, test, package, release, and deploy applications.
+Workflows can also be used to automate tasks such as sending notifications, updating documentation, or managing issues and pull requests.
 
 Each workflow is organized into jobs that run in parallel. Each job is executed on a
 runner instance, which is a server provided by GitHub. You can choose between
@@ -20,6 +20,12 @@ plex tasks in a more structured and reproducible way. For example, you could hav
 actions for packaging an application into an executable, running tests, creating a container image, or pushing an image to a container registry. The GitHub organiza-
 tion provides a basic set of actions, but there's also a marketplace with many more
 actions developed by the community.
+
+When using actions from the GitHub marketplace, handle them
+like any other third-party application and manage the security risks accord-
+ingly. Prefer using trusted actions provided by GitHub or verified organiza-
+tions over other third-party options.
+
 
 == Create Workflows
 
@@ -33,6 +39,7 @@ new code is pushed to the repository.
 [,yml]
 ----
 name: Commit Stage
+# The workflow is triggered when new code is pushed to the repository.
 on:
   push:
 
@@ -44,7 +51,7 @@ jobs:
       contents: read
       security-events: write
     steps:
-      # Checks out the currentGit repository
+        # Checks out the currentGit repository
       - name: Checkout source code
         uses: actions/checkout@v4
         # Installs and configures a Java runtime
