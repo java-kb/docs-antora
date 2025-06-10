@@ -103,7 +103,7 @@ and placed in the root folder (e.g., /catalog-service.yml or /catalog-service-pr
 use the default naming and put them in a subfolder named after the application (e.g.,
 /catalog-service/application.yml or /catalog-service/application-prod.yml).
 
-You can also put application.yml or application-{profile}.yml files in the root folder
+You can also put application.yml or application-\{profile}.yml files in the root folder
 to define default values for all applications. They can be used as a fallback whenever
 there is no more specific property source. Spring Cloud Config Server will always
 return the properties from the most specific path, using the application name, active
@@ -412,6 +412,6 @@ class MessageRestController {
 
 * https://github.com/spring-kb/baeldung-quick-intro-to-spring-cloud-config[Baeldung Quick Intro to Spring Cloud Configuration]
 * https://github.com/spring-kb/baeldung-spring-cloud-consul[Quick Guide to Spring Cloud Consul]
-+
+
 == Samples
 * https://github.com/books-java/Learn-Microservices-with-Spring-Boot-3[Multiplication Microservices Example]
