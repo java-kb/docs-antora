@@ -1,0 +1,223 @@
+= Database Testing
+:figures: 12-db/testing
+
+Spring Boot allows you to run integration tests by
+loading only the Spring components used by a specific application slice (slice tests)
+
+The @DataJdbcTest annotation makes
+each test method run in a transaction and rolls it back at its end, keeping the database
+clean.
+
+== Configuring Testcontainers for PostgreSQL
+. Adding dependency on Testcontainers
++
+[,xml]
+----
+ <properties>
+     <testcontainersVersion>1.17.3</testcontainersVersion>
+ </properties>
+
+ <dependencyManagement>
+     <dependencies>
+         <dependency>
+             <groupId>org.testcontainers</groupId>
+             <artifactId>testcontainers-bom</artifactId>
+             <version>${testcontainersVersion}</version>
+             <type>pom</type>
+             <scope>import</scope>
+         </dependency>
+     </dependencies>
+ </dependencyManagement>
+ <dependencies>
+     <dependency>
+         <groupId>org.testcontainers</groupId>
+         <artifactId>postgresql</artifactId>
+         <scope>test</scope>
+     </dependency>
+ </dependencies>
+----
+
+. Create a new application-integration.yml file in src/test/resources, and add the
+following configuration.
++
+[,yml]
+----
+ spring:
+     datasource:
+         url: jdbc:tc:postgresql:14.12:///
+----
++
+When the integration profile is enabled, Spring Boot will use the PostgreSQL container instantiated by Testcontainers.
+. Create a Testing class, and mark it with the @DataJdbcTest
+annotation. That will trigger Spring Boot to include all Spring Data JDBC entities and
+repositories in the application context. It will also auto-configure JdbcAggregate-
+Template, a lower-level object we can use to set up the context for each test case instead
+of using the repository (the object under testing).
++
+[source,java,attributes]
+----
+import java.time.Instant;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
+
+public record Book(
+
+        @Id Long id,
+
+        @NotBlank(message = "The book ISBN must be defined.") @Pattern(regexp = "^([0-9]{10}|[0-9]{13})$", message = "The ISBN format must be valid.") String isbn,
+
+        @NotBlank(message = "The book title must be defined.") String title,
+
+        @NotBlank(message = "The book author must be defined.") String author,
+
+        @NotNull(message = "The book price must be defined.") @Positive(message = "The book price must be greater than zero.") Double price,
+
+        String publisher,
+
+        @CreatedDate Instant createdDate,
+
+        @LastModifiedDate Instant lastModifiedDate,
+
+        @Version int version
+
+) {
+    // For convenience, let’s add a static factory method to the Book record for
+    // building an object by passing only the business fields.
+
+    public static Book of(String isbn, String title, String author, Double price, String publisher) {
+        return new Book(null, isbn, title, author, price, publisher, null, null, 0);
+    }
+
+}
+----
++
+[source,java,attributes]
+----
+import java.util.Optional;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.repository.query.Modifying;
+import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.transaction.annotation.Transactional;
+
+public interface BookRepository extends CrudRepository<Book, Long> {
+    // The default methods defined by CrudRepository for Book objects are based on
+    // their @Id-annotated fields. Since the application needs to access books based
+    // on the ISBN, we must explicitly declare those operations.
+    Optional<Book> findByIsbn(String isbn);
+
+    boolean existsByIsbn(String isbn);
+    // Identifies an operation cthat will modify the database state
+    @Modifying
+    @Transactional
+    @Query("delete from Book where isbn = :isbn")
+    void deleteByIsbn(String isbn);
+
+}
+----
++
+[source,java,attributes]
+----
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import com.polarbookshop.catalogservice.config.DataConfig;
+import org.junit.jupiter.api.Test;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.jdbc.DataJdbcTest;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
+import org.springframework.test.context.ActiveProfiles;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+// Identifies a test class that focuses on Spring Data JDBC components
+@DataJdbcTest
+// Imports the data configuration (needed to enable auditing)
+@Import(DataConfig.class)
+// Disables the default behavior of relying on an embedded test database since we want to use Testcontainers
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+// Enables the “integration” profile to load configuration from application-integration.yml
+@ActiveProfiles("integration")
+class BookRepositoryJdbcTests {
+
+    @Autowired
+    private BookRepository bookRepository;
+    // A lower-level object to interact with the database
+    @Autowired
+    private JdbcAggregateTemplate jdbcAggregateTemplate;
+
+    @Test
+    void findAllBooks() {
+        var book1 = Book.of("1234561235", "Title", "Author", 12.90, "Polarsophia");
+        var book2 = Book.of("1234561236", "Another Title", "Author", 12.90, "Polarsophia");
+        jdbcAggregateTemplate.insert(book1);
+        jdbcAggregateTemplate.insert(book2);
+
+        Iterable<Book> actualBooks = bookRepository.findAll();
+
+        assertThat(StreamSupport.stream(actualBooks.spliterator(), true)
+                .filter(book -> book.isbn().equals(book1.isbn()) || book.isbn().equals(book2.isbn()))
+                .collect(Collectors.toList())).hasSize(2);
+    }
+
+    @Test
+    void findBookByIsbnWhenExisting() {
+        var bookIsbn = "1234561237";
+        var book = Book.of(bookIsbn, "Title", "Author", 12.90, "Polarsophia");
+        jdbcAggregateTemplate.insert(book);
+
+        Optional<Book> actualBook = bookRepository.findByIsbn(bookIsbn);
+
+        assertThat(actualBook).isPresent();
+        assertThat(actualBook.get().isbn()).isEqualTo(book.isbn());
+    }
+
+    @Test
+    void findBookByIsbnWhenNotExisting() {
+        Optional<Book> actualBook = bookRepository.findByIsbn("1234561238");
+        assertThat(actualBook).isEmpty();
+    }
+
+    @Test
+    void existsByIsbnWhenExisting() {
+        var bookIsbn = "1234561239";
+        var bookToCreate = Book.of(bookIsbn, "Title", "Author", 12.90, "Polarsophia");
+        jdbcAggregateTemplate.insert(bookToCreate);
+
+        boolean existing = bookRepository.existsByIsbn(bookIsbn);
+
+        assertThat(existing).isTrue();
+    }
+
+    @Test
+    void existsByIsbnWhenNotExisting() {
+        boolean existing = bookRepository.existsByIsbn("1234561240");
+        assertThat(existing).isFalse();
+    }
+
+    @Test
+    void deleteByIsbn() {
+        var bookIsbn = "1234561241";
+        var bookToCreate = Book.of(bookIsbn, "Title", "Author", 12.90, "Polarsophia");
+        var persistedBook = jdbcAggregateTemplate.insert(bookToCreate);
+
+        bookRepository.deleteByIsbn(bookIsbn);
+
+        assertThat(jdbcAggregateTemplate.findById(persistedBook.id(), Book.class)).isNull();
+    }
+
+}
+----

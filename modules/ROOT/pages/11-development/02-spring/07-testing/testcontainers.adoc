@@ -31,15 +31,3 @@ JUnit and provides lightweight, throwaway containers such as databases, message 
      </dependency>
  </dependencies>
 ----
-
-. Create a new application-integration.yml file in src/test/resources, and add the
-following configuration.
-+
-[,yml]
-----
- spring:
-     datasource:
-         url: jdbc:tc:postgresql:14.12:///
-----
-+
-When the integration profile is enabled, Spring Boot will use the PostgreSQL container instantiated by Testcontainers.

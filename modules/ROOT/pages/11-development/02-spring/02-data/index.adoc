@@ -44,6 +44,13 @@ weight, throwaway containers in your integration tests.
 tool like Flyway, which provides version control for your database.
 * Flyway should manage any database changes to ensure reproducibility, trace-
 ability, and reliability.
+*  Data sources are one of the primary causes of differences across environments. It’s
+common practice to use an in-memory database while developing locally—something
+like H2 or HSQL. But that affects the predictability and robustness of your applications.
+Even if all relational databases speak the SQL language and Spring Data JDBC provides
+generic abstractions, each vendor has its own dialect and unique features that make it
+essential to use the same database in production that you use in development and test-
+ing. Otherwise, you may not catch errors that might happen only in production.
 +
 == Spring Data JDBC or Spring Data JPA?
 +
@@ -105,48 +112,48 @@ datasource:
     # The maximum number of connections HikariCP will keep in the pool
     maximum-pool-size: 5
 ----
+== defining custom queries in Spring Data
+There are two main options for defining custom queries in Spring Data:
 
-== Testing data persistence with Spring and Testcontainers
-
-Testcontainers (https://testcontainers.org) is a Java library for testing. It supports
-JUnit and provides lightweight, throwaway containers such as databases, message brokers, and web servers. It's perfect for implementing integration tests with the actual backing services used in production. The result is more reliable and stable tests, which lead to higher-quality applications and favor continuous delivery practices.
-
-. Adding dependency on Testcontainers
+* Using the @Query annotation to provide an SQL-like statement that will be exe-
+cuted by the method.
 +
-[,xml]
+[,java]
 ----
- <properties>
-     <testcontainersVersion>1.17.3</testcontainersVersion>
- </properties>
-
- <dependencyManagement>
-     <dependencies>
-         <dependency>
-             <groupId>org.testcontainers</groupId>
-             <artifactId>testcontainers-bom</artifactId>
-             <version>${testcontainersVersion}</version>
-             <type>pom</type>
-             <scope>import</scope>
-         </dependency>
-     </dependencies>
- </dependencyManagement>
- <dependencies>
-     <dependency>
-         <groupId>org.testcontainers</groupId>
-         <artifactId>postgresql</artifactId>
-         <scope>test</scope>
-     </dependency>
- </dependencies>
+  @Modifying
+  @Transactional
+  @Query("delete from Book where isbn = :isbn")
+  void deleteByIsbn(String isbn);
 ----
 
-. Create a new application-integration.yml file in src/test/resources, and add the
-following configuration.
+* Defining query methods following a specific naming convention.
+Spring Data JPA provides full support for read and write operations.
 +
-[,yml]
-----
- spring:
-     datasource:
-         url: jdbc:tc:postgresql:14.12:///
-----
+|===
+| Repository method building block | Examples
+
+| Action
+| find, exists, delete, count
+
+| Limit
+| One, All, First10
+
+| -
+| By
+
+| Property expression
+| findByIsbn, findByTitleAndAuthor, findByAuthorOrPrice
+
+| Comparison
+| findByTitleContaining, findByIsbnEndingWith, findByPriceLessThan
+
+| Ordering operator
+| orderByTitleAsc, orderByTitleDesc
+|===
 +
-When the integration profile is enabled, Spring Boot will use the PostgreSQL container instantiated by Testcontainers.
+[,java]
+----
+  Optional<Book> findByIsbn(String isbn);
+
+  boolean existsByIsbn(String isbn);
+----

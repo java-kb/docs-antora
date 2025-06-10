@@ -27,6 +27,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
+    - run: |
+        echo "::remove-matcher owner=eslint-compact::"
+        echo "::remove-matcher owner=eslint-stylish::"
+        echo "::remove-matcher owner=tsc::"
     - name: Install Antora with the Antora Lunr Extension
       run: npm i antora @antora/lunr-extension
     - name: Generate Site

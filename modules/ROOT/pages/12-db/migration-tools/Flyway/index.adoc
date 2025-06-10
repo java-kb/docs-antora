@@ -28,34 +28,194 @@ table automatically created in the database the first time it runs. You can pict
 migrations as commits in a Git repository and the schema history table as the reposi-
 tory log containing the list of all the commits applied over time
 
+A prerequisite for using Flyway is that both the database you want to
+manage and a user with the correct access privileges exist. Once you have a
+database and a user, Flyway can manage database changes for you. You
+shouldn’t use Flyway to manage users.
+
+
 == Spring Integeration
 
 You can use Flyway in standalone mode or embedded in a Java application. Spring
 Boot provides auto-configuration for it, making it very convenient to include Flyway in
-your applications. When integrated with Spring Boot, Flyway will search for SQL
+your applications. 
+
+When integrated with Spring Boot, Flyway will search for SQL
 migrations in the src/main/resources/db/migration folder and Java migrations in
 src/main/java/db/migration.
+
+Flyway expects SQL migration files to comply with a specific naming pattern. Regular versioned migrations should follow this structure:
+
+* Prefix--V for versioned migrations
+* Version--Version number using dots or underscores to separate it into multiple
+parts (e.g., 2.0.1)
+* Separator--Two underscores: __
+* Description--Words separated by underscores
+* Suffix--.sql
 
 Running schema and data migrations is one of those administrative processes described by the 15-Factor methodology. In this case, the
 strategy adopted for managing such a process was to embed it in the application itself. By default, it's activated during the application startup phase.
 
+== Integrating Flyway in a Spring Boot application
 . add a dependency on Flyway
-```xml+++<dependency>++++++<groupId>+++org.flywaydb+++</groupId>+++ +++<artifactId>+++flyway-core+++</artifactId>++++++</dependency>++++++<dependency>++++++<groupId>+++org.flywaydb+++</groupId>+++ +++<artifactId>+++flyway-database-postgresql+++</artifactId>++++++</dependency>+++
-
-```
-
-. create a src/main/resources/db/migration folder. That's where Flyway will
-look for SQL migrations by default. Inside the folder, create a V1__Initial_schema.sql
-file, which will contain the SQL statement for initializing the database schema required by the  Service application. Flyway expects SQL migration files to comply with a specific naming pattern. Regular versioned migrations should follow this structure:
- ** Prefix--V for versioned migrations
- ** Version--Version number using dots or underscores to separate it into multiple
-parts (e.g., 2.0.1)
- ** Separator--Two underscores: __
- ** Description--Words separated by underscores
- ** Suffix--.sql
 +
-== make field mandatory
-. using an new SQL migration to enforce the field
-column to be NON NULL
-. and implementing a Java migration that adds a field to all
-the existing table rows in the database that don't have one already.
+[source,gradle,attributes]
+----
+dependencies {
+ ...
+ implementation 'org.flywaydb:flyway-core'
+}
+----
++
+[source,xml,attributes]
+----
+<!--database migration -->
+<dependency>
+    <groupId>org.flywaydb</groupId>
+    <artifactId>flyway-core</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.flywaydb</groupId>
+    <artifactId>flyway-database-postgresql</artifactId>
+</dependency>
+----
++
+. create a src/main/resources/db/migration folder. 
+. create a V1__Initial_schema.sql
+. In the V1__Initial_schema.sql migration script, you can include the SQL instructions
++
+[source,sql,attributes]
+----
+CREATE TABLE book ( 
+ id BIGSERIAL PRIMARY KEY NOT NULL, 
+ author varchar(255) NOT NULL,
+ isbn varchar(255) UNIQUE NOT NULL, 
+ price float8 NOT NULL,
+ title varchar(255) NOT NULL,
+ created_date timestamp NOT NULL,
+ last_modified_date timestamp NOT NULL,
+ version integer NOT NULL
+);
+----
+==  Evolving a database with Flyway
+You can evolve a database by adding new migrations to the src/main/resources/db/migration folder. Flyway will automatically detect them and apply them in the correct order.
+For example, if you want to add a new column to the book table, you can create a new migration script named V2__Add_publisher_column.sql with the following content:
+[source,sql,attributes]
+----
+ALTER TABLE book ADD COLUMN publisher varchar(255);
+----
+You can also use Flyway to enforce constraints on existing columns. For example, if you want to make the publisher field mandatory, you can create a new migration script named V3__Make_publisher_mandatory.sql with the following content:
+[source,sql,attributes]
+----
+ALTER TABLE book ALTER COLUMN publisher SET NOT NULL;
+----
+You can also implement a Java migration to add a default value to the existing rows in the book table that don't have a publisher defined. You can create a new Java class named V3__Make_publisher_mandatory.java with the following content:
+[source,java,attributes]
+----
+package db.migration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+public class V3__Make_publisher_mandatory extends BaseJavaMigration {
+    @Override
+    public void migrate(Context context) throws SQLException {
+        Connection connection = context.getConnection();
+        PreparedStatement statement = connection.prepareStatement(
+            "UPDATE book SET publisher = 'Unknown' WHERE publisher IS NULL");
+        statement.executeUpdate();
+        statement.close();
+    }
+}
+----
+This Java migration will set the publisher field to 'Unknown' for all existing rows in the book table that don't have a publisher defined.
+You can then run the Flyway migration by executing the following command:
+[source,console]
+----
+./gradlew flywayMigrate
+----
+This will apply all the pending migrations in the correct order, including the new ones you just created.
+//          == Adding a new column to an existing table
+// . using an SQL migration to add a new column to the table
+// . and implementing a Java migration that adds a default value to the existing rows in the
+// table that don't have a value for the new column.
+//          == Making a field mandatory
+//
+// . using an SQL migration to alter the existing column in the table to
+//          be NON NULL
+// . and implementing a Java migration that adds a default value to the existing rows in the
+// table that don't have a value for the new column.
+== Adding a new column to an existing table
+You can add a new column to an existing table by creating a new migration script. For example, if you want to add a publisher field to the book table, you can create a new migration script named V2__Add_publisher_column.sql with the following content:
+[source,sql,attributes]
+----
+ALTER TABLE book ADD COLUMN publisher varchar(255);
+----
+You can also implement a Java migration to add a default value to the existing rows in the book table that don't have a publisher defined. You can create a new Java class named V2__Add_publisher_column.java with the following content:
+[source,java,attributes]
+----
+package db.migration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;               
+public class V2__Add_publisher_column extends BaseJavaMigration {
+    @Override
+    public void migrate(Context context) throws SQLException {
+        Connection connection = context.getConnection();
+        PreparedStatement statement = connection.prepareStatement(
+            "UPDATE book SET publisher = 'Unknown' WHERE publisher IS NULL");
+        statement.executeUpdate();
+        statement.close();
+    }
+}
+}
+----
+This Java migration will set the publisher field to 'Unknown' for all existing rows in the book table that don't have a publisher defined. You can then run the Flyway migration by executing the following command:
+[source,console]      
+----
+./gradlew flywayMigrate
+----
+This will apply all the pending migrations in the correct order, including the new ones you just created.
+
+== Making a field mandatory
+You can make a field mandatory by altering the existing column in the table to be NON NULL. For example, if you want to make the publisher field mandatory, you can create a new migration script named V3__Make_publisher_mandatory.sql with the following content:
+[source,sql,attributes]
+----
+ALTER TABLE book ALTER COLUMN publisher SET NOT NULL;
+----
+You can also implement a Java migration to add a default value to the existing rows in the book table that don't have a publisher defined. You can create a new Java class named V3__Make_publisher_mandatory.java with the following content:
+[source,java,attributes]
+----
+package db.migration;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;       
+public class V3__Make_publisher_mandatory extends BaseJavaMigration {
+    @Override
+    public void migrate(Context context) throws SQLException {
+        Connection connection = context.getConnection();
+        PreparedStatement statement = connection.prepareStatement(
+            "UPDATE book SET publisher = 'Unknown' WHERE publisher IS NULL");
+        statement.executeUpdate();
+        statement.close();
+    }
+}
+----
+This Java migration will set the publisher field to 'Unknown' for all existing rows in the book table that don't have a publisher defined. You can then run the Flyway migration by executing the following command:
+[source,console]
+----
+./gradlew flywayMigrate
+----
+
+This two-step approach is very common to ensure backward compatibility during an
+upgrade. there are usually multiple instances of the
+same application running. Deploying a new version is generally done through a rolling
+upgrade procedure consisting of updating one (or a few) instances at a time to ensure
+zero downtime. There will be both old and new versions of the application running
+during the upgrade, so it’s paramount that the old instances can still run correctly even
+after the database changes introduced in the latest version have been applied. 

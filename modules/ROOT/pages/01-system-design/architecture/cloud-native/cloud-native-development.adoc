@@ -270,6 +270,11 @@ functions configured in a stateless platform to be triggered when
 certain events happen, or you can embed them in the application itself,
 activating them by calling a specific endpoint.
 
+administrative processes like:
+
+* Running schema and data migrations 
+
+
 == 11 Port binding
 
 Applications following the 15-Factor methodology should be

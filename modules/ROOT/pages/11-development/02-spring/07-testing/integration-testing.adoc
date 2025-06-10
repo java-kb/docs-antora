@@ -54,16 +54,6 @@ running server, the TestRestTemplate utility lets you perform REST calls to an a
 
 // Loads a full Spring web application context and a Servlet container listening on a random port
 
-[,java]
-----
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class CatalogServiceApplicationTests {
-
-
-	@Autowired
-	private WebTestClient webTestClient;
-}
-----
 
 == WebTestClient
 
@@ -75,6 +65,18 @@ reactive applications, optimizing learning and productivity.
 
 WebTestClient is part of the Spring WebFlux project, you'll need to add a
 new dependency in your project(org.springframework.boot:spring-boot-starter-webflux)
+
+[,java]
+----
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class CatalogServiceApplicationTests {
+
+
+	@Autowired
+	private WebTestClient webTestClient;
+}
+----
+== Integration tests with @SpringBootTest and Testcontainers
 
 [,java]
 ----
@@ -199,8 +201,6 @@ class CatalogServiceApplicationTests {
 }
 ----
 
-
-
 == @WebMvcTest
 
 We can test that Spring MVC controllers work as intended by using the @WebMvcTest annotation, which loads a Spring application context in a mock web environment (no running server), configures the Spring MVC infrastructure, and includes only the beans used by the MVC layer, like @RestController and @RestControllerAdvice. It's also a good idea to limit the context to the beans used by the specific controller under test. We can do so by providing the controller class as an argument to the @WebMvcTest annotation in a new BookControllerMvcTests class.
@@ -297,34 +297,3 @@ class BookJsonTests {
 
 You can run integration tests for the Spring Data JDBC slice using the @DataJdbcTest annotation.
 
-[,java]
-----
-@DataJdbcTest
-@Import(DataConfig.class)
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@ActiveProfiles("integration")
-class BookRepositoryJdbcTests {
-
-    @Autowired
-    private BookRepository bookRepository;
-
-    @Autowired
-    private JdbcAggregateTemplate jdbcAggregateTemplate;
-
-    @Test
-    void findAllBooks() {
-        var book1 = Book.of("1234561235", "Title", "Author", 12.90, "Polarsophia");
-        var book2 = Book.of("1234561236", "Another Title", "Author", 12.90, "Polarsophia");
-        jdbcAggregateTemplate.insert(book1);
-        jdbcAggregateTemplate.insert(book2);
-
-        Iterable<Book> actualBooks = bookRepository.findAll();
-
-        assertThat(StreamSupport.stream(actualBooks.spliterator(), true)
-                .filter(book -> book.isbn().equals(book1.isbn()) || book.isbn().equals(book2.isbn()))
-                .collect(Collectors.toList())).hasSize(2);
-    }
-
-    @Test
-}
-----

@@ -18,8 +18,20 @@ terms of the three basic building blocks of cloud infrastructure: compute, stora
 network. As shown in figure 5.1, application services use computing and networking
 resources because they are stateless. On the other hand, data services are stateful and
 require storage to persist the state.
-
-
+*  Data sources are one of the primary causes of differences across environments. It’s
+common practice to use an in-memory database while developing locally—something
+like H2 or HSQL. But that affects the predictability and robustness of your applications.
+Even if all relational databases speak the SQL language and Spring Data JDBC provides
+generic abstractions, each vendor has its own dialect and unique features that make it
+essential to use the same database in production that you use in development and test-
+ing. Otherwise, you may not catch errors that might happen only in production.
++
+Another reason for using in-memory databases is to make integration tests more accessible. However, integration tests are also supposed to test the integration with your application’s exter-
+nal services. Using something like H2 makes those tests less reliable. Each commit
+should be a candidate for release when adopting a continuous delivery approach.
+Suppose the autotests run by the deployment pipeline are not using the same backing
+services used in production. In that case, you’ll need to do extra manual testing
+before deploying the application safely in production because you can’t be sure it 
 == Choosing a Database
 requirements of project, such as:
 

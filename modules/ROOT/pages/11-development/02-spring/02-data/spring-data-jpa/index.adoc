@@ -5,15 +5,57 @@ Spring Data JPA works with mutating objects, so you can't use Java
 records. JPA entity classes must be marked with the @Entity annotation and
 expose a no-args constructor. JPA identifiers are annotated with @Id and
 @Version from the javax.persistence package instead of org.springframework.data.annotation.
+== Enabling and configuring JDBC 
+. Add dependencies
+  dependencies {
+  ...
+  implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+  runtimeOnly 'org.postgresql:postgresql'
+  }
 
+  <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jdbc</artifactId>
+  </dependency>
+  <dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+    <scope>runtime</scope>
+  </dependency>
+
+. Configuring the connection to a database using JDBC
+
+  spring:
+    datasource:
+      username: user
+      password: password
+      url: jdbc:postgresql://localhost:5432/polardb_catalog
+      hikari:
+        # The maximum time (ms) to spend waiting to get a connection from the pool
+        connection-timeout: 2000 #ms
+        # The maximum number of connections HikariCP will keep in the pool
+        maximum-pool-size: 5
+
+== Defining persistent entities with Spring Data
+
+== CREATING THE DATABASE SCHEMA
+Hibernate, the foundation for Spring Data JPA, offers an interesting
+feature for automatically generating schemas from the entities defined in
+Java. it’s better to create
+and evolve relational resources with a more sophisticated tool, like Flyway or Liquibase,
+which will let you version-control your database. 
 == Enabling and configuring JPA auditing
 
 When persisting data, it's useful to know the creation date for each row in a table and
 the date when it was updated last. After securing an application with authentication
 and authorization, you can even register who created each entity and recently updated
 it. All of that is called database auditing.
- With Spring Data JPA, you can enable auditing for all the persistent entities
-using the @EnableJpaAuditing annotation on a configuration class.
+
+In Spring Data JPA, you would use the @EnableJpaAuditing annota-
+tion to enable JPA auditing, and you would annotate the entity class with
+@EntityListeners(AuditingEntityListener.class) to make it listen to audit
+events, which doesn’t happen automatically as in Spring Data JDBC.
+
 
 [,java]
 ----
@@ -50,47 +92,4 @@ private Instant createdDate;
 private Instant lastModifiedDate;
 ----
 
-There are two main options for defining custom queries in Spring Data:
 
-* Using the @Query annotation to provide an SQL-like statement that will be exe-
-cuted by the method.
-+
-[,java]
-----
-  @Modifying
-  @Transactional
-  @Query("delete from Book where isbn = :isbn")
-  void deleteByIsbn(String isbn);
-----
-
-* Defining query methods following a specific naming convention.
-Spring Data JPA provides full support for read and write operations.
-+
-|===
-| Repository method building block | Examples
-
-| Action
-| find, exists, delete, count
-
-| Limit
-| One, All, First10
-
-| -
-| By
-
-| Property expression
-| findByIsbn, findByTitleAndAuthor, findByAuthorOrPrice
-
-| Comparison
-| findByTitleContaining, findByIsbnEndingWith, findByPriceLessThan
-
-| Ordering operator
-| orderByTitleAsc, orderByTitleDesc
-|===
-+
-[,java]
-----
-  Optional<Book> findByIsbn(String isbn);
-
-  boolean existsByIsbn(String isbn);
-----

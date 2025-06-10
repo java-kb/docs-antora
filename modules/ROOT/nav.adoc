@@ -137,6 +137,7 @@
 *** xref:11-development/02-spring/07-testing/unit-testing.adoc[Spring Unit Testing]
 *** xref:11-development/02-spring/07-testing/integration-testing.adoc[Spring Integration Testing]
 **** xref:11-development/02-spring/07-testing/testcontainers.adoc[Testcontainers]
+**** xref:11-development/02-spring/07-testing/db.adoc[DB Testing]
 *** xref:11-development/02-spring/08-development/index.adoc[Spring Development]
 **** xref:11-development/02-spring/08-development/debugging.adoc[Spring Debugging]
 *** xref:11-development/02-spring/09-cookbook/index.adoc[Spring CookBooks]

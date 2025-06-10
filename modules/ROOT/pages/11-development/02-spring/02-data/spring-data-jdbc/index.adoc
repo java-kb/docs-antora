@@ -104,6 +104,14 @@ public record Book(
 
 }
 ----
+As a persistent entity, the Book record will be automatically mapped to relational
+resources. Class and field names are transformed into lowercase, and the camel case is
+translated into words joined by underscores. The Book record will result in the book
+table, the title field will result in the title column, the price field will result in theprice column, and so on. 
+
+image::{figures}/mapping between the Java object and the relational table.png[Java classes marked as persistent entities are automatically mapped by Spring Data JDBC to 
+relational resources in the database.]
+
 
 == Optimistic locking
 It’s also OK when a single user updates an existing Entity object in isolation. But what happens if the same entity
@@ -119,13 +127,50 @@ When the @Id field is null and the @Version field is 0, Spring Data JDBC assumes
 it’s a new object. Consequently, it relies on the database to generate an identifier
 when inserting the new row in the table. When values are provided, it expects to find
 the object in the database already and to update it.
+== CREATING THE DATABASE SCHEMA
+The database must have a table defined in DB for the mapping to
+work. Spring Data offers a feature to initialize a data source at startup time. By default,
+you can use a schema.sql file to create a schema and a data.sql file to insert data in the
+newly created tables. Such files should be placed in the src/main/resources folder.
+
+That is a convenient feature, and it’s useful for demos and experiments. However, it’s
+too limited for use in production. it’s better to create
+and evolve relational resources with a more sophisticated tool, like Flyway or Liquibase,
+which will let you version-control your database. 
+
+[source,sql,attributes]
+----
+DROP TABLE IF EXISTS book; 
+CREATE TABLE book (
+ id BIGSERIAL PRIMARY KEY NOT NULL, 
+ author varchar(255) NOT NULL,
+ isbn varchar(255) UNIQUE NOT NULL, 
+ price float8 NOT NULL,
+ title varchar(255) NOT NULL, 
+ version integer NOT NULL 
+);
+----
+By default, Spring Data loads the schema.sql file only when using an embedded, in-
+memory database. When using Other DB, we need to enable the functionality
+explicitly. In the application.yml file for your service project, add the follow-
+ing configuration to initialize the database schema from the schema.sql file.
+[source,yml,attributes]
+----
+spring:
+ sql:
+ init:
+ mode: always
+
+----
+
 == Enabling and configuring JDBC auditing
 
 When persisting data, it's useful to know the creation date for each row in a table and
 the date when it was updated last. After securing an application with authentication
 and authorization, you can even register who created each entity and recently updated
 it. All of that is called database auditing.
- With Spring Data JDBC, you can enable auditing for all the persistent entities
+
+With Spring Data JDBC, you can enable auditing for all the persistent entities
 using the @EnableJdbcAuditing annotation on a configuration class.
 
 [,java]
@@ -159,50 +204,6 @@ source.
 When using Spring Data repositories, your responsibility is limited to defining an
 interface. At startup time, Spring Data will generate an implementation for your interface on the fly.
 
-There are two main options for defining custom queries in Spring Data:
-
-* Using the @Query annotation to provide an SQL-like statement that will be exe-
-cuted by the method.
-+
-[,java]
-----
-  @Modifying
-  @Transactional
-  @Query("delete from Book where isbn = :isbn")
-  void deleteByIsbn(String isbn);
-----
-
-* Defining query methods following a specific naming convention.
-Spring Data JDBC supports this option only for read operations.
-+
-|===
-| Repository method building block | Examples
-
-| Action
-| find, exists, delete, count
-
-| Limit
-| One, All, First10
-
-| -
-| By
-
-| Property expression
-| findByIsbn, findByTitleAndAuthor, findByAuthorOrPrice
-
-| Comparison
-| findByTitleContaining, findByIsbnEndingWith, findByPriceLessThan
-
-| Ordering operator
-| orderByTitleAsc, orderByTitleDesc
-|===
-+
-[,java]
-----
-  Optional<Book> findByIsbn(String isbn);
-
-  boolean existsByIsbn(String isbn);
-----
 
 == Defining transactional contexts
 
@@ -210,7 +211,8 @@ The repositories provided by Spring Data come configured with transactional con-
 texts for all the operations. For example, all methods in CrudRepository are transac-
 tional. That means you can safely call the saveAll() method, knowing that it will be
 executed in a transaction.
- When you add your own query methods, it's up
+
+When you add your own query methods, it's up
 to you to define which ones should be part of a transaction. You can rely on the
 declarative transaction management provided by the Spring Framework and use
 the @Transactional annotation (from the org.springframework.transaction
