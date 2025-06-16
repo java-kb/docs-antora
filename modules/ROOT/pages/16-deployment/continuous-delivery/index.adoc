@@ -38,14 +38,42 @@ At the end of this stage, an executable application artifact is published to an 
 container registry. This stage supports the continuous integration practice.
 
 the first few steps in the commit stage
-image::{figures}/image.png[The first part of the commit stage in a deployment pipeline]
+image::{figures}/Deployment pipeline - commit stage.png[The first part of the commit stage in a deployment pipeline]
+
 
 * After a developer pushes new code to the mainline
 * the commit stage starts by checking out the source code from the repository. The starting point is always a commit to the main branch.
 * Following continuous integration practices, we'll aim to work in
 small steps and integrate our changes with the main branch multiple times a day(continuously).
 * Next, the pipeline can perform several types of static code analysis. For this example, vulnerability scanning, static code analysis to identify security issues and check compliance with specific coding standards (code linting).
-* Finally, the pipeline builds the application and runs automated tests. In the commit stage, we include technically focused tests that don't require deploying the entire application. These are unit tests and often integration tests. If the integration tests take too long, it's better to move them to the acceptance stage to keep the commit stage fast.
+* the pipeline builds the application and runs automated tests. 
+* In the commit stage, we include technically focused tests that don't require deploying the entire application. These are unit tests and often integration tests. If the integration tests take too long, it's better to move them to the acceptance stage to keep the commit stage fast.
+* Once a release candidate is published, several parties can download it and use it,
+including the next stages in the deployment pipeline. How can we ensure that all
+interested parties use a legitimate container image from the Polar Bookshop project,
+and not one that has been compromised? We can achieve that by signing the image.
+After the publishing step, we could add a new step for signing the release candidate.
+For example, we could use Sigstore (www.sigstore.dev), a non-profit service that pro-
+vides open source tools for signing, verifying, and protecting software integrity.
+* After a developer commits new code
+to the mainline, this stage goes through build, unit tests, integration tests, static code
+analysis, s, it’s
+time to package the application as an executable artifact and publish it. At the end of this stage, an executable application artifact is
+published to an artifact repository. That is a release candidate. 
+
+* An essential idea in continuous delivery, also present in the 15-Factor methodol-
+ogy, is that you should build artifacts only once. At the end of the commit stage, we’ll
+produce a container image that we can reuse in any following stage in the deployment
+pipeline up to production. If the pipeline proves something is wrong (a test fails) at
+any point, the release candidate is rejected. If the release candidate goes through all
+subsequent stages successfully, it’s proven to be ready for deployment in production.
+
+* After we build an executable artifact, we can perform additional operations before
+publishing it. For example, we could scan it for vulnerabilities. That’s what we’re
+going to do with grype, much as we did for the codebase. A container image includes
+application libraries but also system libraries that were not included in the previous
+security analysis. That’s why we need to scan both the codebase and the artifact for vul-
+nerabilities. 
 
 === Acceptance stage
 

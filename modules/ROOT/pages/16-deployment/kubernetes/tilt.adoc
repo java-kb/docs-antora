@@ -1,0 +1,84 @@
+= Tilt
+:figures: 16-deployment/kubernetes
+== Local Kubernetes development with Tilt
+After defining the Deployment and Service manifests, you probably don’t want to keep rebuilding container images manually and using the kubectl client to update the Pods whenever you make a change. 
+
+Tilt is a tool that automates your local development workflow with Kubernetes:
+you work on the application while Tilt takes care of building the image, deploy-
+ing it to your local Kubernetes cluster, and keeping it up-to-date whenever you
+change something in the code.
+
+Tilt takes care of many infrastructural concerns and lets you focus more on the
+business logic of your applications.
+
+Tilt aims at providing a good developer experience when working
+on Kubernetes. It’s an open source tool that offers features for building, deploying,
+and managing containerized workloads in your local environment. 
+
+a typical workflow will automate the following steps:
+
+* Package a Spring Boot application as a container image using Cloud Native
+Buildpacks.
+* Upload the image to a Kubernetes cluster (in our case, the one created with
+minikube).
+* Apply all the Kubernetes objects declared in the YAML manifests.
+* Enable the port-forwarding functionality to access applications from your local
+computer.
+* Give you easy access to the logs from the applications running on the cluster.
+
+Go to your Catalog Service project (catalog-service) and create a file named “Tiltfile” (with no extension) in the root folder
+[source,python,attributes]
+----
+# Build
+custom_build(
+    # Name of the container image
+    ref = 'catalog-service',
+    # Command to build the container image
+    # On Windows, replace $EXPECTED_REF with %EXPECTED_REF%
+    command = './mvnw spring-boot:build-image -DimageName=$EXPECTED_REF',
+    # Files to watch that trigger a new build
+    deps = ['pom.xml', './target/classes'],
+    live_update = [
+        sync('./target/classes', '/workspace/BOOT-INF/classes')
+  ]
+)
+
+# Deploy
+k8s_yaml(['k8s/deployment.yml', 'k8s/service.yml'])
+
+# Manage
+k8s_resource('catalog-service', port_forwards=['9001'])
+----
+Open a Terminal window, navigate to the root folder of your Catalog Service project, and run the following command to start Tilt:
+
+tilt up
+
+The process started by the tilt up command will keep running until you explicitly
+stop it with Ctrl-C. 
+
+Go to the URL where Tilt started its services (by default, it
+should be http://localhost:10350), and monitor the process that Tilt follows to build
+and deploy Catalog Service
+
+To stop the Tilt process in the Catalog Service project and run the following command to undeploy the application: 
+
+tilt down
+
+== Applications deployment on a local Kubernetes cluster
+Tilt is a convenient tool for setting up a local development workflow on Kubernetes. We defined a Tiltfile in each application project to configure Tilt. When working on a specific application, we can run tilt up from within the project.
+
+In case we need to run all the applications locally, Tilt allows to combine multiple Tiltfiles together and run multiple applications at once. If you want to do that, run tilt up in this folder. Remember to start a local Kubernetes cluster and deploy the platform services first.
+
+When each project is tracked in a separate Git repository, you can either ensure you check them out in sibling folders on your localhost or let Tilt do that.
+
+[source,python,attributes]
+----
+include('../../../../config-service/Tiltfile')
+include('../../../../catalog-service/Tiltfile')
+
+update_settings(max_parallel_updates=1)
+----
+
+== Refreences
+* https://tilt.dev/
+* https://paketo.io/docs/howto/java/#using-tilt-with-paketo-buildpacks

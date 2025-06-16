@@ -1,4 +1,4 @@
-= Consul
+= Consul Service Discovery
 :figures: 07-discovery/servers
 
 Consul (https://developer.hashicorp.com/consul), a tool that provides service discovery among other features and has also good integration

@@ -32,6 +32,7 @@ should be a candidate for release when adopting a continuous delivery approach.
 Suppose the autotests run by the deployment pipeline are not using the same backing
 services used in production. In that case, you’ll need to do extra manual testing
 before deploying the application safely in production because you can’t be sure it 
+
 == Choosing a Database
 requirements of project, such as:
 

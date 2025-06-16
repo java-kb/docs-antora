@@ -22,8 +22,117 @@ By default, any Spring project created from Spring Initializr contains the sprin
 
 unit tests includes:
 
-== business logic of an application 
-== validation logic
+==  Testing the JSON serialization with @JsonTest
+By default, Spring Boot automatically configures the Jackson library to parse
+Java objects into JSON (serialization) and vice versa (deserialization).
+
+Using the @JsonTest annotation, you can test JSON serialization and deserializa-
+tion for your domain objects. @JsonTest loads a Spring application context and auto-
+configures the JSON mappers for the specific library in use (by default, it’s Jackson).
+Furthermore, it configures the JacksonTester utility, which you can use to check that
+the JSON mapping works as expected, relying on the JsonPath and JSONAssert libraries.
+
+JsonPath provides expressions you can use to navigate a JSON object
+and extract data from it. For example, if I wanted to get the isbn field from
+the Book object’s JSON representation, I could use the following JsonPath
+expression: @.isbn. For more information on the JsonPath library, you can
+refer to the project documentation: https://github.com/json-path/JsonPath.
+[source,java,attributes]
+----
+public record Book(
+
+        @Id Long id,
+
+        @NotBlank(message = "The book ISBN must be defined.") @Pattern(regexp = "^([0-9]{10}|[0-9]{13})$", message = "The ISBN format must be valid.") String isbn,
+
+        @NotBlank(message = "The book title must be defined.") String title,
+
+        @NotBlank(message = "The book author must be defined.") String author,
+
+        @NotNull(message = "The book price must be defined.") @Positive(message = "The book price must be greater than zero.") Double price,
+
+        String publisher,
+
+        @CreatedDate Instant createdDate,
+
+        @LastModifiedDate Instant lastModifiedDate,
+
+        @Version int version
+
+) {
+    // For convenience, let’s add a static factory method to the Book record for
+    // building an object by passing only the business fields.
+
+    public static Book of(String isbn, String title, String author, Double price, String publisher) {
+        return new Book(null, isbn, title, author, price, publisher, null, null, 0);
+    }
+
+}
+----
+[source,java,attributes]
+----
+// Identifies a test class that focuses on JSON serialization
+@JsonTest
+class BookJsonTests {
+
+        // Utility class to assert JSON serialization and deserialization
+        @Autowired
+        private JacksonTester<Book> json;
+
+        @Test
+        void testSerialize() throws Exception {
+                var now = Instant.now();
+                var book = new Book(394L, "1234567890", "Title", "Author", 9.90, "Polarsophia", now, now, 21);
+                // Verifying the parsing from Java to JSON, using the JsonPath format to
+                // navigate the JSON object
+                var jsonContent = json.write(book);
+                assertThat(jsonContent).extractingJsonPathNumberValue("@.id")
+                                .isEqualTo(book.id().intValue());
+                assertThat(jsonContent).extractingJsonPathStringValue("@.isbn")
+                                .isEqualTo(book.isbn());
+                assertThat(jsonContent).extractingJsonPathStringValue("@.title")
+                                .isEqualTo(book.title());
+                assertThat(jsonContent).extractingJsonPathStringValue("@.author")
+                                .isEqualTo(book.author());
+                assertThat(jsonContent).extractingJsonPathNumberValue("@.price")
+                                .isEqualTo(book.price());
+                assertThat(jsonContent).extractingJsonPathStringValue("@.publisher")
+                                .isEqualTo(book.publisher());
+                assertThat(jsonContent).extractingJsonPathStringValue("@.createdDate")
+                                .isEqualTo(book.createdDate().toString());
+                assertThat(jsonContent).extractingJsonPathStringValue("@.lastModifiedDate")
+                                .isEqualTo(book.lastModifiedDate().toString());
+                assertThat(jsonContent).extractingJsonPathNumberValue("@.version")
+                                .isEqualTo(book.version());
+        }
+
+        @Test
+        void testDeserialize() throws Exception {
+                var instant = Instant.parse("2021-09-07T22:50:37.135029Z");
+                // Defines a JSON object using the Java text block feature
+                var content = """
+                                {
+                                    "id": 394,
+                                    "isbn": "1234567890",
+                                    "title": "Title",
+                                    "author": "Author",
+                                    "price": 9.90,
+                                    "publisher": "Polarsophia",
+                                    "createdDate": "2021-09-07T22:50:37.135029Z",
+                                    "lastModifiedDate": "2021-09-07T22:50:37.135029Z",
+                                    "version": 21
+                                }
+                                """;
+                // Verifies the parsing from JSON to Java
+                assertThat(json.parse(content))
+                                .usingRecursiveComparison()
+                                .isEqualTo(new Book(394L, "1234567890", "Title", "Author", 9.90, "Polarsophia", instant,
+                                                instant, 21));
+        }
+
+}
+----
+== Testing Validation logic
 [source,java,attributes]
 ----
 import java.time.Instant;
@@ -177,7 +286,419 @@ class BookValidationTests {
 }
 ----
       
+[source,java,attributes]
+----
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-== data access logic
-== service logic        
-== controller logic
+public record OrderRequest(
+
+        @NotBlank(message = "The book ISBN must be defined.") String isbn,
+
+        @NotNull(message = "The book quantity must be defined.") @Min(value = 1, message = "You must order at least 1 item.") @Max(value = 5, message = "You cannot order more than 5 items.") Integer quantity
+
+) {
+}
+----
+[source,java,attributes]
+----
+import java.util.Set;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class OrderRequestValidationTests {
+
+    private static Validator validator;
+
+    @BeforeAll
+    static void setUp() {
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
+    }
+
+    @Test
+    void whenAllFieldsCorrectThenValidationSucceeds() {
+        var orderRequest = new OrderRequest("1234567890", 1);
+        Set<ConstraintViolation<OrderRequest>> violations = validator.validate(orderRequest);
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void whenIsbnNotDefinedThenValidationFails() {
+        var orderRequest = new OrderRequest("", 1);
+        Set<ConstraintViolation<OrderRequest>> violations = validator.validate(orderRequest);
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage())
+                .isEqualTo("The book ISBN must be defined.");
+    }
+
+    @Test
+    void whenQuantityIsNotDefinedThenValidationFails() {
+        var orderRequest = new OrderRequest("1234567890", null);
+        Set<ConstraintViolation<OrderRequest>> violations = validator.validate(orderRequest);
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage())
+                .isEqualTo("The book quantity must be defined.");
+    }
+
+    @Test
+    void whenQuantityIsLowerThanMinThenValidationFails() {
+        var orderRequest = new OrderRequest("1234567890", 0);
+        Set<ConstraintViolation<OrderRequest>> violations = validator.validate(orderRequest);
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage())
+                .isEqualTo("You must order at least 1 item.");
+    }
+
+    @Test
+    void whenQuantityIsGreaterThanMaxThenValidationFails() {
+        var orderRequest = new OrderRequest("1234567890", 7);
+        Set<ConstraintViolation<OrderRequest>> violations = validator.validate(orderRequest);
+        assertThat(violations).hasSize(1);
+        assertThat(violations.iterator().next().getMessage())
+                .isEqualTo("You cannot order more than 5 items.");
+    }
+
+}
+----
+== service logic     
+[source,java,attributes]
+----
+@Service
+public class BookService {
+
+    private final BookRepository bookRepository;
+
+    public BookService(BookRepository bookRepository) {
+        this.bookRepository = bookRepository;
+    }
+
+    public Iterable<Book> viewBookList() {
+        return bookRepository.findAll();
+    }
+
+    public Book viewBookDetails(String isbn) {
+        return bookRepository.findByIsbn(isbn)
+                .orElseThrow(() -> new BookNotFoundException(isbn));
+    }
+
+    public Book addBookToCatalog(Book book) {
+        if (bookRepository.existsByIsbn(book.isbn())) {
+            throw new BookAlreadyExistsException(book.isbn());
+        }
+        return bookRepository.save(book);
+    }
+
+    public void removeBookFromCatalog(String isbn) {
+        bookRepository.deleteByIsbn(isbn);
+    }
+
+    public Book editBookDetails(String isbn, Book book) {
+        return bookRepository.findByIsbn(isbn)
+                .map(existingBook -> {
+                    /*
+                     * Uses the last modified date of the existing book record. It will be
+                     * updated automatically by Spring Data if the operation succeeds.
+                     */
+                    var bookToUpdate = new Book(
+                            existingBook.id(),
+                            existingBook.isbn(),
+                            book.title(),
+                            book.author(),
+                            book.price(),
+                            book.publisher(),
+                            existingBook.createdDate(),
+                            existingBook.lastModifiedDate(),
+                            existingBook.version());
+
+                    return bookRepository.save(bookToUpdate);
+                })
+                .orElseGet(() -> addBookToCatalog(book));
+    }
+
+}
+----
+[source,java,attributes]
+----
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class BookServiceTest {
+
+    @Mock
+    private BookRepository bookRepository;
+
+    @InjectMocks
+    private BookService bookService;
+
+    @Test
+    void whenBookToCreateAlreadyExistsThenThrows() {
+        var bookIsbn = "1234561232";
+        var bookToCreate = Book.of(bookIsbn, "Title", "Author", 9.90, "Polarsophia");
+        when(bookRepository.existsByIsbn(bookIsbn)).thenReturn(true);
+        assertThatThrownBy(() -> bookService.addBookToCatalog(bookToCreate))
+                .isInstanceOf(BookAlreadyExistsException.class)
+                .hasMessage("A book with ISBN " + bookIsbn + " already exists.");
+    }
+
+	@Test
+	void whenBookToReadDoesNotExistThenThrows() {
+		var bookIsbn = "1234561232";
+		when(bookRepository.findByIsbn(bookIsbn)).thenReturn(Optional.empty());
+		assertThatThrownBy(() -> bookService.viewBookDetails(bookIsbn))
+				.isInstanceOf(BookNotFoundException.class)
+				.hasMessage("The book with ISBN " + bookIsbn + " was not found.");
+	}
+
+}
+----
+== Testing REST controllers with @WebMvcTest
+We can test that Spring MVC controllers work as intended by using the @WebMvc-
+Test annotation, which loads a Spring application context in a mock web environ-
+ment (no running server), configures the Spring MVC infrastructure, and includes
+only the beans used by the MVC layer, like @RestController and @RestController-
+Advice. It’s also a good idea to limit the context to the beans used by the specific con-
+troller under test. We can do so by providing the controller class as an argument to
+the @WebMvcTest annotation in a new BookControllerMvcTests class.
+[source,java,attributes]
+----
+@RestController
+@RequestMapping("books")
+public class BookController {
+
+    private final BookService bookService;
+
+    public BookController(BookService bookService) {
+        this.bookService = bookService;
+    }
+
+    @GetMapping
+    public Iterable<Book> get() {
+        return bookService.viewBookList();
+    }
+
+    @GetMapping("{isbn}")
+    public Book getByIsbn(@PathVariable String isbn) {
+        return bookService.viewBookDetails(isbn);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Book post(@Valid @RequestBody Book book) {
+        return bookService.addBookToCatalog(book);
+    }
+
+    @DeleteMapping("{isbn}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable String isbn) {
+        bookService.removeBookFromCatalog(isbn);
+    }
+
+    @PutMapping("{isbn}")
+    public Book put(@PathVariable String isbn, @Valid @RequestBody Book book) {
+        return bookService.editBookDetails(isbn, book);
+    }
+
+}
+----
+[source,java,attributes]
+----
+// Identifies a test class that focuses on Spring MVC components, explicitly targeting BookController
+@WebMvcTest(BookController.class)
+class BookControllerMvcTests {
+
+    // Utility class to test the web layer in a mock environment
+    @Autowired
+    private MockMvc mockMvc;
+    // Adds a mock of BookService to the Spring application context
+    @MockBean
+    private BookService bookService;
+
+    @Test
+    void whenGetBookNotExistingThenShouldReturn404() throws Exception {
+        String isbn = "73737313940";
+
+        // Defines the expected behavior for the BookService mock bean
+        given(bookService.viewBookDetails(isbn))
+                .willThrow(BookNotFoundException.class);
+
+        // MockMvc is used to perform an HTTP GET request and verify the result.
+        // and Expects the response to have a “404 Not Found” status
+        mockMvc.perform(get("/books/" + isbn))
+                .andExpect(status().isNotFound());
+    }
+
+}
+----
+== Testing REST clients with a mock web server
+[source,java,attributes]
+----
+@Component
+public class BookClient {
+
+    private static final String BOOKS_ROOT_API = "/books/";
+    private final WebClient webClient;
+
+    public BookClient(WebClient webClient) {
+        this.webClient = webClient;
+    }
+
+    public Mono<Book> getBookByIsbn(String isbn) {
+        /*
+         * Currently, Catalog Ser-
+         * vice exposes a /books/{bookIsbn} endpoint that returns all the available
+         * information
+         * about a book. In a real scenario, you might expose a different endpoint that
+         * returns an
+         * object containing only the required information (a DTO).
+         */
+        return webClient
+                .get()
+                .uri(BOOKS_ROOT_API + isbn)
+                .retrieve()
+                .bodyToMono(Book.class)
+                /*
+                 * Instead of throwing an exception when the timeout expires, you have the
+                 * chance to pro-
+                 * vide a fallback behavior. Considering that Order Service can’t accept an
+                 * order if the
+                 * book’s availability is not verified, you might consider returning an empty
+                 * result so that
+                 * the order will be rejected. You can define a reactive empty result using
+                 * Mono.empty().
+                 */
+                /*
+                 * In a real production scenario, you might want to externalize the time out
+                 * configuration by adding a new field to the ClientProperties.
+                 * In that way, you can change its value depending on the environment without
+                 * having to rebuild the application. It’s also essential to monitor any timeout
+                 * and tune its value if necessary.
+                 */
+                .timeout(Duration.ofSeconds(3), Mono.empty())
+                // Returns an empty object when a 404 response is received
+                .onErrorResume(WebClientResponseException.NotFound.class, exception -> Mono.empty())
+                /*
+                 * we want the timeout to apply to each retry attempt, so we’ll use
+                 * the retryWhen() operator after timeout() whic means that the timeout is
+                 * applied to each retry attempt. The time limiter is applied first. If the
+                 * timeout expires, the retryWhen()
+                 * operator kicks in and tries the request again.
+                 */
+                /*
+                 * Exponential backoff is used
+                 * as the retry strategy. Three
+                 * attempts are allowed with
+                 * a 100 ms initial backoff
+                 */
+                .retryWhen(Retry.backoff(3, Duration.ofMillis(100)))
+                // If any error happens after the 3 retry attempts, catch the exception and return an empty object.
+                .onErrorResume(Exception.class, exception -> Mono.empty());
+    }
+
+}
+----
+
+The OkHttp project provides a mock web server that you can use to test HTTP-based
+request/response interactions with a service downstream. 
+[source,gradle,attributes]
+----
+dependencies {
+ testImplementation 'com.squareup.okhttp3:mockwebserver'
+}
+----
+[source,xml,attributes]
+----
+<dependency>
+    <groupId>com.squareup.okhttp3</groupId>
+    <artifactId>mockwebserver</artifactId>
+    <scope>test</scope>
+</dependency>
+----
+To  set up the mock web server and configure WebClient 
+[source,java,attributes]
+----
+    private MockWebServer mockWebServer;
+    private BookClient bookClient;
+
+    @BeforeEach
+    void setup() throws IOException {
+        this.mockWebServer = new MockWebServer();
+        this.mockWebServer.start();
+
+        var webClient = WebClient.builder()
+                .baseUrl(mockWebServer.url("/").uri().toString())
+                .build();
+        this.bookClient = new BookClient(webClient);
+    }
+
+    @AfterEach
+    void clean() throws IOException {
+        this.mockWebServer.shutdown();
+    }
+----
+Next,  you can define some test cases to validate the client’s functionality
+
+The StepVerifier object lets you process reactive streams and write assertions in steps through a fluent API.
+[source,java,attributes]
+----
+   @Test
+    void whenBookExistsThenReturnBook() {
+        var bookIsbn = "1234567890";
+        // Defines the response to be returned by the mock server
+        var mockResponse = new MockResponse()
+                .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .setBody("""
+                        	{
+                        		"isbn": %s,
+                        		"title": "Title",
+                        		"author": "Author",
+                        		"price": 9.90,
+                        		"publisher": "Polarsophia"
+                        	}
+                        """.formatted(bookIsbn));
+
+        // Adds a mock response to the queue processed by the mock server
+        mockWebServer.enqueue(mockResponse);
+
+        Mono<Book> book = bookClient.getBookByIsbn(bookIsbn);
+        // Initializes a StepVerifier object with the object returned by BookClient
+        StepVerifier.create(book)
+                // Asserts that the Book returned has the ISBN requested
+                .expectNextMatches(b -> b.isbn().equals(bookIsbn))
+                // Verifies that the reactive stream completed successfully
+                .verifyComplete();
+    }
+
+    @Test
+    void whenBookNotExistsThenReturnEmpty() {
+        var bookIsbn = "1234567891";
+
+        var mockResponse = new MockResponse()
+                .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .setResponseCode(404);
+
+        mockWebServer.enqueue(mockResponse);
+
+        StepVerifier.create(bookClient.getBookByIsbn(bookIsbn))
+                .expectNextCount(0)
+                .verifyComplete();
+    }
+----
+ 

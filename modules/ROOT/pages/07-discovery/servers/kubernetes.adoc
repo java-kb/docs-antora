@@ -1,0 +1,102 @@
+= Kubernetes Service Discovery
+:figures: 07-discovery/servers 
+
+Kubernetes provides a native service-discovery and load-balancing feature that
+you can use through the Service objects.
+
+The Kubernetes implementation of service discovery pattern is based on Service
+objects. A Service is “an abstract way to expose an application running on a set of Pods
+as a network service”
+
+A Service object is an abstraction targeting a set of Pods (typically using labels) and
+defining the access policy. When an application needs to contact a Pod exposed by a Service object, it can use the Service name instead of calling the Pod directly. 
+
+The IP address assigned to a Service is fixed for its lifetime. Therefore,
+the DNS resolution of a Service name doesn’t change as often as it would with
+application instances.
+
+After resolving the Service name to its IP address, Kubernetes relies on a proxy (called
+kube-proxy), which intercepts the connection to the Service object and forwards the
+request to one of the Pods targeted by the Service. The proxy knows all the replicas
+available and adopts a load-balancing strategy depending on the type of Service and
+the proxy configuration. There is no DNS resolution involved in this step.
+image::{figures}/Server-side service discovery and load balancing Kubernetes.png[ In Kubernetes, the interprocess communication between Alpha App and Beta App happens through 
+a Service object. Any request arriving at the Service is intercepted by a proxy that forwards it to one of the replicas targeted by the Service based on a specific load-balancing strategy.]
+
+Kubernetes Services let you expose a set of
+Pods via an interface that other applications can call without knowing the details
+about the individual Pod instances. This model provides applications with transparent
+service-discovery and load-balancing functionality.
+
+This solution is transparent to your Spring Boot applications. Unlike options like
+Spring Cloud Netflix Eureka, you get service discovery and load balancing out of the
+box in Kubernetes, without requiring any change to your code. That’s why it’s the pre-
+ferred option when you use a Kubernetes-based platform to deploy your applications.
+
+there are different types of Services, depending on which access policy
+you want to enforce for the application. The default and most common type is called
+ClusterIP, and it exposes a set of Pods to the cluster. This is what makes it possible for
+Pods to communicate with each other (for example, Catalog Service and PostgreSQL).
+
+Four pieces of information characterize a ClusterIP Service:
+
+* The selector label used to match all the Pods that should be targeted and
+exposed by the Service
+* The network protocol used by the Service
+* The port on which the Service is listening (we’re going to use port 80 for all
+our application Services)
+* The targetPort, which is the port exposed by the targeted Pods to which the
+Service will forward requests
+
+image::{figures}/Kubernetes-ClusterIP.png[A ClusterIP service exposes a set of Pods to the network inside the cluster.]
+
+== DEFINING A SERVICE MANIFEST WITH YAML
+To define a manifest for a Service object to expose the Catalog Service application through the DNS name catalog-service and port 80 use
+
+catalog-service/k8s/service.yml
+[source,yaml,attributes]    
+----
+apiVersion: v1
+kind: Service
+metadata:
+  # The name of the Service; it must be a valid DNS name.
+  name: catalog-service
+  labels:
+    app: catalog-service
+spec:
+  # The type of Service
+  type: ClusterIP
+  selector:
+    #The label used to match the Pods to target and expose
+    app: catalog-service
+  ports:
+    - protocol: TCP
+      #The port exposed by the Service
+      port: 80
+      # The port exposed by the Pods targeted by the Service
+      targetPort: 9001
+----
+Open a Terminal window, navigate to your Catalog Service root folder (catalog-service), and run the following command:
+[source,console,attributes]
+----
+kubectl apply -f k8s/service.yml
+----
+You can verify the result with the following command
+[source,console,attributes]
+----
+kubectl get svc -l app=catalog-service
+----
+
+expose the application outside the cluster using the port-forwarding feature offered by Kubernetes to expose an object (in this case, a Service) to a local machine
+
+The process started by the kubectl port-forward command will keep
+running until you explicitly stop it with Ctrl-C. Until then, you’ll need to open
+another Terminal window if you want to run CLI commands.
+
+
+[source,console,attributes]
+----
+kubectl port-forward service/catalog-service 9001:80
+----
+
+image::{figures}/how_the_communication_works_between_your_computer_catalog_service_and_postgresql.png[The Catalog Service application is exposed to your local machine through port forwarding. Both Catalog Service and PostgreSQL are exposed to the inside of the cluster through the cluster-local hostname,IP address, and port assigned to the Service objects.]

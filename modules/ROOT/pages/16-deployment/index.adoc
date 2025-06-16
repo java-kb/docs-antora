@@ -1,3 +1,12 @@
 = Deployment
 :figures: 16-deployment
 
+It’s good practice to gather all deployment-related scripts in a separate codebase and,
+possibly, in a separate repository(i.e poject-namer-deployment). It’ll contain all the Docker and Kubernetes scripts needed to
+run the applications composing your system>
+
+This separation allows you to manage the deployment scripts independently of the application code, making it easier to update, maintain, and deploy your applications across different environments (development, staging, production, etc.).
+
+This way, you can keep your application codebase clean and focused on the business logic.
+This separation also allows you to version the deployment scripts independently of the
+application code, which can be useful if you need to roll back to a previous version of the application or if you need to deploy the same version of the application to different environments.

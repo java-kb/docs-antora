@@ -7,6 +7,12 @@ replicas available. You want to balance the traffic between them so you can incr
 capacity of the system and make it more resilient in case of errors thanks to the added
 redundancy.
 
+Deploying multiple instances of the same application helps in achieving high availabil-
+ity. When the workload is high, it can be distributed across different replicas. When an
+instance enters a faulty state and can’t process requests anymore, it can be deleted and
+a new one created. This continuous and dynamic scaling of application instances
+requires stateless and disposable applications, as per the 15-Factor methodology.
+
 To make load balancing work properly, you need some prerequisites.
 
 * The gateway needs to know the available instances for a given service. The initial configuration points directly to a specific port

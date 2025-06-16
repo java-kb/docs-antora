@@ -215,8 +215,7 @@ executed in a transaction.
 When you add your own query methods, it's up
 to you to define which ones should be part of a transaction. You can rely on the
 declarative transaction management provided by the Spring Framework and use
-the @Transactional annotation (from the org.springframework.transaction
-.annotation package) on classes or methods to ensure they are executed as part of
+the @Transactional annotation (from the org.springframework.transaction.annotation package) on classes or methods to ensure they are executed as part of
 a single unit of work.
 
 [,java]

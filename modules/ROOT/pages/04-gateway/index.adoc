@@ -1,6 +1,11 @@
 = Gateway
 :figures: 04-gateway
 
+An API gateway is a common pattern in distributed
+architectures, like microservices, used to decouple the internal APIs from the cli-
+ents. When establishing such an entry point to your system, you can also use it to
+handle cross-cutting concerns, such as security, monitoring, and resilience.
+
 The Gateway pattern helps abstracting the internal architecture from the outside by routing external requests to the corresponding microservice.
 The gateway pattern centralizes the HTTP access and takes care of proxying
 requests to other underlying services. Usually, the gateway decides where to route a request

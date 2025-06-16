@@ -5,8 +5,28 @@
 the deployment, scaling, and management of containerized applications (https://
 kubernetes.io).
 
+With Buildpacks and Spring Boot, you can build a production-
+ready image in one command, without even having to write your own Dockerfile or
+install additional tools. 
+
+With Docker Compose, you can simultaneously control
+multiple applications,  you can manage the deployment of several containers at once,
+including the configuration of networks and storage, which is convenient for architectures like microservices That is extremely powerful, but
+it’s limited to one machine.
+what if a container stops working? What if the machine where your containers are
+running (the Docker host) crashes? What if you want to scale your applications?
+
+Using Docker CLI and Docker Compose, the interaction happens with a single
+Docker daemon that manages Docker resources on a single machine, called the
+Docker host. Furthermore, it’s not possible to scale a container. All of this is limiting
+when you need cloud native properties like scalability and resilience for your system.
+
+With
+Docker, we deploy containers to an individual machine. With Kubernetes, we deploy
+containers to a cluster of machines, enabling scalability and resilience.
+
 When you are working with containers in Docker, your deployment
-target is a machine. In the example from the previous section, it was your computer.
+target is a machine like your computer.
 In other scenarios it might be a virtual machine (VM). In any case, it’s about deploy-
 ing containers to a specific machine. However, when it comes to deploying containers
 without downtime, scaling them by leveraging the cloud’s elasticity, or connecting
@@ -26,6 +46,30 @@ The control plane is the container orchestration layer that manages the worker
 nodes. It exposes the API and interfaces to define, deploy, and manage the life cycle
 of containers. It offers all the essential elements that implement the typical features of an orchestrator, like cluster management, scheduling, and health monitoring.
 
+Kubernetes clients use an API to interact with the Kubernetes Control Plane, which is
+responsible for creating and managing objects in a Kubernetes cluster. In this new sce-
+nario, we still send commands to a single entity, but it acts on several machines rather
+than only one. 
+
+Pods are the smallest deployable units in
+Kubernetes. When moving from Docker to Kubernetes, we switch from managing
+containers to managing Pods.
+
+These are the main components:
+
+image::{figures}/main components.png[Kubernetes clients interact with the Control Plane, which manages containerized applications in a cluster consisting of one or more nodes. Applications are deployed as Pods to the nodes of a cluster]
+
+* Cluster—A set of nodes running containerized applications. It hosts the Control
+Plane and comprises one or more worker nodes.
+* Control Plane—The cluster component exposing the API and interfaces to
+define, deploy, and manage the life cycle of Pods. It comprises all the essential
+elements that implement the typical features of an orchestrator, like cluster
+management, scheduling, and health monitoring.
+* Worker nodes—Physical or virtual machines providing capacity such as CPU,
+memory, network, and storage so that containers can run and connect to a
+network.
+* Pod—The smallest deployable unit wrapping an application container.
+
 kubectl is a CLI client, which communicates with the control plane to perform some operations on the worker nodes. A client doesn't interact with the worker nodes directly.
 image::{figures}/image.png[Kubernetes’ main components are the API, the control plane, and the worker nodes]
 
@@ -40,6 +84,26 @@ healthy. Among other things, a Deployment allows you to manage Pods as a set.
 * Service--A Deployment (a set of Pods) can be exposed to other nodes in the
 cluster or outside by defining a Service that also takes care of balancing the load
 between Pod instances.
+
+A Pod is the smallest Kubernetes object, and it “represents a set of running contain-
+ers” in a cluster. It’s usually set up to run a single primary container (your applica-
+tion), but it can also run optional helper containers with additional features like
+logging, monitoring, or security.
+ 
+A Pod is usually comprised of one container: the application instance. When that
+happens, it’s not much different from working with containers directly. However,
+there are some scenarios where your application container needs to be deployed
+together with some helper containers that perhaps perform initialization tasks required
+by the application or add extra functionality such as logging. For example, Linkerd (a
+service mesh) adds its own container (a sidecar) to Pods to perform operations such as
+intercepting HTTP traffic and encrypting it to guarantee secure communication
+between all Pods via mTLS (mutual Transport Layer Security).
+
+Compared to containers, Pods allow you to manage related containers as
+a single entity. But that’s not enough. Directly creating and managing Pods would not
+be much different than working with plain Docker containers. We need something at
+a higher level of abstraction to define how we want to deploy and scale our applica-
+tions. That’s where the Deployment objects come into play. 
 
 When you want to run a new application, you can define a resource manifest, a file that
 describes the desired state for the application. For example, you might specify that it
@@ -80,3 +144,325 @@ shown in above figure.
 | kubectl port-forward svc +++<service>++++++<host-port>+++:+++<cluster-port>++++++</cluster-port>++++++</host-port>++++++</service>+++
 | Forwards traffic from your local machine to within the cluster
 |===
+
+==  Working with a local Kubernetes cluster
+You can run a local Kubernetes cluster using Minikube, which is a tool that makes it easy to run Kubernetes locally. It creates a VM or uses a local Docker daemon to run a single-node Kubernetes cluster on your machine.
+
+With minikube you can create and control
+multiple clusters identified via profiles. When no profile is specified, minikube falls
+back on the default cluster.
+
+create a new Kubernetes cluster named polar on top of Docker and declare the resource limits for CPU and memory:
+
+minikube start --cpus 2 --memory 4g --driver docker --profile polar
+
+get a list of all the nodes in the cluster with the following command:
+
+kubectl get nodes
+minikube profile list
+
+The following command will list all the available contexts with which you can interact:
+kubectl config get-contexts
+
+verify which is the current context by running this command:
+kubectl config current-context
+
+change the current context as follows:
+kubectl config use-context polar
+
+stop the cluster with 
+
+minikube stop --profile polar
+
+start it again with 
+
+minikube start --profile polar
+
+delete it and start over, you can run
+
+minikube delete --profile polar
+
+== Managing data services in a local cluster
+create  basic Kubernetes manifests to run a PostgreSQL database file polar-deployment/kubernetes/platform/development/services/postgresql.yml
+
+
+[source,yml,attributes]
+----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: polar-postgres
+  labels:
+    db: polar-postgres
+spec:
+  selector:
+    matchLabels:
+      db: polar-postgres
+  template:
+    metadata:
+      labels:
+        db: polar-postgres
+    spec:
+      containers:
+        - name: polar-postgres
+          image: postgres:14.12
+          env:
+            - name: POSTGRES_USER
+              value: user
+            - name: POSTGRES_PASSWORD
+              value: password 
+            - name: POSTGRES_DB
+              value: polardb_catalog
+          resources:
+            requests:
+              cpu: 100m
+              memory: 60Mi
+            limits:
+              cpu: 200m
+              memory: 120Mi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: polar-postgres
+  labels:
+    db: polar-postgres
+spec:
+  type: ClusterIP
+  selector:
+    db: polar-postgres
+  ports:
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432
+----
+Open a Terminal window, navigate to the kubernetes/platform/development
+folder located in your polar-deployment repository, and run the following command
+to deploy PostgreSQL in your local cluster:
+[source,console,attributes]
+----
+kubectl apply -f services
+----
+You can check the database logs by running 
+[source,console,attributes]
+----
+kubectl logs deployment/polar-postgres
+----
+undeploy the database, you can run the
+[source,console,attributes]
+----
+kubectl delete -f services
+----
+== Controlling Pods with Deployments
+
+How can you scale an application to have five replicas running? How can you ensure
+there are always five replicas up and running even when failures occur? How can you
+deploy a new version of the application without downtime? With Deployments.
+
+A Deployment is an object that manages the life cycle of a stateless, replicated appli-
+cation. Each replica is represented by a Pod. The replicas are distributed among the
+nodes of a cluster for better resilience.
+
+In Docker you manage your application instances directly by creating and remov-
+ing containers. In Kubernetes you don’t manage Pods. You let a Deployment do that
+for you. Deployment objects have several important and valuable characteristics. You
+can use them to deploy your applications, roll out upgrades without downtime, roll
+back to a previous version in case of errors, and pause and resume upgrades.
+
+Deployments also let you manage replication. They make use of an object named
+ReplicaSet to ensure there’s always the desired number of Pods up and running in your
+cluster. If one of them crashes, a new one is created automatically to replace it. Fur-
+thermore, replicas are deployed across different nodes in your cluster to ensure even
+higher availability if one node crashes
+
+Deployments provide a convenient abstraction for us to declare what we want to
+achieve (the desired state), Kubernetes uses controllers that watch the system and compare the desired state
+with the actual state. When there is any difference between the two, it acts to make
+them match again. Deployments and ReplicaSets are controller objects, handling
+rollout, replication, and self-healing. For example, suppose you declare that you
+want three replicas of your Spring Boot application deployed. If one crashes, the
+associated ReplicaSet notices it and creates a new Pod to align the actual state with
+the desired one.
+
+In Kubernetes, the recommended approach is to describe an object’s desired state
+in a manifest file, typically specified in YAML format. We use declarative configuration: we
+declare what we want instead of how to achieve it.
+
+A manifest is “a specification of a Kuber-
+netes API object in JSON or YAML format.” It specifies “the desired state of an object
+that Kubernetes will maintain when you apply the manifest”
+
+A Kubernetes manifest usually comprises four main sections:
+image::{figures}/Kubernetes manifest.png[Kubernetes manifest]
+* apiVersion defines the versioned schema of the specific object representation.
+Core resources such as Pods or Services follow a versioned schema composed of
+only a version number (such as v1). Other resources like Deployments or
+ReplicaSet follow a versioned schema consisting of a group and a version num-
+ber (for example, apps/v1). If in doubt about which version to use, you can
+refer to the Kubernetes documentation (https://kubernetes.io/docs) or use the
+kubectl explain <object_name> command to get more information about the
+object, including the API version to use.
+* kind is the type of Kubernetes object you want to create, such as Pod, Replica-
+Set, Deployment, or Service. You can use the kubectl api-resources com-
+mand to list all the objects supported by the cluster.
+* metadata provides details about the object you want to create, including the
+name and a set of labels (key/value pairs) used for categorization. For example, you can instruct Kubernetes to replicate all the objects with a specific label
+attached.
+* spec is a section specific to each object type and is used to declare the desired
+configuration.
+== Ensuring disposability: Graceful shutdown
+When a Pod has to be terminated (for example,
+during a downscaling process or as part of an upgrade), Kubernetes sends a SIGTERM
+signal to it. Spring Boot will intercept that signal and start shutting down gracefully. By
+default, Kubernetes waits for a grace period of 30 seconds. If the Pod is not terminated
+after that period, Kubernetes sends a SIGKILL signal to force the Pod’s termination.
+Since the Spring Boot grace period is lower than the Kubernetes one, the application is
+in control of when it will terminate. When it sends the SIGTERM signal to a Pod, Kubernetes will also inform its own
+components to stop forwarding requests to the terminating Pod. Since Kubernetes is a
+distributed system, and the two actions happen in parallel, there is a short time win-
+dow when the terminating Pod might still receive requests, even if it has already
+started the graceful shutdown procedure. When that happens, those new requests will
+be rejected, resulting in errors in the clients. Our goal was to make the shutdown pro-
+cedure transparent to the clients, so that scenario is unacceptable.
+
+The recommended solution is to delay sending the SIGTERM signal to the Pod so
+that Kubernetes has enough time to spread the news across the cluster. By doing so, all
+Kubernetes components will already know not to send new requests to the Pod when
+it starts the graceful shutdown procedure. Technically, the delay can be configured
+through a preStop hook.
+
+When a Pod contains multiple containers, the SIGTERM signal is sent to
+all of them in parallel. Kubernetes will wait up to 30 seconds. If any of the con-
+tainers in the Pod are not terminated yet, it will shut them down forcefully.
+
+To update the Deployment manifest for Catalog Service to support a transparent and graceful shutdown.
+
+Open the deployment.yml file located in catalog-service/k8s, and add a preStop
+hook to delay the SIGTERM signal by 5 seconds.
+[source,yml,attributes]
+----
+lifecycle:
+ preStop: 
+ exec:
+ # Makes Kubernetes wait 5 seconds before sending the SIGTERM signal to the Pod
+ command: [ "sh", "-c", "sleep 5" ]
+----
+Finally, apply the updated version of the Deployment object with 
+kubectl apply -f k8s/deployment.yml
+
+== Scaling applications
+In Kubernetes, replication is handled at the Pod level by a ReplicaSet object. 
+
+That’s the basic functionality on top
+of which you can configure an autoscaler to dynamically increase or decrease the
+number of Pods, depending on the workload and without having to update the mani-
+fest every time.
+
+Open the deployment.yml file located in catalog-service/k8s, and define how
+many replicas of the Pod running Catalog Service you want
+
+[source,yml,attributes]
+----
+spec:
+  # How many Pod replicas should  be deployed
+  replicas: 2
+----
+the configuration instructs Kubernetes to manage all Pods with the label app=catalog-service so that there are always two replicas running.
+
+Open a Terminal window, navigate to the catalog-service folder,
+and apply the updated version of the Deployment resource:
+ 
+kubectl apply -f k8s/deployment.yml
+
+Kubernetes will realize that the actual state (one replica) and the desired state (two
+replicas) don’t match, and it will immediately deploy a new replica of Catalog Service.
+You can verify the result with the following command:
+
+kubectl get pods -l app=catalog-service
+
+delete that Pod with the following command:
+kubectl delete pod <pod-name>
+
+The Deployment manifest declares two replicas as the desired state. Since there is now
+only one, Kubernetes will immediately step up to ensure the actual state and the
+desired state are aligned. If you inspect the Pods again with kubectl get pods -l
+app=catalog-service, you will still see two Pods, but one of them has just been cre-
+ated to replace the deleted Pod. You can identify it by checking its age:
+
+kubectl get pods -l app=catalog-service
+
+== Visualizing your Kubernetes workloads 
+=== Using HeadLamp
+[HeadLamp] is an open-source and CNCF Sandbox project providing a convenient Kubernetes web UI. On your local environment, you can run it as a desktop application.
+=== Using Kubernetes Dashboard
+If you're using minikube, you can provision the dashboard via the official addon.
+
+If you have already a cluster provisioned with minikube, you can access the dashboard UI with the following command.
+
+minikube dashboard
+== Running Kubernetes services with Helm
+Helm is a package manager for Kubernetes that simplifies the deployment and management of applications in a Kubernetes cluster. It allows you to define, install, and upgrade complex applications using pre-configured packages called charts.
+
+A popular way of running third-party services in a Kubernetes cluster is through Helm
+(https://helm.sh). Think of it as a package manager. To install software on your com-
+puter, you can use one of the operating system package managers, like Apt (Ubuntu),
+Homebrew (macOS), or Chocolatey (Windows); in Kubernetes, you can similarly use
+Helm, but we call them charts instead of packages.
+
+Helm charts are collections of files that describe a related set of Kubernetes resources. They can include templates for Kubernetes manifests, configuration files, and other resources needed to deploy an application.
+Helm charts can be used to deploy applications, databases, and other services in a Kubernetes cluster. They provide a way to package and distribute applications, making it easier to share and reuse them across different environments.
+
+== Validate Kubernetes manifests
+Since a manifest specifies the desired state of an object, we should ensure that
+our specification complies with the API exposed by Kubernetes. It’s a good idea to
+automate this validation in the commit stage of a deployment pipeline to get fast
+feedback in case of errors (rather than waiting until the acceptance stage, where we
+need to use those manifests to deploy the application in a Kubernetes cluster)
+
+There are several ways of validating Kubernetes manifests against the Kubernetes API.
+
+=== Using Kubeval
+//  no longer maintained
+Open a Terminal window and navigate to the root folder of
+your Catalog Service project (catalog-service). Then use the kubeval command to val-
+idate the Kubernetes manifests within the k8s directory (-d k8s). The --strict flag
+disallows adding additional properties not defined in the object schema:
+
+kubeval --strict -d k8s
+
+
+=== Using Kubeconform
+
+Kubeconform is a Kubernetes manifest validation tool. Incorporate it into your CI, or use it locally to validate your Kubernetes configuration!
+
+[source,yml,attributes]
+----
+- name: Setup tools
+  uses: alexellis/setup-arkade@v3
+- name: Install tools
+  uses: alexellis/arkade-get@master
+  with:
+    kubeconform: latest
+- name: Validate Kubernetes manifests
+  run: |
+    kubeconform --strict k8s
+----
+
+When using Kustomize
+
+[source,yml,attributes]
+----
+- name: Setup tools
+  uses: alexellis/setup-arkade@v3
+- name: Install tools
+  uses: alexellis/arkade-get@master
+  with:
+    kustomize: latest
+    kubeconform: latest
+- name: Validate Kubernetes manifests
+  run: |
+    kustomize build k8s | kubeconform --strict -
+----
+

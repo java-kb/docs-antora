@@ -13,6 +13,110 @@ implementation returns a predefined response. Now and then, the circuit may
 switch to half-open to check again if the target service is working. In that case,
 the circuit will transition to close. If it's still failing, it goes back to the open state.
 
+== Timeouts
+Whenever your application calls a remote service, you don’t know if and when a
+response will be received. Timeouts (also called time limiters) are a simple, yet effective,
+tool for preserving the responsiveness of your application in case a response is not
+received within a reasonable time period.
+
+There are two main reasons for setting up timeouts:
+
+* If you don’t limit the time your client waits, you risk your computational resources
+being blocked for too long (for imperative applications). In the worst-case sce-
+nario, your application will be completely unresponsive because all the avail-
+able threads are blocked, waiting for responses from a remote service, and
+there are no threads available to handle new requests.
+* If you can’t meet your Service Level Agreements (SLAs), there’s no reason to
+keep waiting for an answer. It’s better to fail the request.
+
+Timeouts improve application resilience and follow the principle of failing fast. But
+setting a good value for the timeout can be tricky. You should consider your system
+architecture as a whole. for example, in a Boo sho app if you defined a 3-second timeout.
+This means that a response should get from Catalog Service to Order Service within
+that time limit. Otherwise, either a failure or a fallback occurs. Catalog Service, in
+turn, sends a request to the PostgreSQL database to fetch the data about the specific
+book and waits for a response. A connection timeout guards that interaction. You
+should carefully design a time-limiting strategy for all the integration points in your
+system to meet your software’s SLAs and guarantee a good user experience. If Catalog Service were available, but a response couldn’t get to Order Service
+within the time limit, the request would likely still be processed by Catalog Service.
+That is a critical point to consider when configuring timeouts. It doesn’t matter much
+for read or query operations because they are idempotent. For write or command
+operations, you want to ensure proper handling when a timeout expires, including
+providing the user with the correct status about the operation’s outcome.
+
+When Catalog Service is overloaded, it can take several seconds to get a JDBC con-
+nection from the pool, fetch data from the database, and send a response back to
+Order Service. In that case, you could think of retrying the request rather than falling
+back on a default behavior or throwing an exception. 
+
+== Retries 
+When a service downstream doesn’t respond within a specific time limit or replies with a
+server error related to its momentary inability to process the request, you can configure
+your client to try again. When a service doesn’t respond correctly, it’s likely because it’s
+going through some issues, and it’s unlikely that it will manage to recover immediately.
+Starting a sequence of retry attempts, one after the other, risks making the system even
+more unstable. You don’t want to launch a DoS attack on your own applications!
+
+A better approach is using an exponential backoff strategy to perform each retry
+attempt with a growing delay. By waiting for more and more time between one attempt
+and the next, you’re more likely to give the backing service time to recover and become
+responsive again. The strategy for computing the delay can be configured.
+image::{figures}/Retries.png[When Catalog Service doesn’t respond successfully, Order Service will try at most three more times with a growing delay.]
+
+Retries increase the chance of getting a response back from a remote service when it’s
+momentarily overloaded or unresponsive. 
+
+Idempotent requests like read operations can be retried without harm. Even some
+write requests can be idempotent. For example, a request to change the author of a
+book with a given ISBN from “S.L. Cooper” to “Sheldon Lee Cooper” is idempotent.
+You could perform it a few times, but the outcome will not change. You shouldn’t
+retry non-idempotent requests, or you’ll risk generating inconsistent states. When you
+order a book, you don’t want to be charged multiple times just because the first
+attempt failed due to the response being lost in the network and never received.
+
+When retries are configured in a flow where the user is involved, remember to bal-
+ance resilience and user experience. You don’t want users to wait too long while retry-
+ing the request behind the scenes. If you can’t avoid that, make sure you inform the
+users and give them feedback about the status of the request.
+
+Retries are a helpful pattern whenever the service downstream is momentarily
+unavailable or slow due to overloading, but it’s likely to heal soon. In this case, you
+should limit the number of retries and use exponential backoff to prevent adding
+extra load on an already overloaded service. On the other hand, you shouldn’t retry
+the request if the service fails with a recurrent error, such as if it’s entirely down or
+returns an acceptable error like 404. 
+
+=== Fallbacks and error handling
+A system is resilient if it keeps providing its services in the face of faults without the
+user noticing. Sometimes that’s not possible, so the least you can do is ensure a grace-
+ful degradation of the service level. Specifying a fallback behavior can help you limit
+the fault to a small area while preventing the rest of the system from misbehaving or
+entering a faulty state.
+
+You’ll want to include fallbacks in your
+general strategy to make your system resilient, and not just in a specific case like time-
+outs. A fallback function can be triggered when some errors or exceptions occur, but
+they’re not all the same.
+
+Some errors are acceptable and semantically meaningful in the context of your
+business logic. When Order Service calls Catalog Service to fetch information about a
+specific book, a 404 response might be returned. That’s an acceptable response that
+should be addressed to inform the user that the order cannot be submitted because
+the book is not available in the catalog.
+
+== Resilient applications with Spring
+=== Timeouts
+Here are some examples of timeouts:
+
+* Connection timeout—This is the time limit for establishing a communication
+channel with a remote resource. you can configure the server.netty.connection-timeout property to limit the time Netty waits for a TCP connec-
+tion to be established.
+* Connection pool timeout—This is the time limit for a client to get a connection
+from a pool. you can configure  a timeout for the Hikari connection
+pool through the spring.datasource.hikari.connection-timeout property.
+* Read timeout—This is the time limit for reading from a remote resource after
+establishing the initial connection.you can for example define a read
+timeout for the call to the Catalog Service performed by the BookClient class.
 == Libraries
 
 === Resilience4j

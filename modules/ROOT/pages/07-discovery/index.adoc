@@ -1,6 +1,32 @@
 = Service Discovery
 :figures: 07-discovery
 
+In the cloud, you’ll probably want to have multiple instances of a service running, and
+each service instance will have its own IP address. Unlike physical machines or long-
+running virtual machines, a service instance will not live long in the cloud. Applica-
+tion instances are disposable—they can be removed or replaced for different reasons,
+such as when they are not responsive anymore. You can even enable the auto-scaling
+feature to automatically scale your application in and out, depending on the workload.
+Using IP addresses for interprocess communication in the cloud is not an option. To overcome that issue, you might consider using DNS records, relying on a
+round-robin name resolution pointing to one of the IP addresses assigned to the rep-
+licas. Knowing the hostname, you can reach the backing service even if one of the IP
+addresses changes because the DNS server would be updated with the new ones. How-
+ever, this approach is not the best fit for cloud environments because the topology
+changes too often. Some DNS implementations cache the results of name lookups
+even after they should have expired. Similarly, some applications cache DNS lookup
+responses for too long. Either way, there’s a high chance of using a hostname/IP
+address resolution that is no longer valid.
+
+Service discovery in cloud environments requires a different solution. First, we
+need to keep track of all the service instances running and store that information in a
+service registry. Whenever a new instance is created, an entry should be added to the
+registry. When it’s shut down, it should be removed accordingly. The registry recog-
+nizes that multiple instances of the same application can be up and running. When an
+application needs to call a backing service, it performs a lookup in the registry to deter-
+mine which IP address to contact. If multiple instances are available, a load-balancing
+strategy is applied to distribute the workload across them.
+
+
 The service discovery pattern consists of two main concepts.
 
 * The service registry:
@@ -26,7 +52,28 @@ then decide which instance to call. This technique is known as client-side disco
 and it implies that clients are aware of the service registry and perform load balancing
 themselves. Note that, by client, we mean an application, microservice, browser, and so
 on, that wants to perform an HTTP call to another service
+
 image::{figures}/image-1.png[alt text]
+
+Client-side service discovery requires applications to register themselves with a service
+registry upon startup and unregister when shutting down. Whenever they need to call
+a backing service, they ask the service registry for an IP address. If multiple instances are available, the registry will return the list of IP addresses. The application will
+choose one of them, depending on a load-balancing strategy defined by the applica-
+tion itself.
+
+image::{figures}/Client-side service discovery and load balancing model.png[The interprocess communication between Alpha App and Beta App is based on the IP address of the specific instance to call, chosen from a list of IP addresses returned upon lookup in the service registry.]
+
+A benefit of such a solution is that your applications have complete control
+over the load-balancing strategy. Suppose you need to implement patterns like hedging:sending the same request to multiple instances to increase the chance one responds
+correctly within a specific time limit. Client service discovery can help you with that.
+
+A drawback is that client service discovery assigns more responsibility to develop-
+ers. If your system includes applications built using different languages and frame-
+works, you’ll need to handle the client part of each of them in different ways. Also, it
+results in one more service to deploy and maintain (the service registry), unless you
+use PaaS solutions like Azure Spring Apps or VMware Tanzu Application Service,
+which provide it for you. Server-side discovery solutions solve these issues at the expense
+of fine-grained control in the application.
 
 == Server-side discovery
 
@@ -35,6 +82,16 @@ providing a unique address, known in advance, where callers can find a given ser
 When they make the request, it's intercepted by a load balancer, which is aware of the
 registry. This balancer will proxy the request to one of the replicas
 image::{figures}/image-2.png[alt text]
+
+Server-side service discovery solutions move a lot of responsibility to the deployment
+platform, so that developers can focus on the business logic and rely on the platform
+to provide all the necessary functionality for service discovery and load balancing.
+Such solutions automatically register and deregister application instances and rely on
+a load-balancer component to route any incoming requests to one of the available
+instances according to a specific strategy. In this case, the application doesn’t need to
+interact with the service registry, which is updated and managed by the platform. 
+
+image::{figures}/Server-side service discovery and load balancing model.png[The interprocess communication between Alpha App and Beta App is based on a DNS name that gets resolved to one of the instance IP addresses by a load-balancer component. The service registration process is handled by the platform transparently.]
 
 Typically, in a microservices architecture, you'll see either both approaches
 combined or just server-side discovery. Client-side discovery doesn't work well when

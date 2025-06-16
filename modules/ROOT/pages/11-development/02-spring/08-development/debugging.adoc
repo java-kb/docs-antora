@@ -3,7 +3,16 @@
 
 == Debugging Standard Java
 
+== Debugging Spring Boot Applications
+
+
 == Debugging Spring Boot containers
+
+When running a Spring Boot application as standard Java from your IDE, you can
+specify whether you want to run it in debug mode. If you do, the IDE will attach a
+debugger to the local Java process running your application. However, when you run
+it from within a container, your IDE can’t do that anymore because the process is not
+running on the local machine.
 
 you need to instruct the JVM inside the container to listen for debug connections on a specific port
 

@@ -8,6 +8,19 @@ Dockerfile.
 
 The Spring Boot Plugin adopts the Paketo Buildpacks builder, an implementation of the Cloud Native Buildpacks specification that provides support for many types of applications, including Java and Spring Boot ones (https://paketo.io).
 
+Since Spring Boot 2.3, it has been integrated natively in the Spring Boot Plugin for both Gradle and Maven, so you’re not required to install the dedicated Buildpacks CLI (pack).
+These are some of its features:
+
+* It auto-detects the type of application and packages it without requiring a
+Dockerfile.
+* It supports multiple languages and platforms.
+* It’s highly performant through caching and layering.
+* It guarantees reproducible builds.
+* It relies on best practices in terms of security.
+* It produces production-grade images.
+* It supports building native images using GraalVM.
+
+
 The Paketo builder component relies on a series of default buildpacks for the actual build operation. This structure is highly modular and customizable. You can add new buildpacks to the sequence (for example, to add a monitoring agent to the
 application), replace existing ones (for example, to replace the default Bellsoft Liberica OpenJDK with Microsoft OpenJDK), or even use a different builder image entirely.
 
@@ -15,25 +28,33 @@ application), replace existing ones (for example, to replace the default Bellsof
 +
 [,xml]
 ----
-     <plugin>
-         <groupId>org.springframework.boot</groupId>
-         <artifactId>spring-boot-maven-plugin</artifactId>
-         <configuration>
-             <image>
-                 <name>${project.artifactId}</name>
-                 <env>
-                     <BP_JVM_VERSION>17</BP_JVM_VERSION>
-                 </env>
-             </image>
-         </configuration>
-     </plugin>
+<plugin>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-maven-plugin</artifactId>
+    <configuration>
+        <image>
+            <name>${project.artifactId}</name>
+            <env>
+                <BP_JVM_VERSION>17</BP_JVM_VERSION>
+            </env>
+        </image>
+    </configuration>
+</plugin>
 ----
-
++
+[,groovy]
+----
+bootBuildImage { 
+ imageName = "${project.name}" 
+ environment = ["BP_JVM_VERSION" : "17.*"] 
+}
+----
 . Build image
 +
 [,console]
 ----
  ./mvnw spring-boot:build-image
+ ./gradlew bootBuildImage
 ----
 +
 // Or from root
@@ -54,6 +75,67 @@ application), replace existing ones (for example, to replace the default Bellsof
   -PregistryUrl=ghcr.io \
   -PregistryUsername=<your_github_username> \
   -PregistryToken=<your_github_token>
+----
+**  you can also configure the Spring Boot plugin to publish the
+image directly to a container registry. To do this, you need to
+configure the plugin with the necessary credentials and the registry URL. For example, to publish to GitHub Container Registry, you can add the following configuration to your `pom.xml` or `build.gradle` file:
++
+[,xml]
+----
+<plugin>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-maven-plugin</artifactId>
+    <configuration>
+        <image>
+            <name>ghcr.io/<your_github_username>/service1</name>
+            <publish>true</publish>
+            <env>
+                <BP_JVM_VERSION>17</BP_JVM_VERSION>
+            </env>
+        </image>
+    </configuration>
+</plugin>
+----
++
+[,groovy]
+----
+bootBuildImage {
+ imageName = "${project.name}"
+ environment = ["BP_JVM_VERSION" : "17.*"]
+ docker { 
+    publishRegistry { 
+        username = project.findProperty("registryUsername")
+        password = project.findProperty("registryToken")
+        url = project.findProperty("registryUrl")
+    }
+ }
+}
+----
+ build and publish the image by running the following command:
++
+[,console]
+----
+ ./mvnw spring-boot:build-image \
+ --imageName ghcr.io/<your_github_username>/service1 \
+ --publishImage \
+ -PregistryUrl=ghcr.io \
+ -PregistryUsername=<your_github_username> \
+ -PregistryToken=<your_github_token>
+
+ ./gradlew bootBuildImage \
+ --imageName ghcr.io/<your_github_username>/service1 \
+ --publishImage \
+ -PregistryUrl=ghcr.io \
+ -PregistryUsername=<your_github_username> \
+ -PregistryToken=<your_github_token>
+----
+. Verify the image
++
+[,console]
+----
+ docker images ghcr.io/<your_github_username>/service1
+ docker images service1
+ docker images service1:1.0
 ----
 . Run
 +

@@ -1,0 +1,261 @@
+= Spring Reactive programming
+:figures: 11-development/02-spring/03-web
+
+When you build applications with Spring, you can choose between a servlet stack and a
+reactive stack. The servlet stack relies on synchronous, blocking I/O and uses the thread-
+per-request model to handle requests. On the other hand, the reactive stack relies on
+asynchronous, non-blocking I/O and uses the event loop model to handle requests.
+
+The servlet stack is based on the Servlet API and a Servlet container (such as Tom-
+cat). In contrast, the reactive model is based on the Reactive Streams API (implemented
+by Project Reactor) and either Netty or a Servlet container (version 3.1 as a minimum).
+Both stacks let you build RESTful applications using either classes annotated as @Rest-
+Controller or functional endpoints called router functions. The servlet stack uses Spring MVC, while the reactive stack uses Spring WebFlux. 
+
+Tomcat is the default choice for servlet-based applications. Netty is the preferred choice for reactive applications, providing the best performance.
+
+image::{figures}/servlet-stack-vs-reactive-stack.png[The servlet stack is based on the Servlet API and supports synchronous and blocking operations. The reactive stack is based on Project Reactor and supports asynchronous and non-blocking operations]
+
+Reactive Spring is based on Project Reactor, a framework for building asynchronous,
+non-blocking applications on the JVM. Reactor is an implementation of the Reactive
+Streams specification, and it aims to provide “a standard for asynchronous stream pro-
+cessing with non-blocking back pressure” (www.reactive-streams.org).
+
+Conceptually, reactive streams resemble the Java Stream API in the way we use them
+to build data pipelines. One of the key differences is that a Java stream is pull-based: consumers process data in an imperative and synchronous fashion. Instead, reactive
+streams are push-based: consumers are notified by the producers when new data is
+available, so the processing happens asynchronously.
+
+Reactive streams work according to a producer/consumer paradigm. Producers
+are called publishers. They produce data that might be eventually available. Reactor
+provides two central APIs implementing the Producer<T> interface for objects of type
+<T>, and they are used to compose asynchronous, observable data streams: Mono<T>
+and Flux<T>:
+
+* Mono<T>—Represents a single asynchronous value or empty result (0..1)
+* Flux<T>—Represents an asynchronous sequence of zero or more items (0..N)
+
+In a Java stream, you would process objects like Optional<Customer> or Collection
+<Customer>. In a reactive stream, you would have Mono<Customer> or Flux<Customer>.
+The possible outcomes of a reactive stream are an empty result, a value, or an error.
+All of them are handled as data. When the publisher returns all the data, we say that
+the reactive stream has been completed successfully.
+
+Consumers are called subscribers because they subscribe to a publisher and are noti-
+fied whenever new data is available. As part of the subscription, consumers can also
+define backpressure by informing the publisher that they can process only a certain
+amount of data at a time. That is a powerful feature that puts consumers in control of
+how much data is received, preventing them from being overwhelmed and becoming
+unresponsive. Reactive streams are only activated if there’s a subscriber.
+
+You can build reactive streams that combine data from different sources and
+manipulate it using Reactor’s vast collection of operators. In a Java stream, you can use
+a fluent API to process data through operators like map, flatMap, or filter, each of
+which builds a new Stream object that keeps the previous step immutable. Similarly,
+you can build reactive streams using a fluent API and operators to process the data
+received asynchronously.
+
+Besides the standard operators available to Java streams, you can use more power-
+ful ones to apply backpressure, handle errors, and increase application resilience. For
+example, the retryWhen() and timeout() operators. Operators can
+perform actions on a publisher and return a new publisher without modifying the
+original one, so you can build functional and immutable data streams with ease.
+
+Project Reactor is the foundation of the Spring reactive stack, which lets you imple-
+ment your business logic in terms of Mono<T> and Flux<T>.
+
+== Configuring Emedded Server(Netty)
+The default and recommended embedded server for reactive applications in Spring
+Boot is Reactor Netty, which is built on top of Netty to provide reactive capabilities
+within Project Reactor. You can configure it either through properties or by defining a WebServerFactoryCustomizer<NettyReactiveWebServerFactory> component. 
+
+[source,yml,attributes]
+----
+server:
+  port: 9002
+  # By default, Spring Boot stops the server immediately after receiving a terminationsignal (SIGTERM). 
+  # You can switch to a graceful mode by configuring the server.shut-down property. 
+  shutdown: graceful
+  netty:
+    # How long to wait for a TCP connection to be established with the server
+    connection-timeout: 2s
+    # How long to wait before closing a TCP connection if no data is transferred
+    idle-timeout: 15s 
+
+spring:
+  application:
+    name: order-service
+  lifecycle:
+    #    You can also configure the grace period, which is how long the applica-
+    # tion can spend processing all the pending requests. After the grace period expires,
+    # the application is terminated even if there are still pending requests. By default, the
+    # grace period is 30 seconds. 
+    timeout-per-shutdown-phase: 15s 
+----
+
+== Exposing a REST API with Spring WebFlux
+There are two options for defining RESTful endpoints in a Spring WebFlux application: @RestController classes or functional beans (router functions).
+=== Using @RestController classes
+[source,java,attributes]
+----
+@RestController
+@RequestMapping("orders")
+public class OrderController {
+
+    private final OrderService orderService;
+
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
+
+    @GetMapping
+    public Flux<Order> getAllOrders() {
+        return orderService.getAllOrders();
+    }
+
+    @PostMapping
+    public Mono<Order> submitOrder(@RequestBody @Valid OrderRequest orderRequest) {
+        return orderService.submitOrder(orderRequest.isbn(), orderRequest.quantity());
+    }
+
+}
+----
+
+=== Using functional beans (router functions)
+
+== Reactive clients with Spring WebClient
+WebClient is the modern alternative to RestTemplate. It provides blocking and
+non-blocking I/O, making it the perfect candidate for both imperative and reactive
+applications. It can be operated through a functional-style, fluent API that lets you
+configure any aspect of the HTTP interaction.
+
+== Resilient applications with Reactive Spring
+A popular library for implementing such patterns was Hystrix, developed by Net-
+flix, but as of 2018 it entered maintenance mode and will not be developed further.
+Resilience4J gained a lot of popularity, filling the void left by Hystrix. Project Reactor,
+the Reactive Spring stack foundation, also provides some useful features for resilience.
+
+You can use the Reactor operators to configure timeouts, retries, fallbacks, and
+error handling to make the interaction more resilient to any failure in the ser-
+vice downstream or due to the network
+== Using Reactive Spring
+=== DEFINING Timeouts FOR WEBCLIENT
+Project Reactor provides a timeout() operator you can use to define a time limit for
+completing an operation. You can chain it with the result of the WebClient call to continue the reactive stream. 
+[source,java,attributes]
+----
+public Mono<Book> getBookByIsbn(String isbn) {
+    return webClient
+            .get()
+            .uri(BOOKS_ROOT_API + isbn)
+            .retrieve()
+            .bodyToMono(Book.class)
+            // The fallback returns an empty Mono object.
+            .timeout(Duration.ofSeconds(3), Mono.empty())
+            .onErrorResume(WebClientResponseException.NotFound.class, exception -> Mono.empty())
+}
+----
+=== DEFINING RETRIES FOR WEBCLIENT
+Project Reactor provides a retryWhen() operator to retry an operation when it fails.
+The position where you apply it to the reactive stream matters.
+
+* Placing the retryWhen() operator after timeout() means that the timeout is
+applied to each retry attempt.
+* Placing the retryWhen() operator before timeout() means that the timeout is
+applied to the overall operation (that is, the whole sequence of the initial
+request and retries has to happen within the given time limit).
+
+You can define the number of attempts and the minimum duration for the
+first backoff. The delay is computed for each retry as the current attempt number
+multiplied by the minimum backoff period. A jitter factor can be used to add random-
+ness to the exponential of each backoff. By default, a jitter of at most 50% of the com-
+puted delay is used. When you have multiple instances of Order Service running, the
+jitter factor ensures that the replicas will not retry requests simultaneously.
+
+[source,java,attributes]
+----
+public Mono<Book> getBookByIsbn(String isbn) {
+    return webClient
+            .get()
+            .uri(BOOKS_ROOT_API + isbn)
+            .retrieve()
+            .bodyToMono(Book.class)
+            /*
+                * Instead of throwing an exception when the timeout expires, you have the
+                * chance to pro-
+                * vide a fallback behavior. Considering that Order Service can’t accept an
+                * order if the
+                * book’s availability is not verified, you might consider returning an empty
+                * result so that
+                * the order will be rejected. You can define a reactive empty result using
+                * Mono.empty().
+                */
+            /*
+                * In a real production scenario, you might want to externalize the time out
+                * configuration by adding a new field to the ClientProperties.
+                * In that way, you can change its value depending on the environment without
+                * having to rebuild the application. It’s also essential to monitor any timeout
+                * and tune its value if necessary.
+                */
+            .timeout(Duration.ofSeconds(3), Mono.empty())
+            .onErrorResume(WebClientResponseException.NotFound.class, exception -> Mono.empty())
+            /*
+                * we want the timeout to apply to each retry attempt, so we’ll use
+                * the retryWhen() operator after timeout() whic means that the timeout is
+                * applied to each retry attempt. The time limiter is applied first. If the
+                * timeout expires, the retryWhen()
+                * operator kicks in and tries the request again.
+                */
+                /*
+                 * Exponential backoff is used
+                 * as the retry strategy. Three
+                 * attempts are allowed with
+                 * a 100 ms initial backoff
+                 */
+            .retryWhen(Retry.backoff(3, Duration.ofMillis(100)))
+            .onErrorResume(Exception.class, exception -> Mono.empty());
+}
+----
+=== Fallbacks and error handling
+Some errors are acceptable and semantically meaningful in the context of your
+business logic. When Order Service calls Catalog Service to fetch information about a
+specific book, a 404 response might be returned. That’s an acceptable response that
+should be addressed to inform the user that the order cannot be submitted because
+the book is not available in the catalog.
+
+The retry strategy you defined in the previous section is not limited: it will retry the
+request as long as an error response is received, including acceptable ones like 404.
+However, in that case, you don’t want to retry the request. Project Reactor provides an
+onErrorResume() operator to define a fallback when a specific error occurs. You can
+add it to the reactive stream after the timeout() operator and before the retry-
+When() so that if a 404 response is received (WebClientResponseException.NotFound
+exception), the retry operator is not triggered. Then you can use the same operator
+again at the end of the stream to catch any other exception and fall back to an empty
+Mono. Update the getBookByIsbn() method in the BookClient class as follows.
+
+[source,java,attributes]
+----
+public Mono<Book> getBookByIsbn(String isbn) {
+    return webClient
+            .get()
+            .uri(BOOKS_ROOT_API + isbn)
+            .retrieve()
+            .bodyToMono(Book.class)
+            .timeout(Duration.ofSeconds(3), Mono.empty())
+            // Returns an empty object when a 404 response is received
+            .onErrorResume(WebClientResponseException.NotFound.class, exception -> Mono.empty())
+            .retryWhen(Retry.backoff(3, Duration.ofMillis(100)))
+            // If any error happens after the 3 retry attempts, catch the exception and return an empty object.
+            .onErrorResume(Exception.class, exception -> Mono.empty());
+}
+----
+In a real-world scenario, you would probably want to return some con-
+textual information depending on the type of error, instead of always return-
+ing an empty object. For example, you could add a reason field to the Order
+object to describe why it’s been rejected. Was it because the book is unavail-
+able in the catalog or because of network problems? In the second case, you
+could inform the user that the order cannot be processed because it’s
+momentarily unable to check the book’s availability. A better option would be
+to save the order in a pending state, queue the order submission request, and
+try it again later, using strategies like  Event-driven architectures
+== Using Resilience4J and Spring Cloud Circuit Breaker

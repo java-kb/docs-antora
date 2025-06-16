@@ -1,15 +1,13 @@
 = Packaging
 :figures: 16-deployment/packaging
 
- Cloud native applications should
-be self-contained and not dependent on a server being available in the execution envi-
-ronment. Instead, the necessary server capabilities are included in the application
+Cloud native applications should be self-contained and not dependent on a server being available in the execution environment. Instead, the necessary server capabilities are included in the application
 itself. Spring Boot offers built-in server functionality that helps you remove the exter-
 nal dependency and make the application standalone. Spring Boot comes bundled
 with a preconfigured Tomcat server, but it’s possible to replace it with Undertow, Jetty,
 or Netty.
 
- In the JVM ecosystem, cloud native applications are
+In the JVM ecosystem, cloud native applications are
 packaged as JAR artifacts. Since they are self-contained, they can run as standalone
 Java applications with no external dependency apart from the JVM. Spring Boot is
 flexible enough to allow both JAR and WAR types of packaging. Still, for cloud native
@@ -21,5 +19,23 @@ with the web server. For example, Tomcat contains a web server component (Coyote
 and an execution context based on the Java Servlet API, usually called the Servlet con-
 tainer (Catalina)
 
-On the
-other hand, application servers are not recommended for cloud native applications.
+On the other hand, application servers are not recommended for cloud native applications.
+
+The decision to use a Dockerfile or a tool like Buildpacks depends on
+your organization and requirements. Both approaches are valid and are used in pro-
+duction. In general, recommendation is to use Buildpacks unless it makes sense
+not to.
+
+Another option for packaging Java applications as container images
+without writing a Dockerfile is using Jib, a Gradle and Maven plugin developed by Google (https://github.com/GoogleContainerTools/jib).
+
+I’s not recommended for production scenarios, to use the implicit latest tag for naming container images.
+Instead, you should always use a specific tag that identifies the version of the
+application, such as the version of the artifact or the Git commit hash. This
+practice helps you avoid confusion and ensures that you can roll back to a specific
+version of the application if needed. For example, you can use the following
+command to build a container image with a specific tag:
+
+```bash
+docker build -t catalog-service:1.0.0 .
+```

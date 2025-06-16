@@ -194,7 +194,7 @@ are not application responsibilities anymore. An external tool (a log
 aggregator) will fetch, collect, and make logs available for inspection.
 
 == 7 Disposability
-
+===  Ensuring disposability: Fast startup
 In a traditional environment, you would take much care of your
 applications, ensuring they stay up and running and never terminate. In
 a cloud environment, you don’t need to care that much: applications are
@@ -204,12 +204,26 @@ high-load peak, you can spin up more instances of your applications to
 sustain the increased workload. We say that an application is disposable
 if it can be started or stopped at any time.
 
+Traditional applications deployed on application servers take quite some time to start.
+It’s not rare for them to take several minutes before they’re ready to accept connections.
+On the other hand, cloud native applications should be optimized for starting quickly,
+taking a few seconds rather than minutes to become ready. 
+
 To handle application instances in such a dynamic way, you should design
 them to start up quickly whenever you need a new instance and gracefully
 shut down when you don’t need them anymore. A fast startup enables the
 elasticity of the system, ensuring robustness and resilience. Without a
 fast startup, you will have performance and availability issues.
 
+Fast startup is relevant in a cloud environment because applications are disposable
+and are frequently created, destroyed, and scaled. The quicker the startup, the sooner
+a new application instance is ready to accept connections.
+
+Standard applications, like microservices, are good with a startup time in the range
+of a few seconds. On the other hand, serverless applications usually require a faster
+startup phase in the range of milliseconds rather than seconds.
+
+=== Ensuring disposability: Graceful shutdown
 A graceful shutdown is when an application, on receiving a signal to
 terminate, stops accepting new requests, completes the ones already in
 progress, and finally exits. In the case of web processes, that is
@@ -217,6 +231,11 @@ straightforward. In other cases, such as with worker processes, the jobs
 they were responsible for must be returned to the work queue, and only
 afterward can they exit.
 
+Having applications start quickly is not enough to address our scalability needs. When-
+ever an application instance is shut down, it must happen gracefully without clients
+experiencing downtime or errors. Gracefully shutting down means the application
+stops accepting new requests, completes all those still in progress, and closes any open
+resources, like database connections.
 == 8 Backing services
 
 Backing services can be defined as external resources that an
@@ -234,6 +253,10 @@ environment. The attachment is done through resource binding. For
 example, resource binding for a database could consist of a URL, a
 username, and a password.
 
+As per the 15-Factor methodology, any backing service should be attached to an appli-
+cation through resource binding. For databases, you relied on the configuration prop-
+erties provided by Spring Boot to specify credentials and the URL. When a backing
+service is another application, you need to provide its URL in a similar way. 
 == 9 Environment parity
 
 Environment parity is about keeping all your environments as similar as
@@ -273,7 +296,6 @@ activating them by calling a specific endpoint.
 administrative processes like:
 
 * Running schema and data migrations 
-
 
 == 11 Port binding
 

@@ -29,12 +29,46 @@ Docker CLI directly.
 Next figure shows how the Docker client, Docker server,and container registry interact.
 image::{figures}/image.png[The Docker Engine has a client/server architecture, and it interacts with a registry.]
 
+== container image
 A *container image* (or, simply, an image) is a lightweight executable package that
 includes everything needed to run the application inside. The Docker image format is
 the most used one for creating container images, and it has been standardized by the
 OCI project (in the OCI Image Specification). OCI images can be created from
 scratch by defining instructions in a Dockerfile, a text-based file containing all the
 steps to generate the image.
+
+Container images are the product of executing an ordered sequence of instructions,
+each resulting in a layer. Each image is made up of several layers, and each layer rep-
+resents a modification produced by the corresponding instruction. The final artifact,
+an image, can be run as a container.
+
+Images can be created from scratch or starting from a base image. The latter is the
+most common approach. For example, you can start from an Ubuntu image and apply
+a series of modifications on top of it. The sequence of instructions would be as follows:
+
+. Use Ubuntu as the base image.
+. Install the Java Runtime Environment.
+. Run the java --version command.
+
+Each of these instructions will generate a layer, producing the final container image
+
+All layers in a container image are read-only. Once they are applied, you can’t modify
+them anymore. If you need to change something, you can do so by applying a new
+layer on top of it (by executing a new instruction). Changes applied to the upper lay-
+ers will not affect the lower ones. This approach is called copy-on-write: a copy of the
+original item is created in the upper layer, and changes are applied to the copy rather
+than to the original item.
+
+When an image is run as a container, one last layer is automatically applied on top
+of all the existing ones: the container layer. It is the only writable layer, and it’s used to
+store data created during the execution of the container itself. At runtime, this layer
+might be used to generate files required by the application to run or maybe to store
+temporary data. Even though it’s writable, it’s volatile: once you delete
+your container, everything stored in that layer is gone.
+
+You should never store secrets or sensitive information
+in the lower layers because they will always be accessible, even if the upper layers delete them. For example, you shouldn’t package passwords or encryption keys within a container image.
+
 
 Container images follow common naming conventions, which are adopted by OCI-
 compliant container registries: +++<container_registry>+++/+++<namespace>+++/+++<name>+++[:+++<tag>+++]:+++</tag>++++++</name>++++++</namespace>++++++</container_registry>+++
@@ -57,15 +91,88 @@ ubuntu or docker.io/library/postgres.
  When uploading your images to GitHub Container Registry, you are required
 to use fully qualified names, according to the ghcr.io/+++<your_github_username>+++/+++</your_github_username>++++++<image_name>+++format. 
 
+== container
+
 A **container** is a runnable instance of a container image. You can manage the con- tainer life cycle from the Docker CLI or Docker Compose: you can start, stop, update, and delete containers. Containers are defined by the image on which they are based and the configuration provided at startup time (for example, environment variables used to customize the container). By default, containers are isolated from each other and the host machine, but you can make them expose services to the outside world through specific ports with a process called port forwarding or port mapping. Containers can have any name. If you don't specify one, the Docker server will assign a random one, like bazinga_schrodinger. 
 
+== Port forwarding
+Port forwarding or port mapping or port publishing, is used to
+make your containerized application accessible from the outside world.
+
+By default, containers join an isolated network inside the Docker host. If you want
+to access any container from your local network, you must explicitly configure the
+port mapping. 
+
+Port forwarding is the process of mapping a port on the host machine to a port on the container. This allows you to access services running inside the container from outside. For example, if your application runs on port 8080 inside the container, you can map it to port 80 on the host machine, making it accessible via http://localhost:80.
+
+Docker has a built-in DNS server that can enable containers in the same network to
+find each other using the container name rather than a hostname or an IP address.
+For example, Catalog Service will be able to call the PostgreSQL server through the
+URL jdbc:postgresql:/ /polar-postgres:5432, where polar-postgres is the container name. 
+
+To create a network inside which Catalog Service and Post-
+greSQL can talk to each other using the container name instead of an IP address or a
+hostname.
+
+* run this command from any Terminal window:
++
+```bash
+docker network create catalog-network
+```
+* Next, verify that the network has been successfully created:
++
+```bash
+docker network ls
+```
+* You can then start a PostgreSQL container, specifying that it should be part of the
+catalog-network you just created. Using the --net argument ensures the container
+will join the specified network and rely on the Docker built-in DNS server:
++
+```bash
+docker run -d \
+ --name polar-postgres \
+ --net catalog-network \
+ -e POSTGRES_USER=user \
+ -e POSTGRES_PASSWORD=password \
+ -e POSTGRES_DB=polardb_catalog \
+ -p 5432:5432 \
+ postgres:14.4
+```
+== SECURITY
+Containers are isolated from the host machine and other containers, but they still share the same kernel. This means that if a container is compromised, it could potentially affect the host machine or other containers. To mitigate this risk, you should follow security best practices when working with containers.
+
+containers run using the
+root user by default, potentially letting them get root access to the Docker host. You
+can mitigate the risk by creating a non-privileged user and using it to run the entry-
+point process defined in the Dockerfile, following the principle of least privilege.
+
+[,docker]
+----
+RUN useradd spring
+
+USER spring
+----
+
+You should never store secrets like passwords or keys in a con-
+tainer image. Even if they are removed in an upper layer, they will remain intact in the
+original layer and be easily accessible.
+
+it’s also critical to use up-to-date base images and libraries in your Docker-
+file. Scanning your container images for vulnerabilities is a best practice that should
+be embraced and automated in your deployment pipeline. 
+
+use grype to check if the newly created image contains any vulnerabilities:
+```bash
+grype catalog-service
+```
 == Docker Compose
 Docker Compose provides a better experience than the Docker CLI. Instead of a command line, you work with YAML files that describe which containers you want to run and their characteristics. With Docker Compose, you can define all the applica- tions and services composing your system in one place, and you can manage their life cycles together. It's good practice to gather all deployment-related scripts in a separate codebase and, possibly, in a separate repository i.e \{project-name}-deployment folder. It'll contain all the Docker and Kubernetes scripts needed to run the applications composing your system. ## Security containers run using the root user by default, potentially letting them get root access to the Docker host. You can mitigate the risk by creating a non-privileged user and using it to run the entry- point process defined in the Dockerfile, following the principle of least privilege. 
-
++
+```bash
 docker RUN useradd spring USER spring 
-
+```
 == Containerizing applications with Docker
-Before deploying an application to the cloud, however, you should containerize it. Why? Containers provide isolation from the surrounding
+Before deploying an application to the cloud, however, you should containerize it as Containers provide isolation from the surrounding
 environment, and they’re equipped with all the dependencies required by the appli-
 cation to run.
 
@@ -78,3 +185,59 @@ self-contained and portable across any cloud environment. With containers you ca
 manage all applications in a standard way, no matter the language or framework used
 to implement them.
 
+== Container Registry
+
+A container registry is to images what a Maven repository is to Java libraries. Many
+cloud providers offer their own registry solutions with extra services, like image scan-
+ning for vulnerabilities and certified images. By default, a Docker installation is con-
+figured to use the container registry provided by the Docker company (Docker Hub).
+
+=== Using Docker Hub
+=== Using Azure Container Registry
+=== Using GitHub Container Registry
+When uploading your images to GitHub Container Registry, you are required
+to use fully qualified names, according to the ghcr.io/<your_github_username>/
+<image_name> format
+To use GitHub Container Registry, you need to authenticate with your GitHub account. You can do this by generating a Personal Access Token (PAT) with the appropriate permissions. Follow these steps:
+
+* Go to your GitHub account, navigate to Settings > Developer Settings > Personal access tokens, and choose Generate New Token. Input a meaningful name, and assign it the write:packages scope to give the token permissions to publish images to the container registry
+* generate the token and copy its value. 
+* open a Terminal window and authenticate with GitHub Container Registry When asked, insert username (your GitHub username) and password (your GitHub PAT):
++
+```bash        
+docker login ghcr.io
+```
+* assign your image a fully qualified name before publishing it to a container registry
+(that is, you need to tag the image). You can do so with the docker tag command:
++
+```bash 
+docker tag my-app:1.0.0 \
+ ghcr.io/<your_github_username>/my-app:1.0.0
+```
+* Once authenticated, you can push images to the GitHub Container Registry using the fully qualified name format. For example, to push an image named my-app, you would use:
++
+```bash
+docker push ghcr.io/<your_github_username>/my-app:latest
+```
+* Go to your GitHub account, navigate to your profile page, and enter the Packages sec-
+tion. You should see a new my-app entry
+* To pull an image from the GitHub Container Registry, you can use the docker pull command with the fully qualified name:
+```bash
+docker pull ghcr.io/<your_github_username>/my-app:latest
+```
+* To remove an image from the GitHub Container Registry, you can use the docker rmi command with the fully qualified name:
+```bash
+docker rmi ghcr.io/<your_github_username>/my-app:latest
+```
+=== Using Docker Hub
+To use Docker Hub, you need to authenticate with your Docker account. You can do this by running the following command in your terminal:
+```bash
+docker login
+```
+When prompted, enter your Docker Hub username and password. Once authenticated, you can push images to Docker Hub using the docker push command with the image name in the format <username>/<image_name>:<tag>. For example:       
+```bash
+docker push <your_docker_username>/my-app:latest
+```
+=== Using Azure Container Registry
+=== Using Google Container Registry
+=== Using Amazon Elastic Container Registry (ECR)

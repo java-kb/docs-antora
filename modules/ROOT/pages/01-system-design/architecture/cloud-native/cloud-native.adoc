@@ -112,9 +112,28 @@ It's a good design practice to decompose a system into modules (modularization),
 * *Resilience*
 +
 A system is resilient if it provides its services even in the presence of faults or environ mental changes.
-  Resilience is "`the capability of a hardware-software network to provide and maintain an acceptable level of service in the face of faults and challenges to normal operation.
-  we should design applications to be fault tolerant. An essential part of resilience is ensuring that a failure will not cascade to other components of the system but stay isolated while it gets fixed. We also want the system to be self-repairing or self-healing,
-  some techniques for tolerating faults and preventing their effects from propagating to other parts of the system and spreading the failure are circuit breakers, retries, timeouts, and ratelimiters.
++
+Resilience is about keeping a system available and delivering its services, even when
+failures happen. Since failures will happen, and there’s no way to prevent them all, it
+is critical to design fault-tolerant applications. The goal is to keep the system available
+without the user noticing any failures. In the worst-case scenario, the system may have
+degraded functionality (graceful degradation), but it should still be available.
++
+Resilience is "`the capability of a hardware-software network to provide and maintain an acceptable level of service in the face of faults and challenges to normal operation.
++
+we should design applications to be fault tolerant. An essential part of resilience is ensuring that a failure will not cascade to other components of the system but stay isolated while it gets fixed. We also want the system to be self-repairing or self-healing,some techniques for tolerating faults and preventing their effects from propagating to other parts of the system and spreading the failure are circuit breakers, retries, timeouts, and ratelimiters.
++
+Resilience is one of the goals for moving to the cloud and one of the properties characterizing cloud native applications. Our systems should be resilient to failures and stable enough to ensure a certain service level to their users. The integration points between services over a network are among the most critical areas for achieving a stable and resilient system for production. 
++
+The critical point in achieving resilience (or fault-tolerance) is keeping the faulty
+component isolated until the fault is fixed. By doing that, you’ll prevent crack propagation. Think about Book shop app. If Catalog Service
+enters a faulty state and becomes unresponsive, you don’t want Order Service to be
+affected as well. Integration points between application services should be carefully
+guarded and made resilient to failures affecting the other party.
+
+The key goal is designing a resilient system that, in the best-case scenario, can provide
+its services without the user noticing that there has been a failure. In contrast, in the
+worst-case scenario, it should still work but with graceful degradation.
 
 * *Observability*
 +

@@ -6,7 +6,20 @@ Cloud native applications are self-contained. Spring Boot lets you package your 
 == Packaging Spring Boot applications as container images
 
 === Containerizing Spring Boot with Dockerfiles
-
+* build the JAR artifact for the service application. Open a Terminal window and navigate to the service project’s root folder. First, build the JAR artifact:
++
+```bash
+./gradlew clean bootJar
+```
++
+```bash
+cd app-service
+mvn clean package spring-boot:repackage
+```
+*  Open your Catalog Service project (catalog-service), and create an empty file
+called Dockerfile (with no extension) in the root folder. That file will contain the rec-
+ipe for containerizing your application.
++
 [,docker]
 ----
 FROM openjdk:17
@@ -19,13 +32,31 @@ COPY ${JAR_FILE} catalog-service.jar
 
 ENTRYPOINT ["java", "-jar", "catalog-service.jar"]
 ----
+* build the container image by running this command:for gradle
++
+```bash
+docker build -t catalog-service .
+```
+for maven
++
+```bash
+docker build --build-arg JAR_FILE=target/*.jar -t catalog-service .
+```
+* run the container image by running this command:  
++
+```bash
+docker run -d --name catalog-service -p 9001:9001 -p 8001:8001 app-service
+```
+* verify that the container is running by running this command:
++
+```bash
+docker ps
+```
+* verify that the application is running by opening a browser and navigating to
+http://localhost:9001/catalog. You should see the catalog service’s home page.
+* verify that the application is running by opening a browser and navigating to
+http://localhost:8001/catalog/actuator/health. You should see the catalog service’s health status.
 
-[,bash]
-----
-cd app-service
-mvn clean package spring-boot:repackage
-docker build -t app-service .
-----
 
 === Containerizing Spring Boot using layered-JAR mode
 

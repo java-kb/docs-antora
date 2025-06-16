@@ -1,0 +1,295 @@
+= Reactive Spring Testing
+:figures: 11-development/02-spring/07-testing
+
+[source,gradle,attributes]
+----
+dependencies {
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation 'com.squareup.okhttp3:mockwebserver'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
+	testImplementation 'org.testcontainers:r2dbc'
+}
+----
+[source,xml,attributes]
+----
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>io.projectreactor</groupId>
+    <artifactId>reactor-test</artifactId>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>com.squareup.okhttp3</groupId>
+    <artifactId>mockwebserver</artifactId>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>junit-jupiter</artifactId>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.testcontainers</groupId>
+    <artifactId>r2dbc</artifactId>
+    <scope>test</scope>
+</dependency>
+----
+
+== Testing data persistence with @DataR2dbcTest and Testcontainers
+The approach is the same you used in testing the data layer, but there are two main differences. First, you will use the StepVerifier
+utility to test the Repository behavior reactively. Second, you will define a PostgreSQL test container instance explicitly.
+
+we’ll define a test container in the test class and mark it as @Container. Then the @Testcontainers annotation on the class will activate the automatic
+startup and cleanup of the test container. Finally, we’ll use the @DynamicProperties
+annotation provided by Spring Boot to pass the test database’s credentials and URL to
+the application. This approach of defining test containers and overwriting properties
+is generic and can be applied to other scenarios.
+
+[source,java,attributes]
+----
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+
+public interface OrderRepository extends ReactiveCrudRepository<Order, Long> {
+}
+----
+
+[source,java,attributes]
+----
+//Identifies a test class that focuses on R2DBC components
+@DataR2dbcTest
+// Imports R2DBC configuration needed to enable auditing
+@Import(DataConfig.class)
+// Activates automatic startup and cleanup of test containers
+@Testcontainers
+class OrderRepositoryR2dbcTests {
+
+    // Identifies a PostgreSQL container for testing
+    @Container
+    static PostgreSQLContainer<?> postgresql = new PostgreSQLContainer<>(DockerImageName.parse("postgres:14.12"));
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    // Overwrites R2DBC and Flyway configuration to point to the test PostgreSQL instance
+    @DynamicPropertySource
+    static void postgresqlProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.r2dbc.url", OrderRepositoryR2dbcTests::r2dbcUrl);
+        registry.add("spring.r2dbc.username", postgresql::getUsername);
+        registry.add("spring.r2dbc.password", postgresql::getPassword);
+        registry.add("spring.flyway.url", postgresql::getJdbcUrl);
+    }
+
+    // Builds an R2DBC connection string, because Testcontainers doesn’t provide one out of the box as it does for JDBC
+    private static String r2dbcUrl() {
+        return String.format("r2dbc:postgresql://%s:%s/%s", postgresql.getHost(),
+                postgresql.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT), postgresql.getDatabaseName());
+    }
+
+    @Test
+    void findOrderByIdWhenNotExisting() {
+        StepVerifier.create(orderRepository.findById(394L))
+                .expectNextCount(0)
+                .verifyComplete();
+    }
+
+    @Test
+    void createRejectedOrder() {
+        var rejectedOrder = OrderService.buildRejectedOrder("1234567890", 3);
+        StepVerifier.create(orderRepository.save(rejectedOrder))
+                .expectNextMatches(order -> order.status().equals(OrderStatus.REJECTED))
+                .verifyComplete();
+    }
+}
+----
+
+== Testing REST controllers with @WebFluxTest
+The WebFlux slice can be tested similarly to how you tested the MVC layer and using the same WebTestClient utility you used for the integration tests. It’s an enhanced version of the standard WebClient object, containing extra features to simplify tests.
+
+you can use the @MockBean Spring annotation to mock the
+OrderService class and have Spring add it to the Spring context used in the test.
+[source,java,attributes]
+----
+@RestController
+@RequestMapping("orders")
+public class OrderController {
+
+    private final OrderService orderService;
+
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
+
+    @GetMapping
+    public Flux<Order> getAllOrders() {
+        return orderService.getAllOrders();
+    }
+
+    @PostMapping
+    public Mono<Order> submitOrder(@RequestBody @Valid OrderRequest orderRequest) {
+        return orderService.submitOrder(orderRequest.isbn(), orderRequest.quantity());
+    }
+
+}
+----
+
+[source,java,attributes]
+----
+// Identifies a test class that focuses on Spring WebFlux components, targeting OrderController
+@WebFluxTest(OrderController.class)
+class OrderControllerWebFluxTests {
+
+    // A WebClient variant with extra features to make testing RESTful services
+    // easier
+    @Autowired
+    private WebTestClient webClient;
+
+    // Adds a mock of OrderService to the Spring application context
+    @MockBean
+    private OrderService orderService;
+
+    @Test
+    void whenBookNotAvailableThenRejectOrder() {
+        var orderRequest = new OrderRequest("1234567890", 3);
+        var expectedOrder = OrderService.buildRejectedOrder(orderRequest.isbn(), orderRequest.quantity());
+        // Defines the expected behavior for the OrderService mock bean
+        given(orderService.submitOrder(orderRequest.isbn(), orderRequest.quantity()))
+                .willReturn(Mono.just(expectedOrder));
+
+        webClient
+                .post()
+                .uri("/orders")
+                .bodyValue(orderRequest)
+                .exchange()
+                // Expects the order is created successfully
+                .expectStatus().is2xxSuccessful()
+                .expectBody(Order.class).value(actualOrder -> {
+                    assertThat(actualOrder).isNotNull();
+                    assertThat(actualOrder.status()).isEqualTo(OrderStatus.REJECTED);
+                });
+
+    }
+
+}
+----
+
+== Integerations Testing
+[source,java,attributes]
+----
+import com.polarbookshop.orderservice.book.Book;
+import com.polarbookshop.orderservice.book.BookClient;
+import com.polarbookshop.orderservice.order.domain.Order;
+import com.polarbookshop.orderservice.order.domain.OrderStatus;
+import com.polarbookshop.orderservice.order.web.OrderRequest;
+import org.junit.jupiter.api.Test;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
+import reactor.core.publisher.Mono;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Testcontainers
+class OrderServiceApplicationTests {
+
+	@Container
+	static PostgreSQLContainer<?> postgresql = new PostgreSQLContainer<>(DockerImageName.parse("postgres:14.12"));
+
+	@Autowired
+	private WebTestClient webTestClient;
+
+	@MockBean
+	private BookClient bookClient;
+
+	@DynamicPropertySource
+	static void postgresqlProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.r2dbc.url", OrderServiceApplicationTests::r2dbcUrl);
+		registry.add("spring.r2dbc.username", postgresql::getUsername);
+		registry.add("spring.r2dbc.password", postgresql::getPassword);
+		registry.add("spring.flyway.url", postgresql::getJdbcUrl);
+	}
+
+	private static String r2dbcUrl() {
+		return String.format("r2dbc:postgresql://%s:%s/%s", postgresql.getHost(),
+				postgresql.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT), postgresql.getDatabaseName());
+	}
+
+	@Test
+	void whenGetOrdersThenReturn() {
+		String bookIsbn = "1234567893";
+		Book book = new Book(bookIsbn, "Title", "Author", 9.90);
+		given(bookClient.getBookByIsbn(bookIsbn)).willReturn(Mono.just(book));
+		OrderRequest orderRequest = new OrderRequest(bookIsbn, 1);
+		Order expectedOrder = webTestClient.post().uri("/orders")
+				.bodyValue(orderRequest)
+				.exchange()
+				.expectStatus().is2xxSuccessful()
+				.expectBody(Order.class).returnResult().getResponseBody();
+		assertThat(expectedOrder).isNotNull();
+
+		webTestClient.get().uri("/orders")
+				.exchange()
+				.expectStatus().is2xxSuccessful()
+				.expectBodyList(Order.class).value(orders -> {
+					assertThat(orders.stream().filter(order -> order.bookIsbn().equals(bookIsbn)).findAny())
+							.isNotEmpty();
+				});
+	}
+
+	@Test
+	void whenPostRequestAndBookExistsThenOrderAccepted() {
+		String bookIsbn = "1234567899";
+		Book book = new Book(bookIsbn, "Title", "Author", 9.90);
+		given(bookClient.getBookByIsbn(bookIsbn)).willReturn(Mono.just(book));
+		OrderRequest orderRequest = new OrderRequest(bookIsbn, 3);
+
+		Order createdOrder = webTestClient.post().uri("/orders")
+				.bodyValue(orderRequest)
+				.exchange()
+				.expectStatus().is2xxSuccessful()
+				.expectBody(Order.class).returnResult().getResponseBody();
+
+		assertThat(createdOrder).isNotNull();
+		assertThat(createdOrder.bookIsbn()).isEqualTo(orderRequest.isbn());
+		assertThat(createdOrder.quantity()).isEqualTo(orderRequest.quantity());
+		assertThat(createdOrder.bookName()).isEqualTo(book.title() + " - " + book.author());
+		assertThat(createdOrder.bookPrice()).isEqualTo(book.price());
+		assertThat(createdOrder.status()).isEqualTo(OrderStatus.ACCEPTED);
+	}
+
+	@Test
+	void whenPostRequestAndBookNotExistsThenOrderRejected() {
+		String bookIsbn = "1234567894";
+		given(bookClient.getBookByIsbn(bookIsbn)).willReturn(Mono.empty());
+		OrderRequest orderRequest = new OrderRequest(bookIsbn, 3);
+
+		Order createdOrder = webTestClient.post().uri("/orders")
+				.bodyValue(orderRequest)
+				.exchange()
+				.expectStatus().is2xxSuccessful()
+				.expectBody(Order.class).returnResult().getResponseBody();
+
+		assertThat(createdOrder).isNotNull();
+		assertThat(createdOrder.bookIsbn()).isEqualTo(orderRequest.isbn());
+		assertThat(createdOrder.quantity()).isEqualTo(orderRequest.quantity());
+		assertThat(createdOrder.status()).isEqualTo(OrderStatus.REJECTED);
+	}
+
+}
+----

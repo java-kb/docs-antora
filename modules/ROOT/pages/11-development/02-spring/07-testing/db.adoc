@@ -1,5 +1,5 @@
 = Database Testing
-:figures: 12-db/testing
+:figures: 11-development/02-spring/07-testing
 
 Spring Boot allows you to run integration tests by
 loading only the Spring components used by a specific application slice (slice tests)

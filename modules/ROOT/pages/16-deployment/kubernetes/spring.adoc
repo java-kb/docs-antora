@@ -1,8 +1,18 @@
-= Deploy to Kubernetes
+= Deploy Spring Boot App to Kubernetes
 :figures: 16-deployment/kubernetes
 
-== Using Commands
+A Spring Boot application on Kubernetes is still packaged as a container, but it runs in
+a Pod controlled by a Deployment object.
 
+After packaging a Spring Boot application as an OCI image, all you need to do to
+run it in a Kubernetes cluster is define a Deployment object. 
+
+You can deploy Spring Boot applications to a Kubernetes cluster by defining
+two YAML manifests: one for the Deployment object and one for the Service
+object.
+
+== Creating a Deployment for a Spring Boot application
+=== Using kubectl
 [source,language,attributes]
 ----
 minikube start
@@ -25,4 +35,75 @@ kubectl delete service catalog-service
 kubectl delete deployment catalog-service
 
 minikube stop
+----
+
+=== Using a YAML file(manifest)
+
+create a “k8s” folder in the project root (catalog-service). We will
+use it to store the manifests for the application.
+
+create a deployment.yml file inside the catalog-service/k8s folder
+[source,yaml,attributes]
+----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-service
+  labels:
+    app: catalog-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-service
+  template:
+    metadata:
+      labels:
+        app: catalog-service
+    spec:
+      containers:
+        - name: catalog-service
+          image: catalog-service
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command: [ "sh", "-c", "sleep 5" ]
+          ports:
+            - containerPort: 9001
+          env:
+            - name: BPL_JVM_THREAD_COUNT
+              value: "50"
+            - name: SPRING_CLOUD_CONFIG_URI
+              value: http://config-service
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://polar-postgres/polardb_catalog
+            - name: SPRING_PROFILES_ACTIVE
+              value: testdata
+----
+manu-ally import catalog-service image it into your local cluster
+[source,console,attributes]
+----
+minikube image load catalog-service --profile polar
+----
+
+You can apply Kubernetes manifests to a cluster using the kubectl client. Open a Ter-
+minal window, navigate to your Catalog Service root folder (catalog-service), and run
+the following command:
+[source,console,attributes]
+----
+kubectl apply -f k8s/deployment.yml
+----
+
+verify which objects have been
+created with the following command:
+[source,console,attributes]
+----
+kubectl get all -l app=catalog-service
+----
+To verify that Catalog Service started up correctly, you can check the logs from its
+Deployment as follows:
+[source,console,attributes]
+----
+kubectl logs deployment/catalog-service
 ----
