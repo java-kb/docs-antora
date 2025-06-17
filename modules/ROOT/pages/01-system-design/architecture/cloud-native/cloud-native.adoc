@@ -68,7 +68,7 @@ infrastructure.
 * *Public cloud*--Cloud infrastructure provisioned for public use. It is usually owned and managed by an organization, the cloud provider, and is hosted on the provider's premises. Examples of public cloud service providers are Amazon Web Services (AWS), Microsoft Azure, Google Cloud, Alibaba Cloud, and DigitalOcean.
 * *Hybrid cloud*--Composition of two or more distinct cloud infrastructures belonging to any of the previous types, bound together and offering services as if they were one single environment.
 
-=== Cloud computing service models
+== Cloud computing service models
 
 The cloud computing service models differ by the level of abstraction they provide and who is responsible for managing which levels (the platform or the consumer)
 
@@ -90,11 +90,11 @@ image::{figures}/image-1.png[alt text]
 The CNCF identifies five main properties that cloud native applications should
 have: scalability, loose coupling, resilience, observability, and manageability. Cloud native is a methodology for building and running applications that exhibit those properties. Cornelia Davis sums it up by stating that "`cloud-native software is defined y how you compute, not about where you compute. In other words, the cloud is about where, and cloud native is about how.
 
-* *Scalability*
-+
+===  *Scalability*
+
 Elasticity is about being able to scale your software depending on the load. You can
   scale an elastic system to ensure an adequate service level for all your customers.
-+
+
 Cloud native applications can support increasing workloads if provided with additional resources. Depending on the nature of thoseextra resources, we can distinguish between vertical scalability and horizontal scalability:
 
  ** Vertical scalability--Scaling vertically, or scaling up or down, means adding hard ware resources to or removing them from the computing node, such as CPU ormemory. This approach is limited, since it's not possible to keep adding hard ware resources. On the other hand, applications don't need to be explicitlydesigned to be scaled up or down.
@@ -105,12 +105,12 @@ image::{figures}/image-2.png[alt text]
 +
 In the cloud, where everything is dynamic and in constant change, horizontal scalability is preferred. Thanks to the abstraction levels offered by the cloud computingmodels, it's straightforward to spin up new instances of your application rather thanincreasing the computational power of the machines already running. Since the cloudis elastic, we can scale application instances in and out quickly and dynamically.
 
-* *Loose coupling*
-+
+=== *Loose coupling*
+
 It's a good design practice to decompose a system into modules (modularization), each of which has minimal dependencies on the other parts(loose coupling) and to encapsulate code that changes together (high cohesion).Depending on the architectural style, a module can model a monolithic componentor a standalone service (for example, a microservice). Either way, we should aim atachieving proper modularization with loose coupling and high cohesion.
 
-* *Resilience*
-+
+=== *Resilience*
+
 A system is resilient if it provides its services even in the presence of faults or environ mental changes.
 +
 Resilience is about keeping a system available and delivering its services, even when
@@ -135,8 +135,8 @@ The key goal is designing a resilient system that, in the best-case scenario, ca
 its services without the user noticing that there has been a failure. In contrast, in the
 worst-case scenario, it should still work but with graceful degradation.
 
-* *Observability*
-+
+=== *Observability*
+
 Observability is about inferring the internal state of an application from its external outputs. Manageability is about changing the internal state and outputs via external inputs. In both cases, the application artifact is never changed. It's immutable.
 
  ** Monitoring--Monitoring is about measuring specific aspects of an application to get information on its overall health and identify failures.
@@ -155,8 +155,8 @@ _System/Libraries: Spring with OpenTelemetry ,Grafana Tempo_
 +
 _System/Libraries: Fluent Bit, Loki, and Grafana_
 
-* *Manageability*
-+
+=== *Manageability*
+
 Manageability is the ability to modify an application's behavior without
   needing to change its code
 +
@@ -169,8 +169,8 @@ _System/Libraries: Spring Cloud Config Server, Kubernetes ConfigMaps and Secrets
 
 Cloud native allow engineers to make high-impact changes frequently and predictably with minimal toil
 
-* *Automation*
-+
+=== *Automation*
+
 Automate repetitive manual tasks to accelerate the delivery and deployment of cloud native applications.
   The most important advantage of automation is that it makes processes and tasks repeatable and overall systems more stable and reliable. Manually executing a task is error-prone and costs money. By automating it, we can get a result that is both more reliable and more efficient.
 +
@@ -190,8 +190,8 @@ Automation helps avoid snowflakes in favor of phoenix servers: all tasks acting 
 +
 After their initial provisioning and configuration, immutable servers are not changed: they are immutable. If any change is necessary, it's defined as code and delivered. A new server is then provisioned and configured from the new code while the previous server is destroyed.
 
-* *Continuous delivery*
-+
+=== *Continuous delivery*
+
 Continuous delivery is a "software development discipline where you build software in such a way that the software can be released to production at any time".
 +
 Continuous delivery is a holistic engineering practice for delivering high-quality software quickly, reliably, and safely.
@@ -209,18 +209,18 @@ An essential practice of continuous delivery is test-driven development (TDD), w
 +
 Cloud native applications don't depend on servers being injected into the environment. Instead, they use an embedded server and are self-contained.
 
-* *DevOps*
-+
+=== *DevOps*
+
 DevOps is A culture where people, regardless of title or background, work together to imagine,develop, deploy, and operate a system.
-+
+
 DevOps is a culture enabling collaboration among different roles to deliver business value together.
-+
+
 == Goals
-+
+
 == Cloud Native Topologies
 
-* *Containers*
-+
+=== *Containers*
+
 OS container is a lightweight executable package that
   includes everything needed to run the application. Containers share the same kernel
   as the host: there's no need to bootstrap full operating systems to add new isolated
@@ -234,7 +234,7 @@ OS container is a lightweight executable package that
   perfect for running in the cloud, where applications are disposable and scaled dynamically and quickly. In comparison, building and destroying virtual machines is
   much more expensive and time-consuming.
 
-* *Orchestration*
+=== *Orchestration*
 
 image::{figures}/image-4.png[alt text]
 +
@@ -257,8 +257,8 @@ Container orchestration helps you automate many different tasks:
 +
 _System/Libraries: Kubernetes (a CNCF project), Docker Swarm, and Apache Mesos_
 
-* *Serverless*
-+
+=== *Serverless*
+
 The serverless computing model enables developers to focus on implementing the business logic for their applications.
 +
 Serverless computing is a model where the platform (such as Knative) manages

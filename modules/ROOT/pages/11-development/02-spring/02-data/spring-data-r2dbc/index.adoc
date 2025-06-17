@@ -1,7 +1,7 @@
 = Spring Data R2DBC
 :figures: 11-development/02-spring/02-data/spring-data-r2dbc
 
- JDBC is the most common driver used by Java applications to commu-
+JDBC is the most common driver used by Java applications to commu-
 nicate with a relational database, but it doesn’t support reactive programming. There
 have been a few attempts to provide reactive access to a relational database. One
 project that stood out and that is widely supported is Reactive Relational Database

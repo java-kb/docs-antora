@@ -7,12 +7,17 @@ expose a no-args constructor. JPA identifiers are annotated with @Id and
 @Version from the javax.persistence package instead of org.springframework.data.annotation.
 == Enabling and configuring JDBC 
 . Add dependencies
++
+[source,gradle,attributes]
+----
   dependencies {
   ...
   implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
   runtimeOnly 'org.postgresql:postgresql'
   }
-
+----
+[source,xml,attributes]
+----
   <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-data-jdbc</artifactId>
@@ -22,9 +27,11 @@ expose a no-args constructor. JPA identifiers are annotated with @Id and
     <artifactId>postgresql</artifactId>
     <scope>runtime</scope>
   </dependency>
-
+----
 . Configuring the connection to a database using JDBC
-
++
+[source,yml,attributes]
+----
   spring:
     datasource:
       username: user
@@ -35,6 +42,8 @@ expose a no-args constructor. JPA identifiers are annotated with @Id and
         connection-timeout: 2000 #ms
         # The maximum number of connections HikariCP will keep in the pool
         maximum-pool-size: 5
+----
+
 
 == Defining persistent entities with Spring Data
 

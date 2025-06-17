@@ -7,12 +7,19 @@ an all-args constructor that the framework can use to populate objects.
 
 == Enabling and configuring JDBC 
 . Add dependencies
++
+[source,gradle,attributes]
+----
   dependencies {
   ...
   implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
   runtimeOnly 'org.postgresql:postgresql'
   }
 
+----
++
+[source,xml,attributes]
+----
   <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-data-jdbc</artifactId>
@@ -22,9 +29,11 @@ an all-args constructor that the framework can use to populate objects.
     <artifactId>postgresql</artifactId>
     <scope>runtime</scope>
   </dependency>
-
+----
 . Configuring the connection to a database using JDBC
-
++
+[source,yml,attributes]
+----
   spring:
     datasource:
       username: user
@@ -35,6 +44,8 @@ an all-args constructor that the framework can use to populate objects.
         connection-timeout: 2000 #ms
         # The maximum number of connections HikariCP will keep in the pool
         maximum-pool-size: 5
+
+----
 
 == Defining persistent entities with Spring Data
 Depending on the business domain and its complexity, you might
