@@ -109,6 +109,10 @@ In the cloud, where everything is dynamic and in constant change, horizontal sca
 
 It's a good design practice to decompose a system into modules (modularization), each of which has minimal dependencies on the other parts(loose coupling) and to encapsulate code that changes together (high cohesion).Depending on the architectural style, a module can model a monolithic componentor a standalone service (for example, a microservice). Either way, we should aim atachieving proper modularization with loose coupling and high cohesion.
 
+Cloud native applications should be loosely coupled. The microservices expert
+Sam Newman identifies a few different types of coupling, including implementation,
+deployment, and temporal coupling.
+
 === *Resilience*
 
 A system is resilient if it provides its services even in the presence of faults or environ mental changes.
@@ -124,6 +128,18 @@ Resilience is "`the capability of a hardware-software network to provide and mai
 we should design applications to be fault tolerant. An essential part of resilience is ensuring that a failure will not cascade to other components of the system but stay isolated while it gets fixed. We also want the system to be self-repairing or self-healing,some techniques for tolerating faults and preventing their effects from propagating to other parts of the system and spreading the failure are circuit breakers, retries, timeouts, and ratelimiters.
 +
 Resilience is one of the goals for moving to the cloud and one of the properties characterizing cloud native applications. Our systems should be resilient to failures and stable enough to ensure a certain service level to their users. The integration points between services over a network are among the most critical areas for achieving a stable and resilient system for production. 
+
+resilience is a critical property of cloud native applications. One of the
+principles for achieving resilience is blocking a failure from cascading and affecting
+other components. Consider a distributed system where application X depends on
+application Y. If application Y fails, will application X fail, too? A circuit breaker can
+block a failure in one component from propagating to the others depending on it,
+protecting the rest of the system. That is accomplished by temporarily stopping com-
+munication with the faulty component until it recovers. This pattern comes from elec-
+trical systems, for which the circuit is physically opened to break the electrical
+connection and avoid destroying the entire house when a part of the system fails due
+to current overload.
+
 +
 The critical point in achieving resilience (or fault-tolerance) is keeping the faulty
 component isolated until the fault is fixed. By doing that, you’ll prevent crack propagation. Think about Book shop app. If Catalog Service

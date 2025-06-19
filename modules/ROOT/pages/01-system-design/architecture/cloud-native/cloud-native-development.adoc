@@ -257,6 +257,11 @@ As per the 15-Factor methodology, any backing service should be attached to an a
 cation through resource binding. For databases, you relied on the configuration prop-
 erties provided by Spring Boot to specify credentials and the URL. When a backing
 service is another application, you need to provide its URL in a similar way. 
+
+Cloud native applications should be stateless. Data services should be used for
+storing the state. For example, PostgreSQL is used for persistence storage and
+Redis for cache and session data.
+
 == 9 Environment parity
 
 Environment parity is about keeping all your environments as similar as
@@ -335,8 +340,7 @@ and potentially become a backing service for another application. That’s
 what usually happens in a cloud native system.
 
 == 12 Stateless processes
-
-In the previous chapter, you saw that high scalability is one reason why
+high scalability is one reason why
 we move to the cloud. To ensure scalability, we design applications as
 stateless processes and adopt a share-nothing architecture: no state
 should be shared among different application instances. Ask yourself if
@@ -351,12 +355,16 @@ stateful services like data stores. In other words, a stateless
 application delegates the state management and storage to a backing
 service.
 
-____
-The methodology was revised and expanded by Kevin Hoffman in his book
-Beyond the Twelve-Factor App, refreshing the contents of the original
-factors and adding three extra ones.
-____
+cloud native applications should be
+stateless. We scale them in and out, and if they weren’t stateless, we would lose the
+state every time an instance is shut down. Some state needs to be saved, or the applica-
+tions would probably be useless. For example, Catalog Service and Order Service are
+stateless, but they rely on a stateful service (the PostgreSQL database) to permanently
+store the data about books and orders. Even if the applications are shut down, the
+data will survive and be available to all the application instances.
 
+The general idea is to keep the applications stateless and use data services for stor-
+ing the state. 
 == 13 Concurrency
 
 Creating stateless applications is not enough to ensure scalability. If

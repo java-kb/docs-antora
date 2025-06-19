@@ -115,6 +115,18 @@ ates the resources in the worker nodes. The control plane still relies on a cont
 registry to fetch the image defined in the resource manifest. The workflow, again, is
 shown in above figure.
 
+
+A namespace is “an abstraction used by Kubernetes to support isolation of groups of
+resources within a single cluster. Namespaces are used to organize objects in a cluster
+and provide a way to divide cluster resources” (https://kubernetes.io/docs/refer-
+ence/glossary).
+
+We use namespaces to keep our clusters organized and define network policies to
+keep certain resources isolated for security reasons. So far, we’ve been working with
+the default namespace, and we’ll keep doing that for all our Polar Bookshop applica-
+tions. However, when it comes to platform services such as Ingress NGINX, we’ll rely
+on dedicated namespaces to keep those resources isolated.
+
 == Useful Kubernetes CLI commands for managing Pods, Deployments, and Services
 
 |===
@@ -312,6 +324,110 @@ name and a set of labels (key/value pairs) used for categorization. For example,
 attached.
 * spec is a section specific to each object type and is used to declare the desired
 configuration.
+== Managing external access with Kubernetes Ingress
+When it comes to exposing applications inside a Kubernetes cluster, we can use a Ser-
+vice object of type ClusterIP. For example, that’s how Catalog Service Pods can communicate with the PostgreSQL Pod.
+
+A Service object can also be of type LoadBalancer, which relies on an external
+load balancer provisioned by a cloud provider to expose an application to the
+internet. We could define a LoadBalancer Service for Edge Service instead of the
+ClusterIP one. When running the system in a public cloud, the vendor would pro-
+vision a load balancer, assign a public IP address, and all the traffic coming from
+that load balancer would be directed to the Edge Service Pods. It’s a flexible approach
+that lets you expose a service directly to the internet, and it works with different
+types of traffic.
+
+The LoadBalancer Service approach involves assigning a different IP address to
+each service we decide to expose to the internet. Since services are directly exposed,
+we don’t have the chance to apply any further network configuration, such as TLS
+termination. We could configure HTTPS in Edge(Gateway) Service, route all traffic directed
+to the cluster through the gateway (even platform services that don’t belong to
+our system), and apply further network configuration there. The Spring eco-
+system provides everything we need to address those concerns, and it’s probably
+what we would do in many scenarios. However, since we want to run our system on
+Kubernetes, we can manage those infrastructural concerns at the platform level and
+keep our applications simpler and more maintainable. That’s where the Ingress API
+comes in handy.
+
+An Ingress is an object that “manages external access to the services in a cluster, typ-
+ically HTTP. Ingress may provide load balancing, SSL termination and name-based
+virtual hosting” (https://kubernetes.io/docs). An Ingress object acts as an entry point
+into a Kubernetes cluster and is capable of routing traffic from a single external IP
+address to multiple services running inside the cluster. We can use an Ingress object to
+perform load balancing, accept external traffic directed to a specific URL, and man-
+age the TLS termination to expose the application services via HTTPS.
+
+Ingress objects don’t accomplish anything by themselves. We use an Ingress object
+to declare the desired state in terms of routing and TLS termination. The actual compo-
+nent that enforces those rules and routes traffic from outside the cluster to the appli-
+cations inside is the ingress controller. Since multiple implementations are available,
+there’s no default ingress controller included in the core Kubernetes distribution—
+it’s up to you to install one. Ingress controllers are applications that are usually built
+using reverse proxies like NGINX, HAProxy, or Envoy. Some examples are Ambassa-
+dor Emissary, Contour, and Ingress NGINX.
+
+In production, the cloud platform or dedicated tools would be used to configure
+an ingress controller. 
+
+To configure  Ingress NGINX in  local environment,
+you can use the following command:  
+[source,console,attributes]
+----
+minikube addons enable ingress
+// or 
+minikube addons enable ingress --profile polar
+----
+
+get information about the different components deployed with Ingress NGINX as follows:
+[source,console,attributes]
+----
+kubectl get all -n ingress-nginx
+----
+=== Working with Ingress objects
+Edge(Gateway) Service takes care of application routing, but it should not be concerned with
+the underlying infrastructure and network configuration. Using an Ingress resource,
+we can decouple the two responsibilities. Developers would maintain Edge Service,
+while the platform team would manage the ingress controller and the network configuration (perhaps relying on a service mesh like Linkerd or Istio).
+image::{figures}/ingress.png[Ingress NGINX routes traffic to the Edge Service, which in turn routes it to the Catalog Service and the Order Service]
+
+To define an Ingress to route all HTTP traffic coming from outside the cluster to
+Edge Service. It’s common to define Ingress routes and configurations based on the
+DNS name used to send the HTTP request.
+[source,yml,attributes]
+----
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: polar-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: edge-service
+                port:
+                  number: 80
+----
+The Ingress object above defines a rule that routes all HTTP traffic coming to the
+cluster to the Edge Service. The ingressClassName field specifies which ingress
+controller should handle the Ingress object. In this case, we use nginx, which is the
+default ingress controller installed by the minikube addon. 
+To apply the Ingress object, run the following command:
+[source,console,attributes]
+----
+kubectl apply -f polar-ingress.yml
+----
+You can check the Ingress object with the following command:
+[source,console,attributes]
+----
+kubectl get ingress polar-ingress
+----
+The Ingress object is now ready to route traffic to the Edge Service.
+
 == Ensuring disposability: Graceful shutdown
 When a Pod has to be terminated (for example,
 during a downscaling process or as part of an upgrade), Kubernetes sends a SIGTERM

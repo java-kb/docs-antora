@@ -1,0 +1,174 @@
+= Spring Data Redis
+:figures: 11-development/02-spring/02-data/spring-data-redis
+
+Spring Data Redis provides support for this in-memory, non-relational data store. Both imperative and reactive applications are supported.
+
+== Enabling and configuring Redis 
+. Add dependencies
++
+[source,gradle,attributes]
+----
+implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+----
++
+[source,yml,attributes]
+----
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+		</dependency>
+----
+. Configuring the connection to a database
++
+[source,yml,attributes]
+----
+  spring:
+    data:
+      redis:
+        connect-timeout: 2s
+        host: localhost
+        port: 6379
+        timeout: 1s
+----
+
+== Defining persistent entities with Spring Data
+
+[source,java,attributes]
+----
+import java.time.Instant;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.relational.core.mapping.Table;
+
+@Table("orders")
+public record Order(
+
+        @Id Long id,
+
+        String bookIsbn,
+        String bookName,
+        Double bookPrice,
+        Integer quantity,
+        OrderStatus status,
+
+        @CreatedDate Instant createdDate,
+
+        @LastModifiedDate Instant lastModifiedDate,
+
+        @Version int version) {
+
+    public static Order of(String bookIsbn, String bookName, Double bookPrice, Integer quantity, OrderStatus status) {
+        return new Order(null, bookIsbn, bookName, bookPrice, quantity, status, null, null, 0);
+    }
+
+}
+----
+
+== CREATING THE DATABASE SCHEMA
+The database must have a table defined in DB for the mapping to
+work. Spring Data offers a feature to initialize a data source at startup time. By default,
+you can use a schema.sql file to create a schema and a data.sql file to insert data in the
+newly created tables. Such files should be placed in the src/main/resources folder.
+
+That is a convenient feature, and it’s useful for demos and experiments. However, it’s
+too limited for use in production. it’s better to create
+and evolve relational resources with a more sophisticated tool, like Flyway or Liquibase,
+which will let you version-control your database. 
+
+[source,sql,attributes]
+----
+DROP TABLE IF EXISTS book; 
+CREATE TABLE book (
+ id BIGSERIAL PRIMARY KEY NOT NULL, 
+ author varchar(255) NOT NULL,
+ isbn varchar(255) UNIQUE NOT NULL, 
+ price float8 NOT NULL,
+ title varchar(255) NOT NULL, 
+ version integer NOT NULL 
+);
+----
+By default, Spring Data loads the schema.sql file only when using an embedded, in-
+memory database. When using Other DB, we need to enable the functionality
+explicitly. In the application.yml file for your service project, add the follow-
+ing configuration to initialize the database schema from the schema.sql file.
+[source,yml,attributes]
+----
+spring:
+ sql:
+ init:
+ mode: always
+
+----
+
+== Enabling and configuring R2DBC auditing
+
+The R2DBC auditing functionality can be enabled in a configuration class using the
+@EnableR2dbcAuditing annotations
+
+[,java]
+----
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.r2dbc.config.EnableR2dbcAuditing;
+
+// Indicates a class as a source of Spring configuration
+@Configuration
+// Enables R2DBC auditing for persistent entities
+@EnableR2dbcAuditing
+public class DataConfig {
+}
+----
+
+Spring Data provides convenient annotations that we can use on dedicated fields to capture the information from such events (audit
+metadata) and store it in the database as part of the entity.
+
+[,java]
+----
+@CreatedDate
+private Instant createdDate;
+
+@LastModifiedDate
+private Instant lastModifiedDate;
+----
+
+== Data repositories with Spring Data
+[,java]
+----
+
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+
+public interface OrderRepository extends ReactiveCrudRepository<Order,Long> {
+}
+----
+
+== MANAGING DATABASE SCHEMAS WITH FLYWAY
+Flyway doesn’t support R2DBC yet, so we
+need to provide a JDBC driver to communicate with the database. The Flyway migra-
+tion tasks are only run at application startup and in a single thread, so using a non-
+reactive communication approach for this one case doesn’t impact the overall applica-
+tion’s scalability and efficiency.
+[source,gradle,attributes]
+----
+dependencies {
+ runtimeOnly 'org.flywaydb:flyway-core' 
+ runtimeOnly 'org.postgresql:postgresql' 
+ runtimeOnly 'org.springframework:spring-jdbc'
+}
+----
+Configure Flyway to use the same database
+managed with Spring Data R2DBC but using the JDBC driver
+[source,yml,attributes]
+----
+Spring
+  # Flyway doesn’t support R2DBC yet, so we
+  # need to provide a JDBC driver to communicate with the database. The Flyway migra-
+  # tion tasks are only run at application startup and in a single thread, so using a non-
+  # reactive communication approach for this one case doesn’t impact the overall applica-
+  # tion’s scalability and efficiency.
+  flyway:
+    user: ${spring.r2dbc.username}
+    password: ${spring.r2dbc.password}
+    url: jdbc:postgresql://localhost:5432/polardb_order
+----

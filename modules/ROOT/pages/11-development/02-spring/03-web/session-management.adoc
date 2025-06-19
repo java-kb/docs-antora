@@ -1,0 +1,836 @@
+= Spring Session management
+:figures: 11-development/02-spring/03-web
+
+
+== Distributed session management with Redis
+Spring provides session management features with the Spring Session project. By
+default, session data is stored in memory, but that’s not feasible in a cloud native appli-
+cation. You want to keep it in an external service so that the data survives the applica-
+tion shutdown. Another fundamental reason for using a distributed session store is
+that you usually have multiple instances of a given application. You’ll want them to
+access the same session data to provide a seamless experience to the user.
+
+Redis is a popular option for session management, and it’s supported by Spring
+Session Data Redis.
+
+Spring Session provides a way to manage user sessions in a distributed environment, allowing you to store session data in a Redis database. This is particularly useful for applications that run on multiple instances or in a cloud environment, where session data needs to be shared across different servers.
+Spring Session integrates seamlessly with Spring Boot, making it easy to configure and use. 
+
+To enable session management with Redis, you need to add the `spring-session-data-redis` dependency to your project. This dependency provides the necessary components to store and retrieve session data from Redis.  You can also add the Testcontainers
+library so you can use a lightweight Redis container when writing integration tests.
+[tabs]
+====
+Maven::
++
+.Maven Configuration
+[source, xml]
+----
+
+<dependency>
+    <groupId>org.springframework.session</groupId>
+    <artifactId>spring-session-data-redis</artifactId>
+</dependency>
+----
+
+Gradle::
++
+.Gradle Configuration
+[source, gradle]
+----
+dependencies {
+ implementation 'org.springframework.session:spring-session-data-redis'
+}
+----
+====
+To configure Spring Session with Redis, you can use the following properties in your `application.yml` file:
+```yaml
+spring:
+  session:
+    store-type: redis
+    redis:  
+        flush-mode: on-save
+        namespace: myapp:sessions
+        timeout: 1800s
+```
+This configuration specifies that Spring Session should use Redis as the session store, with a specific namespace for session data and a timeout of 1800 seconds (30 minutes) for session expiration. The `flush-mode` property determines when session data is written to Redis, with `on-save` meaning that data is saved when the session is modified or saved explicitly.   
+
+To use Spring Session with Redis, you also need to ensure that a Redis server is running and accessible from your application. You can use a local Redis instance for development or connect to a managed Redis service in production.
+
+You can also configure Redis connection properties, such as host, port, and password, in the `application.yml` file:
+```yaml
+spring:
+  redis:
+    host: localhost
+    port: 6379
+    password: your_redis_password
+```
+This configuration specifies the Redis server's host and port, along with an optional password for authentication.
+
+You can also use the `spring.redis.ssl` property to enable SSL connections to Redis if your Redis server requires secure connections:
+
+You can also use environment variables or command-line arguments to configure these properties, allowing for flexibility in different environments (development, testing, production).
+
+Once you have added the necessary dependencies and configured Spring Session with Redis, you can start using it in your application. Spring Session will automatically manage user sessions, storing session data in Redis and providing APIs to access and manipulate session attributes.
+You can use the `Session` object provided by Spring Session to store and retrieve session attributes. For example, you can store user information in the session like this:
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.session.Session;
+import org.springframework.session.SessionRepository;
+import org.springframework.stereotype.Service;  
+@Service
+public class UserService {
+    @Autowired
+    private SessionRepository<? extends Session> sessionRepository;
+    public void saveUserSession(String sessionId, String username) {
+        Session session = sessionRepository.findById(sessionId);
+        if (session != null) {
+            session.setAttribute("username", username);
+            sessionRepository.save(session); // Save the updated session
+        }
+    }
+    public String getUsernameFromSession(String sessionId) {
+        Session session = sessionRepository.findById(sessionId);
+        if (session != null) {
+            return (String) session.getAttribute("username");
+        }
+        return null; // Session not found or username not set
+    }
+}
+```
+In this example, the `UserService` class uses the `SessionRepository` to find a session by its ID, set a username attribute in the session, and save the updated session back to Redis. You can retrieve the username from the session using the `getUsernameFromSession` method.
+This approach allows you to manage user sessions effectively, ensuring that session data is stored in a distributed manner using Redis. It also provides a way to access and manipulate session attributes easily, making it suitable for applications that require user authentication and session management.
+You can also use Spring Session's built-in support for session events, such as session creation, destruction, and attribute changes. This can be useful for monitoring and auditing user sessions in your application. You can implement listeners for these events by creating classes that implement the `ApplicationListener<SessionCreatedEvent>` or `ApplicationListener<SessionDestroyedEvent>` interfaces, for example:
+```java
+import org.springframework.context.ApplicationListener;
+import org.springframework.session.events.SessionCreatedEvent;
+import org.springframework.stereotype.Component;
+@Component
+public class SessionEventListener implements ApplicationListener<SessionCreatedEvent> {
+    @Override
+    public void onApplicationEvent(SessionCreatedEvent event) {
+        String sessionId = event.getSessionId();
+        // Handle session creation event, e.g., log it or perform additional actions
+        System.out.println("Session created: " + sessionId);
+    }
+}
+```
+In this example, the `SessionEventListener` class listens for session creation events and logs the session ID when a new session is created. You can implement similar listeners for other session events, such as session destruction or attribute changes, to handle session-related actions in your application.
+This integration of Spring Session with Redis provides a robust solution for managing user sessions in distributed applications, ensuring that session data is consistent and accessible across multiple instances of your application. It also allows you to leverage Redis's performance and scalability features, making it suitable for high-traffic applications that require efficient session management.
+
+You can also use the `spring-session-test` dependency to write integration tests for your application that use Spring Session with Redis. This dependency provides utilities for testing session management in a Spring application, allowing you to create and manage sessions in a test environment without needing a real Redis server. Here's how you can add the `spring-session-test` dependency to your project:
+[tabs]
+====
+Maven::
++
+.Maven Configuration
+[source, xml]
+----
+<dependency>
+    <groupId>org.springframework.session</groupId>
+    <artifactId>spring-session-test</artifactId>
+    <scope>test</scope>
+</dependency>
+----
+Gradle::
++
+.Gradle Configuration
+[source, gradle]
+----
+dependencies {
+    testImplementation 'org.springframework.session:spring-session-test'
+}
+----
+====
+
+With this dependency, you can write tests that use an embedded Redis server or a mock Redis server to simulate session management behavior. This allows you to test your application's session management logic without needing a real Redis instance, making your tests faster and more reliable.
+For example, you can use the `@SpringBootTest` annotation to create a test class that uses Spring Session with Redis:
+```java
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.session.Session;
+import org.springframework.session.SessionRepository;
+import org.springframework.session.data.redis.RedisOperationsSessionRepository;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+@SpringBootTest
+public class UserServiceTest {
+    @Autowired
+    private SessionRepository<? extends Session> sessionRepository;
+    @Test
+    public void testSaveAndRetrieveUserSession() {
+        String sessionId = "test-session-id";
+        String username = "testuser";
+        // Save user session
+        UserService userService = new UserService();
+        userService.saveUserSession(sessionId, username);
+        // Retrieve user session
+        String retrievedUsername = userService.getUsernameFromSession(sessionId);
+        assertEquals(username, retrievedUsername, "Username should match the saved value");
+    }
+}
+```
+In this test, we use the `@SpringBootTest` annotation to load the application context and inject the `SessionRepository`. We then create a test case that saves a user session and retrieves the username from the session, asserting that the retrieved value matches the saved value. This allows you to verify that your session management logic works correctly with Spring Session and Redis.
+By using Spring Session with Redis, you can ensure that your application can handle user sessions effectively in a distributed environment. This approach provides a scalable and reliable solution for session management, allowing you to store session data in Redis and access it seamlessly across multiple instances of your application. It also integrates well with Spring Boot and Spring Security, enabling you to build secure and robust applications that manage user sessions efficiently.
+You can also configure additional properties for Redis, such as connection pooling, serialization, and more, to optimize performance and resource usage. For example, you can configure a connection pool for Redis to manage connections efficiently:
+```yaml
+spring:
+  redis:
+    lettuce:
+      pool:
+        max-active: 10
+        max-idle: 5
+        min-idle: 1
+```
+This configuration sets up a connection pool for Redis using the Lettuce client, allowing you to control the maximum number of active connections, idle connections, and minimum idle connections. This can help improve performance and resource utilization in your application, especially under high load or when dealing with many concurrent requests.
+Additionally, you can customize the serialization of session data stored in Redis. By default, Spring Session uses Java serialization, but you can configure it to use other serialization formats, such as JSON or Kryo, to improve performance and reduce the size of session data. For example, you can configure JSON serialization like this:
+```yaml
+spring:
+  session:
+    redis:
+      serializer:
+        type: json
+```
+This configuration sets the session data serializer to JSON, allowing you to store session attributes in a more compact and human-readable format. This can be particularly useful if you need to inspect or debug session data, as JSON is easier to read and understand compared to binary formats.
+By leveraging these additional configurations, you can further enhance the performance and usability of Spring Session with Redis in your application. This allows you to tailor the session management behavior to your specific requirements, ensuring that your application can handle user sessions efficiently and effectively in a distributed environment.
+You can also monitor Redis performance and session usage using tools like Redis CLI, Redis Desktop Manager, or other Redis monitoring tools. These tools can help you track session data, monitor Redis performance metrics, and identify potential issues with session management in your application. Monitoring Redis can provide insights into session usage patterns, such as the number of active sessions, session expiration rates, and memory usage, allowing you to optimize your session management strategy and ensure that your application runs smoothly.
+In addition, you can implement custom session management logic in your application by extending the `SessionRepository` interface or using the provided `RedisOperationsSessionRepository`. This allows you to create custom session handling behaviors, such as session expiration policies, session attribute management, and more. For example, you can create a custom session repository that implements additional features like session locking, custom expiration strategies, or session attribute validation:
+```java
+import org.springframework.session.data.redis.RedisOperationsSessionRepository;
+import org.springframework.session.Session; 
+import org.springframework.session.SessionRepository;
+import org.springframework.stereotype.Repository;
+@Repository
+public class CustomSessionRepository implements SessionRepository<Session> {
+    private final RedisOperationsSessionRepository redisOperationsSessionRepository;
+    public CustomSessionRepository(RedisOperationsSessionRepository redisOperationsSessionRepository) {
+        this.redisOperationsSessionRepository = redisOperationsSessionRepository;   
+    }
+    @Override
+    public Session createSession() {
+        return redisOperationsSessionRepository.createSession(); // Create a new session
+    }
+    @Override
+    public Session findById(String id) {
+        return redisOperationsSessionRepository.findById(id); // Find session by ID
+    }
+    @Override
+    public void save(Session session) {
+        redisOperationsSessionRepository.save(session); // Save the session to Redis
+    }
+    @Override
+    public void deleteById(String id) { 
+        redisOperationsSessionRepository.deleteById(id); // Delete session by ID
+    }
+}
+```
+In this example, the `CustomSessionRepository` class extends the `SessionRepository` interface and delegates session management operations to the `RedisOperationsSessionRepository`. You can add custom logic to handle session creation, retrieval, saving, and deletion, allowing you to implement specific session management behaviors that suit your application's requirements.
+This flexibility in session management allows you to build applications that can handle complex session scenarios, such as session locking, custom expiration policies, or session attribute validation, while still leveraging the performance and scalability of Redis as a session store. By integrating Spring Session with Redis, you can create robust and scalable applications that manage user sessions effectively in a distributed environment.
+Additionally, you can use Spring Boot's auto-configuration features to simplify the setup of Spring Session with Redis. By including the `spring-session-data-redis` dependency and configuring the necessary properties in your `application.yml` or `application.properties` file, Spring Boot will automatically configure the necessary beans and components for session management with Redis.
+This means you don't have to manually configure the `RedisConnectionFactory`, `RedisTemplate`, or `SessionRepository` beans, as Spring Boot will handle this for you based on the properties you provide. This auto-configuration feature makes it easy to get started with Spring Session and Redis, allowing you to focus on building your application without worrying about the underlying session management infrastructure.
+You can also customize the auto-configuration behavior by defining your own beans or overriding the default configurations provided by Spring Boot. For example, you can define a custom `RedisConnectionFactory` bean to use a specific Redis client or configure additional properties for the Redis connection:
+```java
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+@Configuration
+public class RedisConfig {
+    @Bean
+    public RedisConnectionFactory redisConnectionFactory() {    
+        return new LettuceConnectionFactory("localhost", 6379); // Configure Redis connection factory
+    }
+}
+```
+In this example, we define a custom `RedisConnectionFactory` bean that uses the Lettuce client to connect to a Redis server running on `localhost` at port `6379`. This allows you to customize the Redis connection settings while still leveraging Spring Boot's auto-configuration features for session management.
+By using Spring Boot's auto-configuration capabilities, you can quickly set up and configure Spring Session with Redis, enabling you to focus on building your application logic rather than dealing with the complexities of session management infrastructure. This approach simplifies the development process and allows you to take advantage of the powerful features provided by Spring Session and Redis for managing user sessions in a distributed environment.
+You can also use Spring Boot's `@EnableAutoConfiguration` annotation to enable auto-configuration for Spring Session with Redis. This annotation automatically configures the necessary components for session management based on the dependencies present in your project and the properties defined in your configuration files. Here's an example of how to use `@EnableAutoConfiguration` in your main application class:
+```java
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
+@SpringBootApplication
+@EnableRedisHttpSession // Enable Redis-based session management
+public class MyApplication {    
+    public static void main(String[] args) {
+        SpringApplication.run(MyApplication.class, args); // Start the application
+    }
+}
+```
+In this example, the `@SpringBootApplication` annotation enables auto-configuration, component scanning, and other Spring Boot features. The `@EnableRedisHttpSession` annotation specifically enables Redis-based  session management, allowing you to use Redis as the session store for your application.
+With this setup, Spring Boot will automatically configure the necessary beans and components for session management with Redis, including the `RedisConnectionFactory`, `RedisTemplate`, and `SessionRepository`. You can then use these components in your application to manage user sessions, store session attributes, and retrieve session data as needed.
+This approach simplifies the configuration process and allows you to focus on building your application logic without worrying  about the underlying session management infrastructure. By leveraging Spring Boot's auto-configuration capabilities, you can quickly set up and configure Spring Session with Redis, enabling you to build robust and scalable applications that manage user sessions effectively in a distributed environment.
+You can also customize the session management behavior by defining additional properties in your `application.yml` or `application.properties` file. For example, you can configure session timeout, session storage options, and other session-related settings to tailor the session management behavior to your application's requirements. Here’s an example of how to configure session timeout and storage options:
+```yaml
+spring:
+  session:
+    timeout: 3600s # Set session timeout to 1 hour
+    store-type: redis # Use Redis as the session store
+    redis:
+      flush-mode: on-save # Save session data when modified
+      namespace: myapp:sessions # Set a custom namespace for session data
+```
+In this configuration, we set the session timeout to 3600 seconds (1 hour), specify that Redis should be used as the session store, and configure the flush mode to `on-save`, meaning that session data will be saved to Redis when the session is modified or explicitly saved. We also set a custom namespace for session data to avoid conflicts with other applications that might be using the same Redis instance.
+By customizing these properties, you can control how session data is managed in your application, ensuring that session attributes are stored and retrieved according to your specific requirements. This flexibility allows you to build applications that can handle user sessions efficiently, even in complex distributed environments, while still leveraging the performance and scalability of Redis as a session store.
+You can also use Spring Boot's `@ConfigurationProperties` annotation to bind the session management properties to a custom configuration class. This allows you to group related session properties together and access them in a type-safe manner. Here's an example of how to create a custom configuration class for session management properties:
+```java
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+@Configuration
+@ConfigurationProperties(prefix = "spring.session")
+public class SessionProperties {
+    private String storeType;
+    private long timeout;
+    private String namespace;
+    private String flushMode;   
+    // Getters and setters for the properties
+    public String getStoreType() {
+        return storeType;   
+    }
+    public void setStoreType(String storeType) {
+        this.storeType = storeType;
+    }
+    public long getTimeout() {
+        return timeout;
+    }
+    public void setTimeout(long timeout) {
+        this.timeout = timeout;
+    }
+    public String getNamespace() {
+        return namespace;
+    }
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
+    public String getFlushMode() {
+        return flushMode;   
+    }
+    public void setFlushMode(String flushMode) {
+        this.flushMode = flushMode;
+    }
+}
+```
+In this example, we create a `SessionProperties` class annotated with `@ConfigurationProperties`, which binds the properties prefixed with `spring.session` to the fields in the class. This allows you to access session management properties in a type-safe manner, making it easier to manage and configure session behavior in your application.
+You can then inject this `SessionProperties` class into your service or controller classes to access the session management properties:
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+@Service    
+public class SessionService {
+    @Autowired
+    private SessionProperties sessionProperties;
+    public void printSessionProperties() {
+        System.out.println("Store Type: " + sessionProperties.getStoreType());
+        System.out.println("Timeout: " + sessionProperties.getTimeout());
+        System.out.println("Namespace: " + sessionProperties.getNamespace());
+        System.out.println("Flush Mode: " + sessionProperties.getFlushMode());
+    }
+}```
+In this example, the `SessionService` class injects the `SessionProperties` class and uses it to print the session management properties. This approach allows you to manage session configuration in a structured and type-safe manner, making it easier to maintain and update session management settings as your application evolves.
+By using Spring Boot's `@ConfigurationProperties` annotation, you can create a clean and organized way to manage session properties in your application, ensuring that session management behavior is consistent and easy to configure. This approach also enhances code readability and maintainability, as session properties are grouped together in a dedicated configuration class, making it easier to understand and modify session management settings as needed.
+You can also use Spring Boot's `@Value` annotation to inject individual session management properties directly into your service or controller classes. This allows you to access specific session properties without needing to create a separate configuration class. Here's an example of how to use the `@Value` annotation to inject session management properties:
+```java
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+@Service
+public class SessionService {   
+    @Value("${spring.session.store-type}")
+    private String storeType;
+    @Value("${spring.session.timeout}")
+    private long timeout;
+    @Value("${spring.session.namespace}")
+    private String namespace;
+    @Value("${spring.session.flush-mode}")
+    private String flushMode;   
+    public void printSessionProperties() {
+        System.out.println("Store Type: " + storeType);
+        System.out.println("Timeout: " + timeout);
+        System.out.println("Namespace: " + namespace);
+        System.out.println("Flush Mode: " + flushMode);
+    }
+}
+```
+In this example, the `SessionService` class uses the `@Value` annotation to inject individual session management properties directly into the class fields. This allows you to access session properties without needing a separate configuration class, making it easy to retrieve and use session management settings in your application.
+You can then call the `printSessionProperties` method to display the session management properties, which will output the values configured in your `application.yml` or `application.properties` file. This approach provides a straightforward way to access session management properties in your application, allowing you to use them directly in your business logic or service methods.
+
+Using the `@Value` annotation is particularly useful for simple applications or when you only need to access a few specific session properties. However, for larger applications with many session management settings, using `@ConfigurationProperties` to group related properties together can provide better organization and maintainability. It ultimately depends on your application's complexity and your preference for managing configuration properties.
+I
+n summary, Spring Session with Redis provides a powerful and flexible solution for managing user sessions in distributed applications. By leveraging Redis as a session store, you can ensure that session data is shared across multiple instances of your application, enabling seamless user experiences in cloud-native applications. The integration with Spring Boot simplifies the configuration process, allowing you to quickly set up session management with minimal boilerplate code.
+You can customize session management behavior using properties in your `application.yml` or `application.properties` file, and you can access these properties using `@ConfigurationProperties` or `@Value` annotations in your service or controller classes. This flexibility allows you to tailor session management to your specific requirements, ensuring that your application can handle user sessions efficiently, even in complex distributed environments.
+
+Additionally, Spring Session provides built-in support for session events, allowing you to monitor and audit user sessions in your application. You can implement listeners for session events such as session creation, destruction, and attribute changes, enabling you to track session usage patterns and perform actions based on session events.
+
+By integrating Spring Session with Redis, you can build robust and scalable applications that manage user sessions effectively in a distributed environment. This approach not only enhances user experience but also improves the overall security and scalability of your applications. You can further customize session management by implementing custom session repositories or using Spring Boot's auto-configuration features to simplify the setup process.
+
+Overall, Spring Session with Redis provides a comprehensive solution for session management in modern applications, enabling you to build secure, scalable, and efficient applications that can handle user sessions across multiple instances and environments. Whether you're building a simple web application or a complex distributed system, Spring Session with Redis offers the tools and flexibility you need to manage user sessions effectively.
+
+== Session management with Spring Security
+Spring Security provides built-in support for session management, allowing you to control how user sessions are created, managed, and invalidated. It integrates seamlessly with Spring Session, enabling you to use Redis or other session stores for managing user sessions.
+
+To configure session management with Spring Security, you can use the `HttpSecurity` object in your security configuration class. Here’s an example of how to configure session management:
+```java
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;   
+import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
+import org.springframework.session.web.http.HeaderHttpSessionIdResolver;
+import org.springframework.session.web.http.HttpSessionIdResolver;
+@Configuration
+@EnableWebSecurity
+@EnableRedisHttpSession
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .authorizeRequests()
+                .anyRequest().authenticated()
+                .and()
+            .sessionManagement()
+                .maximumSessions(1) // Limit to one session per user
+                .maxSessionsPreventsLogin(true) // Prevent new login if max sessions reached
+                .and()
+            .sessionManagement()
+                .sessionFixation().migrateSession() // Migrate session on login
+                .and()
+            .csrf().disable(); // Disable CSRF for simplicity, enable in production
+    }
+    @Bean
+    public HttpSessionIdResolver httpSessionIdResolver() {
+        return HeaderHttpSessionIdResolver.xAuthToken(); // Use X-Auth-Token header
+    }   
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher(); // Publish session events
+    }
+}
+```
+In this configuration, we enable Redis-based session management with `@EnableRedisHttpSession`. We also configure session management to limit the number of concurrent sessions per user to one, preventing new logins if the maximum number of sessions is reached. The session fixation strategy is set to migrate the session on login, which helps prevent session fixation attacks.
+
+We also define a custom `HttpSessionIdResolver` to use a specific header (`X-Auth-Token`) for session identification, which can be useful in stateless applications or APIs. The `HttpSessionEventPublisher` bean is registered to publish session events, which can be useful for monitoring and auditing purposes.
+With this configuration, Spring Security will manage user sessions effectively, allowing you to control session behavior and security policies. You can further customize session management by adding additional properties or methods to handle session creation, invalidation, and other session-related events.
+
+== Testing
+=== verify that the Spring context loads correctly when Redis is used for storing web session–related data
+To test your Spring Session and Spring Security configuration, you can write integration tests that verify the correct loading of the Spring context when Redis is used for storing web session-related data. You can use the `@SpringBootTest` annotation to load the application context and ensure that all necessary beans are configured correctly. Here's an example of how to write a test for this purpose:
+```java
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles; 
+@SpringBootTest
+@ActiveProfiles("test") // Use a specific profile for testing
+public class ApplicationContextTest {
+    @Test
+    public void contextLoads() {
+        // This test will pass if the application context loads successfully
+        // and all necessary beans are configured correctly.
+    }
+}
+```
+In this test, we use the `@SpringBootTest` annotation to load the application context, which includes all the beans and configurations defined in your application. The `@ActiveProfiles("test")` annotation specifies that we want to use a specific profile for testing, which can be useful if you have different configurations for different environments (e.g., development, testing, production).
+This test will pass if the application context loads successfully, indicating that all necessary beans for Spring Session and Spring Security are configured correctly. If there are any issues with the configuration, such as missing dependencies or incorrect bean definitions, the test will fail, allowing you to identify and fix the issues early in the development process.
+
+to verify that the Spring context loads correctly when Redis is
+used for storing web session–related data.
+[source,java,attributes]
+----
+import org.junit.jupiter.api.Test;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
+import org.springframework.boot.autoconfigure.cache.CacheProperties.Redis;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+
+/*
+ * verify that the Spring context loads correctly when Redis is
+used for storing web session–related data
+ */
+// Loads a full Spring web application context and a web environment listening on a random port
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+// Activates automatic startup and cleanup of test containers
+@Testcontainers
+class EdgeServiceApplicationTests {
+
+	private static final int REDIS_PORT = 6379;
+	// Defines a Redis container for testing
+	@Container
+	static final GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:7.2"))
+			.withExposedPorts(REDIS_PORT);
+
+	// Overwrites the Redis configuration to point to the test Redis instance
+	@DynamicPropertySource
+	static void redisProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.data.redis.host", () -> redis.getHost());
+		registry.add("spring.data.redis.port", () -> redis.getMappedPort(REDIS_PORT));
+	}
+
+	// An empty test used to verify that the application context is loaded correctly
+	// and that a connection with Redis has been established successfully
+	@Test
+	void verifyThatSpringContextLoads() {
+	}
+
+}
+----
+
+You can also use the `@ContextConfiguration` annotation to specify additional configuration classes or properties files that should be loaded for the test. This allows you to customize the application context for testing purposes, ensuring that it reflects the actual configuration used in your application. 
+You can also use the `@TestPropertySource` annotation to specify additional properties that should be applied during the test, such as Redis connection settings or session management properties. This allows you to simulate different configurations and verify that your application behaves correctly under various conditions.    
+You can also use the `@WebMvcTest` annotation to test your Spring MVC controllers and ensure that they work correctly with Spring Session and Spring Security. This annotation loads only the necessary components for testing web controllers, allowing you to focus on testing the controller logic without loading the entire application context. Here's an example of how to write a test for a controller that uses Spring Session and Spring Security:
+```java
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+@WebMvcTest(UserController.class) // Specify the controller to test
+public class UserControllerTest {
+    @Autowired
+    private MockMvc mockMvc; // MockMvc for testing web controllers
+    @Test
+    @WithMockUser(username = "testuser", roles = "USER") // Simulate a user session
+    public void testGetUser() throws Exception {
+        // Perform a GET request to the /user endpoint
+        mockMvc.perform(MockMvcRequestBuilders.get("/user"))
+            .andExpect(MockMvcResultMatchers.status().isOk()) // Expect a 200 OK response
+            .andExpect(MockMvcResultMatchers.content().string("Hello, testuser!")); // Verify the response content
+    }   
+}
+```
+In this test, we use the `@WebMvcTest` annotation to load only the necessary components for testing the `UserController`. The `MockMvc` object is used to simulate HTTP requests and verify the responses. The `@WithMockUser` annotation simulates a user session with a specific username and role, allowing you to test the controller logic that requires authentication.
+This test performs a GET request to the `/user` endpoint and verifies that the response status is 200 OK and the response content matches the expected value. This approach allows you to test your Spring MVC controllers in isolation, ensuring that they work correctly with Spring Session and Spring Security without needing to start a full web server.
+
+To test your Spring Session and Spring Security configuration, you can write integration tests that verify session management behavior. You can use the `spring-session-test` dependency to create tests that simulate user sessions and validate session management logic. Here's an example of how to write a test for session management:
+```java
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;  
+import org.springframework.session.Session;
+import org.springframework.session.SessionRepository;
+import org.springframework.session.data.redis.RedisOperationsSessionRepository;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+@SpringBootTest
+public class SessionManagementTest {
+    @Autowired
+    private SessionRepository<? extends Session> sessionRepository;
+    @Test
+    @WithMockUser(username = "testuser", roles = "USER")
+    public void testUserSession() {
+        String sessionId = "test-session-id";
+        Session session = sessionRepository.createSession();
+        session.setId(sessionId);
+        session.setAttribute("username", "testuser");
+        sessionRepository.save(session); // Save the session to Redis
+        // Retrieve the session and verify attributes
+        Session retrievedSession = sessionRepository.findById(sessionId);
+        assertEquals("testuser", retrievedSession.getAttribute("username"), "Username should match the saved value");
+        assertEquals(sessionId, retrievedSession.getId(), "Session ID should match the saved session ID");
+    }
+}
+```
+In this test, we use the `@SpringBootTest` annotation to load the application context and inject the `SessionRepository`. We also use the `@WithMockUser` annotation to simulate a user session with a specific username and role. The test creates a new session, sets an attribute, and saves it to Redis. It then retrieves the session by its ID and verifies that the attributes match the expected values.
+
+This approach allows you to validate that your session management configuration works correctly with Spring Session and Spring Security. You can write additional tests to cover different scenarios, such as session expiration, session invalidation, and concurrent session management, to ensure that your application behaves as expected under various conditions. You can also use the `@SpringBootTest` annotation to load the full application context, including all beans and configurations, allowing you to test the complete session management flow in your application.
+
+By writing comprehensive tests for your session management logic, you can ensure that your application handles user sessions correctly, adheres to security policies, and provides a seamless user experience. This is especially important in distributed applications where session management can become complex due to multiple instances and potential session conflicts. Testing your session management configuration helps identify issues early in the development process, ensuring that your application is robust and reliable when deployed in production environments.
+
+You can also use the `MockMvc` framework to test your Spring Security configuration and session management behavior in a more controlled environment. `MockMvc` allows you to simulate HTTP requests and verify the responses, making it easier to test your security and session management logic without needing to start a full web server. Here's an example of how to use `MockMvc` to test session management:
+```java
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+@SpringBootTest
+@AutoConfigureMockMvc
+public class SessionManagementMockMvcTest {
+    @Autowired
+    private MockMvc mockMvc;
+    @Test
+    @WithMockUser(username = "testuser", roles = "USER")
+    public void testUserSessionManagement() throws Exception {
+        // Simulate a request to a protected endpoint   
+        mockMvc.perform(MockMvcRequestBuilders.get("/protected-endpoint"))
+            .andExpect(MockMvcResultMatchers.status().isOk()) // Expect a 200 OK response
+            .andExpect(MockMvcResultMatchers.content().string("Hello, testuser!")); // Verify the response content
+    }
+}
+```
+In this example, we use the `@SpringBootTest` and `@AutoConfigureMockMvc` annotations to set up the test environment with `MockMvc`. The `@WithMockUser annotation` simulates a user session with a specific username and role. The test performs a GET request to a protected endpoint and verifies that the response status is 200 OK and the response content matches the expected value.
+
+This approach allows you to test your Spring Security configuration and session management behavior in a controlled manner, ensuring that your application correctly handles user sessions and enforces security policies. You can write additional tests to cover different scenarios, such as session expiration, session invalidation, and concurrent session management, to ensure that your application behaves as expected under various conditions.
+
+Using `MockMvc` for testing session management provides a lightweight and efficient way to validate your security and session management logic without the overhead of starting a full web server. This can significantly speed up your test execution and make it easier to isolate and debug issues related to session management in your application. By writing comprehensive tests using `MockMvc`, you can ensure that your application handles user sessions correctly, adheres to security policies, and provides a seamless user experience, even in complex distributed environments.
+
+You can also use the `@SessionAttributes` annotation to manage session attributes in your controllers. This annotation allows you to specify which attributes should be stored in the session and automatically binds them to the model. Here's an example of how to use `@SessionAttributes` in a Spring MVC controller:
+```java
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;  
+import org.springframework.web.bind.annotation.SessionAttributes;
+@Controller
+@SessionAttributes("user")
+public class UserController {
+    @GetMapping("/user")
+    public String getUser(Model model) {
+        // Retrieve the user attribute from the session or create a new one
+        User user = (User) model.getAttribute("user");
+        if (user == null) {
+            user = new User(); // Create a new user if not found in session
+            model.addAttribute("user", user); // Add user to the model and session
+        }
+        return "user"; // Return the view name
+    }
+    @ModelAttribute("user")
+    public User createUser() {
+        return new User(); // Create a new user instance for the session
+    }
+}
+```
+In this example, the `UserController` class uses the `@SessionAttributes` annotation to specify that the `user` attribute should be stored in the session. The `getUser` method retrieves the `user` attribute from the session or creates a new one if it doesn't exist. The `@ModelAttribute` method creates a new `User` instance that will be added to the session when the `getUser` method is called. This allows you to manage session attributes easily and ensures that the `user` attribute is available in the session for subsequent requests.
+
+Using `@SessionAttributes` simplifies session management in your controllers by automatically binding session attributes to the model and ensuring that they are persisted across requests. This approach is particularly useful for managing user-related data, such as user profiles or preferences, that need to be accessed and modified throughout the user's session. It also helps keep your controller code clean and organized by separating session management logic from business logic, making it easier to maintain and test your application.
+
+You can also use the `@SessionAttributes` annotation in combination with Spring Security to manage user sessions securely. For example, you can store the authenticated user's details in the session and access them in your controllers or services. Here's an example of how to integrate `@SessionAttributes` with Spring Security:
+```java
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.SessionAttributes;
+@Controller
+@SessionAttributes("currentUser")
+public class UserController {
+    @GetMapping("/profile")
+    public String getProfile(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        // Store the authenticated user in the session
+        model.addAttribute("currentUser", userDetails);     
+        return "profile"; // Return the view name
+    }
+    @ModelAttribute("currentUser")
+    public UserDetails createCurrentUser() {
+        return null; // Create a placeholder for the current user, will be set in the getProfile method
+    }
+}
+```
+In this example, the `UserController` class uses the `@SessionAttributes` annotation to specify that the `currentUser` attribute should be stored in the session. The `getProfile` method retrieves the authenticated user's details using the `@AuthenticationPrincipal` annotation and adds them to the model as the `currentUser` attribute. The `@ModelAttribute` method creates a placeholder for the `currentUser`, which will be set when the `getProfile` method is called.
+
+This integration allows you to manage the authenticated user's details in the session securely, ensuring that user-related data is available across requests while adhering to Spring Security's authentication and authorization mechanisms. It also helps maintain a clean separation of concerns in your application, allowing you to focus on business logic while relying on Spring Security and Spring Session to handle session management and security aspects.
+
+By using `@SessionAttributes` in conjunction with Spring Security, you can build applications that manage user sessions effectively, providing a seamless user experience while ensuring that user data is stored securely and accessed appropriately. This approach enhances the overall security and usability of your application, allowing you to handle user sessions efficiently in a distributed environment.
+
+You can also use the `@SessionAttributes` annotation to manage session attributes in combination with Spring Boot's auto-configuration features. This allows you to easily configure session management properties and access them in your controllers or services without needing to define custom configuration classes. Here's an example of how to use `@SessionAttributes` with Spring Boot's auto-configuration:
+```java
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;  
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.SessionAttributes;
+@Controller
+@SessionAttributes("appConfig")
+public class AppConfigController {
+    @Value("${app.name}")
+    private String appName;
+    @Value("${app.version}")
+    private String appVersion;
+    @GetMapping("/config")
+    public String getAppConfig(Model model) {
+        // Create an AppConfig object with the application properties
+        AppConfig appConfig = new AppConfig(appName, appVersion);
+        model.addAttribute("appConfig", appConfig); // Add appConfig to the model and session
+        return "config"; // Return the view name
+    }
+    @ModelAttribute("appConfig")
+    public AppConfig createAppConfig() {
+        return new AppConfig(); // Create a new AppConfig instance for the session
+    }
+}
+```
+In this example, the `AppConfigController` class uses the `@SessionAttributes` annotation to specify that the `appConfig` attribute should be stored in the session. The `getAppConfig` method retrieves the application properties using the `@Value` annotation and creates an `AppConfig` object with those properties. The `appConfig` object is then added to the model and session. The `@ModelAttribute` method creates a new `AppConfig` instance that will be added to the session when the `getAppConfig` method is called.
+
+This approach allows you to manage session attributes easily while leveraging Spring Boot's auto-configuration features. By using the `@Value` annotation, you can access application properties defined in your `application.yml` or `application.properties` file, making it easy to configure session attributes based on application settings. This integration simplifies session management in your controllers and services, allowing you to focus on building your application logic without worrying about the underlying session management infrastructure.
+
+By using `@SessionAttributes` in conjunction with Spring Boot's auto-configuration, you can build applications that manage session attributes effectively, providing a seamless user experience while ensuring that session data is stored securely and accessed appropriately. This approach enhances the overall usability and maintainability of your application, allowing you to handle user sessions efficiently in a distributed environment while leveraging the powerful features provided by Spring Boot and Spring Session.
+
+You can also use the `@SessionAttributes` annotation to manage session attributes in combination with Spring Boot's `@ConfigurationProperties` feature. This allows you to bind session-related properties to a custom configuration class, making it easier to manage and access session attributes in your controllers or services.
+Here's an example of how to use `@SessionAttributes` with `@ConfigurationProperties` in a Spring Boot application:
+```java
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;  
+import org.springframework.web.bind.annotation.SessionAttributes;
+@Controller
+@SessionAttributes("appConfig")
+@ConfigurationProperties(prefix = "app")
+public class AppConfigController {
+    private String name;
+    private String version;
+    @GetMapping("/config")
+    public String getAppConfig(Model model) {
+        // Create an AppConfig object with the application properties
+        AppConfig appConfig = new AppConfig(name, version);
+        model.addAttribute("appConfig", appConfig); // Add appConfig to the model and session
+        return "config"; // Return the view name
+    }
+    @ModelAttribute("appConfig")
+    public AppConfig createAppConfig() {
+        return new AppConfig(); // Create a new AppConfig instance for the session
+    }
+    // Getters and setters for the properties
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public String getVersion() {
+        return version;
+    }
+    public void setVersion(String version) {
+        this.version = version;
+    }
+}   
+```
+In this example, the `AppConfigController` class uses the `@SessionAttributes` annotation to specify that the `appConfig` attribute should be stored in the session. The class is also annotated with `@ConfigurationProperties`, allowing it to bind properties prefixed with `app` from the `application.yml` or `application.properties` file to the fields in the class.
+
+The `getAppConfig` method retrieves the application properties and creates an `AppConfig` object with those properties. The `appConfig` object is then added to the model and session. The `@ModelAttribute` method creates a new `AppConfig` instance that will be added to the session when the `getAppConfig` method is called.
+
+This approach allows you to manage session attributes easily while leveraging Spring Boot's `@ConfigurationProperties` feature. By binding session-related properties to a custom configuration class, you can access session attributes in a type-safe manner, making it easier to manage and configure session behavior in your application. This integration simplifies session management in your controllers and services, allowing you to focus on building your application logic without worrying about the underlying session management infrastructure.
+
+By using `@SessionAttributes` in conjunction with `@ConfigurationProperties`, you can build applications that manage session attributes effectively, providing a seamless user experience while ensuring that session data is stored securely and accessed appropriately. This approach enhances the overall usability and maintainability of your application, allowing you to handle user sessions efficiently in a distributed environment while leveraging the powerful features provided by Spring Boot and Spring Session.
+
+You can also use the `@SessionAttributes` annotation to manage session attributes in combination with Spring Boot's `@RestController` feature. This allows you to create RESTful endpoints that manage session attributes while still leveraging the session management capabilities provided by Spring Session and Spring Security. Here's an example of how to use `@SessionAttributes` with `@RestController` in a Spring Boot application:
+```java
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.ui.Model;
+@RestController
+@RequestMapping("/api")
+@SessionAttributes("appConfig")
+public class AppConfigController {
+    @Value("${app.name}")
+    private String appName;
+    @Value("${app.version}")
+    private String appVersion;
+    @GetMapping("/config")
+    public AppConfig getAppConfig(Model model) {
+        // Create an AppConfig object with the application properties
+        AppConfig appConfig = new AppConfig(appName, appVersion);
+        model.addAttribute("appConfig", appConfig); // Add appConfig to the model and session
+        return appConfig; // Return the AppConfig object as JSON response
+    }
+}
+```
+In this example, the `AppConfigController` class is annotated with `@RestController`, which indicates that it will handle RESTful requests and return JSON responses. The class is also annotated with `@SessionAttributes`, specifying that the `appConfig` attribute should be stored in the session.
+
+The `getAppConfig` method retrieves the application properties using the `@Value` annotation and creates an `AppConfig` object with those properties. The `appConfig` object is then added to the model and session. The method returns the `AppConfig` object, which will be automatically serialized to JSON format in the response.
+This approach allows you to manage session attributes effectively while providing RESTful endpoints that can be consumed by clients. By using `@SessionAttributes` in conjunction with `@RestController`, you can build applications that handle user sessions efficiently in a distributed environment while still adhering to RESTful principles. This integration enhances the overall usability and maintainability of your application, allowing you to handle user sessions securely and provide a seamless user experience across different client applications.
+
+By leveraging Spring Boot's `@RestController` and `@SessionAttributes` features, you can create RESTful APIs that manage session attributes effectively, providing a seamless user experience while ensuring that session data is stored securely and accessed appropriately. This approach allows you to build modern web applications that can handle user sessions efficiently, even in complex distributed environments, while leveraging the powerful features provided by Spring Boot, Spring Session, and Spring Security.
+
+You can also use the `@SessionAttributes` annotation to manage session attributes in combination with Spring Boot's `@ControllerAdvice` feature. This allows you to define global session attributes that can be accessed across multiple controllers in your application. Here's an example of how to use `@SessionAttributes` with `@ControllerAdvice` in a Spring Boot application:
+```java
+import org.springframework.stereotype.Controller;   
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.SessionAttributes;
+@ControllerAdvice
+@SessionAttributes("globalConfig")
+public class GlobalConfigControllerAdvice {
+    @ModelAttribute("globalConfig")
+    public GlobalConfig createGlobalConfig() {
+        return new GlobalConfig(); // Create a new GlobalConfig instance for the session
+    }
+}
+@Controller
+public class UserController {
+    @GetMapping("/user")
+    public String getUser(Model model) {
+        // Retrieve the globalConfig attribute from the session
+        GlobalConfig globalConfig = (GlobalConfig) model.getAttribute("globalConfig");      
+        if (globalConfig == null) {
+            globalConfig = new GlobalConfig(); // Create a new GlobalConfig if not found in session
+            model.addAttribute("globalConfig", globalConfig); // Add globalConfig to the model and session
+        }
+        return "user"; // Return the view name
+    }
+}
+}
+```
+In this example, the `GlobalConfigControllerAdvice` class is annotated with `@ControllerAdvice`, which allows it to define global session attributes that can be accessed across multiple controllers. The class is also annotated with `@SessionAttributes`, specifying that the `globalConfig` attribute should be stored in the session. The `createGlobalConfig` method creates a new `GlobalConfig` instance that will be added to the session when any controller accesses it.
+
+The `UserController` class retrieves the `globalConfig` attribute from the session or creates a new one if it doesn't exist. The `globalConfig` object is then added to the model and session, making it available for use in the view.
+
+This approach allows you to define global session attributes that can be shared across multiple controllers in your application. By using `@SessionAttributes` in conjunction with `@ControllerAdvice`, you can manage session attributes effectively, providing a seamless user experience while ensuring that session data is stored securely and accessed appropriately.
+
+This integration enhances the overall usability and maintainability of your application, allowing you to handle user sessions efficiently in a distributed environment while leveraging the powerful features provided by Spring Boot, Spring Session, and Spring Security. It also helps keep your controller code clean and organized by separating session management logic from business logic, making it easier to maintain and test your application.
+
+By leveraging Spring Boot's `@ControllerAdvice` and `@SessionAttributes` features, you can create a centralized session management solution that handles global session attributes effectively, providing a seamless user experience while ensuring that session data is stored securely and accessed appropriately. This approach allows you to build modern web applications that can handle user sessions efficiently, even in complex distributed environments, while leveraging the powerful features provided by Spring Boot, Spring Session, and Spring Security.
+
+You can also use the `@SessionAttributes` annotation to manage session attributes in combination with Spring Boot's `@RestControllerAdvice` feature. This allows you to define global session attributes that can be accessed across multiple REST controllers in your application. Here's an example of how to use `@SessionAttributes` with `@RestControllerAdvice` in a Spring Boot application:
+
+=== disable session management through Redis
+To disable the session management through Redis in some of your
+tests, you can do so by setting the spring.session.store-type property to none in a
+specific test class using the @TestPropertySource annotation, or in a property file if
+you want to make it apply to all test classes.
+[source,java,attributes]
+----
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
+
+@SpringBootTest
+@TestPropertySource(properties = "spring.session.store-type=none")
+public class SessionManagementDisabledTest {
+    @Test
+    public void contextLoads() {
+        // This test will pass if the application context loads successfully
+        // without Redis session management.
+    }
+}
+----
+
+== Conclusion
+Spring Session and Spring Security provide powerful tools for managing user sessions in a distributed environment. By leveraging Redis as a session store, you can ensure that session data is shared across multiple instances of your application, enabling seamless user experiences in cloud-native applications. The integration with Spring Security allows you to enforce security policies and manage session behavior effectively, ensuring that user sessions are secure and well-managed.
+By configuring session management with Spring Session and Spring Security, you can build robust applications that handle user sessions efficiently, even in complex distributed environments. This approach not only enhances user experience but also improves the overall security and scalability of your applications.
+
+== References
+* [Spring Session Documentation](https://docs.spring.io/spring-session/docs/current/reference/html5/)
+* [Spring Security Documentation](https://docs.spring.io/spring-security/site/docs/current/reference/html/)
+* [Redis Documentation](https://redis.io/documentation)
+* [Spring Boot Documentation](https://docs.spring.io/spring-boot/docs/current/reference/html
+/)
+* [Spring Boot Redis Session Example](https://spring.io/guides/gs/spring-boot-redis-session/)
+* [Spring Security Session Management](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#servlet-authentication-session-management)
+* [Spring Session Redis](https://docs.spring.io/spring-session/docs/current/reference/html5/#spring-session-redis)
+* [Spring Session with Redis Example](https://spring.io/guides/gs/spring-session-redis/)
+* [Spring Security Session Fixation](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#servlet-authentication-session-fixation)
+* [Spring Security Maximum Sessions](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#servlet-authentication-session-management-maximum-sessions)
+* [Spring Session Event Publishing](https://docs.spring.io/spring-session/docs/current/reference/html5/#spring-session-event-publishing)
+* [Spring Session Custom HttpSessionIdResolver](https://docs.spring.io/spring-session/docs/current/reference/html5/#spring-session-custom-http-session-id-resolver)
+* [Spring Session Redis Configuration](https://docs.spring.io/spring-session/docs/current/reference/html5/#spring-session-redis-configuration)
+* [Spring Security CSRF Protection](https://docs.spring.io/spring-security/site/docs/current/reference/html5/#servlet-csrf)
+* [Spring Boot Redis Integration](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#boot-features-redis)
+* [Spring Boot Session Management](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#boot-features-session-management)
+* [Spring Boot Security Session Management](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#boot-features-security-session-management)
+* [Spring Session Redis Example](https://github.com
+/spring-projects/spring-session/tree/main/spring-session-samples/spring-session-sample-redis)
+* [Spring Security Session Management Example]

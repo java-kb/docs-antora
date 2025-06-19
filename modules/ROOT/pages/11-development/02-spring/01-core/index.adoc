@@ -1,2 +1,78 @@
 = Spring Framework Core
 :figures: 11-development/02-spring/01-core
+
+== Generate a Spring Boot Application Using CLI
+Spring Boot is a framework that simplifies the development of Spring applications by providing a set of conventions and defaults. It allows developers to create stand-alone, production-grade applications with minimal configuration.
+You can generate a Spring Boot application using the Spring CLI by running the following command:
+[source, bash]
+----
+spring init --dependencies=web,data-jpa,h2,devtools myapp
+----
+== Generate a Spring Boot Application Using Curl
+[source, bash]
+----
+curl https://start.spring.io/starter.zip -d groupId=com.polarbookshop -d artifactId=edge-service -d name=edge-service -d packageName=com.polarbookshop.edgeservice -d dependencies=web,data-jpa,h2,devtools -d javaVersion=17 -d bootVersion=3.3.0 -d type=maven-project -o edge-service.zip
+----
+change type=maven-project to type=gradle-project if you want to generate a Gradle project.
+== Generate a Spring Boot Application Using JBang
+[source, bash]
+----
+jbang init --name=myapp --dependencies=web,data-jpa,h2,devtools
+cd myapp
+jbang run
+----
+
+== Generate a Spring Boot Application Using Maven
+[source, bash]
+----
+mvn archetype:generate -DgroupId=com.example -DartifactId=myapp -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false
+cd myapp
+mvn spring-boot:run
+----
+== Generate a Spring Boot Application Using Gradle
+[source, bash]  
+----
+gradle init --type java-application
+cd myapp
+./gradlew bootRun
+----
+== Generate a Spring Boot Application Using IntelliJ IDEA
+1. Open IntelliJ IDEA and select "New Project". 
+2. Choose "Spring Initializr" from the left panel.
+3. Fill in the project details such as Group, Artifact, Name, and Description.
+4. Select the dependencies you want to include, such as "Spring Web", "Spring Data JPA", "H2 Database", and "Spring Boot DevTools".
+5. Click "Finish" to create the project.
+6. IntelliJ IDEA will generate the project structure and download the necessary dependencies.
+7. You can then run the application by right-clicking on the main class (annotated with `@SpringBootApplication`) and selecting "Run".
+
+== Generate a Spring Boot Application Using Eclipse
+1. Open Eclipse and select "File" -> "New" -> "Other".
+2. Choose "Spring Starter Project" from the list.
+3. Fill in the project details such as Group, Artifact, Name, and Description.
+4. Select the dependencies you want to include, such as "Spring Web", "Spring Data JPA", "H2 Database", and "Spring Boot DevTools".
+5. Click "Finish" to create the project.
+6. Eclipse will generate the project structure and download the necessary dependencies.
+7. You can then run the application by right-clicking on the main class (annotated with `@SpringBootApplication`) and selecting "Run As" -> "Java Application".
+
+== Generate a Spring Boot Application Using Visual Studio Code
+1. Open Visual Studio Code and install the "Spring Boot Extension Pack" from the Extensions Marketplace.
+2. Press `Ctrl + Shift + P` to open the Command Palette.
+3. Type "Spring Initializr" and select "Spring Initializr: Generate a Maven Project" or "Spring Initializr: Generate a Gradle Project".
+4. Fill in the project details such as Group, Artifact, Name, and Description.
+5. Select the dependencies you want to include, such as "Spring Web", "Spring Data JPA", "H2 Database", and "Spring Boot DevTools".
+6. Click "Generate" to create the project.
+7. Visual Studio Code will generate the project structure and download the necessary dependencies.
+8. You can then run the application by opening the main class (annotated with `@SpringBootApplication`) and clicking the "Run" button in the top right corner or by using the terminal command `./mvnw spring-boot:run` or `./gradlew bootRun   
+`.  
+
+== Generate a Spring Boot Application Using Spring Initializr
+Spring Initializr is a web-based tool that allows you to generate a Spring Boot application with the desired dependencies and configurations. You can access it at [https://start.spring.io/](https://start.spring.io/).
+
+1. Open your web browser and go to [https://start.spring.io/](https://start.spring.io/).
+2. Fill in the project metadata such as Group, Artifact, Name, Description, and Package Name.
+3. Select the desired dependencies by searching for them or selecting from the list. For example, you can add "Spring Web", "Spring Data J  PA", "H2 Database", and "Spring Boot DevTools".
+4. Choose the project type (Maven or Gradle) and the Java version you want to use.
+5. Click the "Generate" button to download a ZIP file containing the generated Spring Boot application.
+6. Extract the ZIP file to your desired location.       
+7. Open the project in your preferred IDE (such as IntelliJ IDEA, Eclipse, or Visual Studio Code).
+8. You can then run the application by executing the main class (annotated with `@SpringBootApplication`) or using the terminal command `./mvnw spring-boot:run` or `./gradlew bootRun`.

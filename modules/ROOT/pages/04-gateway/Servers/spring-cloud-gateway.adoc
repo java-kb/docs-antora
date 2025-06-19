@@ -1,19 +1,114 @@
 = Spring Cloud Gateway Server
-:figures: 04-gateway/Servers
+:figures: 04-gateway/Servers/spring-cloud-gateway
+
+Spring Cloud Gateway is a project built on top of Spring WebFlux and Project Reactor
+to provide an API gateway and a central place to handle cross-cutting concerns like
+security, resilience, and monitoring. It’s built for developers, and it’s a good fit in
+Spring architectures and heterogeneous environments.
+
+Since it’s based on a reactive stack, it can scale
+efficiently to handle the high workload naturally happening at the edge of a system.
+
 
 For the gateway pattern, Spring Cloud offers two options
 
 * Spring Cloud Netflix(In maintenance mode)
 * Spring Cloud Gateway
 
-== Config
-
-* add library to pom
-
 For Spring Cloud Gateway Reactive the artifact ID is *spring-cloud-starter-gateway*
 
 For Spring Cloud Gateway Server MVC the artifact ID is *spring-cloud-starter-gateway-mvc*
 
+Spring Cloud Gateway is a very flexible project that lets you configure routes the way
+that best suits your needs. Here you have configured routes in a property file (applica-
+tion.yml or application.properties), but there’s also a DSL available for configuring
+routes programmatically in Java or Kotlin. Future versions of the project will also imple-
+ment a feature to fetch the route configuration from a data source using Spring Data.
+How you use it is up to you. Putting routes in configuration properties gives you the
+chance to customize them easily depending on the environment and to update them
+at runtime without the need to rebuild and redeploy the application. For example, you
+would get those benefits when using Spring Cloud Config Server. On the other hand,
+the DSL for Java and Kotlin lets you define more complex routes. Configuration prop-
+erties allow you to combine different predicates with an AND logical operator only.
+The DSL also enables you to use other logical operators like OR and NOT.
+
+== Defining routes and predicates
+Spring Cloud Gateway provides three main building blocks:
+
+* Route—This is identified by a unique ID, a collection of predicates for deciding
+whether to follow the route, a URI for forwarding the request if the predicates
+allow, and a collection of filters that are applied either before or after forward-
+ing the request downstream.
+* Predicate—This matches anything from the HTTP request, including path, host,
+headers, query parameters, cookies, and body.
+* Filter—This modifies an HTTP request or response before or after forwarding
+the request to the downstream service.
+
+Suppose a client sends a request to Spring Cloud Gateway. If the request matches a
+route through its predicates, the Gateway HandlerMapping will send the request to the
+Gateway WebHandler, which in turn will run the request through a chain of filters.
+
+There are two filter chains. One chain contains the filters to be run before the
+request is sent to the downstream service. The other chain is run after sending the
+request downstream and before forwarding the response. 
+image::{figures}/how-the-routing-works-in-spring-cloud-gateway.png[alt text]
+
+A minimal route must be configured with a unique ID, a URI where the request
+should be forwarded, and at least one predicate.
+[source,yml,attributes]
+----
+spring:
+  cloud:
+     gateway:
+      routes:
+        - id: catalog-route
+          uri: ${CATALOG_SERVICE_URL:http://localhost:9001}/books
+          predicates:
+            - Path=/books/**
+        - id: order-route
+          uri: ${ORDER_SERVICE_URL:http://localhost:9002}/orders
+          predicates:
+            - Path=/orders/**
+----
+The project comes with many different predicates built-in, which you can use in
+your route configuration to match against any aspect of an HTTP request, including
+Cookie, Header, Host, Method, Path, Query, and RemoteAddr. You can also combine them to form AND conditionals.
+
+== Processing requests and responses through filters
+Routes and predicates alone make the application act as a proxy, but it’s filters that
+make Spring Cloud Gateway really powerful.
+
+Spring Cloud Gateway provides a rich set of filters that you can use to modify
+requests and responses. Filters can be used to modify the request before it’s sent to
+the downstream service or to modify the response before it’s sent back to the client.
+You can also use filters to implement cross-cutting concerns like security, monitoring,
+and resilience. Filters can be applied globally to all routes or to specific routes only.
+You can also create your own custom filters to implement specific logic that’s not
+covered by the built-in filters.  
+
+Filters can run before forwarding incoming requests to a downstream application
+(pre-filters). They can be used for:
+
+* Manipulating the request headers
+* Applying rate limiting and circuit breaking
+* Defining retries and timeouts for the proxied request
+* Triggering an authentication flow with OAuth2 and OpenID Connect
+
+Other filters can apply to outgoing responses after they are received from the down-
+stream application and before sending them back to the client (post-filters). They can
+be used for:
+
+* Setting security headers
+* Manipulating the response body to remove sensitive information
+
+== Config
+
+* add library to pom
++
+[tabs]
+====
+Maven::
++
 [,xml]
 ----
 <?xml version="1.0" encoding="UTF-8"?>
@@ -23,10 +118,14 @@ For Spring Cloud Gateway Server MVC the artifact ID is *spring-cloud-starter-gat
  <spring-cloud.version>2022.0.3</spring-cloud.version>
  </properties>
  <dependencies>
-    <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-starter-gateway</artifactId>
-    </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-gateway</artifactId>
+		</dependency>
  </dependencies>
  <dependencyManagement>
     <dependencies>
@@ -41,6 +140,29 @@ For Spring Cloud Gateway Server MVC the artifact ID is *spring-cloud-starter-gat
  </dependencyManagement>
 </project>
 ----
+
+GRADLE::
++
+[source, gradle]
+----
+ext {
+	set('springCloudVersion', "2023.0.2")
+}
+dependencies {
+ implementation 'org.springframework.boot:spring-boot-starter-webflux'
+ implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+ testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	}
+}
+----
+
+====
+
 
 * add some configuration to proxy all the endpoints in application.yml
 
@@ -89,15 +211,534 @@ logging:
   level:
     "[org.springframework.cloud.gateway.handler.predicate]": trace
 ----
+== Managing web sessions in a gateway
+Spring Cloud Gateway supports web sessions, which are used to store user-specific
+data across multiple requests. This is useful for implementing features like user
+authentication, authorization, and personalization. 
+Spring Cloud Gateway uses the Spring Session project to manage web sessions.
+Spring Session provides a way to store web sessions in a distributed data store, such
+as Redis, MongoDB, or JDBC. This allows you to share web sessions across multiple
+instances of your application, which is useful for scaling your application horizontally.
+
+To use web sessions in Spring Cloud Gateway, you need to add the Spring Session
+dependency to your project. check 11-development/02-spring/03-web/session-management
+
+Managing web sessions in a gateway requires some additional care to ensure you save
+the right state at the right time. In this example, we want the session to be saved in
+Redis before forwarding a request downstream. How can we do that? If you were
+thinking about whether there’s a gateway filter for it, you would be right!
+The SaveSession gateway filter is used to save the session before forwarding the
+request downstream. It’s a pre-filter, so it runs before the request is sent to the
+downstream service. This filter is useful for ensuring that the session is saved before
+the request is sent downstream, which is important for maintaining the state of the
+session across multiple requests. That’s a critical point when Spring Session is combined with Spring Security. 
+You can configure the SaveSession filter in the application.yml file, as shown in the
+following example:
+[source,yml,attributes]
+----    
+gateway:
+    # Configuration properties for the HTTP client
+      default-filters:
+        #Ensures the session data is saved before forwarding a request downstream
+        - name: SaveSession
+          args:
+            # Whether to save the session before forwarding the request downstream
+            saveSession: true 
+            # Whether to save the session after forwarding the request downstream
+            saveSessionAfter: false
+            # Whether to save the session only if it has been modified
+            saveSessionIfModified: true
+            # Whether to save the session only if it has been created
+            saveSessionIfCreated: false
+            # Whether to save the session only if it has been accessed
+            saveSessionIfAccessed: false
+            # Whether to save the session only if it has been destroyed
+            saveSessionIfDestroyed: false
+            # Whether to save the session only if it has been invalidated
+            saveSessionIfInvalidated: false
+            # Whether to save the session only if it has been changed 
+            saveSessionIfChanged: false
+            # Whether to save the session only if it has been saved
+            saveSessionIfSaved: false
+            # Whether to save the session only if it has been refreshed
+            saveSessionIfRefreshed: false
+----
+You can also configure the SaveSession filter to save the session after forwarding
+the request downstream. This is useful for ensuring that the session is saved after
+the request is sent downstream, which is important for maintaining the state of the
+session across multiple requests. You can also configure the filter to save the session 
+only if it has been modified, created, accessed, destroyed, invalidated, changed, saved,
+or refreshed. This is useful for ensuring that the session is saved only when it has
+been modified, which can help reduce the number of writes to the data store and
+improve performance.
+
+== Resilience with Spring Cloud Gateway
+=== Configure timeout
+Edge Service uses Netty’s HTTP client to forward requests to downstream services. whenever an application calls an external service, it’s essential to configure a timeout to make it resilient to
+interprocess communication failures. Spring Cloud Gateway provides dedicated properties to configure the HTTP client timeouts.
+
+[source,yml,attributes]
+----
+spring:
+  application:
+    name: edge-service
+  lifecycle:
+    #    You can also configure the grace period, which is how long the applica-
+    # tion can spend processing all the pending requests. After the grace period expires,
+    # the application is terminated even if there are still pending requests. By default, the
+    # grace period is 30 seconds. 
+    timeout-per-shutdown-phase: 15s 
+    gateway:
+      # Configuration properties for the HTTP client
+      httpclient:
+        # Time limit for a connection to be established (in ms)
+        connect-timeout: 2000 # 2s
+        # Time limit for a response to be received (Duration)
+        response-timeout: 5s
+----
+By default, the Netty HTTP client used by Spring Cloud Gateway is configured with an
+elastic connection pool to increase the number of concurrent connections dynamically
+as the workload increases. Depending on the number of requests your system receives
+simultaneously, you might want to switch to a fixed connection pool so you have more
+control over the number of connections. You can configure the Netty connection
+pool in Spring Cloud Gateway through the spring.cloud.gateway.httpclient.pool
+property group in the application.yml file.
+[source,yml,attributes]
+----
+    gateway:
+    # Configuration properties for the HTTP client
+      httpclient:
+        pool:
+          # cType of connection pool (elastic, fixed, or disabled)
+          type: elastic
+          # Idle time after which the communication channel will be closed
+          max-idle-time: 15s
+          # Time after which the communication channel will be closed
+          max-life-time: 60s
+----
+=== Retry
+Spring Cloud Gateway provides a Retry filter that can be used to retry requests to
+downstream services in case of failures. This filter can be configured to retry requests
+a specific number of times, with a delay between retries. This is useful for handling
+transient failures, such as network issues or temporary unavailability of downstream
+services. 
+
+You cann apply it as a default filter for all GET requests going through the routes defined in the gateway.
+
+You can configure the Retry filter in the application.yml file, as shown in the
+following example:
+[source,yml,attributes]
+----
+    gateway:
+    # Configuration properties for the HTTP client
+      default-filters:
+        - name: Retry
+          args:
+            # Number of retries to perform
+            retries: 3
+            # Delay between retries (in ms)
+            delay: 1000 # 1s
+            # HTTP methods to retry
+            methods: GET,POST
+            # Status codes to retry
+            statuses: 500,502,503,504
+            # Whether to retry on connection errors
+            retry-on-connect-failure: true
+            # Whether to retry on server errors
+            retry-on-server-errors: true
+            # Whether to retry on client errors
+            retry-on-client-errors: false
+            # Whether to retry on timeout errors
+            retry-on-timeout: true
+            # Whether to retry on network errors
+            retry-on-network-errors: true
+            # Whether to retry on connection refused errors
+            retry-on-connection-refused: true
+            # Whether to retry on connection reset errors
+            retry-on-connection-reset: true
+            # Whether to retry on connection closed errors
+            retry-on-connection-closed: true
+            # Whether to retry on connection aborted errors
+            retry-on-connection-aborted: true
+            # Whether to retry on connection timeout errors
+            retry-on-connection-timeout: true
+----
+
+Let’s define a maximum of three retry attempts for all GET requests whenever the
+error is in the 5xx range (SERVER_ERROR). We don’t want to retry requests when the
+error is in the 4xx range. For example, if the result is a 404 response, it doesn’t make
+sense to retry the request. We can also list the exceptions for which a retry should be
+attempted, such as IOException and TimeoutException.
+
+By now, you know that you shouldn’t keep retrying requests one after the other.
+You should use a backoff strategy instead. By default, the delay is computed using the
+formula firstBackoff * (factor ^ n). If you set the basedOnPreviousValue parame-
+ter to true, the formula will be prevBackoff * factor. 
+[source,yml,attributes]
+----
+spring:
+  cloud:
+    gateway:
+      # A list of default filters
+      default-filters:
+        - name: Retry
+          args:
+            # Maximum of 3 retry attempts
+            retries: 3
+            # Retries only GET requests
+            methods: GET
+            # Retries only when 5XX errors
+            series: SERVER_ERROR
+            # Retries only when the given exceptions are thrown
+            exceptions: java.io.IOException, java.util.concurrent.TimeoutException
+            # Retries with a delay computed as “firstBackoff * (factor ^ n)”
+            backoff:
+              firstBackoff: 50ms
+              maxBackOff: 500ms
+              factor: 2
+              basedOnPreviousValue: false
+----
+== Resilience with Circuit Breaker
+Spring Cloud Gateway provides a Circuit Breaker filter that can be used to implement
+the circuit breaker pattern. This filter can be configured to open the circuit after a
+specific number of failures, and to close the circuit after a specific time period. This is
+useful for handling failures in downstream services and preventing cascading failures
+in the system.  
+
+Spring Cloud Gateway integrates natively with Spring Cloud Circuit Breaker, providing you with a CircuitBreaker gateway filter that you can use to protect the inter-
+actions with all downstream services. 
+
+The CircuitBreaker filter in Spring Cloud Gateway relies on Spring Cloud Circuit
+Breaker to wrap a route. As with the Retry filter, you can choose to apply it to specific
+routes or define it as a default filter. 
+
+When a circuit breaker switches to the open state, we’ll want at least to degrade the
+service level gracefully and make the user experience as pleasant as possible. You can also specify
+an optional fallback URI to handle the request when the circuit is in an open state. 
+The fallback URI can be a static response, a custom error page, or a route to another
+service that can handle the request.
+
+You can configure the Circuit Breaker filter in the application.yml file, as shown in
+the following example:
+[source,yml,attributes]
+----
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
+		</dependency>
+----
+[source,gradle,attributes]
+----
+dependencies {
+ implementation 'org.springframework.cloud: spring-cloud-starter-circuitbreaker-reactor-resilience4j'
+}
+----
+
+[source,yml,attributes]
+----  
+    gateway:
+    # Configuration properties for the HTTP client
+      default-filters:
+        - name: CircuitBreaker
+          args:
+            # Name of the circuit breaker
+            name: myCircuitBreaker
+            # Number of failures before opening the circuit
+            failure-threshold: 5
+            # Time period to keep the circuit open (in ms)
+            wait-duration-in-open-state: 10000 # 10s
+            # Time period to keep the circuit half-open (in ms)
+            sliding-window-size: 10s
+            # Whether to record exceptions as failures
+            record-exceptions: true
+            # Whether to record status codes as failures
+            record-status-codes: true
+            # Whether to record network errors as failures
+            record-network-errors: true
+            # Whether to record connection refused errors as failures
+            record-connection-refused: true
+            # Whether to record connection reset errors as failures
+            record-connection-reset: true
+            # Whether to record connection closed errors as failures
+            record-connection-closed: true
+            # Whether to record connection aborted errors as failures
+            record-connection-aborted: true
+            # Whether to record connection timeout errors as failures
+            record-connection-timeout: true
+            # Whether to record connection errors as failures
+            record-connection-errors: true
+            # Whether to record server errors as failures
+            record-server-errors: true
+            # Whether to record client errors as failures
+            record-client-errors: false
+            # Whether to record timeout errors as failures
+            record-timeout-errors: true
+            # Whether to record network errors as failures
+            record-network-errors: true
+----
+In this example (application.yml), both routes will be configured with a CircuitBreaker
+filter, but only catalog-route will have a fallbackUri  
+[source,yml,attributes]
+----
+routes:
+  - id: catalog-route
+    uri: ${CATALOG_SERVICE_URL:http://localhost:9001}/books
+    predicates:
+      - Path=/books/**
+    filters:
+      - name: CircuitBreaker
+        args:
+          name: catalogCircuitBreaker
+          # Forwards request to this URI when the circuit is open
+          fallbackUri: forward:/catalog-fallback
+  - id: order-route
+    uri: ${ORDER_SERVICE_URL:http://localhost:9002}/orders
+    predicates:
+      - Path=/orders/**
+    filters:
+      - name: CircuitBreaker
+        args:
+          # No fallback defined for this circuit breaker.
+          name: orderCircuitBreaker  
+----
+After defining which routes you want to apply the CircuitBreaker filter to, you need
+to configure the circuit breakers themselves. As often in Spring Boot, you have two
+main choices. You can configure circuit breakers through the properties provided by
+Resilience4J or via a Customizer bean. Since we’re using the reactive version of Resil-
+ience4J, the specific configuration bean would be of type Customizer<Reactive-
+Resilience4JCircuitBreakerFactory>.
+
+The timeout configured via Resilience4J will take precedence over the response timeout 
+defined in the Netty HTTP client (spring.cloud.gateway.httpclient.response-timeout).
+
+For the current example, we can define circuit breakers to consider a window of 20
+calls (slidingWindowSize). Each new call will make the window move, dropping the
+oldest registered call. When at least 50% of the calls in the window have produced an
+error (failureRateThreshold), the circuit breaker will trip, and the circuit will enter
+the open state. After 15 seconds (waitDurationInOpenState), the circuit will be
+allowed to transition to a half-open state in which 5 calls are permitted (permitted-
+NumberOfCallsInHalfOpenState). If at least 50% of them result in an error, the circuit
+will go back to the open state. Otherwise, the circuit breaker will trip to the closed state.
+
+[source,yml,attributes]
+----
+resilience4j:
+  circuitbreaker:
+    configs:
+      # Default configuration bean for all circuit breakers
+      default:
+        #The size of the sliding window used to record the outcome of calls when the circuit is closed
+        slidingWindowSize: 20
+        # Number of permitted calls when the circuit is half-open
+        permittedNumberOfCallsInHalfOpenState: 5
+        # When the failure rate is above the threshold, the circuit becomes open.
+        failureRateThreshold: 50
+        # Waiting time before moving from open to half-open (ms)
+        waitDurationInOpenState: 15000
+  timelimiter:
+    configs:
+      # Default configuration bean for all time limiters
+      default:
+        # Configures a timeout (seconds)
+        timeoutDuration: 5s 
+----
+=== verify the result of applying these patterns 
+You can verify the result of applying these patterns to Edge Service by using a tool like
+Apache Benchmark (https://httpd.apache.org/docs/2.4/programs/ab.html).
+
+Make sure both Catalog Service and Order Service are not running so that you can
+test circuit breakers in a failure scenario. Then enable debug logging for Resilience4J so you can follow the state transitions of the circuit breaker. At the end of the applica-
+tion.yml file in your Edge Service project, add the following configuration.
+[source,yml,attributes]
+=== 
+----
+logging:
+  level:
+    io.github.resilience4j: debug 
+    org.springframework.cloud.gateway.filter: debug
+    org.springframework.cloud.gateway.handler.predicate: debug
+----
+Then run the Edge Service and execute the following command in a terminal:
+[source,console]
+---- 
+ab -n 21 -c 1 -m POST http://localhost:9000/orders
+----
+This command sends 21 POST requests to the Edge Service.
+You should see the circuit breaker switching between the open and half-open states
+as the requests are sent to the Edge Service. The fallback URI is called when the cir-cuit is open, and the response status code is 503 Service Unavailable. The response
+body is empty because the fallback response is not configured to return any content. 
+
+=== Rate limiting
+Resilience4J supports the client-side rate limiter and bulkhead patterns for both
+reactive and non-reactive applications. Spring Cloud Gateway supports the server-side
+rate limiter pattern. 
+
+Imagine you want to limit access to your API so that each user can only perform 10
+requests per second. Implementing such a requirement would require a storage
+mechanism to track the number of requests each user performs every second. When
+the limit is reached, the following requests should be rejected. When the second is
+over, each user can perform 10 more requests within the next second. The data used
+by the rate-limiting algorithm is small and temporary, so you might think of saving it
+in memory inside the application itself.
+
+the RequestRateLimiter gateway filter provides server-side rate limiting support. Depending on the requirements, you can configure the RequestRateLimiter filter
+for specific routes or as a default filter.
+
+The RequestRateLimiter filter relies on a KeyResolver bean to determine which
+bucket to use for each request. By default, it uses the currently authenticated user in
+Spring Security. 
+If you don’t use Spring Security, you can define your own KeyResolver bean to
+determine the key to use for each request. The KeyResolver bean should implement
+the KeyResolver interface, which has a single method, resolve(ServerWebExchange
+exchange). This method receives the ServerWebExchange object, which contains
+the HTTP request and response, and returns a Mono<String> that contains the key to
+use for the request. The key is used to identify the bucket for the rate-limiting 
+algorithm. For example, you can use the user’s IP address, the request path, or any
+other aspect of the request to determine the key. The KeyResolver bean is used by
+the RequestRateLimiter filter to determine which bucket to use for each request.
+
+[source,java,attributes]
+----
+import reactor.core.publisher.Mono;
+import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/*
+ * The RequestRateLimiter filter relies on a KeyResolver bean to determine which
+bucket to use for each request. By default, it uses the currently authenticated user in
+Spring Security. Until we add security to Edge Service, we’ll define a custom Key-
+Resolver bean and make it return a constant value (for example, anonymous) so that
+all requests will be mapped to the same bucket.
+ */
+@Configuration
+public class RateLimiterConfig {
+    @Bean
+    public KeyResolver keyResolver() {
+        return exchange -> Mono.just("anonymous");
+    }
+}
+----
+The RequestRateLimiter filter is implemented on top of Redis, which is used to
+store the rate-limiting data. Redis is a fast, in-memory data store that can
+handle high throughput and low latency. It’s a good fit for rate limiting because it
+can store the data in memory and provide fast access to it. The RequestRateLimiter
+filter uses Redis to store the rate-limiting data, which is used to track the number of requests each user performs every second. The filter uses Redis to store the
+buckets for each user, where each bucket contains the number of tokens available for
+the user. The filter uses the Redis data store to track the number of requests each user
+performs every second and to determine whether to allow or reject the request based on the
+rate-limiting algorithm.  
+
+What happens if Redis becomes unavailable? Spring Cloud Gateway
+has been built with resilience in mind, so it will keep its service level, but the
+rate limiters would be disabled until Redis is up and running again.
+
+The implementation of RequestRateLimiter on Redis is based on the token bucket
+algorithm(check  (https://stripe.com/blog/rate-limiters)). Each user is assigned a bucket inside which tokens are dripped over time at
+a specific rate (the replenish rate). Each bucket has a maximum capacity (the burst
+capacity). When a user makes a request, a token is removed from its bucket. When
+there are no more tokens left, the request is not permitted, and the user will have to
+wait until more tokens are dripped into its bucket.
+
+There’s no general rule to follow in coming up with good numbers for the request
+rate limiter. You should start with your application requirements and go with a trial
+and error approach: analyze your production traffic, tune the configuration, and do
+this all over again until you achieve a setup that keeps your system available while not
+affecting the user experience badly. Even after that, you should keep monitoring the
+status of your rate limiters, since things can change in the future.
+
+Add the following dependency to your Edge Service project to use the Redis-based
+RequestRateLimiter filter:
+[source,gradle,attributes]
+----
+dependencies {
+ implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+ implementation 'org.springframework.cloud:spring-cloud-starter-redis-rate-limiter'
+}
+----
++
+[source,xml,attributes]
+----
+<dependency>
+ <groupId>org.springframework.cloud</groupId>   
+  <artifactId>spring-cloud-starter-redis-rate-limiter</artifactId>
+</dependency>
+----
++
+in the application.yml file, configure the Redis integration through the properties provided by Spring Boot
+[source,yml,attributes]
+----
+  spring:
+    data:
+      redis:
+        connect-timeout: 2s
+        host: localhost
+        port: 6379
+        timeout: 1s
+----
+Configure the RequestRateLimiter filter as a default filter in the application.yml file.
+This way, it will be applied to all routes defined in the gateway. You can also apply
+it to specific routes only, but in this case, you would need to define the filter inside
+the route definition.
++
+The following example shows how to configure the RequestRateLimiter filter as a
+default filter in the application.yml file. The filter is configured to allow 10 requests
+per second, with a burst capacity of 20 requests. Each request costs one token, and
+tokens are dripped into the bucket at a rate of 10 tokens per second. This means    
+that each user can perform 10 requests per second, and if there’s a spike in the
+number of requests, up to 20 requests can be allowed in a single second. If two
+spikes happen sequentially, only the first one will succeed, while the second will
+result in some requests being dropped with an HTTP 429 - Too Many Requests
+response.
++
+
+[source,yml,attributes]
+----
+
+      default-filters:
+        # let’s configure the algorithm so that each request costs 1 token
+        # (redis-rate-limiter.requestedTokens). Tokens are dripped in the bucket follow-
+        # ing the configured replenish rate (redis-rate-limiter.replenishRate), which we’ll
+        # set as 10 tokens per second. Sometimes there might be spikes, resulting in a larger
+        # number of requests than usual. You can allow temporary bursts by defining a larger
+        # capacity for the bucket (redis-rate-limiter.burstCapacity), such as 20. This
+        # means that when a spike occurs, up to 20 requests are allowed per second. Since the
+        # replenish rate is lower than the burst capacity, subsequent bursts are not allowed.
+        # If two spikes happen sequentially, only the first one will succeed, while the second
+        # will result in some requests being dropped with an HTTP 429 - Too Many Requests
+        # response.
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter:
+              # Number of tokens dripped in the bucket each second
+              replenishRate: 10
+              # Allows request bursts of up to 20 requests
+              burstCapacity: 20
+              # How many tokens a request costs
+              requestedTokens: 1
+----
+
+Spring Cloud Gateway is configured to append headers with details about rate-limiting
+to each HTTP response, which we can use to verify its behavior. 
+
+=== Combining patterns
+When you combine multiple resilience patterns, the sequence in which they are
+applied is fundamental. Spring Cloud Gateway takes care of applying the TimeLimiter
+first (or the timeout on the HTTP client), then the CircuitBreaker filter, and finally
+Retry. 
+image::{figures}/Combining-resilience-patterns.png[When multiple resilience patterns are implemented, they are applied in a specific sequence.]
+
+When the rate limiter pattern is combined with other patterns like
+time limiters, circuit breakers, and retries, the rate limiter is applied first. If a
+user’s request exceeds the rate limit, it is rejected right away.
 
 == Examples
-
 * https://github.com/spring-kb/spring-cloud-gateway-sample[Spring Cloud Gateway Sample]
 * https://github.com/spring-kb/spring-guide-building-gateway[Building a Gateway :: Learn how to configure a gateway]
 * https://github.com/galkzaz/what-is-api-gateway-exactly-spring-cloud-gateway[What is API Gateway exactly? Spring Cloud Gateway?]
 * https://github.com/galkzaz/what-is-api-gateway-exactly-spring-cloud-gateway[Sample application integrating Spring Cloud Gateway and Spring Security OAuth2]
 * https://github.com/spring-kb/spring-cloud-gateway-oidc-tokenrelay[Spring Cloud Gateway with OpenID Connect and Token Relay]
 * https://github.com/spring-kb/spring-boot-microservices-with-consul-spring-cloud-gateway-and-docker[Spring Boot Microservices with Consul, Spring Cloud Gateway and Docker])
-+
+
 == Samples
 * https://github.com/books-java/Learn-Microservices-with-Spring-Boot-3[Multiplication Microservices Example]

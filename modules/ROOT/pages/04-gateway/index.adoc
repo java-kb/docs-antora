@@ -2,8 +2,7 @@
 :figures: 04-gateway
 
 An API gateway is a common pattern in distributed
-architectures, like microservices, used to decouple the internal APIs from the cli-
-ents. When establishing such an entry point to your system, you can also use it to
+architectures, like microservices, used to decouple the internal APIs from the clients. When establishing such an entry point to your system, you can also use it to
 handle cross-cutting concerns, such as security, monitoring, and resilience.
 
 The Gateway pattern helps abstracting the internal architecture from the outside by routing external requests to the corresponding microservice.
@@ -15,8 +14,39 @@ filters.
 
 Also, if you add user authentication to your system, you would be required to validate the security credentials in every backend microservice, which can be cumbersome. A more sensible approach is to place this logic at the edge of your backend, validating API calls and forwarding simple requests to other microservices. As long as you ensure the rest of the backend services are not externally reachable, you don't need to worry about security concerns.
 
+An API gateway provides an entry point to your system. In distributed systems like
+microservices, that’s a convenient way to decouple the clients from any changes to the
+internal services’ APIs. You’re free to change how your system is decomposed into ser-
+vices and their APIs, relying on the fact that the gateway can translate from a more
+stable, client-friendly, public API to the internal one.
+
 with the gateway, you made your API clients unaware of your internal services, and you could easily
 implement cross-cutting concerns such as user authentication or monitoring.
+
+Suppose you’re in the process of moving from a monolith to microservices. In that
+case, an API gateway can be used as a monolith strangler and can wrap your legacy applications until they are migrated to the new architecture, keeping the process transparent to clients. 
+
+In case of different client types (single-page applications, mobile
+applications, desktop applications, IoT devices), an API gateway gives you the option
+to provide a better-crafted API to each of them depending on their needs (also called
+the backend-for-frontend pattern). Sometimes a gateway can also implement the API com-
+position pattern, letting you query and join data from different services before return-
+ing the result to a client (for example, using the new Spring for GraphQL project).
+
+Calls are forwarded to downstream services from the gateway according to speci-
+fied routing rules, similar to a reverse proxy. This way the client doesn’t need to keep
+track of the different services involved in a transaction, simplifying the client’s logic
+and reducing the number of calls it has to make.
+
+Since the API gateway is the entry point to your system, it can also be an excellent
+place to handle cross-cutting concerns like security, monitoring, and resilience. Edge
+servers are applications at the edge of a system that implement aspects like API gate-
+ways and cross-cutting concerns. You can configure circuit breakers to prevent cascading
+failures when invoking the services downstream. You can define retries and timeouts for
+all the calls to internal services. You can control the ingress traffic and enforce quota
+policies to limit the use of your system depending on some criteria (such as the mem-
+bership level of your users: basic, premium, pro). You can also implement authentica-
+tion and authorization at the edge and pass tokens to downstream services 
 
 In a production environment, you would
 typically expose the gateway HTTP interface on port 80 (or 443 if you use HTTPS) and use a DNS
@@ -33,9 +63,157 @@ the gateway, which adds client-side discovery (DNS resolution to a list of IP ad
 load balancing (choose an IP address from the list), and fault tolerance (try another IP
 after a timeout or error). This is not a typical approach.
 
+However, it’s important to remember that an edge server adds complexity to the
+system. It’s another component to build, deploy, and manage in production. It also
+adds a new network hop to the system, so the response time will increase. That’s usu-
+ally an insignificant cost, but you should keep it in mind. Since the edge server is the
+entry point to the system, it’s at risk of becoming a single point of failure. As a basic
+mitigation strategy, you should deploy at least two replicas of an edge server and
+configure a load balancer in front of them to distribute the traffic. This way, if one
+instance goes down, the other one can still handle the requests. You can also use a
+reverse proxy to route the requests to the edge server, which can help with load balanc-ing and failover. This is a common practice in production environments to ensure
+high availability and reliability of the edge server.and to avoid a single point of failure.
+
 Cloud providers such as Amazon, Microsoft, and Google offer the routing and
 load balancing patterns as managed services with high availability guarantees, so
 that's also an alternative to making sure the gateway remains operational at all times.
 Kubernetes, on the other hand, allows you to create a load balancer on top of your own
 gateway, so you can add redundancy to that layer too. You'll read more about platform
 implementations at the end of this chapter.
+
+== Timeouts
+Whenever your application calls a remote service, you don’t know if and when a
+response will be received. Timeouts (also called time limiters) are a simple, yet effective,
+tool for preserving the responsiveness of your application in case a response is not
+received within a reasonable time period.
+
+There are two main reasons for setting up timeouts:
+
+* If you don’t limit the time your client waits, you risk your computational resources
+being blocked for too long (for imperative applications). In the worst-case sce-
+nario, your application will be completely unresponsive because all the avail-
+able threads are blocked, waiting for responses from a remote service, and
+there are no threads available to handle new requests.
+* If you can’t meet your Service Level Agreements (SLAs), there’s no reason to
+keep waiting for an answer. It’s better to fail the request.
+
+Timeouts improve application resilience and follow the principle of failing fast. But
+setting a good value for the timeout can be tricky. You should consider your system
+architecture as a whole. for example, in a Boo sho app if you defined a 3-second timeout.
+This means that a response should get from Catalog Service to Order Service within
+that time limit. Otherwise, either a failure or a fallback occurs. Catalog Service, in
+turn, sends a request to the PostgreSQL database to fetch the data about the specific
+book and waits for a response. A connection timeout guards that interaction. You
+should carefully design a time-limiting strategy for all the integration points in your
+system to meet your software’s SLAs and guarantee a good user experience. If Catalog Service were available, but a response couldn’t get to Order Service
+within the time limit, the request would likely still be processed by Catalog Service.
+That is a critical point to consider when configuring timeouts. It doesn’t matter much
+for read or query operations because they are idempotent. For write or command
+operations, you want to ensure proper handling when a timeout expires, including
+providing the user with the correct status about the operation’s outcome.
+
+When Catalog Service is overloaded, it can take several seconds to get a JDBC con-
+nection from the pool, fetch data from the database, and send a response back to
+Order Service. In that case, you could think of retrying the request rather than falling
+back on a default behavior or throwing an exception. 
+
+== Retries 
+When a service downstream doesn’t respond within a specific time limit or replies with a
+server error related to its momentary inability to process the request, you can configure
+your client to try again. When a service doesn’t respond correctly, it’s likely because it’s
+going through some issues, and it’s unlikely that it will manage to recover immediately.
+Starting a sequence of retry attempts, one after the other, risks making the system even
+more unstable. You don’t want to launch a DoS attack on your own applications!
+
+A better approach is using an exponential backoff strategy to perform each retry
+attempt with a growing delay. By waiting for more and more time between one attempt
+and the next, you’re more likely to give the backing service time to recover and become
+responsive again. The strategy for computing the delay can be configured.
+image::{figures}/Retries.png[When Catalog Service doesn’t respond successfully, Order Service will try at most three more times with a growing delay.]
+
+Retries increase the chance of getting a response back from a remote service when it’s
+momentarily overloaded or unresponsive. 
+
+Idempotent requests like read operations can be retried without harm. Even some
+write requests can be idempotent. For example, a request to change the author of a
+book with a given ISBN from “S.L. Cooper” to “Sheldon Lee Cooper” is idempotent.
+You could perform it a few times, but the outcome will not change. You shouldn’t
+retry non-idempotent requests, or you’ll risk generating inconsistent states. When you
+order a book, you don’t want to be charged multiple times just because the first
+attempt failed due to the response being lost in the network and never received.
+
+When retries are configured in a flow where the user is involved, remember to bal-
+ance resilience and user experience. You don’t want users to wait too long while retry-
+ing the request behind the scenes. If you can’t avoid that, make sure you inform the
+users and give them feedback about the status of the request.
+
+Retries are a helpful pattern whenever the service downstream is momentarily
+unavailable or slow due to overloading, but it’s likely to heal soon. In this case, you
+should limit the number of retries and use exponential backoff to prevent adding
+extra load on an already overloaded service. On the other hand, you shouldn’t retry
+the request if the service fails with a recurrent error, such as if it’s entirely down or
+returns an acceptable error like 404. 
+
+=== Fallbacks and error handling
+A system is resilient if it keeps providing its services in the face of faults without the
+user noticing. Sometimes that’s not possible, so the least you can do is ensure a grace-
+ful degradation of the service level. Specifying a fallback behavior can help you limit
+the fault to a small area while preventing the rest of the system from misbehaving or
+entering a faulty state.
+
+You’ll want to include fallbacks in your
+general strategy to make your system resilient, and not just in a specific case like time-
+outs. A fallback function can be triggered when some errors or exceptions occur, but
+they’re not all the same.
+
+Some errors are acceptable and semantically meaningful in the context of your
+business logic. When Order Service calls Catalog Service to fetch information about a
+specific book, a 404 response might be returned. That’s an acceptable response that
+should be addressed to inform the user that the order cannot be submitted because
+the book is not available in the catalog.
+== Rate limiting
+Rate limiting is a pattern used to control the rate of traffic sent to or received from an
+application, helping to make your system more resilient and robust. In the context of
+HTTP interactions, you can apply this pattern to control outgoing or incoming net-
+work traffic using client-side and server-side rate limiters, respectively.
+
+When a user has exceeded the number of allowed requests in a specific time win-
+dow, all the extra requests are rejected with an HTTP 429 - Too Many Requests status.
+The limit is applied according to a given strategy. For example, you can limit requests
+per session, per IP address, per user, or per tenant. The overall goal is to keep the sys-
+tem available for all users in case of adversity. That is the definition of resilience. This
+pattern is also handy for offering services to users depending on their subscription
+tiers. For example, you might define different rate limits for basic, premium, and
+enterprise users.
+=== Rate limiting Data Management
+Imagine you want to limit access to your API so that each user can only perform 10
+requests per second. Implementing such a requirement would require a storage
+mechanism to track the number of requests each user performs every second. When
+the limit is reached, the following requests should be rejected. When the second is
+over, each user can perform 10 more requests within the next second. The data used
+by the rate-limiting algorithm is small and temporary, so you might think of saving it
+in memory inside the application itself. However, that would make the application stateful and lead to errors, since each
+application instance would limit requests based on a partial data set. It would mean
+letting users perform 10 requests per second per instance rather than overall, because
+each instance would only keep track of its own incoming requests. The solution is to use a dedicated data service like  Redis to store the rate-limiting state and make it available to all
+the application replicas. 
+=== Client-side rate limiters
+Client-side rate limiters are for constraining the number of requests sent to a down-
+stream service in a given period. It’s a useful pattern to adopt when third-party  organizations like cloud providers manage and offer the downstream service. You’ll want to avoid incurring extra costs for having sent more requests than are allowed by your sub-
+scription. In the case of pay-per-use services, this helps prevent unexpected expenses.
+
+If the downstream service belongs to your system, you might use a rate limiter to
+avoid causing DoS problems for yourself. In this case, though, a bulkhead pattern (or
+concurrent request limiter) would be a better fit, setting constraints on how many concur-
+rent requests are allowed and queuing up the blocked ones. Even better is an adaptive
+bulkhead, for which the concurrency limits are dynamically updated by an algorithm
+to better adapt to the elasticity of cloud infrastructure.
+=== Server-side rate limiters 
+Server-side rate limiters are for constraining the number of requests received by an
+upstream service (or client) in a given period. This pattern is handy when imple-
+mented in an API gateway to protect the whole system from overloading or from DoS
+attacks. When the number of users increases, the system should scale in a resilient way,
+ensuring an acceptable quality of service for all users. Sudden increases in user traffic
+are expected, and they are usually initially addressed by adding more resources to the
+infrastructure or more application instances. Over time, though, they can become a
+problem and even lead to service outages. Server-side rate limiters help with that.

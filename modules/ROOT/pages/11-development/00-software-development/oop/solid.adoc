@@ -1,6 +1,32 @@
 = SOLID
 :figures: 11-development/00-software-development/oop
 
+SOLID stands for five software development design principles intended to make software 
+designs more flexible and maintainable: 
+
+-  S: Single responsibility principle (SRP)
+-  O: Open/Closed principle (OCP)
+-  L: Liskov substitution principle (LSP)
+-  I: Interface segregation principle (ISP)
+-  D: Dependency inversion principle (DIP)
+
+These principles were introduced by Robert C. Martin (Uncle Bob) and are widely used in object-oriented programming to create systems that are easier to understand, extend, and maintain.
+
+Here is a brief overview of each of these principles:
+
+-  SRP states that a class should have only one reason to change. A class should 
+have only one job, and it should do it well.
+-  OCP states that software entities (classes, modules, functions, etc.) should be 
+open for extension but closed for modification. 
+-  LSP states that objects of a superclass should be replaceable with objects of a 
+subclass without affecting the correctness of the program. What works with a su-
+perclass should also work with its subclasses.
+-  ISP states that a client should not be forced to depend on methods it does not use. 
+It’s better to have small interfaces than big ones.
+-  DIP states that high-level modules should not depend on low-level modules. You 
+should program to interfaces, not implementations.
+
+
 == Single responsibility
 
 == Open--closed

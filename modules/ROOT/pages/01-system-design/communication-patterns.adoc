@@ -57,6 +57,12 @@ spring.io/projects/spring-cloud-contract).
 
 Both are viable options. Which strategy you adopt is up to your project require-
 ments and your organization’s structure. 
+
+=== Publish-Subscribe Pattern
+The Publish-Subscribe pattern is a messaging pattern that allows decoupling of the components in a system. In this pattern, publishers send messages to a message broker, which then distributes those messages to subscribers that have expressed interest in receiving them.
+This pattern is particularly useful in event-driven architectures, where components can react to events without being tightly coupled to the source of those events. It allows for greater flexibility and scalability, as new subscribers can be added or removed without affecting the publishers or other subscribers.
+The Publish-Subscribe pattern is often implemented using message brokers or message queues, which handle the routing and delivery of messages between publishers and subscribers.
+
 === Event-driven Architecture
 
 event-driven architecture is an approach to software architecture that focuses on responding to events that either occur within a system or in the external environment.
@@ -64,6 +70,9 @@ event-driven architecture is an approach to software architecture that focuses o
 The event-driven architecture uses the Publish-Subscribe pattern and involves publishers sending events to subscribers without knowledge of their specific destinations. As a result, subscribers do not need to understand the publishers`' logic.
 In event-driven architectures, an event indicates that something happened in the system. Events get published to a messaging channel (e.g., a message broker) by the business logic that owns the domain where those events happened. Other components in the architecture that are interested in a given event type subscribe to the channel to consume all the subsequent event instances. events relate to the publish-
 subscribe pattern, so they are linked to message brokers or buses too
+
+Event-driven architectures describe distributed systems that interact by producing
+and consuming events. The interaction is asynchronous, solving the problem of temporal coupling. 
 
 *Benefits*
 

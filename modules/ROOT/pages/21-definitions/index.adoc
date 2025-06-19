@@ -48,3 +48,18 @@ Example of Non-Tokens:
 == Resilience
 
 Resilience in microservices refers to an application's ability to withstand failures, stay available, and deliver consistent performance in distributed environments
+
+== Rate limiting
+In computer networks, rate limiting is used to control the rate of requests sent or received by a network interface controller. It can be used to prevent DoS attacks[1] and limit web scraping.[2]
+
+Research indicates flooding rates for one zombie machine are in excess of 20 HTTP GET requests per second,[3] legitimate rates much less.
+
+Rate limiting should be used along with throttling pattern to minimize the number of throttling errors.
+
+Protocol servers using a request / response model, such as FTP servers or typically Web servers may use a central in-memory key-value database, like Redis or Aerospike, for session management. A rate limiting algorithm is used to check if the user session (or IP address) has to be limited based on the information in the session cache.
+
+In case a client made too many requests within a given time frame, HTTP servers can respond with status code 429: Too Many Requests.
+
+However, in some cases (i.e. web servers) the session management and rate limiting algorithm should be built into the application (used for dynamic content) running on the web server, rather than the web server itself.
+
+When a protocol server or a network device notice that the configured request limit is reached, then it will offload new requests and not respond to them. Sometimes they may be added to a queue to be processed once the input rate reaches an acceptable level, but at peak times the request rate can even exceed the capacities of such queues and requests have to be thrown away. 

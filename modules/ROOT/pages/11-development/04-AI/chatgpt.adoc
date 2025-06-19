@@ -12,3 +12,8 @@ projects and easily translate code from one programming language to another.
 Copilot and CodeWhisperer take hints from your comments to infer what code 
 you want to write. With ChatGPT, you explicitly write prompts that ChatGPT uses 
 to create the code.
+
+We should always double-check ChatGPT’s work and 
+never assume that it is 100% safe or accurate. You will occasionally find that ChatGPT 
+produces code that doesn’t work—ChatGPT is focused on generating the next token 
+rather than thinking of systems as we do.
