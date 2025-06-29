@@ -10,3 +10,46 @@ This separation allows you to manage the deployment scripts independently of the
 This way, you can keep your application codebase clean and focused on the business logic.
 This separation also allows you to version the deployment scripts independently of the
 application code, which can be useful if you need to roll back to a previous version of the application or if you need to deploy the same version of the application to different environments.
+== Local IP's
+Service-to-service interactions within the same Docker network or Kubernetes cluster
+can be configured using the container name or the Service name respectively. For
+example, Edge Service forwards requests to Polar UI via the http:/ /polar-ui:9004
+URL on Docker (<container-name>:<container-port>) and via the http:/ /polar-ui
+URL on Kubernetes (Service name).
+
+Keycloak is different because it’s involved in service-to-service interactions (for now,
+those are just interactions with Edge Service) and also interactions with end users
+via the web browser. In production, Keycloak will be accessible via a public URL that
+both applications and users will use, so there will be no problem. How about in local
+environments? Since we don’t deal with public URLs when working locally, we need to configure
+things differently. On Docker, we can solve the problem by using the http://host.docker.internal special URL configured automatically when installing the soft-
+ware. It resolves to your localhost IP address and can be used both within a Docker
+network and outside.
+
+On Kubernetes, we don’t have a generic URL to let Pods within a cluster access your
+local host. That means Edge Service will interact with Keycloak via its Service name
+(http:/ /polar-keycloak). When Spring Security redirects a user to Keycloak to log
+in, the browser will return an error because the http:/ /polar-keycloak URL cannot
+be resolved outside the cluster. To make that possible, we can update the local DNS
+configuration to resolve the polar-keycloak hostname to the cluster IP address.
+Then a dedicated Ingress will make it possible to access Keycloak when requests are
+directed to the polar-keycloak hostname.
+
+If you’re on Linux or macOS, you can map the polar-keycloak hostname to the mini-
+kube local IP address in the /etc/hosts file. On Linux, the IP address is the one
+returned by the minikube ip --profile polar command (as explained in chapter 9).
+On macOS, it’s going to be 127.0.0.1. Open a Terminal window, and run the follow-
+ing command (make sure you replace the <ip-address> placeholder with the cluster
+IP address, depending on your operating system):
+[source,console,attributes]
+----
+echo "<ip-address> polar-keycloak" | sudo tee -a /etc/hosts
+----
+On Windows you must map the polar-keycloak hostname to 127.0.0.1 in the
+hosts file. Open a PowerShell window as an administrator, and run the following
+command:
+[source,console,attributes]
+----
+Add-Content C:\Windows\System32\drivers\etc\hosts "127.0.0.1 polar-
+keycloak"
+----

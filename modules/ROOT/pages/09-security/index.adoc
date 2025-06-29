@@ -1,6 +1,28 @@
 = Security
 :figures: 09-security
 
+Access control systems require identification (who are you?), authentication (can
+you prove it’s really you?), and authorization (what are you allowed to do?).
+
+Access control systems allow users access to resources only when their identity
+has been proven and they have the required permissions. To accomplish that, we
+need to follow three pivotal steps: identification, authentication, and authorization.
+
+1. Identification happens when a user (human or machine) claims an identity. In
+the physical world, that’s when I introduce myself by stating my name. In the
+digital world, I would do that by providing my username or email address
+2. Authentication is about verifying the user’s claimed identity through factors
+like a passport, a driver’s license, a password, a certificate, or a token. When
+multiple factors are used to verify the user’s identity, we talk about multi-factor
+authentication.
+3. Authorization always happens after authentication, and it checks what the user is
+allowed to do in a given context.
+
+A common strategy for implementing authentication and authorization in
+cloud native applications is based on JWT as the data format, OAuth2 as the
+authorization framework, and OpenID Connect as the authentication protocol.
+
+
 == Security Standards and rules
 == Encoding vs. encrypting vs. hashing
 *Encoding* refers to any transformation of a given input. For example, if we have a function x that reverses a string, function x -> y applied to ABCD produces DCBA.
@@ -90,3 +112,4 @@ a connection between aى application and a database. These credentials include t
 == Transport-level protection
 
 SSL protection ensures that communication between the browser client and the web application server is secure against many kinds of tampering and snooping.
+

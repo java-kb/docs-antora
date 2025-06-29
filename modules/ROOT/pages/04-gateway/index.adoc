@@ -217,3 +217,23 @@ ensuring an acceptable quality of service for all users. Sudden increases in use
 are expected, and they are usually initially addressed by adding more resources to the
 infrastructure or more application instances. Over time, though, they can become a
 problem and even lead to service outages. Server-side rate limiters help with that.
+== Cross-cutting Functionalities 
+=== Security
+Edge Service is the access point to the system, so it’s an excellent candidate for
+addressing cross-cutting concerns like security. For that reason, we made it responsi-
+ble for authenticating users. Edge Service initiates the authentication flow but dele-
+gates the actual authentication step to identity provider using the OpenID Connect protocol.
+
+Once a user authenticates successfully with identity provider , Edge Service receives an ID
+Token from identity provider  with information about the authentication event and initiates
+an authenticated session with the user’s browser. At the same time, identity provider  also
+issues an Access Token, which is used to grant Edge Service access to downstream appli-
+cations on behalf of the user as per OAuth2.
+==== token relay pattern
+=== loaded balancing
+=== governance
+=== protocol transformation
+=== analytics
+=== performance management
+=== payload transformation
+

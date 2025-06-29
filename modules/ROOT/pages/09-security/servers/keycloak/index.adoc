@@ -1,6 +1,10 @@
 = Keycloak
 :figures: 09-security/servers/keycloak
 
+Keycloak provides several authentication strategies,
+including traditional login forms, social logins via providers like GitHub or Twitter,
+and SAML. It also supports two-factor authentication (2FA)
+
 == Installing and running Keycloak
 
 === Development
@@ -63,9 +67,7 @@ bin\kc.bat start-dev
 
 === Production
 
-== Configuration
-
-== Clients
+=== Clients
 
 * *Valid redirect URIs*: This value is very important in an OpenID Connect authorization
 code flow when a client-side application is used. A client-side application is not able to
@@ -108,7 +110,98 @@ roles granted to the user, and the roles the client has access to.
 * *resource_access*: This contains a list of client roles.
 * *scope*: Scopes can be used both to decide what fields (or claims) to include in the token
 and by backends to decide what APIs the token can access.
+== Configuration
+=== Managing Realms
+In Keycloak, any security aspect of an application or a system is defined in the context
+of a realm, a logical domain in which we apply specific security policies. By default,
+Keycloak comes preconfigured with a Master realm, but you’ll probably want to create
+a dedicated one for each product you build.
 
+open a Terminal window, and enter a bash console inside the Keycloak container:
+
+docker exec -it polar-keycloak bash
+
+navigate to the folder where the Keycloak Admin CLI scripts are located:
+
+cd /opt/keycloak/bin
+
+We’ll need to start an authenticated sessionbefore running any other commands:
+
+ ./kcadm.sh config credentials \
+ --server http:/ /localhost:8080 \ 
+ --realm master \ 
+ --user user \ 
+ --password password 
+
+create a new security realm where all the policies associated with Polar Bookshop will be stored: 
+ 
+ ./kcadm.sh create realms -s realm=PolarBookshop -s enabled=true
+
+=== Managing users and roles
+
+To create roles:
+
+ ./kcadm.sh create roles -r PolarBookshop -s name=employee
+
+ ./kcadm.sh create roles -r PolarBookshop -s name=customer
+
+To create users:
+
+ /kcadm.sh create users -r PolarBookshop \
+ -s username=isabelle \ 
+ -s firstName=Isabelle \
+ -s lastName=Dahl \
+ -s enabled=true 
+
+ To add user to roles:
+ 
+ ./kcadm.sh add-roles -r PolarBookshop \
+ --uusername isabelle \ 
+ --rolename employee \
+ --rolename customer
+
+To change password:
+
+ ./kcadm.sh set-password -r PolarBookshop \
+ --username isabelle --new-password password
+
+=== Managing Clients
+To register Edge Service as an OAuth2 Client in the PolarBookshop realm:
+
+ ./kcadm.sh create clients -r PolarBookshop \
+        -s clientId=edge-service \ 
+        -s enabled=true \ 
+        -s publicClient=false \ 
+        -s secret=polar-keycloak-secret \ 
+        -s 'redirectUris=["http:/ /localhost:9000","http:/ /localhost:9000/login/oauth2/code/*"]'
+
+The valid redirect URLs are the endpoints exposed by the OAuth2 Client application
+(Edge Service) where Keycloak will redirect authentication requests. Since Keycloak
+can include sensitive information in a redirect request, we want to limit which applica-
+tions and endpoints are authorized to receive such information.
+
+== Configuring Access To User Roles In Keycloak
+Keycloak comes preconfigured with a roles scope you can use to give an application
+access to the user roles contained in a roles claim. However, the default representa-
+tion of the roles list is not very convenient to use because it’s defined as a nested
+object. 
+
+Once Keycloak is up and running, log in to the administration console, and choose the realm.
+Then select Client Scopes from the left menu. On the new page, you’ll
+find a list of all the preconfigured scopes in Keycloak, and you have the option to create new ones. In our case, we want to customize the existing roles scope, so click on it to
+open its settings.
+
+In the roles scope page, open the Mappers tab. That is where you can define the
+set of claims to which the given scope provides access (i.e., mappings). By default, Keycloak already has some mappers defined to map claims to the roles scope. We’re
+interested in the realm roles mapper, which maps the user realm roles (including
+employee and customer) to a JWT claim. Select that mapper.
+
+The settings page for the realm roles mapper provides a few options for customiza-
+tion. We want to change two things:
+
+* The token claim name should be roles instead of realm_access.roles (so we
+will remove the nested object).
+* The roles claim should be included in both ID Token and Access Token, 
 == Examples
 
 * https://github.com/security-kb/keycloak-nodejs-quickstart[Keycloak Nodejs Quickstart]

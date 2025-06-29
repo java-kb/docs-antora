@@ -1,6 +1,8 @@
 = Spring Security Reactive
 :figures: 11-development/02-spring/04-security
 
+annotate the SecurityConfig class with @EnableWebFluxSecurity to enable
+Spring Security WebFlux support. 
 == Examples
 
 * https://github.com/spring-kb/spring-security-reactive-example[Spring Security Reactive example]

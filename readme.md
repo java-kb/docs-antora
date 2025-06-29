@@ -2,6 +2,21 @@
 ## Tabs
 [tabs]
 ====
+Maven::
++
+[source, xml]
+----
+----
+
+Gradle::
++
+[source, gradle]
+----
+----
+====
+
+[tabs]
+====
 Java::
 +
 .Java Configuration
@@ -15,7 +30,21 @@ XML::
 [source, xml]
 ----
 ----
+====
 
+[tabs]
+====
+Imperative Applications::
++
+[source, java]
+----
+----
+
+Reactive Applications::
++
+[source, java]
+----
+----
 ====
 # Run
 npx antora antora-playbook.yml

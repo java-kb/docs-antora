@@ -184,14 +184,48 @@ it. All of that is called database auditing.
 With Spring Data JDBC, you can enable auditing for all the persistent entities
 using the @EnableJdbcAuditing annotation on a configuration class.
 
+we’ll also define an AuditorAware bean that should return the principal the currently authenticated user.
+
 [,java]
 ----
+import java.util.Optional;
+
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jdbc.repository.config.EnableJdbcAuditing;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Configuration
-@EnableJdbcAuditing
+/*
+ * With Spring Data JDBC, you can enable auditing for all the persistent
+ * entities
+ * using the @EnableJdbcAuditing annotation on a configuration class.
+ */
+@EnableJdbcAuditing <1>
 public class DataConfig {
+    // define an AuditorAware bean that should return the principal cthe currently
+    // authenticated user.
+    // Returns the currently authenticated user for auditing purposes
+    @Bean
+    AuditorAware<String> auditorAware() { <2>
+        return () -> Optional
+                // Extracts the SecurityContext object for the currently authenticated user from
+                // SecurityContextHolder
+                .ofNullable(SecurityContextHolder.getContext())
+                // Extracts the Authentication object for the currently authenticated user from
+                // SecurityContext
+                .map(SecurityContext::getAuthentication)
+                // Handles the case where a user is not authenticated, but is manipulating data.
+                // Since we protected all the endpoints, this case should never happen, butwe’ll
+                // include it for completeness.
+                .filter(Authentication::isAuthenticated)
+                // Extracts the username for the currently authenticated user from the
+                // Authentication object
+                .map(Authentication::getName);
+    }
 }
 ----
 
@@ -200,11 +234,79 @@ metadata) and store it in the database as part of the entity.
 
 [,java]
 ----
-@CreatedDate
-private Instant createdDate;
+import java.time.Instant;
 
-@LastModifiedDate
-private Instant lastModifiedDate;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
+
+public record Book (
+
+        @Id
+        Long id,
+
+        @NotBlank(message = "The book ISBN must be defined.")
+		@Pattern(regexp = "^([0-9]{10}|[0-9]{13})$", message = "The ISBN format must be valid.")
+        String isbn,
+
+        @NotBlank(message = "The book title must be defined.")
+        String title,
+
+        @NotBlank(message = "The book author must be defined.")
+        String author,
+
+        @NotNull(message = "The book price must be defined.")
+        @Positive(message = "The book price must be greater than zero.")
+        Double price,
+
+        String publisher,
+
+        @CreatedDate
+        Instant createdDate, <1>
+
+        @LastModifiedDate
+        Instant lastModifiedDate,<2>
+
+        @CreatedBy
+        String createdBy,<3>
+
+        @LastModifiedBy
+        String lastModifiedBy,<4>
+
+        @Version
+        int version
+
+){
+
+        public static Book of(String isbn, String title, String author, Double price, String publisher) {
+                return new Book(null, isbn, title, author, price, publisher, null, null, null, null, 0);
+        }
+
+}
+----
+[source,sql,attributes]
+----
+CREATE TABLE orders (
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    book_isbn varchar(255) NOT NULL,
+    book_name varchar(255),
+    book_price float8,
+    quantity int NOT NULL,
+    status varchar(255) NOT NULL,
+    created_date timestamp NOT NULL,
+    created_by varchar(255),
+    last_modified_date timestamp NOT NULL,
+    last_modified_by varchar(255),
+    version integer NOT NULL
+);
 ----
 
 == Data repositories with Spring Data

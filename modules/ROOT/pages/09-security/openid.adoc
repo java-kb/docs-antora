@@ -1,13 +1,65 @@
 = OpenID Connect
 :figures: 09-security
 
+== identity provider
+what happens if we introduce different clients to our system, such
+as mobile applications and IoT devices? How should the users authenticate then?
+What if the bookshop employees are already registered in the company’s Active Direc-
+tory (AD) and want to log in via SAML? Can we provide a single sign-on (SSO) experi-
+ence across different applications? Will the users be able to log in via their GitHub or
+Twitter accounts (social login)? A better solution is
+delegating a dedicated identity provider to authenticate users following any supported
+strategy. The dedicated
+service could let users authenticate in various ways, such as using the credentials regis-
+tered in the system, through social login, or via SAML to rely on the identity defined
+in the company’s AD.
+
+Since users will interact directly with
+identity provider(i,e Keycloak) to log in, their credentials will never be exposed to any component of the system except identity provider, which is one of the benefits of adopting such a solution.
+
+By delegating the authentication step to identity provider, Edge(Gateway) Service is not affected
+by the specific authentication strategy. For example, we used the login form feature
+offered by Keycloak, but we could also enable social login via GitHub or rely on an
+existing Active Directory to authenticate users. Edge Service only needs to support
+OIDC to verify that the authentication happened correctly and get information
+about the user via an ID Token.
+
+Using a dedicated service to authenticate users leads to two aspects we need to
+address for the system to work. 
+
+1. First, we need to establish a protocol for our system
+to delegate user authentication to the identity provider and for the latter to provide
+information about the authentication result. 
+2. Second, we need to define a data format
+that the identity provider can use to securely inform our system about the identity
+of users after they have been successfully authenticated. 
+
+OpenID Connect (OIDC) is a protocol that enables an application (called the Client)
+to verify the identity of a user based on the authentication performed by a trusted
+party (called an Authorization Server) and retrieve the user profile information. The
+authorization server informs the Client application about the result of the authentication step via an ID Token.
+
 While OAuth 2.0 is a protocol for authorization, it does not cover authentication. OpenID Connect builds on top of OAuth 2.0 to add an authentication layer.
+
+When it comes to handling user authentication, we can identify three main actors in
+the OAuth2 framework that are used by the OIDC protocol:
+
+* *Authorization Server*—The entity responsible for authenticating users and issuing
+tokens. i.e Keycloak.
+* *User*—Also called the Resource Owner, this is the human logging in with the
+Authorization Server to get authenticated access to the Client application. i.e either a customer or an employee.
+* *Client*—The application requiring the user to be authenticated. This can be a
+mobile application, a browser-based application, a server-side application, or
+even a smart TV application. i.e Gateway(Edge) service in microservices system.
 
 OpenID Connect defines a number of roles involved in the protocol:
 
 * *End User*: This is the equivalent of the resource owner in OAuth 2.0. It is, of course, the human being that is authenticating.
 * *Relying Party (RP)*: A somewhat confusing term for the application that would like to authenticate the end user. It is called the RP as it is a party that relies on the OpenID Provider (OP) to verify the identity of the user.
 * *OpenID Provider (OP)*: The identity provider that is authenticating the user, which is the role of Keycloak.
+
+The roles defined by the OAuth2 framework are also known by different names when used in the context of OpenID Connect. The OAuth2 Authorization Server is also called the OIDC Provider. The OAuth2 Client,
+which relies on the Authorization Server for authentication and token issuing, is also called the Relying Party (RP). The OAuth2 User is also called the End-User. 
 
 In an OpenID Connect protocol flow, the Relying Party (RP) requests the identity of the end user from the OpenID Provider (OP). As it builds on top of OAuth 2.0 at the same time as the identity of the user is requested, it can also obtain an access token.
 
@@ -27,3 +79,126 @@ OpenID Connect has two additional concepts on top of OAuth 2.0.
 * It clearly specifies the format of the ID token by leveraging the JWT specification, which, unlike the access token in OAuth 2.0, is not opaque. It has a well-specified format, and the values (called claims) within the token can
 be directly read by the client. This allows the clients to discover information about the authenticated user in a standard way.
 * In addition, it defines a *userinfo* endpoint, which can be invoked with an access token and returns the same standard claims as found in the ID token.
+
+When an unauthenticated user calls a secure endpoint exposed by Edge Service,
+the following happens:
+
+1. Edge(Gateway)c Service (the Client) redirects the browser to Keycloak (the Authorization
+Server) for authentication.
+2. Keycloak authenticates the user (for example, by asking for a username and
+password via a login form) and then redirects the browser back to Edge Service,
+together with an Authorization Code.
+3. Edge Service calls Keycloak to exchange the Authorization Code with an ID
+Token, containing information about the authenticated user.
+4. Edge Service initializes an authenticated user session with the browser based on
+a session cookie. Internally, Edge Service maintains a mapping between the ses-
+sion identifier and ID Token (the user identity).
+
+The authentication flow supported by OIDC is based on the OAuth2
+Authorization Code flow. The second step might seem redundant, but the
+Authorization Code is essential for ensuring that only the legitimate Client
+can exchange it with tokens.
+== ID Token?
+ID Token is a JSON Web Token (JWT) containing information about the user
+authentication event.
+
+In distributed systems, including microservices and cloud native applications, the
+most-used strategy for exchanging information about an authenticated user and their
+authorization is through tokens.
+
+JSON Web Token (JWT) is an industry-standard for representing claims to be trans-
+ferred between two parties. It’s a widely used format for propagating information
+about an authenticated user and their permissions securely among different parties in
+a distributed system. A JWT is not used by itself, but it’s included in a larger structure,
+the JSON Web Signature (JWS), which ensures the integrity of the claims by digitally
+signing the JWT object.
+
+A digitally signed JWT (JWS) is a string composed of three parts encoded in
+Base64 and separated by a dot (.) character:
+ 
+ <header>.<payload>.<signature>
+
+a digitally signed JWT has three parts:
+
+1. *Header*—A JSON object (called JOSE Header) containing information about the
+cryptographic operations performed on the payload. The operations follow the
+standards from the Javascript Object Signing and Encryption (JOSE) frame-
+work. A decoded header looks like this:
++
+[source,json,attributes]
+----
+{
+"alg": "HS256", 
+"typ": "JWT" 
+}
+----
++
+alg: The algorithm used to sign the token digitally
++
+typ: The type of token
++
+2. *Payload*—A JSON object (called Claims Set) containing the claims conveyed by
+the token. The JWT specification defines some standard claim names, but you
+can also define your own. A decoded payload looks like the following:
++
+[source,json,attributes]
+----
+{
+ "iss": "https:/ /sso.polarbookshop.com", 
+ "sub": "isabelle", 
+ "exp": 1626439022 
+}
+----
++
+iss: The entity that issued the JWT (the issuer)
++
+sub: The entity that is the subject of the JWT (the end-user)
++
+exp: When the JWT expiresc(a timestamp)
++
+3. *Signature*—The signature of the JWT, ensuring that the claims have not been
+tampered with. A prerequisite of using a JWS structure is that we trust the entity
+issuing the token (the issuer), and we have a way to check its validity.
+
+When a JWT requires integrity and confidentiality, it’s first signed as a JWS and then
+encrypted with JSON Web Encryption (JWE).
+
+== Clients
+An OAuth2 Client is an application that can
+request user authentication and ultimately receive tokens from an Authorization
+Server.
+
+When using OIDC/OAuth2, you need to register each OAuth2 Client with the Authorization Server before using it for authenticating users.
+
+Clients can be public or confidential. We register an application as a public Client if
+it can’t keep a secret. For example, mobile applications would be registered as public
+Clients. On the other hand, confidential Clients are those that can keep a secret, and
+they are usually backend applications like Edge Service. The registration process is
+similar either way. The main difference is that confidential Clients are required to
+authenticate themselves with the Authorization Server, such as by relying on a shared
+secret. It’s an additional protection layer we can’t use for public Clients, since they
+have no way to store the shared secret securely.
+
+The Client role can be assigned either to a frontend or a backend application. The
+main difference is the level of security of the solution. The Client is the entity that will
+receive tokens from the Authorization Server. The Client will have to store them somewhere to be used in subsequent requests from the same user. Tokens are sensitive
+data that should be secured, and there’s no better place than a backend application
+to do that. But it’s not always possible.
+
+If the frontend is a mobile or desktop application like iOS
+or Android, that will be the OAuth2 Client, and it will be categorized as a public Client.
+You can use libraries like AppAuth (https://appauth.io) to add support for OIDC/
+OAuth2 and store the tokens as securely as possible on the device. If the frontend
+is a web application (like in SPA), then a backend service should be the
+Client. In this case, it would be categorized as a confidential Client.
+
+The reason for this distinction is that no matter how much you try to hide the
+OIDC/OAuth2 tokens in the browser (cookies, local storage, session storage), they
+will always be at risk of being exposed and misused. “From a security perspective, it
+is virtually impossible to secure tokens in a frontend web application.” That’s what
+application security expert Philippe De Ryck writes,a recommending engineers rely on
+the backend-for-frontend pattern and have a backend application deal with tokens instead.
+
+It's recommended basing the interaction between browser and backend on a session
+cookie (like you’d do for monoliths) and have the backend application be responsible
+for controlling the authentication flow and using the tokens issued by the Authorization Server, even in the case of SPAs. That is the current best practice recommended by security experts.

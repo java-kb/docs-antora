@@ -1,13 +1,12 @@
-= Spring AMQP
+= Spring Messaging
 :figures: 11-development/02-spring/05-message
 
-Spring AMQP module contains two dependencies:
-
-* spring-rabbit, a set of utils to work with a RabbitMQ broker.
-* spring-amqp, which includes all the AMQP abstractions, so that you can make your implementation vendor-independent.
-
-Spring Boot provides a starter for AMQP with extra utilities such as autoconfiguration: spring-boot-starter-amqp. This starter uses both dependencies described earlier, so it implicitly assumes that you'll use a RabbitMQ
-broker (since it's the only implementation available).
+Spring provides broad support for the most-used messaging solutions. The Spring
+Framework itself has built-in support for the Java Message Service (JMS) API. The
+Spring AMQP project (https://spring.io/projects/spring-amqp) adds support for this
+messaging protocol and provides integration with RabbitMQ. 
+The Spring for Apache Kafka
+project (https://spring.io/projects/spring-kafka) provides that integration.
 
 == Message converters
 
@@ -50,3 +49,25 @@ the class that serializes and sends objects as AMQP messages to the broker
 === Google's Protocol Buffers (aka, protobuf)
 
 In real systems where performance is critical, you should consider an efficient binary format (e.g., protobuf).
+
+== Making messaging resilient to failures
+Event-driven architectures solve some issues affecting synchronous request/response
+interactions. For example, if you remove the temporal coupling between applications,
+you won’t need to adopt patterns like circuit breakers, since the communication will
+be asynchronous. If the consumer is momentarily unavailable while the producer
+sends a message, it doesn’t matter. The consumer will receive the message once it’s up
+and running again.
+
+In software engineering, there are no silver bullets. Everything comes at a cost. On
+the one hand, applications that are decoupled can operate more independently. On
+the other hand, you introduced a new component in your system that needs to be
+deployed and maintained: the message broker.
+
+Assuming that part is taken care of by the platform, there’s still something for you to
+do as the application developer. When an event happens and your application wants to
+publish a message, something might go wrong. Retries and timeouts are still helpful, but
+this time we’ll use them to make the interaction between application and broker more
+resilient. 
+
+For RabbitMQ check 10-message-queuing/RabbitMQ
+For Spring Cloud Stream check  11-development/02-spring/09-spring-cloud/spring-cloud-stream/index

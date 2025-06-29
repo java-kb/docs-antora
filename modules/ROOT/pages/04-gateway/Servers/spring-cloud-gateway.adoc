@@ -272,10 +272,46 @@ or refreshed. This is useful for ensuring that the session is saved only when it
 been modified, which can help reduce the number of writes to the data store and
 improve performance.
 
+[[token-relay-pattern]]
+== Token relay pattern
+After a user successfully authenticates with Identity provider, Edge Service (the OAuth2 Client) receives an ID Token and an Access Token, In Edge Service, Spring Security uses the ID Token to extract information about the
+authenticated user, set up a context for the current user session, and make the data
+available through the OidcUser object. 
+
+The Access Token grants Edge Service authorized access to System services (the OAuth2 Resource Servers) on behalf of the user. After we secure
+both applications, Edge Service will have to include the Access Token in all requests routed to them as an Authorization HTTP header. Unlike ID Tokens, Edge Service
+doesn’t read the Access Token’s content because it’s not the intended audience. It
+stores the Access Token received from Identity provider and then includes it as-is in any
+request to a protected endpoint downstream.
+
+This pattern is called token relay, and it’s supported by Spring Cloud Gateway as a
+built-in filter, so you don’t need to implement anything yourself. When the filter is
+enabled, the Access Token is included automatically in all requests sent to one of the
+downstream applications. 
+
+image::{figures}/token-relay.png[ After a user is authenticated, Edge Service relays the Access Token to Order Service to call its protected endpoints on behalf of the user.]
+
+Spring Cloud Gateway implements the token relay pattern as a filter. In the Edge Ser-
+vice project (edge-service), open the application.yml file and add TokenRelay as a
+default filter, since we want it applied to all routes.
+[source,yml,attributes]
+----
+      default-filters:
+        # Enables the propagation of the Access Token when calling a downstream service
+        - TokenRelay
+----
+With the filter enabled, Spring Cloud Gateway takes care of propagating the right
+Access Token as an Authorization header in all outgoing requests to system services. For example:
+[source,console,attributes]
+----
+GET /orders
+Authorization: Bearer <access_token>
+----
+
 == Resilience with Spring Cloud Gateway
 === Configure timeout
-Edge Service uses Netty’s HTTP client to forward requests to downstream services. whenever an application calls an external service, it’s essential to configure a timeout to make it resilient to
-interprocess communication failures. Spring Cloud Gateway provides dedicated properties to configure the HTTP client timeouts.
+Edge Service uses Netty’s HTTP client to forward requests to downstream services. whenever an application calls an external service, it’s essential to configure a timeout to make it resilient to interprocess communication failures. Spring Cloud Gateway provides dedicated properties to configure the HTTP client timeouts.
+
 
 [source,yml,attributes]
 ----
@@ -607,7 +643,7 @@ import org.springframework.context.annotation.Configuration;
 /*
  * The RequestRateLimiter filter relies on a KeyResolver bean to determine which
 bucket to use for each request. By default, it uses the currently authenticated user in
-Spring Security. Until we add security to Edge Service, we’ll define a custom Key-
+Spring Security. Without security in hand, we can define a custom Key-
 Resolver bean and make it return a constant value (for example, anonymous) so that
 all requests will be mapped to the same bucket.
  */
@@ -720,6 +756,18 @@ response.
 
 Spring Cloud Gateway is configured to append headers with details about rate-limiting
 to each HTTP response, which we can use to verify its behavior. 
+
+the rate-limiting above is computed based on the total number of requests received every second. We should update it to apply the rate limits to each user independently.
+[source,java,attributes]
+----
+    @Bean
+    KeyResolver keyResolver() {
+        return exchange -> exchange.getPrincipal()
+                .map(Principal::getName)
+                .defaultIfEmpty("anonymous");
+    }
+----
+
 
 === Combining patterns
 When you combine multiple resilience patterns, the sequence in which they are

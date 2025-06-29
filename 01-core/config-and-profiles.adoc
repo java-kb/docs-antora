@@ -1,0 +1,366 @@
+= Spring Configuration and Profiles
+:figures: 11-development/02-spring/01-core
+
+The term configuration can have different meanings depending on the context. When
+discussing the Spring Framework’s core features and its ApplicationContext, config-
+uration refers to which beans (Java objects registered in Spring) have been defined
+to be managed by the Spring container and are injected where needed. For example,
+you can define beans in an XML file (XML configuration), in a @Configuration class
+(Java configuration), or
+
+Spring provides a convenient *Environment* abstraction that gives access
+to any configuration data, no matter its source. The two key aspects of a Spring application environment are properties and profiles. 
+
+Profiles are a tool for labeling logical groups of beans or configuration data that should be loaded at runtime only if a given profile is enabled.
+image::{figures}/image.png[Spring application environment]
+
+== Precedence rules for overriding a Spring property
+
+image::{figures}/image-2.png[alt text]
+Later property sources can override the values defined in earlier ones. Sources are considered in the following order:
+
+. Default properties (specified by setting `SpringApplication.setDefaultProperties`).
+. @PropertySource annotations on your `@Configuration` classes.
+  Please note that such property sources are not added to the `Environment` until the application context is being refreshed.
+  This is too late to configure certain properties such as `+logging.*+` and `+spring.main.*+` which are read before refresh begins.
+. Config data (such as `application.properties` files).
+. A `RandomValuePropertySource` that has properties only in `+random.*+`.
+. OS environment variables.
+. Java System properties (`System.getProperties()`).
+. JNDI attributes from `java:comp/env`.
+. `ServletContext` init parameters.
+. `ServletConfig` init parameters.
+. Properties from `SPRING_APPLICATION_JSON` (inline JSON embedded in an environment variable or system property).
+. Command line arguments.
+. `properties` attribute on your tests. Available on @SpringBootTest and the test annotations for testing a particular slice of your application.
+. @DynamicPropertySource annotations in your tests.
+. @TestPropertySource annotations on your tests.
+. Devtools global settings properties in the $HOME/.config/spring-boot directory when devtools is active.
+
+Config data files are considered in the following order:
+
+. Application properties packaged inside your jar (application.properties and YAML variants).
+. Profile-specific application properties packaged inside your jar (application-\{profile}.properties and YAML variants).
+. Application properties outside of your packaged jar (application.properties and YAML variants).
+. Profile-specific application properties outside of your packaged jar (application-\{profile}.properties and YAML variants).
+
+
+== Properties
+
+Properties are key/value pairs supported in Java with java.util.Properties. They play an essential role in many applications for storing configuration parameters outside of the compiled Java code. Spring Boot automatically loads them from different sources.
+
+Property files packaged with your application code are useful for
+defining sensible default values for your configuration data. They can also act
+as specifications for what configuration properties your application supports.
+
+== Using application properties
+
+image::{figures}/image-1.png[access Spring properties in different ways]
+
+. *Environment*
++
+Access properties through the Environment interface.
++
+[,java]
+----
+ @Autowired
+ private Environment environment;
+
+ public String getServerPort() {
+     return environment.getProperty("server.port");
+ }
+----
+
+. *@Value*
++
+Inject properties with the @Value annotation.
++
+[,java]
+----
+ @Value("${server.port}")
+ private String serverPort;
+
+ public String getServerPort() {
+     return serverPort;
+ }
+----
+
+. *@ConfigurationProperties*
+
+when using the Environment object or the @Value annotation, you still have a hardcoded value that can become difficult to manage: the property key. A more robust and maintainable option, which is also the one recommended by the Spring team, is to use special beans marked with the
+@ConfigurationProperties annotation to hold configuration data.
+
+Instead of making Spring scan the application context, searching for
+configuration data beans, you can directly specify which ones Spring should
+consider by using the @EnableConfigurationProperties annotation.
+
+
+Access properties from a class or record annotated with @ConfigurationProperties.
+
+ .. Enabling scanning of configuration data beans
++
+[,java]
+----
+ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+
+ @SpringBootApplication
+ @ConfigurationPropertiesScan
+ public class CatalogServiceApplication {
+
+     public static void main(String[] args) {
+         SpringApplication.run(CatalogServiceApplication.class, args);
+     }
+
+ }
+----
+
+ .. create a SomeProperties class annotated with @ConfigurationProperties to mark it as a holder of configuration data
++
+[,java]
+----
+ import org.springframework.boot.context.properties.ConfigurationProperties;
+
+ @ConfigurationProperties(prefix = "some")
+ public class SomeProperties {
+
+     /**
+         * A message to welcome users.
+     */
+     private String greeting;
+
+     public String getGreeting() {
+         return greeting;
+     }
+
+     public void setGreeting(String greeting) {
+         this.greeting = greeting;
+     }
+
+ }
+----
+
+ .. Generating Your Own Metadata by Using the Annotation Processor
++
+add
++
+[,xml]
+----
+ <dependency>
+     <groupId>org.springframework.boot</groupId>
+     <artifactId>spring-boot-configuration-processor</artifactId>
+     <optional>true</optional>
+ </dependency>
+----
+
+ .. Using custom properties
++
+[,java]
+----
+ @RestController
+ public class HomeController {
+
+     // Bean to access the custom properties injected via constructor autowiring
+     private final SomeProperties someProperties;
+
+     public HomeController(SomeProperties polarProperties) {
+         this.someProperties = someProperties;
+     }
+
+     @GetMapping("/")
+     public String getGreeting() {
+         return someProperties.getGreeting();
+     }
+
+ }
+----
+
+== Profiles
+
+Profiles are logical groups of beans that are loaded into the Spring context only if the specified profile is active. Spring Boot also extends this concept to property files, allowing you to define groups of configuration data that are loaded only if a specific profile is active.
+
+You can activate zero, one, or more profiles at a time:
+
+* All beans not assigned to a profile will always be activated.
+* Beans assigned to the default profile are only activated when no other profile is active.
+
+one of the main advantages of Spring Boot is its ability to configure profiles. A profile is a set of configuration properties that you can enable
+depending on your needs. For example, you could switch between connecting to a local RabbitMQ server while testing locally and the real RabbitMQ server running on production when you deploy it to that environment.
+
+To introduce a new rabbitprod profile, create a file named applicationrabbitprod.properties. Spring Boot uses the application-\{profile} naming
+convention (for both properties and YAML formats) to define profiles in separate files.
+
+If you use this profile for the production environment, you may want to use different credentials, a cluster of
+nodes to connect to, a secure interface, and so on.
+
+[,yml]
+----
+spring.rabbitmq.addresses=rabbitserver1.tpd.network:5672,rabbitserver2.tpd.
+network:5672
+spring.rabbitmq.connection-timeout=20s
+spring.rabbitmq.ssl.enabled=true
+spring.rabbitmq.username=produser1
+----
+
+You have to make sure you enable this profile when you start the application in the
+target environment. To do that, you use the spring.profiles.active property. Spring
+Boot aggregates the base configuration (in application.properties) with the values
+in this file. In this case, all extra properties will be added to the resulting configuration.
+You can use a Spring Boot's Maven plugin command to enable this new profile
+
+[,bash]
+----
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=rabbitprod"
+----
+
+=== Using profiles as feature flags
+
+The first use case for profiles is for loading groups of beans only if a specified profile is active. The deployment environment shouldn't influence the reasoning behind the groupings too much. A common mistake is using profiles like dev or prod to load
+beans conditionally. If you do that, the application will be coupled to the environment, which is usually not what we want for a cloud native application.
+
+Consider the case where you deploy applications to three different environments
+(development, test, and production) and define three profiles to load certain beans conditionally (dev, test, and prod). At some point you decide to add a staging environment,where you also want to enable the beans marked with the prod profile. What do youdo? You have two options. Either you activate the prod profile in the staging environment (which doesn't make much sense), or you update the source code to add a
+staging profile, and assign it to the beans marked as prod (which prevents your application from being immutable and deployable to any environment without any change
+to the source code). Instead, use profiles as feature flags when they're
+associated with groups of beans to be loaded conditionally. Consider what functionality a profile provides, and name it accordingly, rather than thinking about where it will be enabled.
+
+You might still have cases where a bean that handles infrastructural concerns is
+required in specific platforms. For example, you might have certain beans that should
+only be loaded when the application is deployed to a Kubernetes environment (no
+matter whether it is for staging or production). In that case, you could define a
+kubernetes profile.
+
+A use case is Whenever you run your app locally,  and you need to add some data
+explicitly if you want to work with the application. A better option would be to let the application generate some test data at startup, but only when it's needed (for example, in a development or test environment). Loading test data can be modeled as a
+feature that you enable or disable through configuration. You could define a testdata
+profile to toggle the loading of this test data. In that way, you'll keep the profiles independent from the deployment environment, and you can use them as feature flags
+with no constraint on the deployment environment whatsoever.
+
+[,java]
+----
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
+
+@Component
+// Assigns the class to the testdata profile. It will be registered only when
+// the testdata profile is active.
+@Profile("testdata")
+public class BookDataLoader {
+
+    private final BookRepository bookRepository;
+
+    public BookDataLoader(BookRepository bookRepository) {
+        this.bookRepository = bookRepository;
+    }
+
+    // The test data generation is triggered when an ApplicationReadyEvent is
+    // sent—that is when the application startup phase is completed.
+    @EventListener(ApplicationReadyEvent.class)
+    public void loadBookTestData() {
+        var book1 = new Book("1234567891", "Northern Lights", "Lyra Silverstar", 9.90);
+        var book2 = new Book("1234567892", "Polar Journey", "Iorek Polarson", 12.90);
+        bookRepository.save(book1);
+        bookRepository.save(book2);
+    }
+
+}
+----
+
+then run your app using
+
+[,console]
+----
+mvn spring-boot:run -Dspring-boot.run.profiles=testdata
+----
+
+=== Using Conditional Annotations 
+Another solution instead of using profiles as feature flags, a more scalable and struc-
+tured approach is defining custom properties to configure functionality, and
+relying on annotations such as @ConditionalOnProperty and @ConditionalOnCloudPlatform to control when certain beans should be loaded into the
+Spring application context. That's one of the foundations of Spring Boot autoconfiguration. For example, you could define a polar.testdata.enabled custom property and use the @ConditionalOnProperty(name = "polar.testdata.enabled", havingValue ="true") annotation on the BookDataLoader class.
+
+=== Using profiles as configuration groups
+
+The Spring Framework's profile functionality allows you to register some beans only
+if a given profile is active. Likewise, Spring Boot lets you define configuration data
+that is loaded only when a specific profile is active. A common way to do that is
+inside a property file named with the profile as a suffix ,you could create a new application-dev.yml file and define a value for the
+sample.greeting property, which would be used by Spring Boot only if the dev profile was active. Profile-specific property files take precedence over the non-specific
+property files, so the value defined in application-dev.yml would take precedence
+over the one in application.yml.
+
+The 15-Factor methodology recommends not batching configuration values into
+groups named after environments and bundled with the application source code
+because it wouldn't scale. As a project grows, new environments might be created for
+different stages; developers might create their own custom environments to try out
+new functionality. You can quickly end up with way too many configuration groups,
+implemented like Spring profiles and requiring new builds. Instead, you'll want to
+keep them outside the application, such as in a dedicated repository served by a con-
+figuration server. The only exception is for defaults
+and development-oriented configuration.
+
+
+== Externalized configuration
+
+Externalized configuration allows you to configure your application depending on where it's deployed while consistently using the same immutable build for your application code.
+
+=== Configuring an application through command-line arguments
+
+[,console]
+----
+java -jar app.jar \
+--sample.greeting="Welcome to the catalog from CLI"
+----
+
+=== Configuring an application through JVM system properties
+
+[,console]
+----
+java -Dsample.greeting="Welcome to the catalog from JVM" -jar app.jar
+----
+
+=== Configuring an application through environment variables
+
+Environment variables defined in the operating system are commonly used for
+externalized configuration, and they are the recommended option according to the
+15-Factor methodology. One of the advantages of environment variables is that every
+operating system supports them, making them portable across any environment.
+Furthermore, most programming languages provide features for accessing environment variables. For example, in Java, you can do that by calling the System.getenv()
+method.
+
+You can use environment variables to define configuration values that
+depend on the infrastructure or platform where the application is deployed,
+such as profiles, port numbers, IP addresses, and URLs.
+
+Environment variables work seamlessly on virtual machines, OCI containers, and
+Kubernetes clusters.
+
+Spring automatically reads environment variables during the startup phase and
+adds them to the Spring Environment object, making them accessible, you can access its value either from the Environment interface or using the @Value annotation.
+
+environment variables have some naming constraints dictated by the operating system. For example, on Linux,the common syntax consists of having all capital letters and words separated by an underscore.
+
+You can turn a Spring property key into an environment variable by making all
+the letters uppercase and replacing any dot or dash with an underscore. Spring Boot
+will map it correctly to the internal syntax. For example, a SAMPLE_GREETING environ-
+ment variable is recognized as the sample.greeting property. This feature is called
+relaxed binding.
+
+To use environment variables
+
+*On Linux*
+
+ SAMPLE_GREETING="Welcome to the catalog from ENV" \
+ java -jar app.jar
+
+*On Windows*
+
+....
+$env:SAMPLE_GREETING="Welcome to the catalog from ENV"; java -jar app.jar
+
+Remove-Item Env:\SAMPLE_GREETING
+....
+
+=== Centralized configuration management with Spring Cloud Config Server
+refer to 02-configuration/servers/spring-cloud-config-server

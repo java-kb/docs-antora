@@ -58,53 +58,7 @@ spring.io/projects/spring-cloud-contract).
 Both are viable options. Which strategy you adopt is up to your project require-
 ments and your organization’s structure. 
 
-=== Publish-Subscribe Pattern
-The Publish-Subscribe pattern is a messaging pattern that allows decoupling of the components in a system. In this pattern, publishers send messages to a message broker, which then distributes those messages to subscribers that have expressed interest in receiving them.
-This pattern is particularly useful in event-driven architectures, where components can react to events without being tightly coupled to the source of those events. It allows for greater flexibility and scalability, as new subscribers can be added or removed without affecting the publishers or other subscribers.
-The Publish-Subscribe pattern is often implemented using message brokers or message queues, which handle the routing and delivery of messages between publishers and subscribers.
-
 === Event-driven Architecture
-
-event-driven architecture is an approach to software architecture that focuses on responding to events that either occur within a system or in the external environment.
-
-The event-driven architecture uses the Publish-Subscribe pattern and involves publishers sending events to subscribers without knowledge of their specific destinations. As a result, subscribers do not need to understand the publishers`' logic.
-In event-driven architectures, an event indicates that something happened in the system. Events get published to a messaging channel (e.g., a message broker) by the business logic that owns the domain where those events happened. Other components in the architecture that are interested in a given event type subscribe to the channel to consume all the subsequent event instances. events relate to the publish-
-subscribe pattern, so they are linked to message brokers or buses too
-
-Event-driven architectures describe distributed systems that interact by producing
-and consuming events. The interaction is asynchronous, solving the problem of temporal coupling. 
-
-*Benefits*
-
-When you use events with a message broker, you can better isolate all the components in your software architecture. Publishers and subscribers can function independently without needing to be aware of each other. This approach is ideal for microservice architecture since you aim to keep microservices as independent as possible. By following this strategy, you can introduce new microservices that consume
-events from the channels without having to modify the microservice that publishes those events, or any other subscribers.
-
-*Challenges*
-
-One such challenge of the event-driven architecture is ensuring that events are handled in the correct order.
-Additionally, ensuring that events are not lost or duplicated can be another challenge. Without proper planning,
-designing the system to handle a large number of events can be difficult to manage. Event-driven architecture can be
-more complex to design and implement than traditional architectures, as they might require additional resources and expertise.
-Avoid including business logic in the communication channel as much as possible. Keep that logic in your distributed system, respecting a domain-driven design approach.
-
-. Dropped messages
-+
-Configure the broker to fulfill the at-least-once guarantee. This policy ensures the messages are delivered at least once by the broker, although they could be duplicated.
-
-. Duplicated messages
-+
-Make the event consumption idempotent
-marking the events that you already processed(e.g., in the database) and ignoring any repeated ones.
-configure the broker to fulfill the at-most-once guarantee, and that helps prevent duplicates.
-
-. Unordered messages
-+
-You have to prepare your code to cope with that
-
-. Broker's downtime
-+
-Both publishers and subscribers should try to deal with that situation (e.g., with a retry strategy or a cache).
-You could also flag the services as unhealthy and stop accepting new operations
 
 == Reactive Systems
 

@@ -1,0 +1,112 @@
+= Testing Spring Cloud Function
+Using the functional programming paradigm, we can implement business logic in
+standard Java and write unit tests with JUnit without being affected by the framework.
+At that level there is no Spring code, just plain Java. Once you’ve ensured that each
+function works, you’ll want to write some integration tests to verify your application’s
+overall behavior when your functions are processed by Spring Cloud Function and
+exposed the way you configured.
+
+First, you need to add a test dependency on Reactor Test
+[source,gradle,attributes]
+----
+dependencies {
+ testImplementation 'io.projectreactor:reactor-test'
+}
+----
+
+
+== Writing integration tests with @FunctionalSpringBootTest
+Spring Cloud Function provides a @FunctionalSpringBootTest annotation you
+can use to set up the context for your integration tests. Unlike unit tests, you don’t
+want to invoke the function directly but rather ask the framework to provide that for
+you. All the functions managed by the framework are available through the Function-
+Catalog, an object that acts as a function registry. When the framework serves the
+function, it doesn’t only contain the implementation you wrote; it’s enhanced with
+extra features offered by Spring Cloud Function, like transparent type conversion and
+function composition. 
+
+[source,java,attributes]
+----
+public record OrderAcceptedMessage (
+		Long orderId
+){}
+//DTO containing the order identifier as a Long field
+public record OrderDispatchedMessage (
+		Long orderId
+){}
+
+@Configuration
+public class DispatchingFunctions {
+
+	private static final Logger log = LoggerFactory.getLogger(DispatchingFunctions.class);
+
+	@Bean
+	public Function<OrderAcceptedMessage, Long> pack() {
+		return orderAcceptedMessage -> {
+			log.info("The order with id {} is packed.", orderAcceptedMessage.orderId());
+			return orderAcceptedMessage.orderId();
+		};
+	}
+
+	@Bean
+	public Function<Flux<Long>, Flux<OrderDispatchedMessage>> label() {
+		return orderFlux -> orderFlux.map(orderId -> {
+			log.info("The order with id {} is labeled.", orderId);
+			return new OrderDispatchedMessage(orderId);
+		});
+	}
+
+}
+----
+[source,java,attributes]
+----
+import java.util.function.Function;
+
+import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.function.context.FunctionCatalog;
+import org.springframework.cloud.function.context.test.FunctionalSpringBootTest;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@FunctionalSpringBootTest
+class DispatchingFunctionsIntegrationTests {
+
+	@Autowired
+	private FunctionCatalog catalog;
+
+	@Test
+	void packOrder() {
+		Function<OrderAcceptedMessage, Long> pack = catalog.lookup(Function.class, "pack");
+		long orderId = 121;
+		assertThat(pack.apply(new OrderAcceptedMessage(orderId))).isEqualTo(orderId);
+	}
+
+	@Test
+	void labelOrder() {
+		Function<Flux<Long>, Flux<OrderDispatchedMessage>> label = catalog.lookup(Function.class, "label");
+		Flux<Long> orderId = Flux.just(121L);
+
+		StepVerifier.create(label.apply(orderId))
+				.expectNextMatches(dispatchedOrder ->
+						dispatchedOrder.equals(new OrderDispatchedMessage(121L)))
+				.verifyComplete();
+	}
+
+	@Test
+	void packAndLabelOrder() {
+		Function<OrderAcceptedMessage, Flux<OrderDispatchedMessage>> packAndLabel =
+				catalog.lookup(Function.class, "pack|label");
+		long orderId = 121;
+
+		StepVerifier.create(packAndLabel.apply(new OrderAcceptedMessage(orderId)))
+				.expectNextMatches(dispatchedOrder ->
+						dispatchedOrder.equals(new OrderDispatchedMessage(orderId)))
+				.verifyComplete();
+	}
+
+}
+----

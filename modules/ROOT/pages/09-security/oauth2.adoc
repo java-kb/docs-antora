@@ -11,6 +11,29 @@ wants to access.
 * *Client*: This is the application that would like to access the resource.
 * *Authorization server*: This is the server issuing access to the client, which is the role of Keycloak,Openam,etc.
 
+== Scopes
+Both ID Tokens and Access Tokens can include different information about the user,
+which is formatted as claims in the JWT. Claims are simple key/value pairs in JSON for-
+mat. For example, OpenID Connect defines several standard claims to carry informa-
+tion about the user, like given_name, family_name, preferred_username, and email.
+
+Access to such claims is controlled through scopes, a mechanism provided by
+OAuth2 to limit what data an OAuth2 Client can access. You can think of scopes as
+roles assigned to applications rather than to users. 
+
+Scopes are an OAuth2 concept for limiting an application’s access to user
+resources. You can think of them as roles, but for applications instead of users. 
+
+Perhaps you have logged in to a third-party website using GitHub or Google (a
+social login based on OAuth2). If you did, you might have noticed that right after
+the authentication step, the service prompted you with a second request about
+what information from your GitHub or Google account you consented to allow the
+third party to access. That consent functionality is based on scopes, granting the third
+party (the OAuth2 Client) specific permissions depending on what scopes have been
+assigned.
+
+When we use the OpenID Connect extension on top of OAuth2 to verify the user’s identity, we need to include the openid scope to inform the Authorization Server and receive an ID Token containing data about the user authentication.
+
 == OAuth 2 Flows(Grant Types)
 
 In an OAuth 2.0 protocol flow, the client requests access to a resource on behalf of a resource owner from the authorization server. The authorization server issues limited access to the resource in the form of an access token. After receiving the access token, the client can access the resource at the resource server by including the access token in the request.
@@ -32,7 +55,6 @@ Depending on the application type and use case, there are a number of different 
 * If none of the preceding conditions are applicable, use the authorization code flow.
 
 == Tokens
-
 as the resource servers are  able to directly read the value of the access token,
 they do not always have to make a request to the OAuth 2.0 token introspection endpoint, or the OpenID Connect UserInfo endpoint. This potentially eliminates two additional requests to Aauth2 server for a request to the resource server, reducing latency as well as significantly reducing the number of requests to server.
 
@@ -42,3 +64,10 @@ When a resource server receives an access token, it is able to verify the token 
 * Downloading the public signing keys for the OP from the JWKS URL endpoint. These are
 typically cached/stored at the Resource Server.
 * Verifying the signature of the token using the public signing keys from the OP.
+
+Access Tokens defined as JWTs should be handled with care. They
+are bearer tokens, meaning that any application can use them in an HTTP
+request and get access to an OAuth2 Resource Server. Handling the OIDC/
+OAuth2 flow in the backend rather than in an SPA provides better security
+because we don’t expose any tokens to the browser. However, there might be
+other risks to manage, so carefully consider the trust boundaries of your system.

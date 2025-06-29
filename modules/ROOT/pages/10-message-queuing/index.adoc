@@ -1,6 +1,60 @@
 = Message Queuing
 :figures: 10-message-queuing
 
+:figures: 10-message-queuing
+
+Message queuing is a communication pattern that allows different components of a system to communicate asynchronously by sending messages through a message broker. This pattern is particularly useful in distributed systems, where components may be running on different servers or even in different geographical locations.
+
+Message queuing decouples the sender and receiver, allowing them to operate independently. The sender sends a message to the message broker, which stores it until the receiver is ready to process it.
+This decoupling allows for greater flexibility and scalability, as components can be added or removed without affecting the overall system. It also provides reliability, as messages can be persisted in the queue until they are successfully processed by the receiver.
+
+Message queuing is commonly used in event-driven architectures, where components can react to events without being tightly coupled to the source of those events. It allows for greater flexibility and scalability, as new components can be added or removed without affecting the overall system.
+
+Message queuing is often implemented using message brokers or message queues, which handle the routing and delivery of messages between senders and receivers. Popular message brokers include Apache Kafka, RabbitMQ, and Amazon SQS.
+
+Message queuing is a powerful pattern that enables asynchronous communication between components in a distributed system. It allows for greater flexibility, scalability, and reliability, making it a popular choice for building modern applications.
+
+Event processing platforms like RabbitMQ and Kafka are responsible for collecting events from the producers, routing, and distributing them to the interested consumers.
+== AMQP
+When using an AMQP-based solution like RabbitMQ, the actors involved in the inter-
+action can be categorized as follows:
+
+* Producer—The entity sending messages (publisher)
+* Consumer—The entity receiving messages (subscriber)
+* Message broker—The middleware accepting messages from producers and rout-
+ing them to consumers
+
+In the AMQP protocol, producers send messages to an exchange in a broker
+that forwards them to queues according to specific routing algorithms.
+
+In the AMQP protocol, consumers receive messages from the queues in the
+broker.
+
+In the AMQP protocol, messages are data structures composed of key/value
+attributes and a binary payload.
+
+From the protocol point of view, we can also say that the broker is the server, while producers and consumers are the clients.
+
+The AMQP messaging model is based on exchanges and queuesc. Producers send messages to an exchange. RabbitMQ computes which
+queues should receive a copy of the message according to a given routing rule. Consumers read messages from a queue.
+
+image::{figures}/AMQP-message-routing.png[ Producers publish messages to an exchange. Consumers subscribe to queues. Exchanges route messages to queues according to a routing algorithm.]
+
+The protocol establishes that a message comprises attributes and a payload. AMQP defines some attributes, but you can add your own to pass
+the information that’s needed to route the message correctly. The payload must be of
+a binary type and has no constraints besides that.
+
+== Message Queuing in Cloud Native Applications
+Message queuing is a key component of cloud native applications and plays a crucial role in enabling asynchronous communication between different components of a system. In cloud native architectures, applications are often composed of multiple microservices that need to communicate with each other in a decoupled manner. Message queuing provides a way to achieve this by allowing services to send and receive messages without being tightly coupled to each other.
+
+This decoupling is essential for building scalable and resilient applications, as it allows services to evolve independently and handle failures gracefully. In a cloud native environment, message queuing can also help with load balancing and scaling, as messages can be distributed across multiple instances of a service.
+
+Message queuing is often implemented using message brokers or message queues, which provide features such as message persistence, delivery guarantees, and message transformation. These features are particularly important in cloud native applications, where services may be running on different servers or even in different geographical locations.
+
+Popular message brokers used in cloud native applications include Apache Kafka, RabbitMQ, and Amazon SQS. These brokers provide robust messaging capabilities that enable asynchronous communication between services, allowing them to react to events and process messages in a scalable and reliable manner.
+
+In summary, message queuing is a fundamental pattern in cloud native applications that enables asynchronous communication between services. It provides the necessary decoupling, scalability, and reliability needed to build modern applications that can handle varying workloads and adapt to changing requirements. By leveraging message brokers, cloud native applications can achieve greater flexibility and resilience, making them well-suited for the dynamic nature of cloud environments. 
+
 == Examples
 
 * https://github.com/spring-kb/logging-spring-rabbitmq-logging[A Simple Solution for Log Centralization Using Spring and RabbitMQ]

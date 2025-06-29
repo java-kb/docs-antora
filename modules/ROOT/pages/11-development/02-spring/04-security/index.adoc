@@ -1,7 +1,52 @@
 = Spring Security
 :figures: 11-development/02-spring/04-security
 
+Spring Security provides its main functionality by relying on filters. Let’s consider a
+possible requirement for adding authentication to a Spring Boot application. Users
+should be able to authenticate with their username and password through a login
+form. When we configure Spring Security to enable such a feature, the framework
+adds a filter that intercepts any incoming HTTP request. If the user is already authen-
+ticated, it sends the request through to be processed by a given web handler, such as a
+@RestController class. If the user is not authenticated, it forwards the user to a login
+page and prompts for their username and password.
+
+In imperative Spring applications, a filter is implemented as a Servlet
+`Filter` class. In reactive applications, the `WebFilter` class is used.
+
+Most Spring Security features, when enabled, are handled via filters. The framework
+establishes a chain of filters that are executed according to a well-defined and sensi-
+ble order. For instance, the filter that handles authentication runs before the one
+that checks for authorization because we can’t verify a user’s authority before know-
+ing who it is.
+
+
+== Spring Security dependencies
+====
+Maven::
++
+[,xml]
+----
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+----
+
+GRADLE::
++
+[source, gradle]
+----
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+}
+
+----
+
+====
 == Authentication
+
+Spring Security provides several authentication strategies, including HTTP Basic,
+login form, SAML, and OpenID Connect. 
 
 With spring boot default configuration, the app has two different authentication
 mechanisms in place: HTTP Basic and Form Login, including a username and a password, when you start the application.
@@ -34,6 +79,289 @@ public interface Customizer<T> {
 
 A customizer object allows you more flexibility in moving the configuration where needed. Sure, with simple examples, using lambda expressions is comfortable. But in real-world apps, the configurations can grow a lot. In such cases, the ability to move these configurations in separate classes helps you keep the configurations easier to maintain and test.
 
+== Configuring Spring Security
+The central place for defining and configuring security policies in Spring Security is a
+`SecurityWebFilterChain` bean. That object tells the framework which filters should
+be enabled. You can build a `SecurityWebFilterChain` bean through the DSL provided by `ServerHttpSecurity`.
+
+To collect all the configurations related to security, create a SecurityWebFilterChain
+bean in a new SecurityConfig class:
+[source,java,attributes]
+----
+@Configuration(proxyBeanMethods = false)
+public class SecurityConfig {
+
+	@Bean
+	SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
+		return http.build();
+	}
+}
+----
+
+The ServerHttpSecurity object, autowired by Spring, provides a convenient DSL for
+configuring Spring Security and building a SecurityWebFilterChain bean. 
+
+== HTTP Basic Authentication
+== login form Authentication
+we can enable login form strategy  via the formLogin() method exposed by the
+ServerHttpSecurity object. 
+
+The default configuration (available via the
+Spring Security Customizer interface), includes a login page, provided by the
+framework out of the box, and an automatic redirect to that page whenever a request
+is not authenticated:
+
+[source,java,attributes]
+----
+@Bean
+SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
+ return http
+ .authorizeExchange(exchange -> exchange.anyExchange().authenticated())
+ .formLogin(Customizer.withDefaults()) 
+ .build();
+}
+----
+Bydefault, Spring Security defines a user account in memory with the username user
+and a password randomly generated and printed out in the application logs. You should
+look for a log entry like the following:
+[source,console,attributes]
+----
+Using generated security password: ee60bdf6-fb82-439a-8ed0-8eb9d47bae08
+----
+
+== SAML Authentication
+== OpenID Connect Authentication
+
+== Logout
+In Spring Security, logging out results in all the session data associated with the
+user being deleted. When OpenID Connect/OAuth2 is used, the tokens stored by
+Spring Security for that user are also deleted. However, the user will still have an active session in identity provider(i.e Keycloak). Just as the authentication process involves both identity provider and your system, completely logging a user out requires propagating the logout request to both components.
+
+== Protecting against Cross-Site Request Forgery
+The interaction between the frontend and backend is based on a session cookie. After
+the user is successfully authenticated with the OIDC/OAuth2 strategy, Spring will gen-
+erate a session identifier to match the authenticated context and send it to the
+browser as a cookie. Any subsequent request to the backend will have to contain the
+session cookie, from which Spring Security can retrieve the tokens associated with the
+specific user and validate the request.
+
+However, session cookies are not enough to validate requests, which are vulnerable
+to Cross-Site Request Forgery (CSRF) attacks. CSRF affects modifying HTTP requests
+like POST, PUT, and DELETE. An attacker could induce users to perform requests they
+didn’t intend by forging a request meant to cause harm. Forged requests could do
+things like transfer money from your bank account or compromise critical data.
+
+Spring Security has built-in protection against such attacks. The protec-
+tion is based on a so-called CSRF token generated by the framework that’s provided to
+the client at the beginning of the session and required to be sent along with any state-
+changing requests.
+
+By default, the generated CSRF token is sent to the browser as an HTTP header. However, Frontend applications like Angular cannot work with that and expect to receive the token
+value as a cookie. Spring Security supports this specific requirement, but it’s not
+enabled by default.
+
+For imperative applications, You can instruct Spring Security to provide CSRF tokens as cookies through the
+csrf() DSL exposed by ServerHttpSecurity and the CookieServerCsrfTokenRepository class.
+
+for reactive applications like Edge Service, you need to take an extra step to ensure the
+CsrfToken value is actually provided.  reactive streams need to be subscribed to in order to
+activate them. At the moment, CookieServerCsrfTokenRepository doesn’t ensure a
+subscription to CsrfToken, so you must explicitly provide a workaround in a Web-
+Filter bean. This problem should be solved in future versions of Spring Security (see
+issue 5766 on GitHub: https://mng.bz/XW89). For now, update the SecurityConfig
+class as follows.
+
+[tabs]
+====
+Imperative Applications::
++
+[source, java]
+----
+----
+
+Reactive Applications::
++
+[source, java]
+----
+import reactor.core.publisher.Mono;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler;
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint;
+import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
+import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
+import org.springframework.security.web.server.csrf.CsrfToken;
+import org.springframework.security.web.server.csrf.XorServerCsrfTokenRequestAttributeHandler;
+import org.springframework.web.server.WebFilter;
+
+@Configuration(proxyBeanMethods = false)
+public class SecurityConfig {
+
+    @Bean
+    SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http,
+            ReactiveClientRegistrationRepository clientRegistrationRepository) {
+        return http
+                .authorizeExchange(exchange -> exchange
+                        // Any other request requires user authentication.
+                        .anyExchange().authenticated())
+                // Uses a cookie-based strategy for exchanging CSRF tokens with the Angular
+                // frontend
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new XorServerCsrfTokenRequestAttributeHandler()::handle)) <1>
+                .build();
+    }
+
+    /*
+     * A filter with the only purpose of subscribing
+     * to the CsrfToken reactive stream and
+     * ensuring its value is extracted correctly
+     */
+    @Bean
+    WebFilter csrfWebFilter() { <2>
+        // Required because of
+        // https://github.com/spring-projects/spring-security/issues/5766
+        return (exchange, chain) -> {
+            exchange.getResponse().beforeCommit(() -> Mono.defer(() -> {
+                Mono<CsrfToken> csrfToken = exchange.getAttribute(CsrfToken.class.getName());
+                return csrfToken != null ? csrfToken.then() : Mono.empty();
+            }));
+            return chain.filter(exchange);
+        };
+    }
+}
+----
+====
+== return an HTTP 401 response when a request is unauthenticated
+With a single-page application, things work a bit differently. The Angular applica-
+tion is returned by the backend when accessing the root endpoint through a standard
+HTTP GET request performed by the browser. After that first step, the SPA interacts
+with the backend through AJAX requests. When the SPA sends an unauthenticated
+AJAX request to a protected endpoint, you don’t want Spring Security to reply with an
+HTTP 302 response redirecting to Keycloak. Instead, you want it to return a response
+with an error status like HTTP 401 Unauthorized.
+
+The main reason for not using redirects with SPAs is that you would run into Cross-
+Origin Request Sharing (CORS) issues. Consider the scenario where an SPA is served
+from https:/ /client.polarbookshop.com and makes HTTP calls through AJAX to a backend at https:/ /server.polarbookshop.com. The communication is blocked because
+the two URLs don’t have the same origin (the same protocol, domain, and port).
+That’s the standard same-origin policy enforced by all web browsers.
+
+If  Spring Security is configured to reply to an unauthenticated AJAX
+call with a redirect to Keycloak (having a different origin). In that case, the request
+will be blocked because redirects to different origins are not permitted during
+AJAX requests.
+
+When changing the Spring Security configuration to reply with an HTTP 401
+response to unauthenticated requests, it’s up to the SPA to handle the error and call
+the backend to initiate the authentication flow.  w. Redirects are only a problem during
+AJAX requests. The crucial part here is that the call to the backend to start the user
+authentication is not an AJAX request sent by Angular. Instead, it’s a standard HTTP
+call sent from the browser, like the following:
+[source,javascript,attributes]
+----
+login(): void {
+ window.open('/oauth2/authorization/keycloak', '_self');
+}
+----
+ the login call is not an AJAX request sent from the Angular Http-
+Client. Instead, it instructs the browser to call the login URL. Spring Security exposes
+an /oauth2/authorization/{registrationId} endpoint that you can use to start the
+authentication flow based on OAuth2/OIDC.
+
+To make that possible, we need to define a custom AuthenticationEntryPoint to
+instruct Spring Security to reply with an HTTP 401 status when an unauthenticated
+request is received for a protected resource. The framework already provides an Http-
+StatusServerEntryPoint implementation that perfectly suits this scenario, since it
+lets you specify which HTTP status to return when a user is required to authenticate.
+[source,java,attributes]
+----
+    @Bean
+    SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http,
+            ReactiveClientRegistrationRepository clientRegistrationRepository) {
+        return http
+                .authorizeExchange(exchange -> exchange
+                        .anyExchange().authenticated())
+                 // When an exception is thrown because a user is not authenticated, it replies
+                // with an HTTP 401 response.
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .oauth2Login(Customizer.withDefaults())
+                .build();
+    }
+----
+At this point, the Angular application can explicitly intercept HTTP 401 responses
+and trigger the authentication flow.
+
+== ENSURING USER DATA PRIVACY
+To ensure that order data is only
+accessed by the users who created the entity(i.e orders). No user should be able to see the orders from another person.
+ 
+There are a few different solutions for implementing this requirement in Spring.
+We’ll follow these steps:
+
+1. Add a custom query to OrderRepository to filter orders based on the user who
+created them.
+2. Update OrderService to use the new query instead of the default findAll().
+3. Update OrderController to extract the username of the currently authenticated user from the security context and pass it to OrderService when asking
+for orders. refer to chapter 17 of Spring Security in Action by Laurent¸iu Spilca˘
+(Manning, 2020).
+
+[tabs]
+====
+Imperative Applications::
++
+[source, java]
+----
+----
+
+Reactive Applications::
++
+[source, java]
+----
+public interface OrderRepository extends ReactiveCrudRepository<Order, Long> {
+    // Custom method to query only the orders created by the given user
+    Flux<Order> findAllByCreatedBy(String userId);
+}
+----
+Next we need to update the getAllOrders() method in OrderService to accept a
+username as input and use the new query method provided by OrderRepository.
+[source, java]
+----
+    // When requesting all orders, the response includes only those belonging to the
+    // given user.
+    public Flux<Order> getAllOrders(String userId) {
+        return orderRepository.findAllByCreatedBy(userId);
+    }
+----
+update the getAllOrders() method in OrderController
+[source, java]
+----
+    // Autowires the JWT representing the currently authenticated user
+    @GetMapping
+    public Flux<Order> getAllOrders(@AuthenticationPrincipal Jwt jwt) {
+        // Extracts the subject of the JWT and uses it as the user identifier
+        /*
+         * Since Order Service is configured with JWT authentication, the principal will
+         * be of
+         * type Jwt. We can use the JWT (an Access Token) to read the sub claim
+         * containing the
+         * username for which the Access Token was generated (the subject).
+         * 
+         */
+        return orderService.getAllOrders(jwt.getSubject());
+    }
+----
+====
+
 == Examples
 
 * https://github.com/spring-kb/baeldung-spring-security-oauth-auth-server[Baeldung Spring Security OAuth Authorization Server]
+

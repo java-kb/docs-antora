@@ -99,6 +99,14 @@ CREATE TABLE book (
 ----
 ==  Evolving a database with Flyway
 You can evolve a database by adding new migrations to the src/main/resources/db/migration folder. Flyway will automatically detect them and apply them in the correct order.
+
+Any change to a database schema should also be backward compatible to support
+common deployment strategies for cloud native applications, like rolling upgrades,
+blue/green deployments, or canary releases).
+
+During the application’s startup, Flyway will automatically go through all the migra-
+tion scripts and apply those not yet applied.
+
 For example, if you want to add a new column to the book table, you can create a new migration script named V2__Add_publisher_column.sql with the following content:
 [source,sql,attributes]
 ----
@@ -219,3 +227,21 @@ upgrade procedure consisting of updating one (or a few) instances at a time to e
 zero downtime. There will be both old and new versions of the application running
 during the upgrade, so it’s paramount that the old instances can still run correctly even
 after the database changes introduced in the latest version have been applied. 
+
+==  backward-compatible changes
+Any change to a database schema should also be backward compatible to support
+common deployment strategies for cloud native applications, like rolling upgrades,
+blue/green deployments, or canary releases. In case we need to add new columns to the  table. As long as we don’t make
+them mandatory, the change will be backward compatible. After we change the schema,
+any running instance of the previous release of  the ervice will continue to work
+without errors, simply ignoring the new columns.
+
+The tradeoff of enforcing backward-compatible changes is that we now have to
+treat as optional the new fields that we need to have always filled in, and that may possibly
+fail validation if they’re not. That is a common problem that can be solved over two
+subsequent releases of the application:
++
+1. In the first release, you add the new columns as optional and implement a data
+migration to fill in the new columns for all the existing data. For example for an new created by field, you could use a conventional value to represent that we don’t know who created or updated the entity, such as unknown or anonymous.
+2. In the second release, you can create a new migration to update the schema
+safely and make the new columns required.

@@ -1,0 +1,87 @@
+= SSpring Cloud Stream
+
+Spring Cloud Stream, built on top of Spring Cloud Function, provides you with
+all the necessary plumbing to integrate your functions with external messaging
+systems like RabbitMQ or Kafka.
+
+Spring Cloud Stream is a framework for building scalable, event-driven, and
+streaming applications. It’s built on top of Spring Integration, which offers the com-
+munication layer with message brokers; Spring Boot, which provides auto-configura-
+tion for the middleware integration; and Spring Cloud Function, which produces,
+processes, and consumes events. Spring Cloud Stream relies on the native features of
+each message broker, but it also provides an abstraction to ensure a seamless experi-
+ence independently of the underlying middleware. For example, features like con-
+sumer groups and partitions (native in Apache Kafka) are not present in RabbitMQ,
+but you can still use them thanks to the framework providing them for you.
+
+The framework supports integrations with RabbitMQ, Apache Kafka, Kafka Streams,
+and Amazon Kinesis. There are also integrations maintained by partners for Google
+PubSub, Solace PubSub+, Azure Event Hubs, and Apache RocketMQ.
+
+Spring Cloud Stream is based on a few essential concepts:
+
+-  Destination binder—The component providing the integration with external
+messaging systems, like RabbitMQ or Kafka
+-  Destination binding—The bridge between the external messaging system entities,
+like queues and topics, and the application-provided producers and consumers
+-  Message—The data structure used by the application producers and consumers
+to communicate with the destination binders, and therefore with the external
+messaging systems
+
+All three of these are handled by the framework itself. The core of your application,
+the business logic, is not aware of the external messaging system. Destination binders
+are responsible for letting the application communicate with the external message
+brokers, including any vendor-specific concerns. The bindings are auto-configured by
+the framework, but you can still provide your own configuration to adapt them to your needs.
+
+Spring Cloud Function and Spring Boot Starter is already included in Spring Cloud Stream.
+
+Once you implement your functions, you don’t have to make any changes to
+your code. You only need to add a dependency on Spring Cloud Stream and
+configure it to adapt to your needs.
+
+In Spring Cloud Stream, destination binders provide integration with external
+messaging systems.
+
+In Spring Cloud Stream, destination bindings (input and output) bridge the
+producers and consumers in your applications with exchanges and queues in a
+message broker like RabbitMQ.
+
+Functions and consumers are activated automatically when new messages arrive. Suppliers need to be explicitly activated, such as by explicitly sending a message
+to a destination binding.
+[tabs]
+====
+Gradle::
+[source,gradle,attributes]
+----
+dependencies {
+ implementation 'org.springframework.boot:spring-boot-starter'
+ implementation 'org.springframework.cloud:spring-cloud-stream-binder-rabbit'
+}
+----
+Maven::
+[source,xml,attributes]
+----
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-stream-binder-rabbit</artifactId>
+</dependency>
+----
+====
+== Implementing event producers
+Suppliers are message sources. They produce messages when an event happens. Unlike functions and consumers, suppliers need to be activated. They act only upon invocation.
+
+Spring Cloud Stream provides a few ways to define suppliers and cover different
+scenarios.
+== Making messaging resilient to failures
+Spring Cloud Stream uses the retry pattern with an exponential backoff strat-
+egy by default, relying on the Spring Retry library for imperative consumers and the
+retryWhen() Reactor operator for reactive consumers, you can customize it via configuration properties.
+
+Spring Cloud Stream defines several defaults to make the interaction more resil-
+ient, including error channels and graceful shutdown. You can configure different
+aspects of message processing, including dead-letter queues, acknowledgment flows,
+and republishing messages on error.
+
+== Testing
+see 11-development/02-spring/07-testing/spring-cloud-stream

@@ -1,0 +1,998 @@
+= Testing Spring Security and OpenID Connect
+
+== Testing OIDC authentication
+[tabs]
+====
+To test the scenario where a user is authenticated, we can use mockOidcLogin(), a
+configuration object supplied by SecurityMockServerConfigurers to mock an OIDC
+login, synthesize an ID Token, and mutate the request context in WebTestClient
+accordingly.
+
+The /user endpoint reads claims from the ID Token through the OidcUser object,
+so we need to build an ID Token with username, first name, and last name (the roles
+are hardcoded in the controller for now). 
+Imperative Applications::
++
+[source, java]
+----
+----
+
+Reactive Applications::
++
+[source, java]
+----
+@RestController
+public class UserController {
+    /*
+     * For Spring Web MVC and WebFlux controllers, besides using ReactiveSecurity-
+     * ContextHolder directly, we can use the annotations @CurrentSecurityContext
+     * and @AuthenticationPrincipal to inject the SecurityContext and the principal (in
+     * this case, OidcUser) respectively.
+     */
+    // Injects an OidcUser object containing info about the currently authenticated user
+    @GetMapping("user")
+    public Mono<User> getUser(@AuthenticationPrincipal OidcUser oidcUser) {
+        var user = new User(
+                oidcUser.getPreferredUsername(),
+                oidcUser.getGivenName(),
+                oidcUser.getFamilyName(),
+                List.of("employee", "customer"));
+        return Mono.just(user);
+    }
+}
+----
++
+[source, java]
+----
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
+import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
+import com.polarbookshop.edgeservice.config.SecurityConfig;
+
+@WebFluxTest(UserController.class)
+@Import(SecurityConfig.class)
+class UserControllerTests {
+
+    @Autowired
+    WebTestClient webClient;
+
+    // A mock bean to skip the interaction with Keycloak when retrieving information
+    // about the Client registration
+    @MockBean
+    ReactiveClientRegistrationRepository clientRegistrationRepository;
+
+    /*
+     * Since we configured Edge Service to return an HTTP 401 response when a
+     * request is
+     * unauthenticated, let’s verify that happens when calling the /user endpoint
+     * without
+     * authenticating first:
+     * 
+     */
+    @Test
+    void whenNotAuthenticatedThen401() {
+        webClient
+                .get()
+                .uri("/user")
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    /*
+     * To test the scenario where a user is authenticated, we can use
+     * mockOidcLogin(), a
+     * configuration object supplied by SecurityMockServerConfigurers to mock an
+     * OIDC
+     * login, synthesize an ID Token, and mutate the request context in
+     * WebTestClient
+     * accordingly.
+     * 
+     * The /user endpoint reads claims from the ID Token through the OidcUser
+     * object,
+     * so we need to build an ID Token with username, first name, and last name (the
+     * roles
+     * are hardcoded in the controller for now).
+     */
+    @Test
+    void whenAuthenticatedThenReturnUser() {
+        // The expected authenticated user
+        var expectedUser = new User("jon.snow", "Jon", "Snow", List.of("employee", "customer"));
+
+        webClient
+                // Defines an authentication context based on OIDC and uses the expected user
+                .mutateWith(configureMockOidcLogin(expectedUser))
+                .get()
+                .uri("/user")
+                .exchange()
+                .expectStatus().is2xxSuccessful()
+                .expectBody(User.class)
+                .value(user -> assertThat(user).isEqualTo(expectedUser));
+    }
+
+    private SecurityMockServerConfigurers.OidcLoginMutator configureMockOidcLogin(User expectedUser) {
+        // Builds a mock ID Token
+        return SecurityMockServerConfigurers.mockOidcLogin().idToken(builder -> {
+            builder.claim(StandardClaimNames.PREFERRED_USERNAME, expectedUser.username());
+            builder.claim(StandardClaimNames.GIVEN_NAME, expectedUser.firstName());
+            builder.claim(StandardClaimNames.FAMILY_NAME, expectedUser.lastName());
+            builder.claim("roles", expectedUser.roles());
+        });
+    }
+
+}
+----
+====
+
+== Testing CSRF
+In Spring Security, CSRF protection applies to all mutating HTTP requests by default
+(such as POST, PUT, and DELETE)
+[tabs]
+====
+Imperative Applications::
++
+[source, java]
+----
+----
+
+Reactive Applications::
++
+[source, java]
+----
+import reactor.core.publisher.Mono;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler;
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint;
+import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
+import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
+import org.springframework.security.web.server.csrf.CsrfToken;
+import org.springframework.security.web.server.csrf.XorServerCsrfTokenRequestAttributeHandler;
+import org.springframework.web.server.WebFilter;
+
+@Configuration(proxyBeanMethods = false)
+public class SecurityConfig {
+
+    @Bean
+    SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http,
+            ReactiveClientRegistrationRepository clientRegistrationRepository) {
+        return http
+                .authorizeExchange(exchange -> exchange
+                        // Allows unauthenticated access to the SPA static resources
+                        .pathMatchers("/", "/*.css", "/*.js", "/favicon.ico").permitAll()
+                        // Allows unauthenticated read access to the books in the catalog
+                        .pathMatchers(HttpMethod.GET, "/books/**").permitAll()
+                        // Any other request requires user authentication.
+                        .anyExchange().authenticated())
+                // When an exception is thrown because a user is not authenticated, it replies
+                // with an HTTP 401 response.
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .oauth2Login(Customizer.withDefaults())
+                // Defines a custom handler for the scenario where a logout operation is
+                // completed successfully
+                .logout(logout -> logout.logoutSuccessHandler(oidcLogoutSuccessHandler(clientRegistrationRepository)))
+                // Uses a cookie-based strategy for exchanging CSRF tokens with the Angular
+                // frontend
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new XorServerCsrfTokenRequestAttributeHandler()::handle))
+                .build();
+    }
+
+    private ServerLogoutSuccessHandler oidcLogoutSuccessHandler(
+            ReactiveClientRegistrationRepository clientRegistrationRepository) {
+        // After logging out from the OIDC Provider, Keycloak will redirect the user to
+        // the application base URL computed dynamically from Spring (locally, it’s
+        // http:/ /localhost:9000).
+        var oidcLogoutSuccessHandler = new OidcClientInitiatedServerLogoutSuccessHandler(clientRegistrationRepository);
+        oidcLogoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}");
+        return oidcLogoutSuccessHandler;
+    }
+
+    /*
+     * A filter with the only purpose of subscribing
+     * to the CsrfToken reactive stream and
+     * ensuring its value is extracted correctly
+     */
+    @Bean
+    WebFilter csrfWebFilter() {
+        // Required because of
+        // https://github.com/spring-projects/spring-security/issues/5766
+        return (exchange, chain) -> {
+            exchange.getResponse().beforeCommit(() -> Mono.defer(() -> {
+                Mono<CsrfToken> csrfToken = exchange.getAttribute(CsrfToken.class.getName());
+                return csrfToken != null ? csrfToken.then() : Mono.empty();
+            }));
+            return chain.filter(exchange);
+        };
+    }
+}
+----
+[source, java]
+----
+import static org.mockito.Mockito.when;
+
+import org.assertj.core.util.URLs;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
+import reactor.core.publisher.Mono;
+
+@WebFluxTest
+@Import(SecurityConfig.class)
+public class SecurityConfigTest {
+    @Autowired
+    WebTestClient webClient;
+
+    // A mock bean to skip the interaction with Keycloak when retrieving information
+    // about the Client registration
+    @MockBean
+    ReactiveClientRegistrationRepository clientRegistrationRepository;
+
+    @Test
+    void whenLogoutNotAuthenticatedAndNoCsrfTokenThen403() {
+        webClient
+                .post()
+                .uri("/logout")
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    void whenLogoutAuthenticatedAndNoCsrfTokenThen403() {
+        webClient
+                .mutateWith(SecurityMockServerConfigurers.mockOidcLogin())
+                .post()
+                .uri("/logout")
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+    /*
+     * check whether the application returns an HTTP 302 response
+     * after sending an HTTP POST request to the /logout with the correct OIDC login
+     * and
+     * CSRF context.
+     * 
+     */
+    @Test
+    void whenLogoutAuthenticatedAndWithCsrfTokenThen302() {
+        when(clientRegistrationRepository.findByRegistrationId("test"))
+                .thenReturn(Mono.just(testClientRegistration()));
+
+        webClient
+                // Uses a mock ID Token to authenticate the user
+                .mutateWith(SecurityMockServerConfigurers.mockOidcLogin())
+                // Enhances the request to provide the required CSRF token
+                .mutateWith(SecurityMockServerConfigurers.csrf())
+                .post()
+                .uri("/logout")
+                .exchange()
+                // The response is a redirect to Keycloak to propagate the logout operation.
+                .expectStatus().isFound();
+    }
+    // A mock ClientRegistration used by Spring Security to get the URLs to contact
+    // Keycloak
+    private ClientRegistration testClientRegistration() {
+        return ClientRegistration.withRegistrationId("test")
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .clientId("test")
+                .authorizationUri("https://sso.polarbookshop.com/auth")
+                .tokenUri("https://sso.polarbookshop.com/token")
+                .redirectUri("https://polarbookshop.com")
+                .build();
+    }
+}
+----
+====
+
+=== Testing Secured Rest Controllers
+As part of the OAuth2 Access Token validation, Spring Security relies on the public
+keys provided by Keycloak to verify the JWT signature. Internally, the framework configures a JwtDecoder bean to decode and verify a JWT using those keys. In the context of a web slice test, we can provide a mock JwtDecoder bean so that Spring Security skips the
+interaction with Keycloak (which we can validate in a full integration test).
+[tabs]
+====
+Imperative Applications::
++
+[source,java,attributes]
+----
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration(proxyBeanMethods = false)
+public class SecurityConfig {
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+                .authorizeHttpRequests(authorize -> authorize
+                        // Allows users to fetch greetings and books without being authenticated
+                        .requestMatchers(HttpMethod.GET, "/", "/books/**").permitAll()
+                        // Any other request requires not only authentication but also the employee role
+                        // (which is the same as the ROLE_employee authority).
+                        .anyRequest().hasRole("employee"))
+                // Enables OAuth2 Resource Server support using the default configuration based
+                // on JWT (JWT authentication)
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                // Each request must include an Access Token, so there’s no need to keep a user
+                // session alive between requests. We want it to be stateless.
+                .sessionManagement(
+                        sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Since the authentication strategy is stateless and doesn’t involve a
+                // browser-based client, we can safely disable the CSRF protection.
+                .csrf(AbstractHttpConfigurer::disable)
+                .build();
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        // Defines a converter to map claims to GrantedAuthority objects
+        var jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        // Applies the “ROLE_” prefix to each user role
+        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+        // Extracts the list of roles from the roles claim
+        jwtGrantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+
+        // Defines a strategy to convert a JWT. We’ll only customize how to build
+        // granted authorities out of it.
+        var jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
+        return jwtAuthenticationConverter;
+    }
+
+}
+----
+[source,java,attributes]
+----
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.polarbookshop.catalogservice.config.SecurityConfig;
+import com.polarbookshop.catalogservice.domain.Book;
+import com.polarbookshop.catalogservice.domain.BookNotFoundException;
+import com.polarbookshop.catalogservice.domain.BookService;
+import org.junit.jupiter.api.Test;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+// Identifies a test class that focuses on Spring MVC components, explicitly targeting BookController
+@WebMvcTest(BookController.class)
+// Imports the application’s security configuration
+@Import(SecurityConfig.class)
+class BookControllerMvcTests {
+    private static final String ROLE_EMPLOYEE = "ROLE_employee";
+    private static final String ROLE_CUSTOMER = "ROLE_customer";
+    // Utility class to test the web layer in a mock environment
+    @Autowired
+    private MockMvc mockMvc;
+    // Adds a mock of BookService to the Spring application context
+    @MockBean
+    private BookService bookService;
+    @Autowired
+    ObjectMapper objectMapper;
+
+    @Test
+    void whenGetBookExistingAndAuthenticatedThenShouldReturn200() throws Exception {
+        var isbn = "7373731394";
+        var expectedBook = Book.of(isbn, "Title", "Author", 9.90, "Polarsophia");
+        given(bookService.viewBookDetails(isbn)).willReturn(expectedBook);
+        mockMvc
+                .perform(get("/books/" + isbn)
+                        .with(jwt()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void whenGetBookExistingAndNotAuthenticatedThenShouldReturn200() throws Exception {
+        var isbn = "7373731394";
+        var expectedBook = Book.of(isbn, "Title", "Author", 9.90, "Polarsophia");
+        given(bookService.viewBookDetails(isbn)).willReturn(expectedBook);
+        mockMvc
+                .perform(get("/books/" + isbn))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void whenGetBookNotExistingAndAuthenticatedThenShouldReturn404() throws Exception {
+        var isbn = "7373731394";
+        given(bookService.viewBookDetails(isbn)).willThrow(BookNotFoundException.class);
+        mockMvc
+                .perform(get("/books/" + isbn)
+                        .with(jwt()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void whenGetBookNotExistingAndNotAuthenticatedThenShouldReturn404() throws Exception {
+        var isbn = "7373731394";
+        given(bookService.viewBookDetails(isbn)).willThrow(BookNotFoundException.class);
+        mockMvc
+                .perform(get("/books/" + isbn))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void whenDeleteBookWithEmployeeRoleThenShouldReturn204() throws Exception {
+        var isbn = "7373731394";
+        mockMvc
+                .perform(delete("/books/" + isbn)
+                        .with(jwt().authorities(new SimpleGrantedAuthority(ROLE_EMPLOYEE))))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void whenDeleteBookWithCustomerRoleThenShouldReturn403() throws Exception {
+        var isbn = "7373731394";
+        mockMvc
+                .perform(delete("/books/" + isbn)
+                        .with(jwt().authorities(new SimpleGrantedAuthority(ROLE_CUSTOMER))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void whenDeleteBookNotAuthenticatedThenShouldReturn401() throws Exception {
+        var isbn = "7373731394";
+        mockMvc
+                .perform(delete("/books/" + isbn))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void whenPostBookWithEmployeeRoleThenShouldReturn201() throws Exception {
+        var isbn = "7373731394";
+        var bookToCreate = Book.of(isbn, "Title", "Author", 9.90, "Polarsophia");
+        given(bookService.addBookToCatalog(bookToCreate)).willReturn(bookToCreate);
+        mockMvc
+                .perform(post("/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bookToCreate))
+                        .with(jwt().authorities(new SimpleGrantedAuthority(ROLE_EMPLOYEE))))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void whenPostBookWithCustomerRoleThenShouldReturn403() throws Exception {
+        var isbn = "7373731394";
+        var bookToCreate = Book.of(isbn, "Title", "Author", 9.90, "Polarsophia");
+        given(bookService.addBookToCatalog(bookToCreate)).willReturn(bookToCreate);
+        mockMvc
+                .perform(post("/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bookToCreate))
+                        .with(jwt().authorities(new SimpleGrantedAuthority(ROLE_CUSTOMER))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void whenPostBookAndNotAuthenticatedThenShouldReturn403() throws Exception {
+        var isbn = "7373731394";
+        var bookToCreate = Book.of(isbn, "Title", "Author", 9.90, "Polarsophia");
+        mockMvc
+                .perform(post("/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bookToCreate)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void whenPutBookWithEmployeeRoleThenShouldReturn200() throws Exception {
+        var isbn = "7373731394";
+        var bookToCreate = Book.of(isbn, "Title", "Author", 9.90, "Polarsophia");
+        given(bookService.addBookToCatalog(bookToCreate)).willReturn(bookToCreate);
+        mockMvc
+                .perform(put("/books/" + isbn)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bookToCreate))
+                        .with(jwt().authorities(new SimpleGrantedAuthority(ROLE_EMPLOYEE))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void whenPutBookWithCustomerRoleThenShouldReturn403() throws Exception {
+        var isbn = "7373731394";
+        var bookToCreate = Book.of(isbn, "Title", "Author", 9.90, "Polarsophia");
+        given(bookService.addBookToCatalog(bookToCreate)).willReturn(bookToCreate);
+        mockMvc
+                .perform(put("/books/" + isbn)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bookToCreate))
+                        .with(jwt().authorities(new SimpleGrantedAuthority(ROLE_CUSTOMER))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void whenPutBookAndNotAuthenticatedThenShouldReturn401() throws Exception {
+        var isbn = "7373731394";
+        var bookToCreate = Book.of(isbn, "Title", "Author", 9.90, "Polarsophia");
+        mockMvc
+                .perform(put("/books/" + isbn)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bookToCreate)))
+                .andExpect(status().isUnauthorized());
+    }
+
+}
+----
+
+Reactive Applications::
+As part of the OAuth2 Access Token validation, Spring Security relies on the public
+keys provided by Keycloak to verify the JWT signature. Internally, the framework con-
+figures a ReactiveJwtDecoder bean to decode and verify a JWT using those keys. In
+the context of a web slice test, we can provide a mock ReactiveJwtDecoder bean so
+that Spring Security skips the interaction with Keycloak
++
+
+[source, java]
+----
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.savedrequest.NoOpServerRequestCache;
+
+@Configuration(proxyBeanMethods = false)
+public class SecurityConfig {
+
+    @Bean
+    SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
+        return http
+                // All requests require authentication
+                .authorizeExchange(exchange -> exchange
+                        .anyExchange().authenticated())
+                // Enables OAuth2 Resource Server support using the default configuration based
+                // on JWT (JWT authentication)
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                // Each request must include an Access Token, so there’s no need to keep a
+                // session cache alive between requests. We want it to be stateless.
+                .requestCache(requestCacheSpec -> requestCacheSpec.requestCache(NoOpServerRequestCache.getInstance()))
+                // Since the authentication strategy is stateless and doesn’t involve a
+                // browser-based client, we can safely disable the CSRF protection.
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .build();
+    }
+
+}
+----
+[source, java]
+----
+@RestController
+@RequestMapping("orders")
+public class OrderController {
+
+    private final OrderService orderService;
+
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
+
+    @GetMapping
+    public Flux<Order> getAllOrders() {
+        return orderService.getAllOrders();
+    }
+
+    @PostMapping
+    public Mono<Order> submitOrder(@RequestBody @Valid OrderRequest orderRequest) {
+        return orderService.submitOrder(orderRequest.isbn(), orderRequest.quantity());
+    }
+
+}
+----
+[source, java]
+----
+
+import com.polarbookshop.orderservice.config.SecurityConfig;
+import com.polarbookshop.orderservice.order.domain.Order;
+import com.polarbookshop.orderservice.order.domain.OrderService;
+import com.polarbookshop.orderservice.order.domain.OrderStatus;
+import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Mono;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
+import org.springframework.test.web.reactive.server.WebTestClient;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+
+// Identifies a test class that focuses on Spring WebFlux components, targeting OrderController
+@WebFluxTest(OrderController.class)
+@Import(SecurityConfig.class)
+class OrderControllerWebFluxTests {
+
+    // A WebClient variant with extra features to make testing RESTful services
+    // easier
+    @Autowired
+    private WebTestClient webClient;
+
+    // Adds a mock of OrderService to the Spring application context
+    @MockBean
+    private OrderService orderService;
+
+    @Test
+    void whenBookNotAvailableThenRejectOrder() {
+        var orderRequest = new OrderRequest("1234567890", 3);
+        var expectedOrder = OrderService.buildRejectedOrder(orderRequest.isbn(), orderRequest.quantity());
+        // Defines the expected behavior for the OrderService mock bean
+        given(orderService.submitOrder(orderRequest.isbn(), orderRequest.quantity()))
+                .willReturn(Mono.just(expectedOrder));
+
+        webClient
+                // Mutates the HTTP request with a mock, JWT-formatted Access Token for a user
+                // with the “customer” role
+                .mutateWith(SecurityMockServerConfigurers.mockJwt()
+                        .authorities(new SimpleGrantedAuthority("ROLE_customer")))
+                .post()
+                .uri("/orders")
+                .bodyValue(orderRequest)
+                .exchange()
+                // Expects the order is created successfully
+                .expectStatus().is2xxSuccessful()
+                .expectBody(Order.class).value(actualOrder -> {
+                    assertThat(actualOrder).isNotNull();
+                    assertThat(actualOrder.status()).isEqualTo(OrderStatus.REJECTED);
+                });
+
+    }
+
+}
+----
+====
+== Integration Tests With @Springboottest, Spring Security, And Testcontainers
+This section will show you how to write slice tests for the web slice using mock
+Access Tokens and full integration tests relying on an actual Keycloak container run
+via Testcontainers.
+
+In the context of an OAuth2 Resource Server, authentication means
+token authentication. In this case, it happens by providing an Access Token
+in the Authorization header of each HTTP request.
+
+Before starting, we need to add new dependencies on Spring Security Test and
+Testcontainers Keycloak.
+[tabs]
+====
+Maven::
++
+[source, xml]
+----
+    <properties>
+        <testcontainersVersion>1.17.3</testcontainersVersion>
+        <testKeycloakVersion>3.3.1</testKeycloakVersion>
+    </properties>
+    <dependencies>
+        <dependency>
+			<groupId>com.github.dasnik</groupId>
+			<artifactId>testcontainers-keycloak</artifactId>
+			<version>${testKeycloakVersion}</version>
+		</dependency>
+	</dependencies>
+----
+
+Gradle::
++
+[source, gradle]
+----
+ext {
+	set('testKeycloakVersion', "3.3.1")
+}
+dependencies {
+	testImplementation "com.github.dasniko:testcontainers-keycloak:${testKeycloakVersion}"
+}
+----
+====
+
+[tabs]
+====
+Imperative Applications::
++
+[source, java]
+----
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.polarbookshop.catalogservice.domain.Book;
+import dasniko.testcontainers.keycloak.KeycloakContainer;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.keycloak.admin.client.Keycloak;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.net.URI;
+
+/*
+ * we’ll use the @SpringBootTest annotation configured to provide a full Spring applica-
+tion context, including a running server that exposes its services through a random
+port (because it doesn’t matter which one).
+ */
+// Loads a full Spring web application context and a Servlet container listening on a random port
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+// Enables the “integration” profile to load configuration from
+// application-integration.yml
+@ActiveProfiles("integration")
+// Activates automatic startup and cleanup of test containers
+@Testcontainers
+class CatalogServiceApplicationTests {
+
+	// Utility to perform REST calls for testing
+	@Autowired
+	private WebTestClient webTestClient;
+	// Defines a Keycloak container for testing
+	/*
+	 * The Keycloak configuration I provided in the JSON file includes the
+	 * definition of a
+	 * test Client (polar-test) that we can use to authenticate users via a username
+	 * and pass-
+	 * word directly, instead of going through the browser-based flow we implemented
+	 * in Edge
+	 * Service. In OAuth2, such a flow is called a Password Grant, and it’s not
+	 * recommended for
+	 * production use.
+	 */
+	@Container
+	private static final KeycloakContainer keycloakContainer = new KeycloakContainer("quay.io/keycloak/keycloak:26.2.5")
+			.withRealmImportFile("/test-realm-config.json");
+	// Customer
+	private static KeycloakToken bjornTokens;
+	// Customer and employee
+	private static KeycloakToken isabelleTokens;
+
+	// Overwrites the Keycloak Issuer URI configuration to point to the test
+	// Keycloak instance
+	@DynamicPropertySource
+	static void dynamicProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri",
+				() -> keycloakContainer.getAuthServerUrl() + "/realms/PolarBookshop");
+	}
+
+	/*
+	 * Let’s set up CatalogServiceApplicationTests to authenticate with Keycloak as
+	 * Isabelle and Bjorn so that we can obtain the Access Tokens we need to call
+	 * the Catalog
+	 * Service’s protected endpoints. Keep in mind that Isabelle is both a customer
+	 * and
+	 * employee, whereas Bjorn is only a customer.
+	 * 
+	 */
+	@BeforeAll
+	static void generateAccessTokens() {
+		// A WebClient used to call Keycloak
+		WebClient webClient = WebClient.builder()
+				.baseUrl(keycloakContainer.getAuthServerUrl() + "/realms/PolarBookshop/protocol/openid-connect/token")
+				.defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+				.build();
+		// Authenticates as Isabelle and obtains an Access Token
+		isabelleTokens = authenticateWith("isabelle", "password", webClient);
+		bjornTokens = authenticateWith("bjorn", "password", webClient);
+	}
+
+	@Test
+	void whenGetRequestWithIdThenBookReturned() {
+		var bookIsbn = "1231231230";
+		var bookToCreate = Book.of(bookIsbn, "Title", "Author", 9.90, "Polarsophia");
+		Book expectedBook = webTestClient
+				.post()
+				.uri("/books")
+				.headers(headers -> headers.setBearerAuth(isabelleTokens.accessToken()))
+				.bodyValue(bookToCreate)
+				.exchange()
+				.expectStatus().isCreated()
+				.expectBody(Book.class).value(book -> assertThat(book).isNotNull())
+				.returnResult().getResponseBody();
+
+		webTestClient
+				.get()
+				.uri("/books/" + bookIsbn)
+				.exchange()
+				.expectStatus().is2xxSuccessful()
+				.expectBody(Book.class).value(actualBook -> {
+					assertThat(actualBook).isNotNull();
+					assertThat(actualBook.isbn()).isEqualTo(expectedBook.isbn());
+				});
+	}
+
+	@Test
+	void whenPostRequestThenBookCreated() {
+		var expectedBook = Book.of("1231231231", "Title", "Author", 9.90, "Polarsophia");
+
+		webTestClient
+				.post()
+				.uri("/books")
+				// Sends a request to add a book to the catalog as an authenticated employee
+				// user (Isabelle)
+				.headers(headers -> headers.setBearerAuth(isabelleTokens.accessToken()))
+				.bodyValue(expectedBook)
+				.exchange()
+				// The book has been successfully created (201).
+				.expectStatus().isCreated()
+				.expectBody(Book.class).value(actualBook -> {
+					assertThat(actualBook).isNotNull();
+					assertThat(actualBook.isbn()).isEqualTo(expectedBook.isbn());
+				});
+	}
+
+	@Test
+	void whenPostRequestUnauthenticatedThen401() {
+		var expectedBook = Book.of("1231231231", "Title", "Author", 9.90, "Polarsophia");
+		// Sends a request to add a book to the catalog as
+		webTestClient
+				.post()
+				.uri("/books")
+				.bodyValue(expectedBook)
+				.exchange()
+				// The book has not been created because the user is not authenticated (401).
+				.expectStatus().isUnauthorized();
+	}
+
+	@Test
+	void whenPostRequestUnauthorizedThen403() {
+		var expectedBook = Book.of("1231231231", "Title", "Author", 9.90, "Polarsophia");
+
+		webTestClient
+				.post()
+				.uri("/books")
+				// Sends a request to add a book to the catalog as an authenticated customer
+				// user (Bjorn)
+				.headers(headers -> headers.setBearerAuth(bjornTokens.accessToken()))
+				.bodyValue(expectedBook)
+				.exchange()
+				// The book has not been created because the user doesn’t have the correct
+				// authorization, no “employee” role (403).
+				.expectStatus().isForbidden();
+	}
+
+	@Test
+	void whenPutRequestThenBookUpdated() {
+		var bookIsbn = "1231231232";
+		var bookToCreate = Book.of(bookIsbn, "Title", "Author", 9.90, "Polarsophia");
+		Book createdBook = webTestClient
+				.post()
+				.uri("/books")
+				.headers(headers -> headers.setBearerAuth(isabelleTokens.accessToken()))
+				.bodyValue(bookToCreate)
+				.exchange()
+				.expectStatus().isCreated()
+				.expectBody(Book.class).value(book -> assertThat(book).isNotNull())
+				.returnResult().getResponseBody();
+		var bookToUpdate = new Book(createdBook.id(), createdBook.isbn(), createdBook.title(), createdBook.author(),
+				7.95,
+				createdBook.publisher(), createdBook.createdDate(), createdBook.lastModifiedDate(),
+				createdBook.createdBy(), createdBook.lastModifiedBy(), createdBook.version());
+
+		webTestClient
+				.put()
+				.uri("/books/" + bookIsbn)
+				.headers(headers -> headers.setBearerAuth(isabelleTokens.accessToken()))
+				.bodyValue(bookToUpdate)
+				.exchange()
+				.expectStatus().isOk()
+				.expectBody(Book.class).value(actualBook -> {
+					assertThat(actualBook).isNotNull();
+					assertThat(actualBook.price()).isEqualTo(bookToUpdate.price());
+				});
+	}
+
+	@Test
+	void whenDeleteRequestThenBookDeleted() {
+		var bookIsbn = "1231231233";
+		var bookToCreate = Book.of(bookIsbn, "Title", "Author", 9.90, "Polarsophia");
+		webTestClient
+				.post()
+				.uri("/books")
+				.headers(headers -> headers.setBearerAuth(isabelleTokens.accessToken()))
+				.bodyValue(bookToCreate)
+				.exchange()
+				.expectStatus().isCreated();
+
+		webTestClient
+				.delete()
+				.uri("/books/" + bookIsbn)
+				.headers(headers -> headers.setBearerAuth(isabelleTokens.accessToken()))
+				.exchange()
+				.expectStatus().isNoContent();
+
+		webTestClient
+				.get()
+				.uri("/books/" + bookIsbn)
+				.exchange()
+				.expectStatus().isNotFound()
+				.expectBody(String.class).value(errorMessage -> assertThat(errorMessage)
+						.isEqualTo("The book with ISBN " + bookIsbn + " was not found."));
+	}
+
+	private static KeycloakToken authenticateWith(String username, String password, WebClient webClient) {
+		// Uses the Password Grant flow to authenticate with Keycloak directly
+		return webClient
+				.post()
+				.body(BodyInserters.fromFormData("grant_type", "password")
+						.with("client_id", "polar-test")
+						.with("username", username)
+						.with("password", password))
+				.retrieve()
+				.bodyToMono(KeycloakToken.class)
+				// Blocks until a result is available. This is how we use WebClient imperatively
+				// rather than reactively.
+				.block();
+	}
+
+	private record KeycloakToken(String accessToken) {
+		// Instructs Jackson to use this constructor when deserializing JSON into
+		// KeycloakToken objects
+		@JsonCreator
+		private KeycloakToken(@JsonProperty("access_token") final String accessToken) {
+			this.accessToken = accessToken;
+		}
+
+	}
+
+}
+----
+
+Reactive Applications::
++
+[source, java]
+----
+----
+====
+

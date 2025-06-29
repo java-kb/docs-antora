@@ -1,0 +1,660 @@
+= Spring OpenID Connect
+:figures: 11-development/02-spring/04-security/openid
+
+Support for OAuth2 used to be in a separate project called Spring Security OAuth,
+which you would use as part of Spring Cloud Security to adopt OAuth2 in a cloud
+native application. Both of those projects have now been deprecated in favor of the
+native, more comprehensive support for OAuth2 and OpenID Connect introduced in
+the main Spring Security project, starting from version 5. 
+
+If we used the Spring Session project to
+make (Gateway)) Service store session data in an external data service (Redis), so it could
+remain stateless and be able to scale out. Then SecurityContext objects are included in the
+session data and are therefore stored in Redis automatically, making it possible for
+Edge Service to scale out without any problem.
+
+the redirect URL for authentication requests will be http:/ /localhost:9000/login/
+oauth2/code/*, following the default format provided by Spring Security. To support
+redirects after logout operations, we also need to add http:/ /localhost:9000 as a
+valid redirect URL.
+
+== Adding dependencies
+====
+Maven::
++
+[,xml]
+----
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-oauth2-client</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.security</groupId>
+    <artifactId>spring-security-test</artifactId>
+</dependency>
+----
+
+GRADLE::
++
+[source, gradle]
+----
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	testImplementation 'org.springframework.security:spring-security-test'
+}
+
+----
+
+====
+== Use OpenID Connect to authenticate users
+Each Client registration in Spring Security must have an identifier (registrationId). In this example, it’s Identity provider. The registration identifier is used to build the URL where Spring Security receives the Authorization Code from Identity provider. The default URL
+template is /login/oauth2/code/\{registrationId\}. the full URL is
+http:/ /localhost:9000/login/oauth2/code/Identity provider, which we should already configured in Identity provider as a valid redirect URL.
+[source,yml,attributes]
+----
+spring
+  security:
+    oauth2:
+      client:
+        registration:
+          # The name identifying the Client registration in Spring Security (called “registrationId”). It can be any string.
+          Identity provider:
+            # The OAuth2 Client identifier as defined in Identity provider
+            client-id: edge-service
+            # The shared secret used by the Client to authenticate with Identity provider
+            client-secret: polar-Identity provider-secret
+            # The list of scopes the Client would like to have access to. The openid scope triggers OIDC authentication on top of OAuth2.
+            scope: openid
+        provider:
+          # The same name used as “registrationId” a few lines above
+          Identity provider:
+            # The Identity provider URL providing information about all the relevant OAuth2 and OIDC endpoints for the specific realm
+            issuer-uri: http://localhost:8080/realms/PolarBookshop
+----
+The central place for defining and configuring security policies in Spring Security is a SecurityWebFilterChain class.
+
+ The ServerHttpSecurity object provides two ways of configuring an OAuth2 Cli-
+ent in Spring Security. With oauth2Login(), you can configure an application to act as an OAuth2 Client and also authenticate users through OpenID Connect. With
+oauth2Client(), the application will not authenticate users, so it’s up to you to define
+another authentication mechanism.
+
+== Protecting APIs with Spring Security and OAuth2
+When a user accesses system services, Edge Service initiates the
+OpenID Connect authentication flow through identity provider and ultimately receives an
+Access Token granting it access to downstream services on behalf of that user.
+
+We should secure downstream services by requiring a valid Access Token to access their protected endpoints.
+
+In the OAuth2 authorization framework, they play the role of OAuth2 Resource Servers: the applications hosting protected data that a user can access through a third
+party (i.e Edge Service).
+
+OAuth2 Resource Servers don’t deal with user authentication. They receive an
+Access Token in the Authorization header of each HTTP request. Then they verify
+the signature and authorize the request according to the content of the token. 
+
+In an OAuth2 Resource Server, the strategy for authenticating users is entirely
+based on a valid Access Token provided in the Authorization header of each
+request. We call it JWT authentication.
+
+In an OAuth2 Resource Server, security policies are still enforced through a
+SecurityFilterChain (imperative) or SecurityWebFilterChain (reactive) bean.
+
+We need to configure Edge Service first to send over an Access Token when routing a
+request downstream. see xref:04-gateway/Servers/spring-cloud-gateway.adoc#token-relay-pattern[Token relay pattern]
+
+Then add a
+dependency on the dedicated Spring Boot starter that includes Spring Security and
+OAuth2 support for Resource Servers.
+[tabs]
+====
+Maven::
++
+[source, xm]
+----
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+</dependency>
+----
+
+Gradle::
++
+[source,gradle,attributes]
+----
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+}
+----
+====
+
+Spring Security supports protecting endpoints using two data formats for the Access
+Token: JWT and opaque tokens. With Access Tokens, Identity provider grants Edge Service
+access to downstream applications on behalf of the user. When the Access Token is a
+JWT, we can also include relevant information as claims about the authenticated user
+and propagate this context to downstream services with ease. In contrast, opaque tokens would require the application downstream to contact Identity provider
+every time to fetch the information associated with the token.
+
+When working with
+JWTs, the application will contact Identity provider mainly to fetch the public keys necessary
+to verify the token’s signature Using the issuer-uri property.
+
+We need to configure downstream services to auto-discover the Identity provider endpoint where it can find the public keys.
+
+The default behavior is for the application to fetch the public keys lazily upon the
+first received HTTP request rather than at startup, both for performance and coupling reasons (you don’t need Identity provider up and running when starting the applica-
+tion). OAuth2 Authorization Servers provide their public keys using the JSON Web
+Key (JWK) format. The collection of public keys is called a JWK Set. The endpoint
+where Identity provider exposes its public keys is called the JWK Set URI. Spring Security will
+automatically rotate the public keys whenever Identity provider makes new ones available.
+
+For each incoming request containing an Access Token in the Authorization
+header, Spring Security will automatically validate the token’s signature using the public keys provided by Identity provider and decode its claims via a JwtDecoder object, which is
+auto-configured behind the scenes.
+
+In the downstream service project(i.e catalog-service), open the application.yml file, and add the following configuration.
+[source,yml,attributes]
+----
+spring
+  security:
+    oauth2:
+      resourceserver:
+        # OAuth2 doesn’t enforce a data format for Access Tokens, so we must be explicit about our choice. In this case, we want to use JWT.
+        jwt:
+          # The Keycloak URL providing information about all the relevant OAuth2 endpoints for the specific realm
+          issuer-uri: http://localhost:8080/realms/PolarBookshop
+----
+Edge Service triggers the user authentication flow and
+leverages the web session to store data like ID Tokens and Access Tokens that would
+otherwise get lost at the end of each HTTP request, forcing a user to authenticate at
+each request. To make it possible for the application to scale, we used Spring Session
+to store the web session data in Redis and keep the application stateless.
+
+Unlike Edge Service, downstream services  only needs an Access Token to authenticate a
+request. Since the token is always provided in each HTTP request to a protected end-
+point, downstream services  doesn’t need to store any data between requests. We call this
+strategy stateless authentication or token-based authentication. We use JWTs as Access
+Tokens, so we can also refer to it as JWT authentication.
+
+In the downstream service project, create a new SecurityConfig 
+[tabs]
+====
+Imperative Applications::
++
+[source, java]
+----
+package com.polarbookshop.catalogservice.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration(proxyBeanMethods = false)
+public class SecurityConfig {
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+                .authorizeHttpRequests(authorize -> authorize
+                        // Allows users to fetch greetings and books without being authenticated
+                        .requestMatchers(HttpMethod.GET, "/", "/books/**").permitAll()
+                        // Any other request requires authentication
+                        .anyRequest().hasRole("employee"))
+                // Enables OAuth2 Resource Server support using the default configuration based
+                // on JWT (JWT authentication)
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                // Each request must include an Access Token, so there’s no need to keep a user
+                // session alive between requests. We want it to be stateless.
+                .sessionManagement(
+                        sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Since the authentication strategy is stateless and doesn’t involve a
+                // browser-based client, we can safely disable the CSRF protection.
+                .csrf(AbstractHttpConfigurer::disable)
+                .build();
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        var jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+        jwtGrantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+
+        var jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
+        return jwtAuthenticationConverter;
+    }
+
+}
+----
+
+Reactive Applications::
++
+[source, java]
+----
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.savedrequest.NoOpServerRequestCache;
+
+@Configuration(proxyBeanMethods = false)
+public class SecurityConfig {
+
+    @Bean
+    SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
+        return http
+                // All requests require authentication
+                .authorizeExchange(exchange -> exchange
+                        .anyExchange().authenticated())
+                // Enables OAuth2 Resource Server support using the default configuration based
+                // on JWT (JWT authentication)
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                // Each request must include an Access Token, so there’s no need to keep a
+                // session cache alive between requests. We want it to be stateless.
+                .requestCache(requestCacheSpec -> requestCacheSpec.requestCache(NoOpServerRequestCache.getInstance()))
+                // Since the authentication strategy is stateless and doesn’t involve a
+                // browser-based client, we can safely disable the CSRF protection.
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .build();
+    }
+
+}
+----
+====
+== Extract information about the authenticated user
+As part of the authentication process, Spring Security defines a context to hold infor-
+mation about the user and map a user session to an ID Token.
+
+Independent of the authentication strategy adopted (whether username/password,
+OpenID Connect/OAuth2, or SAML2), Spring Security keeps the information about an authenticated user (also called the principal) in an Authentication object. In the
+case of OIDC, the principal object is of type OidcUser, and it’s where Spring Security
+stores the ID Token. In turn, Authentication is saved in a SecurityContext object. The ID Token is stored in OidcUser, part of Authentication and ultimately
+included in SecurityContext. 
+
+One way to access the Authentication object for the currently logged-in user is
+extracting it from the related SecurityContext retrieved from the ReactiveSecurity-
+ContextHolder (or SecurityContextHolder for imperative applications)
+
+
+
+image::{figures}/OidcUser.png[The main classes used to store information about the currently authenticated user]
+
+define a User model to collect the username, first name, last name, and
+roles of an authenticated user. 
+[source,java,attributes]
+----
+import java.util.List;
+
+public record User(
+        String username,
+        String firstName,
+        String lastName,
+        List<String> roles) {
+}
+----
+You can make that work by doing the following:
+
+1. Create a UserController class annotated with @RestController in the
+com.polarbookshop.edgeservice.user package.
+2. Define a method to handle GET requests to a new /user endpoint.
+3. Return a User object for the currently authenticated user, retrieving the necessary information from OidcUser. 
+
+[source,java,attributes]
+----
+import java.util.List;
+
+import reactor.core.publisher.Mono;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class UserController {
+    @GetMapping("user1")
+    public Mono<User> getUser() {
+        // Gets SecurityContext for the currently authenticated user from
+        // ReactiveSecurityContextHolder
+        return ReactiveSecurityContextHolder.getContext()
+                // Gets Authentication from SecurityContext
+                .map(SecurityContext::getAuthentication)
+                // Gets the principal from cAuthentication. For OIDC, it’s of type OidcUser.
+                .map(authentication -> (OidcUser) authentication.getPrincipal())
+                // Builds a User object using data from OidcUser (extracted from the ID Token)
+                .map(oidcUser -> new User(
+                        oidcUser.getPreferredUsername(),
+                        oidcUser.getGivenName(),
+                        oidcUser.getFamilyName(),
+                        List.of("employee", "customer")));
+    }
+}
+----
+For Spring Web MVC and WebFlux controllers, besides using ReactiveSecurity-
+ContextHolder directly, we can use the annotations @CurrentSecurityContext and
+@AuthenticationPrincipal to inject the SecurityContext and the principal (in this
+case, OidcUser) respectively.
+
+[source,java,attributes]
+----
+import java.util.List;
+
+import reactor.core.publisher.Mono;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class UserController {
+
+    @GetMapping("user")
+    // Injects an OidcUser object containing info about the currently authenticated user
+    public Mono<User> getUser(@AuthenticationPrincipal OidcUser oidcUser) {
+        var user = new User(
+                oidcUser.getPreferredUsername(),
+                oidcUser.getGivenName(),
+                oidcUser.getFamilyName(),
+                List.of("employee", "customer"));
+        return Mono.just(user);
+    }
+
+}
+----
+Another option for retrieving the currently authenticated user (the principal) is
+from the context associated with a specific HTTP request (called the exchange). and  We can use that option to update the rate limiter configuration(with Spring Cloud Gateway and Redis)
+[source,java,attributes]
+----
+    @GetMapping("user2")
+    public Mono<User> getUser2(ServerWebExchange exchange) {
+        return exchange.getPrincipal()
+                .cast(OAuth2AuthenticationToken.class)
+                .map(authentication -> (OidcUser) authentication.getPrincipal())
+                .map(oidcUser -> new User(
+                        oidcUser.getPreferredUsername(),
+                        oidcUser.getGivenName(),
+                        oidcUser.getFamilyName(),
+                        List.of("employee", "customer")));
+    }
+----
+
+== Configure user logout
+By default, Spring Security exposes a /logout endpoint for logging a user out. In an OIDC/OAuth2 context, we also need to propagate the logout request to
+the Authorization Server (such as Identity provider) to log the user out of there. We can
+do that via the RP-Initiated Logout flow supported by Spring Security via the
+OidcClientInitiatedServerLogoutSuccessHandler class.
+
+In Spring Security, logging out results in all the session data associated with the
+user being deleted. When OpenID Connect/OAuth2 is used, the tokens stored by
+Spring Security for that user are also deleted. However, the user will still have an active session in identity provider(i.e Identity provider). Just as the authentication process involves both identity provider and your system, completely logging a user out requires propagating the logout request to both components.
+
+By default, a logout performed against an application protected by Spring Security
+will not affect identity provider. Spring Security provides an implementation of
+the “OpenID Connect RP-Initiated Logout” specification, which defines how a logout
+request should be propagated from an OAuth2 Client (the Relying Party) to the
+Authorization Server.
+
+Spring Security supports logging out by sending a POST request to the /logout end-
+point implemented and exposed by the framework by default. We can enable the
+RP-Initiated Logout scenario so that when a user logs out of the application, they are
+also logged out of the Authorization Server. Spring Security has full support for this
+scenario and provides an OidcClientInitiatedServerLogoutSuccessHandler object
+you can use to configure how to propagate a logout request to identity provider.
+
+If the RP-Initiated Logout feature is enabled. In that case, after a user has
+been successfully logged out of Spring Security, Spring Security will send a logout
+request to identity provider through the browser (using a redirect). Next you’ll probably want
+the user to be redirected back to the application after the logout operation has been
+performed on the Authorization Server as well.
+
+You can configure where the user should be redirected after a logout with the set-
+PostLogoutRedirectUri() method, which is exposed by the OidcClientInitiated-
+ServerLogoutSuccessHandler class. You might specify a direct URL, but that will not
+work well in a cloud environment due to many variables such as hostnames, service names, and protocols (http vs. https). The Spring Security team knew that, and they
+added support for placeholders that are resolved dynamically at runtime. Instead of
+hardcoding a URL value, you can use the \{baseUrl\} placeholder. When you run Edge
+Service locally, the placeholder will be resolved to http:/ /localhost:9000. If you ran
+it in the cloud behind a proxy with TLS termination and accessible through the DNS
+name polarbookshop.com, it would automatically be replaced with https:/ /polar-
+bookshop.com.
+
+However, the Client configuration in identity provider requires an exact URL. That’s why
+we added http:/ /localhost:9000 to the list of valid redirect URLs when we regis-
+tered it in identity provider . In production you’ll have to update the list of valid
+redirect URLs in identity provider to match the actual URLs used there.
+
+Since the application’s logout functionality is already provided by default in Spring
+Security, you only need to enable and configure the RP-Initiated Logout for youe system
+
+1. In the SecurityConfig class, define an oidcLogoutSuccessHandler() method
+to build an OidcClientInitiatedServerLogoutSuccessHandler object.
+2. Configure the post-logout redirect URL using the setPostLogoutRedirectUri()
+method.
+3. Call the oidcLogoutSuccessHandler() method from the logout() configura-
+tion defined in the SecurityWebFilterChain bean.
+
+The ReactiveClientRegistrationRepository bean is automatically
+configured by Spring Boot for storing the information about the clients regis-
+tered with Identity provider, and it’s used by Spring Security for authentication/
+authorization purposes.
+[source,java,attributes]
+----
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler; <1>
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository; <2>
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint;
+import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;  <3>
+import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
+import org.springframework.security.web.server.csrf.XorServerCsrfTokenRequestAttributeHandler;
+
+@Configuration(proxyBeanMethods = false)
+public class SecurityConfig {
+
+    @Bean
+    SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http,
+            ReactiveClientRegistrationRepository clientRegistrationRepository) {
+        return http
+                .authorizeExchange(exchange -> exchange
+                        .pathMatchers("/", "/*.css", "/*.js", "/favicon.ico").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/books/**").permitAll()
+                        .anyExchange().authenticated())
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .oauth2Login(Customizer.withDefaults())
+                // Defines a custom handler for the scenario where a logout operation is
+                // completed successfully
+                .logout(logout -> logout.logoutSuccessHandler(oidcLogoutSuccessHandler(clientRegistrationRepository)))  <4>
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new XorServerCsrfTokenRequestAttributeHandler()::handle))
+                .build();
+    }
+
+    private ServerLogoutSuccessHandler oidcLogoutSuccessHandler(  <5>
+            ReactiveClientRegistrationRepository clientRegistrationRepository) {
+        // After logging out from the OIDC Provider, Identity provider will redirect the user to
+        // the application base URL computed dynamically from Spring (locally, it’s
+        // http:/ /localhost:9000).
+        var oidcLogoutSuccessHandler = new OidcClientInitiatedServerLogoutSuccessHandler(clientRegistrationRepository);
+        oidcLogoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}");
+        return oidcLogoutSuccessHandler;
+    }
+}
+----
+== Storing Access Tokens
+By default, Spring Security stores the Access Tokens for the currently authenticated
+users in memory. When you have multiple instances of Edge Service running (which is
+always true in a cloud production environment to ensure high availability), you will
+encounter issues due to the statefulness of the application. Cloud native applications
+should be stateless.
+=== Storing Access Tokens In Redis
+Spring Security stores Access Tokens in an OAuth2AuthorizedClient object that is
+accessible through a ServerOAuth2AuthorizedClientRepository bean. The default
+implementation for that repository adopts an in-memory strategy for persistence.
+
+A simple way to do that is to store OAuth2AuthorizedClient objects in the web ses-
+sion rather than in memory so that Spring Session will pick them up automatically and
+save them in Redis, just like it does with ID Tokens. Fortunately, the framework already
+provides an implementation of the ServerOAuth2AuthorizedClientRepository inter-
+face to save data in the web session: WebSessionServerOAuth2AuthorizedClient-
+Repository.
+
+
+[source,java,attributes]
+----
+@Configuration(proxyBeanMethods = false)
+public class SecurityConfig {
+
+    @Bean
+    SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http,
+            ReactiveClientRegistrationRepository clientRegistrationRepository) {
+        return http
+                .authorizeExchange(exchange -> exchange
+                        // Allows unauthenticated access to the SPA static resources
+                        .pathMatchers("/", "/*.css", "/*.js", "/favicon.ico").permitAll()
+                        // Allows unauthenticated read access to the books in the catalog
+                        .pathMatchers(HttpMethod.GET, "/books/**").permitAll()
+                        // Any other request requires user authentication.
+                        .anyExchange().authenticated())
+                // When an exception is thrown because a user is not authenticated, it replies
+                // with an HTTP 401 response.
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .oauth2Login(Customizer.withDefaults())
+                .build();
+    }
+
+    // Defines a repository to store Access Tokens in the web session
+    @Bean
+    ServerOAuth2AuthorizedClientRepository authorizedClientRepository() {
+        return new WebSessionServerOAuth2AuthorizedClientRepository();
+    }
+}
+----
+== Accessing To User Roles In Spring Security
+the roles claim will only
+be returned if the OAuth2 Client (Edge Service) asks for the roles scope.
+[source,yml,attributes]
+----
+spring
+  security:
+    oauth2:
+      client:
+        registration:
+          # The name identifying the Client registration in Spring Security (called “registrationId”). It can be any string.
+          Identity provider:
+            # The OAuth2 Client identifier as defined in Identity provider
+            client-id: edge-service
+            # The shared secret used by the Client to authenticate with Identity provider
+            client-secret: polar-Identity provider-secret
+            # The list of scopes the Client would like to have access to. The openid scope triggers OIDC authentication on top of OAuth2.
+            scope: openid,roles <1>
+----
+[source,java,attributes]
+----
+    @GetMapping("user")
+    public Mono<User> getUser(@AuthenticationPrincipal OidcUser oidcUser) {
+        var user = new User(
+                oidcUser.getPreferredUsername(),
+                oidcUser.getGivenName(),
+                oidcUser.getFamilyName(),
+                // Gets the “roles” claim and extracts it as a list of strings
+                oidcUser.getClaimAsStringList("roles")); <2>
+        return Mono.just(user);
+    }
+----
+
+== Role-based access control
+Spring Security associates each authenticated user with a list of GrantedAuthority
+objects that model the authorities the user has been granted. Granted authorities can
+be used to represent fine-grained permissions, roles, or even scopes and come from
+different sources depending on the authentication strategy. The authorities are avail-
+able through the Authentication object representing the authenticated user and
+stored in the SecurityContext.
+
+When your service configured as an OAuth2 Resource Server and uses JWT
+authentication, Spring Security extracts the list of scopes from the scopes claim of the
+Access Token and uses them as granted authorities for the given user automatically.
+Each GrantedAuthority object built in this way will be named with the SCOPE_ prefix
+and the scope value.
+
+The default behavior is acceptable in many scenarios where scopes are used to
+model permissions, but it doesn’t fit where we rely on user roles to know
+which privileges each user has. We need to set up a role-based access control (RBAC) strategy using the user roles provided in the roles claim of the Access Token.
+
+We need to define a custom converter for the
+Access Token to build a list of GrantedAuthority objects using the values in the roles
+claim and the ROLE_ prefix. Then we’ll use those authorities to define authorization
+rules for the endpoints of our services.
+
+image::{figures}/user-roles-to-grantedauthority.png[How the user roles listed in the Access Token (JWT) are converted into GrantedAuthority objects used by Spring Security for RBAC]
+
+=== Extracting User Roles From The Access Token
+Spring Security provides a JwtAuthenticationConverter class we can use to define a
+custom strategy to extract information from a JWT. In our case, the JWT is an Access
+Token, and we want to configure how to build GrantedAuthority objects from the val-
+ues in the roles claim. 
+[source,java,attributes]
+----
+@Bean
+public JwtAuthenticationConverter jwtAuthenticationConverter() {
+    //Defines a converter to map claims to GrantedAuthority objects
+    var jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+    // Applies the “ROLE_” prefix to each user role
+    jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+    // Extracts the list of roles from the roles claim
+    jwtGrantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+
+    //Defines a strategy to convert a JWT. We’ll only customize how to build granted authorities out of it.
+    var jwtAuthenticationConverter = new JwtAuthenticationConverter();
+    jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
+    return jwtAuthenticationConverter;
+}
+----
+
+With this bean in place, Spring Security will associate a list of GrantedAuthority objects
+with each authenticated user, and we can use them to define authorization policies.
+
+Spring Security provides an expression-based DSL for defining authorization policies.
+The most generic one is hasAuthority("ROLE_employee"), which you can use to
+check for any type of authority. In our case, authorities are roles, so we can use the
+most descriptive hasRole("employee") and drop the prefix (which is added by Spring
+Security under the hood).
+[source,java,attributes]
+----
+@Bean
+SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    return http
+            .authorizeHttpRequests(authorize -> authorize
+                    // Allows users to fetch greetings and books without being authenticated
+                    .requestMatchers(HttpMethod.GET, "/", "/books/**").permitAll()
+                    // Any other request requires not only authentication but also the employee role
+                    // (which is the same as the ROLE_employee authority).
+                    .anyRequest().hasRole("employee"))
+            // Enables OAuth2 Resource Server support using the default configuration based
+            // on JWT (JWT authentication)
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+            // Each request must include an Access Token, so there’s no need to keep a user
+            // session alive between requests. We want it to be stateless.
+            .sessionManagement(
+                    sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Since the authentication strategy is stateless and doesn’t involve a
+            // browser-based client, we can safely disable the CSRF protection.
+            .csrf(AbstractHttpConfigurer::disable)
+            .build();
+}
+----

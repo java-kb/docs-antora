@@ -409,3 +409,7 @@ Knowing that, we can then check the user permissions to verify whether
 the user is allowed to perform specific actions. A few standards are
 available for implementing identity and access management, including
 OAuth 2.1 and OpenID Connect.
+
+A common strategy for implementing authentication and authorization in
+cloud native applications is based on JWT as the data format, OAuth2 as the
+authorization framework, and OpenID Connect as the authentication protocol.

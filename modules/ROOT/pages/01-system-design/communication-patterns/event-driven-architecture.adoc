@@ -1,0 +1,103 @@
+= Event-driven architectures
+:figures: 01-system-design
+
+== Publish-Subscribe Pattern
+The Publish-Subscribe pattern is a messaging pattern that allows decoupling of the components in a system. In this pattern, publishers send messages to a message broker, which then distributes those messages to subscribers that have expressed interest in receiving them.
+This pattern is particularly useful in event-driven architectures, where components can react to events without being tightly coupled to the source of those events. It allows for greater flexibility and scalability, as new subscribers can be added or removed without affecting the publishers or other subscribers.
+The Publish-Subscribe pattern is often implemented using message brokers or message queues, which handle the routing and delivery of messages between publishers and subscribers.
+
+In the pub/sub model, producers publish events, which are sent to all subscrib-
+ers to be consumed.
+== event-driven architecture
+An event is an occurrence. It’s something relevant that happened in a system, like a
+state change, and there can be many sources of events. events can very well be happening in IoT devices, sensors, or networks. When an event occurs, interested parties can be notified. Event notification is
+usually done through messages, which are data representations of events.
+
+Event-driven architectures are distributed systems that interact with each other
+by producing and consuming events.
+
+event-driven architecture is an approach to software architecture that focuses on responding to events that either occur within a system or in the external environment.
+
+The event-driven architecture uses the Publish-Subscribe pattern and involves publishers sending events to subscribers without knowledge of their specific destinations. As a result, subscribers do not need to understand the publishers`' logic.
+In event-driven architectures, an event indicates that something happened in the system. Events get published to a messaging channel (e.g., a message broker) by the business logic that owns the domain where those events happened. Other components in the architecture that are interested in a given event type subscribe to the channel to consume all the subsequent event instances. events relate to the publish-
+subscribe pattern, so they are linked to message brokers or buses too
+
+Event-driven architectures describe distributed systems that interact by producing
+and consuming events. The interaction is asynchronous, solving the problem of temporal coupling. 
+
+In an event-driven architecture, we identify event producers and event consumers. A
+producer is a component that detects the event and sends a notification. A consumer
+is a component that is notified when a specific event occurs. Producers and consumers
+don’t know each other and work independently. A producer sends an event notification by publishing a message to a channel operated by an event broker that’s responsible
+for collecting and routing messages to consumers. A consumer is notified by the bro-
+ker when an event occurs and can act upon it.
+
+Producers and consumers have minimal coupling when using a broker that takes
+the processing and distribution of events on itself. In particular, they are temporally
+decoupled, because the interaction is asynchronous. Consumers can fetch and pro-
+cess messages at any time without affecting the producers whatsoever.
+
+A message broker is a software component that facilitates communication between different applications or services by sending messages between them. It acts as an intermediary that decouples the sender and receiver, allowing them to operate independently. Message brokers are commonly used in distributed systems to enable asynchronous communication, improve scalability, and enhance fault tolerance.    
+
+A message broker receives messages from producers (senders) and routes them to consumers (receivers) based on predefined rules or topics. It can also provide features like message persistence, delivery guarantees, and message transformation. Popular message brokers include Apache Kafka, RabbitMQ, and Amazon SQS.
+
+
+The event-driven architecture is a powerful pattern that allows for loose coupling between components, enabling them to evolve independently. It is particularly useful in scenarios where you have multiple components that need to react to changes in the system without being tightly coupled to each other.
+
+== Event-driven models
+Event-driven architectures can be based on two main models:
+
+- Publisher/subscriber (pub/sub)—This model is based on subscriptions. Producers
+publish events that are sent to all subscribers to be consumed. Events cannot be
+replayed after being received, so new consumers joining will not be able to get
+the past events.
+- Event streaming—In this model, events are written to a log. Producers publish
+events as they occur, and they are all stored in an ordered fashion. Consumers
+don’t subscribe to them, but they can read from any part of the event stream. In
+this model, events can be replayed. Clients can join at any time and receive all
+the past events.
+
+In a basic scenario, consumers receive and process events as they arrive. For specific
+use cases like pattern matching, they can also process a series of events over a time
+window. In the event streaming model, consumers have the additional possibility of
+processing event streams. At the core of event-driven architectures are platforms that
+can process and route events. For example, RabbitMQ is a common choice to use with
+the pub/sub model. Apache Kafka is a powerful platform for event stream processing.
+
+The event streaming model is fascinating and growing in popularity, thanks to the
+many technologies developed in the last few years, allowing you to build real-time data
+pipelines.
+
+== Benefits
+
+When you use events with a message broker, you can better isolate all the components in your software architecture. Publishers and subscribers can function independently without needing to be aware of each other. This approach is ideal for microservice architecture since you aim to keep microservices as independent as possible. By following this strategy, you can introduce new microservices that consume
+events from the channels without having to modify the microservice that publishes those events, or any other subscribers.
+
+== Challenges
+
+One such challenge of the event-driven architecture is ensuring that events are handled in the correct order.
+Additionally, ensuring that events are not lost or duplicated can be another challenge. Without proper planning,
+designing the system to handle a large number of events can be difficult to manage. Event-driven architecture can be
+more complex to design and implement than traditional architectures, as they might require additional resources and expertise.
+Avoid including business logic in the communication channel as much as possible. Keep that logic in your distributed system, respecting a domain-driven design approach.
+
+. Dropped messages
++
+Configure the broker to fulfill the at-least-once guarantee. This policy ensures the messages are delivered at least once by the broker, although they could be duplicated.
+
+. Duplicated messages
++
+Make the event consumption idempotent
+marking the events that you already processed(e.g., in the database) and ignoring any repeated ones.
+configure the broker to fulfill the at-most-once guarantee, and that helps prevent duplicates.
+
+. Unordered messages
++
+You have to prepare your code to cope with that
+
+. Broker's downtime
++
+Both publishers and subscribers should try to deal with that situation (e.g., with a retry strategy or a cache).
+You could also flag the services as unhealthy and stop accepting new operations
+
+

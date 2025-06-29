@@ -153,20 +153,60 @@ spring:
 ----
 
 == Enabling and configuring R2DBC auditing
+When persisting data, it's useful to know the creation date for each row in a table and
+the date when it was updated last. After securing an application with authentication
+and authorization, you can even register who created each entity and recently updated
+it. All of that is called database auditing.
 
 The R2DBC auditing functionality can be enabled in a configuration class using the
 @EnableR2dbcAuditing annotations
 
+Even in this case, we need to tell Spring Data where to get the information about the
+currently authenticated user. Since it’s a reactive application, this time we’ll get the
+SecurityContext object for the principal from the ReactiveSecurityContextHolder.
+
 [,java]
 ----
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.ReactiveAuditorAware;
 import org.springframework.data.r2dbc.config.EnableR2dbcAuditing;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 
 // Indicates a class as a source of Spring configuration
 @Configuration
 // Enables R2DBC auditing for persistent entities
 @EnableR2dbcAuditing
 public class DataConfig {
+    /*
+     * DEFINING AN AUDITOR TO CAPTURE WHO CREATED OR UPDATED AN R2DBC DATA ENTITY
+     * Even in this case, we need to tell Spring Data where to get the information
+     * about the
+     * currently authenticated user. Since it’s a reactive application, this time
+     * we’ll get the
+     * SecurityContext object for the principal from the
+     * ReactiveSecurityContextHolder.
+     * 
+     */
+    // Returns the currently authenticated user for auditing purposes
+    @Bean
+    ReactiveAuditorAware<String> auditorAware() {
+        // Extracts the SecurityContext object for the currently authenticated user from
+        // ReactiveSecurityContextHolder
+        return () -> ReactiveSecurityContextHolder.getContext()
+                // Extracts the Authentication object for the currently authenticated user from
+                // SecurityContext
+                .map(SecurityContext::getAuthentication)
+                // Handles the case where a user is not authenticated, but it is manipulating
+                // data. Since we protected all the endpoints, this case should never happen,
+                // but we’ll include it for completeness.
+                .filter(Authentication::isAuthenticated)
+                // Extracts the username of the currently authenticated user from the
+                // Authentication object
+                .map(Authentication::getName);
+    }
 }
 ----
 
@@ -175,13 +215,66 @@ metadata) and store it in the database as part of the entity.
 
 [,java]
 ----
-@CreatedDate
-private Instant createdDate;
+import java.time.Instant;
 
-@LastModifiedDate
-private Instant lastModifiedDate;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.relational.core.mapping.Table;
+
+@Table("orders")
+public record Order (
+
+		@Id
+		Long id,
+
+		String bookIsbn,
+		String bookName,
+		Double bookPrice,
+		Integer quantity,
+		OrderStatus status,
+
+		@CreatedDate <1>
+		Instant createdDate,
+
+		@LastModifiedDate <2>
+		Instant lastModifiedDate,
+
+		@CreatedBy <3>
+		String createdBy,
+
+		@LastModifiedBy <4>
+		String lastModifiedBy,
+
+		@Version
+		int version
+){
+
+	public static Order of(String bookIsbn, String bookName, Double bookPrice, Integer quantity, OrderStatus status) {
+		return new Order(null, bookIsbn, bookName, bookPrice, quantity, status, null, null, null, null, 0);
+	}
+
+}
 ----
-
+[source,sql,attributes]
+----
+CREATE TABLE book (
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    author varchar(255) NOT NULL,
+    isbn varchar(255) UNIQUE NOT NULL,
+    price float8 NOT NULL,
+    title varchar(255) NOT NULL,
+	publisher varchar(255),
+    created_date timestamp NOT NULL, <1>
+    created_by varchar(255), <1>
+    last_modified_date timestamp NOT NULL, <1>
+    last_modified_by varchar(255), <1>
+    version integer NOT NULL
+);
+----
 == Data repositories with Spring Data
 [,java]
 ----

@@ -1,0 +1,206 @@
+= Testing Spring Security
+
+Spring Security provides convenient utilities
+to make that easier, including expressions that mutate HTTP requests to
+include a JWT Access Token (.with(jwt()) or .mutateWith(mockJwt())) or to
+run a test case in a specific security context for a given user (@WithMockUser).
+
+Testcontainers can help write full integration tests by using an actual Keycloak
+container to verify the interactions with Spring Security.
+
+
+When we test security at the data layer, we’re not interested in which authentication
+strategy has been adopted. The only thing we need is to know whether the operation
+is performed in the context of an authenticated request.
+
+The Spring Security Test project provides us with a handy @WithMockUser annota-
+tion we can use on test cases to make them run in an authenticated context. You can
+also add information about the mock user. Since we’re testing auditing, we want to
+define at least a username that can be used as the principal.
+[tabs]
+====
+Imperative Applications::
++
+[source,java,attributes]
+----
+import java.util.Optional;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.jdbc.repository.query.Modifying;
+import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.transaction.annotation.Transactional;
+
+public interface BookRepository extends CrudRepository<Book, Long> {
+    // The default methods defined by CrudRepository for Book objects are based on
+    // their @Id-annotated fields. Since the application needs to access books based
+    // on the ISBN, we must explicitly declare those operations.
+    Optional<Book> findByIsbn(String isbn);
+
+    boolean existsByIsbn(String isbn);
+    // Identifies an operation cthat will modify the database state
+    @Modifying
+    @Transactional
+    @Query("delete from Book where isbn = :isbn")
+    void deleteByIsbn(String isbn);
+
+}
+----
+[source,java,attributes]
+----
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import com.polarbookshop.catalogservice.config.DataConfig;
+import org.junit.jupiter.api.Test;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.jdbc.DataJdbcTest;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@DataJdbcTest
+@Import(DataConfig.class)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ActiveProfiles("integration")
+class BookRepositoryJdbcTests {
+
+    @Autowired
+    private BookRepository bookRepository;
+
+    @Autowired
+    private JdbcAggregateTemplate jdbcAggregateTemplate;
+
+    // This test case is executed in an unauthenticated context.
+    @Test
+    void whenCreateBookNotAuthenticatedThenNoAuditMetadata() {
+        var bookToCreate = Book.of("1232343456", "Title", "Author", 12.90, "Polarsophia");
+        var createdBook = bookRepository.save(bookToCreate);
+        // No audit data when there is no authenticated user
+        assertThat(createdBook.createdBy()).isNull();
+        assertThat(createdBook.lastModifiedBy()).isNull();
+    }
+
+    // This test case is executed in an authenticated context for the user “john.”
+    @Test
+    @WithMockUser("john")
+    void whenCreateBookAuthenticatedThenAuditMetadata() {
+        var bookToCreate = Book.of("1232343457", "Title", "Author", 12.90, "Polarsophia");
+        var createdBook = bookRepository.save(bookToCreate);
+        // Audit data when there is an authenticated user
+        assertThat(createdBook.createdBy()).isEqualTo("john");
+        assertThat(createdBook.lastModifiedBy()).isEqualTo("john");
+    }
+}
+----
+Reactive Applications::
++
+[source, java]
+----
+
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+
+import reactor.core.publisher.Flux;
+
+public interface OrderRepository extends ReactiveCrudRepository<Order, Long> {
+    // Custom method to query only the orders created by the given user
+    Flux<Order> findAllByCreatedBy(String userId);
+}
+----
+[source, java]
+----
+import java.util.Objects;
+
+import com.polarbookshop.orderservice.config.DataConfig;
+import org.junit.jupiter.api.Test;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
+import reactor.test.StepVerifier;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+
+//Identifies a test class that focuses on R2DBC components
+@DataR2dbcTest
+// Imports R2DBC configuration needed to enable auditing
+@Import(DataConfig.class)
+// Activates automatic startup and cleanup of test containers
+@Testcontainers
+class OrderRepositoryR2dbcTests {
+
+    // Identifies a PostgreSQL container for testing
+    @Container
+    static PostgreSQLContainer<?> postgresql = new PostgreSQLContainer<>(DockerImageName.parse("postgres:14.12"));
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    // Overwrites R2DBC and Flyway configuration to point to the test PostgreSQL
+    // instance
+    @DynamicPropertySource
+    static void postgresqlProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.r2dbc.url", OrderRepositoryR2dbcTests::r2dbcUrl);
+        registry.add("spring.r2dbc.username", postgresql::getUsername);
+        registry.add("spring.r2dbc.password", postgresql::getPassword);
+        registry.add("spring.flyway.url", postgresql::getJdbcUrl);
+    }
+
+    // Builds an R2DBC connection string, because Testcontainers doesn’t provide one
+    // out of the box as it does for JDBC
+    private static String r2dbcUrl() {
+        return String.format("r2dbc:postgresql://%s:%s/%s", postgresql.getHost(),
+                postgresql.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT), postgresql.getDatabaseName());
+    }
+
+    @Test
+    void findOrderByIdWhenNotExisting() {
+        StepVerifier.create(orderRepository.findById(394L))
+                .expectNextCount(0)
+                .verifyComplete();
+    }
+
+    @Test
+    void createRejectedOrder() {
+        var rejectedOrder = OrderService.buildRejectedOrder("1234567890", 3);
+        StepVerifier.create(orderRepository.save(rejectedOrder))
+                .expectNextMatches(order -> order.status().equals(OrderStatus.REJECTED))
+                .verifyComplete();
+    }
+
+    @Test
+    void whenCreateOrderNotAuthenticatedThenNoAuditMetadata() {
+        var rejectedOrder = OrderService.buildRejectedOrder("1234567890", 3);
+        StepVerifier.create(orderRepository.save(rejectedOrder))
+                // When the user is not authenticated, no audit metadata is saved.
+                .expectNextMatches(order -> Objects.isNull(order.createdBy()) &&
+                        Objects.isNull(order.lastModifiedBy()))  <1>
+                .verifyComplete();
+    }
+
+    @Test
+    @WithMockUser("marlena") <2>
+    void whenCreateOrderAuthenticatedThenAuditMetadata() {
+        var rejectedOrder = OrderService.buildRejectedOrder("1234567890", 3);
+        StepVerifier.create(orderRepository.save(rejectedOrder))
+                // When the user is authenticated, the information about who created or updated
+                // the entity is correctly included in the data. 
+                .expectNextMatches(order -> order.createdBy().equals("marlena") &&
+                        order.lastModifiedBy().equals("marlena")) <3>
+                .verifyComplete();
+    }
+
+}
+----
+====

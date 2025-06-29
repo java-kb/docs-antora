@@ -1,9 +1,13 @@
 = Hexagonal architecture
+:figures: 01-system-design/architecture/hexagonal-architecture
+
 Hexagonal architecture, also known as the Ports and Adapters Pattern, is an architec-
 tural pattern that aims to create a clear separation between an application’s core logic 
 and its interaction with external systems, such as databases, user interfaces, and third-
 party services. This separation of concerns helps to achieve a more maintainable, flexi-
 ble, and testable application.
+
+image::{figures}/hexagonal-architecture01.png[A traditional visualization of hexagonal architecture in which the domain, or business logic, sits in the middle]
 
 The main components of hexagonal architecture are as follows:
 
@@ -14,23 +18,23 @@ details like databases or APIs.
 - Ports—Interfaces that define the contract between the domain model and the ex-
 ternal systems. They represent the input and output boundaries of the applica-
 tion. There are two types of ports: primary and secondary.
-
-  – Primary (driven) ports—Define the use cases that the application exposes to 
++
+    – Primary (driven) ports—Define the use cases that the application exposes to 
 the external systems. They represent the API that external systems can use to 
 interact with the application.
     – Secondary (driving) ports—Define the contracts that the application expects 
 from external systems, like data repositories or external services.
-
++
 - Adapters—The implementations of the ports. Adapters handle communication be-
 tween the domain model and the external systems, converting the data and pro-
 tocols used by external systems into a format the domain model can understand. 
 There are two types of adapters: primary and secondary.
-
++
     – Primary (driven) adapters—Implement the primary ports and are responsible 
 for receiving input from external systems and passing it to the domain model. 
     – Secondary (driving) adapters—Implement the secondary ports and are respon-
 sible for interacting with external systems on behalf of the domain model. 
-
++
 In hexagonal architecture, the domain model is at the center (the “hexagon”), sur-
 rounded by the ports and adapters. The key idea is that any interaction between the 
 domain model and external systems must pass through the ports and adapters. This 
@@ -38,6 +42,14 @@ architecture allows for easy swapping of external systems, simplified testing by
 mock implementations of ports, and clear separation of concerns, promoting a more 
 maintainable application.
 
+== The domain model 
+The domain model 
+should contain the unvarnished business rules and responsibilities of our application, 
+free from the outside world, focusing solely on business logic and workflows.  the domain sits at the heart of our application. This is no 
+coincidence, given that it is the heart of the application.
+
+
+== References
 https://alistair.cockburn.us/hexagonal-architecture/
 https://en.wikipedia.org/wiki/Hexagonal_architecture_(software)
 https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html

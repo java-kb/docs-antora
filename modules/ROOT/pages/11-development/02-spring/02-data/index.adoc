@@ -157,3 +157,13 @@ Spring Data JPA provides full support for read and write operations.
 
   boolean existsByIsbn(String isbn);
 ----
+
+== Data Auditing
+The Spring Data libraries support auditing to track who created an entity and
+who updated it last. You can enable this feature in both Spring Data JDBC and
+Spring Data R2DBC by configuring an AuditorAware (or ReactiveAuditor-
+Aware) bean to return the username of the currently authenticated user.
+
+When data auditing is enabled, you can use the @CreatedBy and @LastModifiedBy
+annotations to automatically inject the right values when a create or update
+operation occurs.

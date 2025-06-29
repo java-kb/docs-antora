@@ -1,6 +1,15 @@
 = Spring RabbitMQ
 :figures: 11-development/02-spring/05-message/rabbitmq
 
+== Using Spring AMQP
+Spring AMQP module contains two dependencies:
+
+* spring-rabbit, a set of utils to work with a RabbitMQ broker.
+* spring-amqp, which includes all the AMQP abstractions, so that you can make your implementation vendor-independent.
+
+Spring Boot provides a starter for AMQP with extra utilities such as autoconfiguration: spring-boot-starter-amqp. This starter uses both dependencies described earlier, so it implicitly assumes that you'll use a RabbitMQ
+broker (since it's the only implementation available).
+
 To use the AMQP and RabbitMQ features in Spring Boot applications.
 
 [,xml]
@@ -14,6 +23,214 @@ To use the AMQP and RabbitMQ features in Spring Boot applications.
 </dependencies>
 ----
 
+== Using Spring Cloud Stream
+[source,gradle,attributes]
+----
+dependencies {
+ implementation 'org.springframework.cloud:spring-cloud-stream-binder-rabbit'
+ testImplementation 'io.projectreactor:reactor-test'
+}
+----
+[source,xml,attributes]
+----
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-stream-binder-rabbit</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.projectreactor</groupId>
+    <artifactId>reactor-test</artifactId>
+</dependency>
+----
+[source,yml,attributes]
+----
+  polar-rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: polar-rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+----
+rabbitmq.conf
+[source,language,attributes]
+----
+default_user = user
+default_pass = password
+----
+
+
+open the application.yml file and add the following configuration for the RabbitMQ integration. 
+[source,yml,attributes]
+----
+spring:
+  application:
+    name: dispatcher-service
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: user
+    password: password
+    connection-timeout: 5s
+----
+Spring Cloud Stream will auto-generate and configure the bindings to exchanges and queues in RabbitMQ.
+
+By default, Spring Cloud Stream uses the binding names to generate the names for
+exchanges and queues in RabbitMQ, but in a production scenario you’d probably
+want to manage them explicitly for several reasons. For example, it’s likely that both exchanges and queues already exist in production. You will also want to control different options for exchanges and queues, like durability or routing algorithms.
+
+to configure input and output bindings. At
+startup, Spring Cloud Stream will check if the related exchanges and queues already
+exist in RabbitMQ. If they don’t, it will create them according to your configuration.
+[source,java,attributes]
+----
+public record OrderAcceptedMessage (
+		Long orderId
+){}
+//DTO containing the order identifier as a Long field
+public record OrderDispatchedMessage (
+		Long orderId
+){}
+
+@Configuration
+public class DispatchingFunctions {
+
+	private static final Logger log = LoggerFactory.getLogger(DispatchingFunctions.class);
+
+	@Bean
+	public Function<OrderAcceptedMessage, Long> pack() {
+		return orderAcceptedMessage -> {
+			log.info("The order with id {} is packed.", orderAcceptedMessage.orderId());
+			return orderAcceptedMessage.orderId();
+		};
+	}
+
+	@Bean
+	public Function<Flux<Long>, Flux<OrderDispatchedMessage>> label() {
+		return orderFlux -> orderFlux.map(orderId -> {
+			log.info("The order with id {} is labeled.", orderId);
+			return new OrderDispatchedMessage(orderId);
+		});
+	}
+
+}
+----
+[source,java,attributes]
+----
+import java.util.function.Function;
+
+import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.function.context.FunctionCatalog;
+import org.springframework.cloud.function.context.test.FunctionalSpringBootTest;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@FunctionalSpringBootTest
+class DispatchingFunctionsIntegrationTests {
+
+	@Autowired
+	private FunctionCatalog catalog;
+
+	@Test
+	void packOrder() {
+		Function<OrderAcceptedMessage, Long> pack = catalog.lookup(Function.class, "pack");
+		long orderId = 121;
+		assertThat(pack.apply(new OrderAcceptedMessage(orderId))).isEqualTo(orderId);
+	}
+
+	@Test
+	void labelOrder() {
+		Function<Flux<Long>, Flux<OrderDispatchedMessage>> label = catalog.lookup(Function.class, "label");
+		Flux<Long> orderId = Flux.just(121L);
+
+		StepVerifier.create(label.apply(orderId))
+				.expectNextMatches(dispatchedOrder ->
+						dispatchedOrder.equals(new OrderDispatchedMessage(121L)))
+				.verifyComplete();
+	}
+
+	@Test
+	void packAndLabelOrder() {
+		Function<OrderAcceptedMessage, Flux<OrderDispatchedMessage>> packAndLabel =
+				catalog.lookup(Function.class, "pack|label");
+		long orderId = 121;
+
+		StepVerifier.create(packAndLabel.apply(new OrderAcceptedMessage(orderId)))
+				.expectNextMatches(dispatchedOrder ->
+						dispatchedOrder.equals(new OrderDispatchedMessage(orderId)))
+				.verifyComplete();
+	}
+
+}
+----
+[source,yml,attributes]
+----
+spring:
+  application:
+    name: dispatcher-service
+  cloud:
+    function:
+      definition: pack|label
+    stream:
+      # By default, Spring Cloud Stream uses the binding names to generate the names for
+      # exchanges and queues in RabbitMQ, but in a production scenario you’d probably
+      # want to manage them explicitly for several reasons. For example, it’s likely that both exchanges and queues already exist in production. 
+      # You will also want to control different options for exchanges and queues, like durability or routing algorithms.
+      # Section for configuring destination bindings
+      bindings:
+        # The input binding
+        packlabel-in-0:
+          # The actual name at the broker that the binder binds to (the exchange in RabbitMQ)
+          destination: order-accepted
+          # The consumer group interested in the destination (same as the application name)
+          group: ${spring.application.name}
+        # The output binding
+        packlabel-out-0:
+          destination: order-dispatched
+----
+The output binding (packlabel-out-0) will be mapped to an order-dispatched
+exchange in RabbitMQ. The input binding (packlabel-in-0) will be mapped to an
+order-accepted exchange and an order-accepted.dispatcher-service queue in
+RabbitMQ. If they don’t exist already in RabbitMQ, the binder will create them.
+
+The queue-naming strategy (<destination>.<group>) includes a parameter called con-
+sumer group. The idea of consumer groups has been borrowed from Kafka and is very useful. In
+a standard pub/sub model, all consumers receive a copy of the messages sent to the
+queues they’re subscribed to. That is convenient when different applications need
+to process the messages. But in a cloud native context, where multiple instances of
+an application are running simultaneously for scaling and resilience, that would be
+a problem. If you have numerous Dispatcher Service instances, you don’t want an
+order to be dispatched from all of them. That would lead to errors and an inconsistent state.
+Consumer groups solve the problem. All consumers in the same group share a sin-
+gle subscription. As a consequence, each message arriving at the queue to which
+they’re subscribed will be processed by one consumer only. Assume we have two appli-
+cations (Dispatcher Service and Mail Service) interested in receiving events about
+accepted orders and deployed in a replicated fashion. Using the application name to
+configure consumer groups, we can ensure that each event is received and processed
+by a single instance of Dispatcher Service and a single instance of Mail Service
+
+image::{figures}/consumer-groups-with-spring-cloud-stream-and-rabbitmq.png[Consumer groups ensure that each message is received and processed by only one consumer within the same group.]
+
+Open a browser window and navigate to http:/ /localhost:15672. The credentials
+are the same that we defined in Docker Compose (user/password). Then go to the
+Exchanges section. Figure 10.12 shows a list of default exchanges provided by
+RabbitMQ and the two exchanges generated by our application: order-accepted and
+order-dispatched. Spring Cloud Stream maps them to the packlabel-in-0 and
+packlabel-out-0 bindings respectively. The exchanges are durable (denoted by the
+D icon in the management console), meaning that they will survive a broker restart.
+
+we configured a
+packlabel-in-0 binding and a consumer group. That’s the only input channel for
+the application, so it should result in a single queue. In the RabbitMQ
+management console, you can see a durable order-accepted.dispatcher-service queue in the Queues section.
+
+No queue has been created for the packlabel-out-0 binding because
+no consumer subscribed to it.  a queue will be created after configuring a Service to listen to it.
 == Examples
 * https://github.com/spring-kb/logging-spring-rabbitmq-logging[A Simple Solution for Log Centralization Using Spring and RabbitMQ]
 +

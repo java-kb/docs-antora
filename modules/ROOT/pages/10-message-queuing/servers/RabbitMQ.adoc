@@ -1,0 +1,136 @@
+= RabbitMQ
+:figures: 10-message-queuing/servers
+
+A messaging system requires two main things: a message broker and a protocol. The
+Advanced Message Queuing Protocol (AMQP) ensures interoperability across plat-
+forms and reliable message delivery. It has become widely used in modern architec-
+tures, and it’s a good fit in the cloud, where we need resilience, loose coupling, and
+scalability. RabbitMQ is a popular open source message broker that relies on AMQP
+and provides flexible asynchronous messaging, distributed deployment, and monitor-
+ing. Recent RabbitMQ versions have also introduced event streaming features.
+
+RabbitMQ is a message broker based on the AMQP protocol that you can use to
+implement event-driven architectures based on the pub/sub model.
+
+RabbitMQ is a widely used open-source message broker that implements the Advanced Message Queuing Protocol (AMQP). It provides a robust and flexible platform for building distributed systems and enables asynchronous communication between different components of an application.
+
+RabbitMQ allows applications to send and receive messages in a decoupled manner, enabling them to operate independently. It supports various messaging patterns, including point-to-point, publish-subscribe, and request-reply, making it suitable for a wide range of use cases.
+
+RabbitMQ was initially developed to support AMQP, but it also sup-
+ports other protocols, including STOMP, MQTT, and even WebSockets for
+delivering messages over HTTP. Since version 3.9, it also supports event
+streaming.
+
+RabbitMQ provides features such as message persistence, delivery guarantees, and message routing, which are essential for building reliable and scalable applications.
+It also supports multiple messaging protocols, including AMQP, MQTT, and STOMP, allowing it to integrate with various programming languages and frameworks.
+
+RabbitMQ is designed to be highly available and can be deployed in a clustered configuration to ensure fault tolerance and scalability. It provides management tools and APIs for monitoring and managing message queues, exchanges, and bindings, making it easy to administer and maintain.
+
+RabbitMQ is a powerful message broker that enables asynchronous communication between components in a distributed system. It provides the necessary features and flexibility to build reliable and scalable applications, making it a popular choice for developers and organizations looking to implement message queuing in their systems.
+
+== Using RabbitMQ with docker
+To run RabbitMQ in a Docker container, you can use the official RabbitMQ image from Docker Hub. Here’s a simple command to start a RabbitMQ container with the management plugin enabled, which provides a web-based UI for managing RabbitMQ:
+```bash
+docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:management
+```
+This command does the following:
+
+- `-d`: Runs the container in detached mode (in the background).
+- `--name rabbitmq`: Names the container "rabbitmq".
+- `-p 5672:5672`: Maps the RabbitMQ default port (5672) for AMQP communication.
+- `-p 15672:15672`: Maps the RabbitMQ management plugin port (15672) for the web UI.
+- `rabbitmq:management`: Specifies the RabbitMQ image with the management plugin enabled. 
+
+After running this command, RabbitMQ will be accessible at `http://localhost:15672` in your web browser, and you can log in with the default credentials:
+
+- Username: `guest`
+- Password: `guest`
+
+You can also customize the RabbitMQ configuration by mounting a configuration file or using environment variables. For example, to set a custom username and password, you can use the following command:
+```bash
+docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 \
+  -e RABBITMQ_DEFAULT_USER=myuser \
+  -e RABBITMQ_DEFAULT_PASS=mypassword \
+  rabbitmq:management
+```
+This command sets the default username to `myuser` and the password to `mypassword`. You can then access the RabbitMQ management UI using these credentials.
+== RabbitMQ Management UI
+The RabbitMQ Management UI is a web-based interface that allows you to manage and monitor your RabbitMQ   
+server. It provides a user-friendly way to view queues, exchanges, bindings, and message statistics.
+
+To access the management UI, open your web browser and navigate to `http://localhost:15672`. You can log in using the default credentials or the ones you set when starting the RabbitMQ
+container.
+/
+The management UI provides various features, including:
+
+- Viewing and managing queues and exchanges
+- Monitoring message rates and statistics
+- Creating and deleting queues and exchanges
+- Managing users and permissions
+- Viewing message details and contents   
+
+The management UI is a powerful tool for administering RabbitMQ and provides insights into the message flow and
+system performance. It is especially useful for debugging and monitoring your RabbitMQ setup in a development or production environment.
+
+== Using RabbitMQ with docker compose
+To run RabbitMQ using Docker Compose, you can create a `docker-compose.yml` file with the following content:
+```yaml
+version: '3.8'
+services:
+  rabbitmq:
+    image: rabbitmq:management  
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"        # AMQP port
+      - "15672:15672"      # Management UI port
+    environment:
+      RABBITMQ_DEFAULT_USER: myuser
+      RABBITMQ_DEFAULT_PASS: mypassword 
+    volumes:
+        - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - rabbitmq_data:/var/lib/rabbitmq  # Persistent data storage  
+volumes:
+  rabbitmq_data:
+```
+This `docker-compose.yml` file defines a RabbitMQ service with the management plugin enabled. It maps the necessary ports and sets the default username and password. It also uses a named volume (`rabbitmq_data`) to persist RabbitMQ data across container restarts. 
+
+The configuration is based on a file mounted as a volume (`./rabbitmq/rabbitmq.conf`), which you can create to customize RabbitMQ settings. Make sure to create the `rabbitmq` directory in the same location as your `docker-compose.yml` file and place your configuration file there.
+You can customize the RabbitMQ configuration by creating a `rabbitmq.conf` file in the `./rabbitmq` directory. Here’s an example of what that file might look like:
+```conf
+# rabbitmq.conf
+# Custom RabbitMQ configuration
+listeners.tcp.default = 5672
+management.listener.port = 15672
+management.listener.ip =    
+default_user = user
+default_pass = password
+```
+This configuration file sets the default TCP listener port, management listener port, and default user credentials. You can add more configuration options as needed based on your RabbitMQ requirements.
+You can also customize the RabbitMQ configuration further by adding additional settings to the `rabbitmq.conf` file. For example, you can configure virtual hosts, enable SSL, or set up clustering options.
+Make sure to adjust the paths and settings according to your environment and requirements.      
+Once you have created the `docker-compose.yml` file and the `rabbitmq.conf` file, you can start RabbitMQ using Docker Compose. This setup allows you to easily manage RabbitMQ as a service, making it convenient for development and testing purposes.
+
+You can also scale RabbitMQ by adding more instances or configuring clustering options in the `docker-compose.yml` file. This flexibility allows you to adapt RabbitMQ to your application's needs, whether you're running a single instance for development or a clustered setup for production.
+You can also add additional services to your `docker-compose.yml` file to create a complete application stack. For example, you can add a web application service that communicates with RabbitMQ to send and receive messages. This way, you can easily set up a development environment with all the necessary components running in Docker containers.
+
+You can also use Docker Compose to define networks, volumes, and other services that your application might need. This allows you to create a complete development environment with all the necessary components running in Docker containers, making it easy to manage and deploy your application.
+
+
+To start RabbitMQ using Docker Compose, run the following command in the directory where your `docker-compose.yml` file is located:
+```bash
+docker-compose up -d
+```
+This command will start the RabbitMQ container in detached mode. You can then access the RabbitMQ Management UI at `http://localhost:15672` using the credentials you specified in the `docker-compose.yml` file (`myuser` and `mypassword` in this example).
+
+== Making messaging resilient to failures
+RabbitMQ itself has several features in place to improve reliability and resilience.
+Among other things, it guarantees that each message is delivered at least once. Be aware that consumers in your applications might receive the same message twice, so
+your business logic should know how to identify and handle duplicates.
+
+see:
+
+RabbitMQ (https://rabbitmq.com), Spring AMQP (https://spring.io/projects/
+spring-amqp), and Spring Cloud Stream (https://spring.io/projects/spring-cloud
+-stream). You can also check out the event-driven patterns described in Sam Newman’s
+Building Microservices (O’Reilly, 2021) and Chris Richardson’s Microservices Patterns
+(Manning, 2018).
