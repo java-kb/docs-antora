@@ -1,6 +1,24 @@
 = Grafana Loki
 :figures: 13-logging/servers/loki
 
+Loki is “a log aggregation system
+designed to store and query logs from all your applications and infrastructure” (https://
+grafana.com/oss/loki).
+== Running
+=== Locally
+=== Docker
+=== Docker compose
+[source,yml,attributes]
+----
+  loki:
+    image: grafana/loki:2.9.8
+    container_name: loki
+    depends_on:
+      - fluent-bit
+    ports:
+      - "3100:3100"
+----
+== Kubernates
 == Integration with Spring
 
 == Examples

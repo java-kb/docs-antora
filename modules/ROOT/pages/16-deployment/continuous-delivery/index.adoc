@@ -3,16 +3,24 @@
 
 Continuous delivery is a holistic approach for quickly, reliably, and safely delivering high-quality software.
 
+Continuous delivery is one of the fundamental practices we have identified that
+can support us in our journey to achieve the cloud native goals: speed, resilience,
+scale, and cost optimization. It’s a holistic approach for delivering high-quality software quickly, reliably, and safely. The main idea behind continuous delivery is that
+an application is always in a releasable state. The primary pattern for adopting continuous delivery is the deployment pipeline, which goes from code commit to
+releasable software. It should be automated as much as possible and represent the
+only path to production.
+
 == Deployment pipeline
 
 The primary pattern for adopting such an approach is the deployment pipeline, which goes from code commit to releasable software. It should be automated as much as possible, and it should represent the only path to production.
+
+a deployment pipeline can be composed of three key stages: commit stage, acceptance stage, and production stage. 
 
 *key stages in a deployment pipeline:*
 
 === Commit stage
 
-After a developer commits new code to the mainline, this stage
-goes through :
+After a developer commits new code to the mainline, this stage goes through :
 
 * build, 
 * unit tests, 
@@ -28,18 +36,12 @@ It's supposed to be fast, possibly under five minutes, to provide developers
 with fast feedback about their changes and allow them to move on to the
 next task.
 
-This stage should be fast, because a developer will wait until it completes success-
-fully before moving on to their next task. That’s a critical point. If the commit stage
+This stage should be fast, because a developer will wait until it completes successfully before moving on to their next task. That’s a critical point. If the commit stage
 fails, the developer responsible for it should immediately deliver a fix or revert their
-changes so as not to leave the mainline in a broken state and prevent all other devel-
-opers from integrating their code.
-
-At the end of this stage, an executable application artifact is published to an artifact repository. It is a release candidate. For example, it can be a JAR artifact published to a Maven repository or a container image published to a
-container registry. This stage supports the continuous integration practice.
+changes so as not to leave the mainline in a broken state and prevent all other developers from integrating their code.
 
 the first few steps in the commit stage
 image::{figures}/Deployment pipeline - commit stage.png[The first part of the commit stage in a deployment pipeline]
-
 
 * After a developer pushes new code to the mainline
 * the commit stage starts by checking out the source code from the repository. The starting point is always a commit to the main branch.
@@ -75,21 +77,195 @@ application libraries but also system libraries that were not included in the pr
 security analysis. That’s why we need to scan both the codebase and the artifact for vul-
 nerabilities. 
 
+At the end of this stage, an executable application artifact is published to an artifact repository. It is a release candidate. That’s the deployable artifact for an application.. For example, 
+
+- it can be a JAR artifact published to a Maven repository 
+- or a container image published to a container registry(i.e GitHub Container Registry). 
+
+This stage supports the continuous integration practice.
+
+All the subsequent steps in the pipeline will evaluate the quality of that container
+image through different tests. If no issue is found, the release candidate is ultimately deployed to production and released to users.
+
+==== Versioning release candidates for continuous delivery
+A release candidate is stored in an artifact repository. If it’s a JAR, it would be
+stored in a Maven repository. In our case, it’s a container image and will be stored in a container registry.
+
+Each release candidate must be uniquely identified. strategies for version release candidates are:
+
+- **semantic versioning** (https://semver.org). 
++
+It consists of identifiers in the form of <major>.<minor>.<patch>. Optionally, you can also add a hyphen
+at the end, followed by a string, marking a pre-release. By default, a Spring Boot project generated from Spring Initializr (https://start.spring.io) is initialized with version 0.0.1-SNAPSHOT, which identifies a snapshot release. 
++
+Semantic versioning will require some form of manual step to assign a version number
+based on the content of the release artifact: Does it contain breaking changes? Does it
+only contain bug fixes? When we have a number, it’s still not clear what’s included in
+the new release artifact, so we need to use Git tags and define a mapping between Git
+commit identifiers and version numbers.
++
+Things get even more challenging for snapshot artifacts. Let’s consider a Spring
+Boot project as an example. By default, we start with version 0.0.1-SNAPSHOT. Until
+we’re ready to cut the 0.0.1 release, every time we push new changes to the main
+branch, the commit stage will be triggered, and a new release candidate will be pub-
+lished with the number 0.0.1-SNAPSHOT. All release candidates will have the same
+number until version 0.0.1 is released. This approach doesn’t ensure traceability of
+changes. Which commits are included in release candidate 0.0.1-SNAPSHOT? We can’t
+tell. Furthermore, it’s affected by the same unreliability as using latest. Any time we retrieve the artifact, it might be different from the last time.
++
+When it comes to continuous delivery, using an approach like semantic versioning
+is not ideal for uniquely identifying release candidates. When we follow the principles
+of continuous integration, we’ll have many release candidates built daily. And every
+release candidate can potentially be promoted to production. Will we have to update
+the semantic version for each new code commit, with a different approach based on
+its content (major, minor, patch)? The path from code commit to production should
+be automated as much as possible, trying to eliminate manual intervention. If we go
+with continuous deployment, even the promotion to production will happen automat-
+ically. What should we do?
++
+One solution would be using the Git commit hash to version release candidates—that
+would be automated, traceable, and reliable, and you wouldn’t need Git tags. You could
+use the commit hash as is (for example, 486105e261cb346b87920aaa4ea6dce6eebd6223)
+or use it as the base for generating a more human-friendly number. For example,
+you could prefix it with a timestamp or with an increasing sequence number, with the
+goal of making it possible to tell which release candidate is the newest (for example,
+20220731210356-486105e261cb346b87920aaa4ea6dce6eebd6223).
++
+Still, semantic versioning and similar strategies have their place in continuous
+delivery. They can be used as display names in addition to the unique identifier, as Dave Farley suggests in his book Continuous Delivery Pipelines (2021). That would be a way to provide users with information about the release candidate while still making it possible to benefit from continuous delivery.
+
+- **calendar versioning (https://calver.org)**
++
+A variation of this strategy is calendar versioning (https://calver.org), which combines the concepts of semantic versioning with date and time.
+
+If you’re working on software projects for which semantic versioning
+makes sense, check out JReleaser, a release automation tool.
+“Its goal is to simplify creating releases and publishing artifacts to multiple
+package managers while providing customizable options” (https://jreleaser.org).
+
+At this point, the container image (our release candidate) is uniquely identified and ready to go through the acceptance stage.
+
 === Acceptance stage
 
+The acceptance stage of the deployment pipeline is triggered whenever a new release
+candidate is published to the artifact repository at the end of the commit stage. It con-
+sists of deploying the application to a production-like environment and running addi-
+tional tests to increase the confidence in its releasability. The tests that run in the
+acceptance stage are usually slow, but we should strive to keep the whole deployment
+pipeline’s execution under one hour.
+
 The publication of a new release candidate to the artifact repository triggers this stage, which consists of:
+
 * deploying the application to  production-like environments and
 * running additional tests to increase the confidence about its releasability. The tests that run in the acceptance stage are usually slow, but we should strive to keep the whole deployment pipeline execution to under one hour. 
 
+image::{figures}/Deployment-pipeline-from-code-commit-to-acceptance.png[The commit stage goes from code commit to a release candidate, which then goes through the acceptance stage. If it passes all the tests, it’s ready for production.]
+
+According to the software test classification provided by the Agile Testing Quadrants. The quadrants classify software tests based on
+whether they are technology or business facing, and whether they support development teams or are used to critique the project.
+
+In the commit stage, we mainly focus on the first quadrant, including unit and integration tests. They are technology-facing tests that support the team, ensuring
+they build the software right. On the other hand, the acceptance stage focuses on the second and fourth quadrants and tries to eliminate the need for manual regression
+testing. This stage includes functional and non-functional acceptance tests.
+
 Examples of tests included in this stage are:
 
- ** functional acceptance tests
- ** non-functional acceptance tests, such as performance tests,security tests, and compliance tests.
- ** If necessary, this stage can also include manual tasks like exploratory and usability tests.
+* functional acceptance tests
+* non-functional acceptance tests, such as performance tests,security tests, and compliance tests.
+* If necessary, this stage can also include manual tasks like exploratory and usability tests.
+
+The functional acceptance tests are business-facing tests that support development
+teams, ensuring they are building the right software. They take on the user perspective and
+are usually implemented via executable specifications using a high-level domain-specific lan-
+guage (DSL), which is then translated into a lower-level programming language. For
+example, you could use Cucumber (https://cucumber.io) to write scenarios like “browse
+the book catalog” or “place a book order” in human-friendly plain text. Those scenarios
+can then be executed and verified using a programming language like Java.
+
+In the acceptance stage, we can also verify the quality attributes of a release candidate via
+non-functional acceptance tests. For example, we could run performance and load tests
+using a tool like Gatling (https://gatling.io), security and compliance tests, and resil-
+ience tests. In this last case, we could embrace chaos engineering, a discipline made
+popular by Netflix and consisting of making certain parts of the system fail to verify
+how the rest will react and how resilient the system is to failures. For Java applications,
+you can look at Chaos Monkey for Spring Boot (https://codecentric.github.io/chaos-monkey-spring-boot).
+
+How about the third quadrant(exploratory and usability tests,UAT(user acceptance test), Monitoring and observability)? Following the continuous delivery principles, we strive not to include manual tests in the deployment pipeline. Yet we usually need them. They are particularly important for software products aimed at end users like web and mobile applications. Therefore, we run
+them on the side in the form of exploratory testing and usability testing, so that
+we ensure more freedom for testers and fewer constraints on the pace and
+timing required by continuous integration and the deployment pipeline.
+
+An essential feature of the acceptance stage is that all tests are run against a production-
+like environment to ensure the best reliability. The deployment would follow the same
+procedure and scripts as production and could be tested via dedicated system tests
+(first quadrant).
 
 At the end of this stage, the release candidate is ready to be deployed to production at any time. If we are still not confident about it, this stage is missing some tests.
+
+If a release candidate passes all the tests in the acceptance stage, that means it’s
+in a releasable state and can be delivered and deployed to production. 
 
 === Production stage
 
 After a release candidate has gone through the commit and
 acceptance stages, we are confident enough to deploy it to production. This stage is triggered manually or automatically, depending on whether the organization has decided to adopt a continuous deployment practice. The new release candidate is deployed to a production environment using the same deployment scripts employed (and tested) in the acceptance stage. Optionally, some final automated tests can be run to verify that the deployment was successful.
+
+Continuous delivery is “a software development discipline where you build software
+in such a way that the software can be released to production at any time”. The key part is understanding that the software can be released to production, but it doesn’t
+have to. That’s a common source of confusion between continuous delivery and continuous deployment. If you also want to take the newest release candidate and deploy
+it to production automatically, then you would have continuous deployment. 
+
+The production stage consists of two main steps:
+
+1. Update the deployment scripts (i.e, the Kubernetes manifests) with the new release version.
+2. Deploy the application to the production environment.
+3. An optional third step would be to run some final automated tests to verify that the deployment was successful. Perhaps you could reuse the same system tests that you will have included in the acceptance stage to verify the deployment in a staging environment.
+
+For GitHub Actions refer to xref:modules/ROOT/pages/16-deployment/continuous-delivery/github-actions/github-actions.adoc#production-stage[Deployment pipeline(production-stage)]
+
+==  Continuous deployment with GitOps
+Traditionally, continuous deployment is implemented by adding a further step to the
+production stage of the deployment pipeline. This additional step would authenticate
+with the target platform (such as a virtual machine or a Kubernetes cluster) and
+deploy the new version of the application. In recent years, a different approach has
+become more and more popular: GitOps. The term was coined by Alexis Richardson,
+CEO and founder of Weaveworks (www.weave.works).
+
+GitOps is a set of practices for operating and managing software systems, enabling
+continuous delivery and deployment while ensuring agility and reliability. Compared
+to the traditional approach, GitOps favors decoupling between delivery and deploy-
+ment. Instead of having the pipeline pushing deployments to the platform, it’s the
+platform itself pulling the desired state from a source repository and performing
+deployments. In the first case, the deployment step is implemented within the produc-
+tion stage workflow. In the second case, which will be our focus, the deployment is still
+theoretically considered part of the production stage, but the implementation differs.
+
+GitOps doesn’t enforce specific technologies, but it’s best implemented with Git and Kubernetes. 
+
+The GitOps Working Group, part of the CNCF, defines GitOps in terms of four
+principles (https://opengitops.dev):
+
+1. Declarative—“A system managed by GitOps must have its desired state expressed declaratively.”
++
+** Working with Kubernetes, we can express the desired state via YAML files(manifests).
+** Kubernetes manifests declare what we want to achieve, not how. The platform is responsible for finding a way to achieve the desired state.
+2. Versioned and immutable—“Desired state is stored in a way that enforces immutability, versioning and retains a complete version history.”
+** Git is the preferred choice for ensuring the desired state is versioned and the
+whole history retained. That makes it possible, among other things, to roll
+back to a previous state with ease.
+** The desired state stored in Git is immutable and represents the single source of truth.
+3. Pulled automatically—“Software agents automatically pull the desired state declarations from the source.”
+** Examples of software agents (GitOps agents) are Flux (https://fluxcd.io),
+Argo CD (https://argoproj.github.io/cd), and kapp-controller (https://carvel.dev/kapp-controller).
+** Rather than granting CI/CD tools like GitHub Actions full access to the cluster or running commands manually, we grant the GitOps agent access to a
+source like Git so that it pulls changes automatically.
+4. Continuously reconciled—“Software agents continuously observe actual system state
+and attempt to apply the desired state.”
+** Kubernetes is composed of controllers that keep observing the system and
+ensuring the actual state of the cluster matches the desired state.
+** On top of that, GitOps ensures that it’s the right desired state to be considered in the cluster. Whenever a change is detected in the Git source, the
+agent steps up and reconciles the desired state with the cluster.
+
+image::{figures}/Deployment-pipeline-GitOps.png[Every time the production stage workflow updates the deployment repository, the GitOps controller reconciles the desired and actual states.]
+
+=== Implementing GitOps with Argo CD

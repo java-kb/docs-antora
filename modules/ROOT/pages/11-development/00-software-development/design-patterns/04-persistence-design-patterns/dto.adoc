@@ -1,0 +1,27 @@
+= Data Transfer Object (DTO) Design Pattern
+:figures: 11-development/00-software-development/design-patterns/04-persistence-design-patterns
+
+The data transfer object (DTO) pattern is used in multiple languages, aggregated, and 
+encapsulates data for transfer between the layers of your application or applications. You 
+can think of this pattern as a data structure that does not contain any business logic and 
+could represent a combination of structures.
+
+This pattern is not something that has appeared recently. Martin Fowler mentioned 
+it in 2002 in his book Patterns of Enterprise Application Architecture. It’s also discussed 
+on his webpage.25
+
+This pattern helps to reduce the number of calls to different endpoints or processes 
+to obtain all the information necessary to do a certain task, which is expensive in terms 
+of time or the size of the information to transfer.
+image::{figures}/Example-of-DTO-that-combines-two-different-objects.png[Example of DTO that combines two different objects]
+
+This pattern appears in examples when classes transform the entities used to persist the information into a database and the other application layers.
+
+There are a variety of ways to map objects; some are done manually and imply 
+creating a class that receives an object and returns another. Another approach is to use 
+libraries like MapStruct, Orika, Dozer, JMapper, and ModelMapper to do most 
+of the translation automatically. There are a lot of analyses and benchmarking about 
+which library is the best option according to the use of CPU, memory, or complexity to 
+implement it.
+
+check https://www.baeldung.com/java-performance-mapping-frameworks

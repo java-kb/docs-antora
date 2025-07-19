@@ -1,4 +1,4 @@
 = Tracing  Libraries
 :figures: 15-tracing/libraries
 
-== Spring Cloud Sleuth
+

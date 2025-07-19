@@ -2,7 +2,16 @@
 :figures: 17-documentation
 
 == Documenting APIs
+One of the biggest problems when using another REST API is knowing information 
+about the endpoints like the URL, request/response, and HTTP method. There are 
+different methods to document all this information. The default standard is OpenAPI 
+Specification.8
+
 Documenting APIs is an essential task when you’re following the API-first approach.
+
+Frameworks like Spring Boot and Quarkus offer libraries to document the 
+endpoints and dynamically generate the documentation
+
 In the Spring ecosystem, there are two main options:
 
 * Spring provides a Spring REST Docs project (https://spring.io/projects/spring

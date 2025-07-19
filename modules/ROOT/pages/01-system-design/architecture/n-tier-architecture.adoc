@@ -1,6 +1,38 @@
 = N-Tier architecture (layered architecture)
 :figures: 01-system-design/architecture
 
+This type of architecture is the simplest because it splits the application into different 
+layers like a cake where each layer can only access the elements to the same or the 
+inferior level. These types of architecture mutate from architecture with four layers like 
+view/presentation, business logic, persistence, and database to others with three or five. 
+There is no universal criterion for the correct number of layers. But, if you consider that 
+three is a small number of layers, Spring Boot is represented by controllers, services, 
+repositories, and the database, which does not appear directly in Spring as layers. 
+
+Benefits
+
+This structure has the following benefits.
+
+• It’s simple to implement and maintain because you only have a 
+hierarchy of layers.
+• Each layer has only one responsibility and does not know how 
+to implement the logic of the other layers, so you can introduce 
+modifications in the logic of layers that could not directly 
+affect others.
+• The structure is more or less the same in all the projects. You 
+can change from one project to another and know where to find 
+something.
+
+Drawbacks
+
+This type of architecture has the following drawbacks.
+
+• Hiding the use cases, it’s difficult to know where all the classes or 
+objects are connected to represent a use case.
+• Depending on the size and the number of layers, you can have 
+problems with scalability because you can have several classes/
+interfaces in the same package or layer.
+
 N-tier architecture, also known as a hierarchical structure with distinct layers, refers to a design
 approach for software systems that organizes the application into multiple layers, typically four:
 Presentation, Business, Persistence, and Data. This architectural model is commonly employed in

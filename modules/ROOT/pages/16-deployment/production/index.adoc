@@ -1,0 +1,4 @@
+= Deployment to Production
+
+In a real production scenario, you would automate the platform management tasks using a tool like Terraform or Crossplane. That is usually the
+responsibility of the platform team, not of application developers.

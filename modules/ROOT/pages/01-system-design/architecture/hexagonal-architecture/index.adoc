@@ -1,40 +1,80 @@
 = Hexagonal architecture
 :figures: 01-system-design/architecture/hexagonal-architecture
 
-Hexagonal architecture, also known as the Ports and Adapters Pattern, is an architec-
-tural pattern that aims to create a clear separation between an application’s core logic 
+The layered architecture offers developers a simple way to create an application and 
+understand the separation of roles or responsibilities. In 2005, Alistar Cockburn23
+proposed a new alternative that encapsulates or keeps all external communication with databases or external systems agnostic. To this, he created the concept of input/output 
+in the architecture to represent communication with external resources like databases or 
+external systems.
+
+Hexagonal architecture, also known as the Ports and Adapters Pattern, is an architectural pattern that aims to create a clear separation between an application’s core logic 
 and its interaction with external systems, such as databases, user interfaces, and third-
 party services. This separation of concerns helps to achieve a more maintainable, flexi-
 ble, and testable application.
 
-image::{figures}/hexagonal-architecture01.png[A traditional visualization of hexagonal architecture in which the domain, or business logic, sits in the middle]
+The main idea of this type of architecture is to create all the business logic that isolates 
+it from the external tools and technologies that are irrelevant to how the application 
+works. 
+image::{figures}/Hexagonal-architecture-with-the-most-relevant-layers.png[the different elements that have the hexagonal architecture and how to interact with external resources like databases or other applications.]
+This architecture splits the hexagon into two parts. One part is called the “driving 
+side,” where the actors start the interaction, such as external systems and web/mobile 
+systems. The other part is the “driven side,” where the actors receive a request to obtain 
+certain information from a database or other external systems.
 
+hexagonal architecture is an approach to designing software that 
+emphasizes the separation of the core business logic from external services. The busi-
+ness logic can be thought of as the “brain” of the application. It contains all the import-
+ant rules and constructs that the application will need to guarantee the correctness 
+of the program. In this analogy, the external services are your “hands” or “eyes;” they 
+allow interactions with the outside world (user interfaces, database, etc.).
+
+Hexagonal architecture separates the main program logic from the outside parts like 
+buttons, screens, and databases. It makes it easy to change those outside parts without changing the main program. It does this by using ports that define how the outside parts 
+can interact with the main program and adapters that make those interactions happen 
+in a concrete way.
+
+This approach makes it easier to change and evolve the application over time. If a 
+change needs to be made to one of the external systems, the application’s core should 
+be unaffected; you only need to update the adapter 
+image::{figures}/conceptual-visualization-of-the-hexagonal-architecture.png[A more conceptual visualization of the hexagonal architecture in action. Notice that the core is segregated from the rest of the system and is only interacted with via ports.]
+
+== Components
 The main components of hexagonal architecture are as follows:
 
-- Domain model—The core business logic of the application, including entities, val-
-ue objects, and domain services. The domain model is isolated from any external 
-systems or technologies and should not depend on any implementation-specific 
-details like databases or APIs.
-- Ports—Interfaces that define the contract between the domain model and the ex-
-ternal systems. They represent the input and output boundaries of the applica-
-tion. There are two types of ports: primary and secondary.
-+
-    – Primary (driven) ports—Define the use cases that the application exposes to 
+=== Infrastructure 
+contains the port and adapters responsible for 
+connecting with external systems or databases using different 
+protocols. The ports are interfaces agnostic to the technology defining the methods to access the application or other systems. The adapters
+are the implementation of the ports related to a specific technology, 
+like a query to a database or a REST controller.
+
+=== Use cases 
+are the core of the systems because it contains all the logic 
+related to various scenarios and how they are related. Depending 
+on the author, this component receives other names like application
+or domain layer and combines the use cases with the domain 
+component.
+
+=== Ports
+Interfaces that define the contract between the domain model and the external systems. They represent the input and output boundaries of the application. There are two types of ports: primary and secondary.
+
+– Primary (driven) ports—Define the use cases that the application exposes to 
 the external systems. They represent the API that external systems can use to 
 interact with the application.
-    – Secondary (driving) ports—Define the contracts that the application expects 
+– Secondary (driving) ports—Define the contracts that the application expects 
 from external systems, like data repositories or external services.
-+
-- Adapters—The implementations of the ports. Adapters handle communication be-
+
+=== Adapters
+The implementations of the ports. Adapters handle communication be-
 tween the domain model and the external systems, converting the data and pro-
 tocols used by external systems into a format the domain model can understand. 
 There are two types of adapters: primary and secondary.
 +
-    – Primary (driven) adapters—Implement the primary ports and are responsible 
+– Primary (driven) adapters—Implement the primary ports and are responsible 
 for receiving input from external systems and passing it to the domain model. 
-    – Secondary (driving) adapters—Implement the secondary ports and are respon-
+– Secondary (driving) adapters—Implement the secondary ports and are respon-
 sible for interacting with external systems on behalf of the domain model. 
-+
+
 In hexagonal architecture, the domain model is at the center (the “hexagon”), sur-
 rounded by the ports and adapters. The key idea is that any interaction between the 
 domain model and external systems must pass through the ports and adapters. This 
@@ -42,13 +82,42 @@ architecture allows for easy swapping of external systems, simplified testing by
 mock implementations of ports, and clear separation of concerns, promoting a more 
 maintainable application.
 
-== The domain model 
-The domain model 
-should contain the unvarnished business rules and responsibilities of our application, 
-free from the outside world, focusing solely on business logic and workflows.  the domain sits at the heart of our application. This is no 
-coincidence, given that it is the heart of the application.
+=== The domain model 
+Entities are the pure domain of the application, with all the entities 
+of value objects used in the application component.
 
+Domain model is the core business logic of the application, including entities, value objects, and domain services. The domain model is isolated from any external 
+systems or technologies and should not depend on any implementation-specific 
+details like databases or APIs.
 
+The domain model should contain the unvarnished business rules and responsibilities of our application, 
+free from the outside world, focusing solely on business logic and workflows. the domain sits at the heart of our application. This is no coincidence, given that it is the heart of the application.
+
+image::{figures}/domain-model01.png[A traditional visualization of hexagonal architecture in which the domain, or business logic, sits in the middle]
+
+== Driver
+A driver is a system external to the 
+context boundary of the application that sends requests to the system and, optionally, 
+receives responses from the application. A conventional example is a Representational 
+State Transfer (commonly referred to as REST) call from a web browser to a REST 
+controller. 
+
+== Benefits
+This structure has the following benefits.
+
+• You can change or swap adapters without problems.
+• The domain and the use cases are pure, so you can understand the 
+business logic.
+• You can change the implementation of the ports for testing purposes.
+
+== Drawbacks
+This type of architecture has the following drawbacks.
+
+• Implementing some frameworks is difficult because you can make 
+mistakes with what you consider adapters/ports.
+• Introduce indirection to find the implementation of each port.
+• No guideline explains all the things about the organization of the 
+projects, so anyone can introduce something wrong.
 == References
 https://alistair.cockburn.us/hexagonal-architecture/
 https://en.wikipedia.org/wiki/Hexagonal_architecture_(software)

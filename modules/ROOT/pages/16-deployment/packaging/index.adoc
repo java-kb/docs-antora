@@ -39,3 +39,184 @@ command to build a container image with a specific tag:
 ```bash
 docker build -t catalog-service:1.0.0 .
 ```
+== Producing native images with Spring Native and GraalVM
+One significant benefit of cloud infrastructures is that you can increase or
+reduce resources on demand and pay only for what you use. Java applications have
+traditionally been very resource-intensive, resulting in higher CPU and memory
+consumption than other stacks like Go. Not anymore. Using GraalVM and Spring
+Native, you can compile your Spring Boot applications to native executables, which
+are more performant and efficient than their JVM counterparts.
+
+One of the reasons why Java applications became widely popular was the common
+platform (the Java Runtime Environment, or JRE), allowing developers to “write them
+once, run them everywhere,” no matter the operating system. That comes from the
+way applications are compiled. Rather than compiling the application code directly
+into machine code (the code understood by operating systems), the Java compiler
+produces bytecode that a dedicated component (the Java Virtual Machine, or JVM)
+runs. During execution, the JRE interprets the bytecode into machine code dynami-
+cally, allowing the same application executable to run on any machine and OS where
+a JVM is available. This is called a just-in-time (JIT) compilation.
+
+Applications running on the JVM are subject to startup and footprint costs. The
+startup phase used to be quite long for traditional applications, for which it could even
+take several minutes. Standard cloud native applications have a much faster startup
+phase: a few seconds rather than a few minutes. This is good enough for most scenar-
+ios, but it can become a serious issue for serverless workloads that are required to start
+almost instantaneously.
+
+Standard Java applications also have a higher footprint cost than other stacks like
+Go. Cloud services are usually based on a pay-per-use model, so reducing CPU and
+memory footprint means cutting down costs. 
+
+GraalVM is a newer distribution from Oracle based on OpenJDK and is “designed to accelerate the execution of applications written in Java and other JVM languages” (www.graalvm.org).
+
+By replacing a standard OpenJDK distribution with GraalVM as the runtime environment for your Java applications, you can increase their performance and efficiency, thanks to a new optimized technology for performing JIT compilation (the GraalVM compiler). GraalVM also provides runtimes to execute code written in other languages like JavaScript, Python, and R. You can even write polyglot applications, including Python scripts in your Java code, for example.
+
+GraalVM offers two primary operational modes. 
+
+1. ``The JVM Runtime mode ``
++
+lets you run your Java applications like any other OpenJDK distribution while improving per-
+formance and efficiency thanks to the GraalVM compiler. 
+2. ``Native Image mode``
++
+What makes GraalVM so innovative and popular in the serverless context is the Native Image mode. Rather than
+compiling your Java code into bytecode and relying on a JVM to interpret it and convert it to machine code, GraalVM offers a new technology (the Native Image builder)
+that compiles Java applications directly into machine code, obtaining a native executable or native image that contains the whole machine code necessary for its execution.
++
+Java applications compiled as native images have faster startup times, optimized
+memory consumption, and instant peak performance compared to the JVM options.
+GraalVM builds them by changing the way applications are compiled. Instead of a JIT-
+compiler optimizing and producing machine code at runtime, the Native Image mode
+is based on Ahead-Of-Time (AOT) compilation. Starting from the main() method, all
+classes and methods that are reachable during the application’s execution are stati-
+cally analyzed at build time and compiled into a standalone binary executable, includ-
+ing any dependencies and libraries. Such an executable doesn’t run on a JVM but
+directly on the machine, just like C or C++ applications.
++
+When using native images, much of the work that used to be performed at runtime by
+the JVM is now done at build time. As a result, building an application into a native executable takes longer and requires more computational resources than the JVM option.
+The GraalVM AOT compiler does not support some Java features out of the box. For
+example, reflection, dynamic proxies, serialization, and dynamic class loading require
+extra configuration to help the AOT compiler understand how to analyze them statically.
+
+=== Spring Native
+How can we adapt existing Java applications to run as native images? How much configuration is required to support frameworks and libraries? How can we provide the necessary configuration for the AOT compiler? That’s where Spring Native enters the scene. 
+
+Spring Native is a new project introduced to support compiling Spring Boot applica-
+tions with GraalVM. The main goal of Spring Native is to make it possible to compile any
+Spring application into a native executable using GraalVM without any code changes.
+To achieve that goal, the project provides an AOT infrastructure (invoked from a dedi-
+cated Gradle/Maven plugin) that contributes all the required configurations for
+GraalVM to AOT-compile Spring classes. 
+
+For Spring libraries not yet supported, or for your own code, Spring Native offers
+helpful tools for configuring the GraalVM compiler. For example, if you use reflection or dynamic proxies in your code, GraalVM will require a dedicated configuration to
+know how to AOT-compile it. Spring Native offers convenient annotations like @NativeHints and @TypedHint to instruct the GraalVM compiler directly from your Java code, taking advantage of the IDE auto-completion features and type checks.
+
+[tabs]
+====
+Maven::
++
+[source, xml]
+----
+----
+
+Gradle::
++
+[source, gradle]
+----
+plugins {
+	id 'org.springframework.boot' version '3.3.0'
+	id 'io.spring.dependency-management' version '1.1.5'
+	id 'java'
+	id 'org.graalvm.buildtools.native' version '0.10.2' <1>
+}
+----
+====
+====  Compiling Spring Boot applications as native images
+There are two ways to compile your Spring Boot applications into native executables.
+
+- The first option uses GraalVM explicitly and produces an OS-specific executable that
+runs directly on a machine. 
+- The second option relies on Cloud Native Buildpacks to
+containerize the native executable and run it on a container runtime like Docker.
+
+===== Compiling Native Executables With Graalvm
+The first option requires the GraalVM runtime to be available on your machine.
+
+Using sdkman, you can install GraalVM as follows:
+
+
+You can also run the autotests as native executables to make them even more reli-
+able, since they will use the actual runtime environment used in production. However,
+the compilation step still takes longer than when running on the JVM:
+
+    ./gradlew nativeTest
+
+Finally, you can run a Spring Boot application as a native image directly from
+Gradle/Maven:
+
+    ./gradlew nativeRun
+
+To compile to native
+[source,console,attributes]
+----
+sdk install java 24.0.2-graal
+
+sdk use java 24.0.2-graal
+
+./gradlew nativeCompile
+----
+then run build/native/nativeCompile/project-name
+
+===== Containerizing Native Images With Buildpacks
+The second option for compiling Spring Boot applications to native executables relies
+on Cloud Native Buildpacks. Similar to how we packaged Spring Boot applications as
+container images(TODO add link), we can use Buildpacks to build a container image from
+the application native executable compiled by GraalVM. This approach benefits from
+not requiring GraalVM to be installed on your machine.
+
+When using Spring Initializr , it didn’t just include the Spring AOT plugin when you bootstrapped the  project; it also provided additional configuration for the Buildpacks  integration available in Spring Boot. If you check the build.gradle file again, you can
+see that the bootBuildImage task is configured to produce a containerized native
+image through the BP_NATIVE_IMAGE environment variable. While you’re there, con-
+figure the image name and the container registry authentication as we did for the
+other Polar Bookshop applications.
+[source,gradle,attributes]
+----
+tasks.named('bootBuildImage') {
+	// Uses the “tiny” version of Paketo Buildpacks to minimize the container image size
+	builder = 'docker.io/paketobuildpacks/builder-jammy-tiny'
+	// Enables GraalVM support and produces a containerized native image
+	environment = ['BP_NATIVE_IMAGE': 'true']
+	imageName = "${project.name}"
+
+	docker {
+		publishRegistry {
+			username = project.findProperty("registryUsername")
+			password = project.findProperty("registryToken")
+			url = project.findProperty("registryUrl")
+		}
+	}
+}
+----
+As you probably noticed when running the native image compilation
+process on your machine, it takes not only time but also more computational
+resources than usual. When using Buildpacks, make sure you have at least 16
+GB of RAM on your computer. If you use Docker Desktop, configure the
+Docker virtual machine with at least 8 GB of RAM. On Windows, it’s recom-
+mended that you use Docker Desktop on WSL2 rather than Hyper-V. For more
+recommendations about the setup, refer to the Spring Native documentation
+(https://docs.spring.io/spring-native/docs/current/reference/htmlsingle).
+
+The command to use Buildpacks and produce a containerized native image is the
+same that you’d use for JVM images. Open a Terminal window, navigate to your Quote
+Service project (quote-service), and run the following command:
+
+    ./gradlew bootBuildImage
+
+When it’s done, try running the resulting container image:
+ 
+    docker run --rm -p 9101:9101 {project_name}
+
+send a few requests to test whether the application is working correctly:

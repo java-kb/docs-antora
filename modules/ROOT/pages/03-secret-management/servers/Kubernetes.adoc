@@ -1,0 +1,86 @@
+= Kubernetes Secrets
+
+The three strategies stated are generic enough that we can use them to configure applications for any cloud environment and service model (CaaS, PaaS, FaaS). When it
+comes to Kubernetes, there’s an additional configuration strategy that is provided
+natively by the platform: ConfigMaps and Secrets.
+
+The 15-Factor methodology recommends keeping code, configuration, and creden-
+tials always separate. Kubernetes fully embraces that principle and defines two APIs
+to handle configuration and credentials independently: ConfigMaps and Secrets.
+
+The most critical part of configuring applications is managing secret information like
+passwords, certificates, tokens, and keys. Kubernetes provides a Secret object to hold
+such data and pass it to containers.
+
+These are a very convenient way to define configuration data that depends on the
+infrastructure and platform where the application is deployed: service names (defined
+by Kubernetes Service objects), credentials and certificates for accessing other services running on the platform, graceful shutdown, logging, and monitoring. You
+could use ConfigMaps and Secrets to complement or completely replace what a configuration service does. Which you choose depends on the context. In any case,
+Spring Boot provides native support for all those options.
+
+A Secret is an API object used to store and manage sensitive information, such as
+passwords, OAuth tokens, and ssh keys. Pods can consume Secrets as environment
+variables or configuration files in a volume (https://kubernetes.io/docs/concepts/
+configuration/secret).
+
+What makes this object secret is the process used to manage it. By themselves,
+Secrets are just like ConfigMaps. The only difference is that data in a Secret is usually
+Base64-encoded, a technical choice made to support binary files. Any Base64-encoded
+object can be decoded in a very straightforward way. It’s a common mistake to think
+that Base64 is a kind of encryption. If you remember only one thing about Secrets,
+make it the following: Secrets are not secret!
+
+== Creating Secrets
+One way of creating a Secret is using the Kubernetes CLI with an imperative
+approach. Open a Terminal window and generate a test-credentials Secret object
+for some fictitious test credentials (user/password).
+
+[source,console,attributes]
+----
+kubectl create secret generic \ <1>
+ test-credentials \ <2>
+ --from-literal=test.username=user \ <3>
+ --from-literal=test.password=password <4>
+----
+<1> Creates a generic secret with Base64-encoded values
+<2> The name of the Secret
+<3> Adds a secret value for the test username
+<4> Adds a secret value for the test password
+
+We can verify that the Secret has been created successfully with the following command:
+
+``kubectl get secret test-credentials``
+
+We can also retrieve the internal representation of the Secret in the familiar YAML format with the following command:
+
+``kubectl get secret test-credentials -o yaml``
+
+We can decode the value stored in the test-credentials Secret with a simple command:
+
+``echo 'cGFzc3dvcmQ=' | base64 --decode``
+
+Like ConfigMaps, Secrets can be passed to a container as environment variables or
+through a volume mount. In the second case, you can mount them as property files or config trees. For example, the test-credentials Secret would be mounted as a config tree because it’s composed of key/value pairs rather than a file.
+
+Since Secrets are not encrypted, we can’t include them in a version control system. It’s up to the platform engineers to ensure that Secrets are adequately protected. For example, Kubernetes could be configured to store Secrets in its internal etcd storage encrypted. That would help ensure security at rest, but it doesn’t solve the problem of managing them in a version control system.
+
+== Encrypting secerts using Bitnami Sealed Secrets
+//TODO reasearch Bitnami Sealed Secrets
+Bitnami introduced a project called Sealed Secrets (https://github.com/bitnami-labs/sealed-secrets), aimed at encrypting Secrets and putting them under version control. First you would generate an encrypted SealedSecret object, starting from literal values, similar to what we did for the plain Secret. Then you would include that in your repository and safely put it under version control. When the SealedSecret manifest is applied to a Kubernetes cluster, the Sealed Secrets controller decrypts its content and generates a standard Secret object that can be used within a Pod.
+
+== Integration with Secrets Systems
+//TODO reasearch Integrating Kubernetes with Secrets Systems
+What if your secrets are stored in a dedicated backend like HashiCorp Vault or
+Azure Key Vault? In that case, you can use a project like External Secrets (https://
+github.com/external-secrets/kubernetes-external-secrets). As you can guess from its
+name, this project lets you generate a Secret from an external source. The External-
+Secret object would be safe to store in your repository and put under version control.
+When the ExternalSecret manifest is applied to a Kubernetes cluster, the External
+Secrets controller fetches the value from the configured external source and gener-
+ates a standard Secret object that can be used within a Pod.
+== Integration with Spring boot
+Spring Boot provides native and flexible support for both ConfigMaps and Secrets.
+
+== References
+- chapter 7 of GitOps and Kubernetes by Billy Yuen, Alexander Matyushentsev, Todd Ekenstam, and Jesse Suen (Manning, 2021)
+- Kubernetes Secrets Management by Alex Soto Bueno and Andrew Block (Manning, 2022).

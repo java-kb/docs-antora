@@ -1,0 +1,9 @@
+= Grafana log visualization
+
+Just as you browsed
+logs using Loki as a data source for Grafana, you can query metrics using Prometheus
+as a data source. Furthermore, you can use the metrics stored by Prometheus to
+define dashboards, graphically visualize data, and set alarms or notifications when cer-
+tain metrics return known critical values. For example, when the rate of failing HTTP
+requests per minute goes above a certain threshold, you might want to get an alarm or
+a notification so you can act on it. 

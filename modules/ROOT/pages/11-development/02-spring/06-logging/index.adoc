@@ -1,5 +1,101 @@
 = Spring Logging
 :figures: 11-development/02-spring/06-logging
 
+Spring Boot comes with built-in support and auto-configuration for the most common
+logging frameworks, including Logback, Log4J2, Commons Logging, and Java Util
+Logging. By default, Logback is used (https://logback.qos.ch), but you can easily
+replace it with another library thanks to the abstraction provided by the Simple Logging Facade for Java (SLF4J).
+
+Using the interfaces from SLF4J (www.slf4j.org), you have the freedom to change the logging library without changing your Java code. Furthermore, cloud native applications should treat logs as events and stream them to the standard output. That’s precisely what Spring Boot does out of the box. 
+
+Event logs are categorized by level with decreasing details and increasing importance:
+trace, debug, info, warn, error. By default, Spring Boot logs everything from the info
+level up.
+
+By default, each event log provides essential information, including the date and time
+of the occurrence, the log level, the process identifier (PID), the name of the thread
+from which the event was triggered, the logger name, and the log message.
+image::{figures}/Default-event-log-format-in-Spring-Boot.png[Event logs include a timestamp, contextual information, and a message about what happened.]
+The logging format can be customized using the logging.pattern configuration property group.
+
+A logger is a class that produces log events. You can set logger levels through configuration properties, with options to apply global configurations or to target specific
+packages or classes.
+[source,yml,attributes]
+----
+logging:
+    level:
+        io.github.resilience4j: debug
+----
+You might need to configure multiple loggers at the same time. In that case, you can
+collect them in a log group and apply the configuration to the group directly. Spring
+Boot provides two predefined log groups, web and sql, but you can also define your
+own. For example, to better analyze the behavior of the circuit breakers defined in the
+Edge Service application, you could define a log group and configure a log level for
+both Resilience4J and Spring Cloud Circuit Breaker.
+[source,yml,attributes]
+----
+logging:
+    # Collects multiple loggers into a group to apply the same configuration
+    group:
+        circuitbreaker: io.github.resilience4j,org.springframework.cloud.circuitbreaker
+    # Sets an “info” logger for both Resilience4J and Spring Cloud Circuit Breaker, which is easy to change if you need to debug the circuit breakers
+    level:
+        circuitbreaker: info 
+----
+== Adding Logs To Spring Boot Applications
+Thanks to the SLF4J façade, the syntax for defining new event logs in Java is the
+same no matter which logging library you use: a Logger instance created from a
+LoggerFactory.
+[source,java,attributes]
+----
+import com.polarbookshop.catalogservice.domain.Book;
+import com.polarbookshop.catalogservice.domain.BookService;
+import org.slf4j.Logger; <1>
+import org.slf4j.LoggerFactory; <2>
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("books")
+public class BookController {
+    // Defines a logger for cthe BookController class
+    private static final Logger log = LoggerFactory.getLogger(BookController.class); <3>
+
+    private final BookService bookService;
+
+    public BookController(BookService bookService) {
+        this.bookService = bookService;
+    }
+
+    @GetMapping
+    public Iterable<Book> get() {
+        // Logs the given message at the “info” level
+        log.info("Fetching the list of books in the catalog"); <4>
+        return bookService.viewBookList();
+    }
+}
+----
+
+== Logging To files
+== The Mapped Diagnostic Context (MDC)
+You’ll likely need to add common information to your log messages, such as the iden-
+tifier of the currently authenticated user, the tenant for the current context, or the
+request URI. You could directly add that information to your log message, as you did
+in the previous listing, and it would work, but the data would not be structured.
+Instead, I prefer working with structured data.
+SLF4J and common logging libraries, like Logback and Log4J2, support adding struc-
+tured information depending on the request context (authentication, tenant, thread)
+through a tool named Mapped Diagnostic Context (MDC). If you’d like to know more
+about MDC, I recommend checking the official documentation for the specific logging
+library you’re using.
 == Examples
 * https://github.com/spring-kb/logging-spring-rabbitmq-logging[A Simple Solution for Log Centralization Using Spring and RabbitMQ]

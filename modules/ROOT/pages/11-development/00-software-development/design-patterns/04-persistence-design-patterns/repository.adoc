@@ -1,0 +1,87 @@
+= Repository Patterns
+:figures: 11-development/00-software-development/design-patterns/04-persistence-design-patterns
+
+The repository pattern accesses a database to obtain certain information introducing an 
+abstraction for the rest of the layers. The spirit of the repository pattern is to emulate or 
+mediate between the domain and data mapping using interfaces to access the domain 
+objects.
+
+The Repository Pattern is a design pattern that helps manage data by creating a separate place to handle tasks like getting, saving, updating, and deleting data. It connects 
+the data source (such as a database or file) to the rest of the application, keeping data access code separate from other code.
+
+== difference between the DAO and repository patterns
+The main difference between the DAO and repository patterns is the repositories are 
+next to the business logic and try to hide all the logic related to the queries to a database. 
+The most common use is to create an interface containing certain methods; frameworks 
+like Spring Boot and Quakus transform the methods into specific queries to a database. 
+In contraposition, the DAOs implement all the logic using queries to access a database. 
+
+Main Differences Between DAOs and Repositories
+|===
+|**DAO Pattern** |**Repository Pattern**
+|It’s closer to the database because dealing 
+queries and tables.
+|It’s closer to the business/domain layer because it uses 
+abstraction to hide the implementation.
+|DAOs could not contain repositories 
+because they are in different layers.
+|Repositories could contain or implement DAOs.
+|It’s an abstraction of the data. |It’s an abstraction of a collection of objects.
+|===
+
+== combining DAO and  Repository Patterns
+This combination is very infrequently seen because most developers use one or 
+another. Spring Data offers a huge set of elements for repositories to solve using only the 
+repository interfaces.
+image::{figures}/structure-of-combining-both-patterns.png[structure of combining both patterns]
+[source,java,attributes]
+----
+import java.util.List;
+import java.util.Optional;
+
+
+import me.study.designpatterns.persistence.repository.examples.example02_inmemory_city_repository_and_dao.model.City;
+
+public interface CityRepository {
+    Optional<City> get(long id);
+
+    List<City> getAll();
+
+    void save(City city);
+
+    void delete(City city);
+}
+----
+
+[source,java,attributes]
+----
+import java.util.List;
+import java.util.Optional;
+
+import me.study.designpatterns.persistence.repository.examples.example02_inmemory_city_repository_and_dao.model.City;
+
+public class CityRepositoryImpl implements CityRepository {
+
+    private InMemoryCityDao cityDao;
+    
+    public CityRepositoryImpl(InMemoryCityDao cityDao) {
+		this.cityDao = cityDao;
+	}
+
+	public Optional<City> get(long id) {
+        return cityDao.get(id);
+    }
+    
+    public List<City> getAll() {
+    	return cityDao.getAll();
+    }
+    
+    public void save(City city) {
+    	cityDao.save(city);
+    }
+    
+    public void delete(City city) {
+    	cityDao.delete(city);
+    }
+}
+----

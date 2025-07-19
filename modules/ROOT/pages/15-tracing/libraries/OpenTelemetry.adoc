@@ -1,0 +1,120 @@
+= OpenTelemetry
+:figures: 15-tracing/libraries
+
+The OpenTelemetry project includes instrumentation that generates traces and spans
+for the most common Java libraries, including Spring, Tomcat, Netty, Reactor, JDBC,
+Hibernate, and Logback. The OpenTelemetry Java Agent is a JAR artifact provided by
+the project that can be attached to any Java application. It injects the necessary byte-
+code dynamically to capture traces and spans from all those libraries, and it exports
+them in different formats without you having to change your Java source code.
+
+Java agents are often provided to the application at runtime from the outside. For
+better dependency management capabilities, in this case, I prefer using Gradle (or
+Maven) to include the agent JAR file in the final application artifact.
+
+[tabs]
+====
+Maven::
++
+[source, xml]
+----
+    <properties>
+        <otelVersion>2.4.0</otelVersion> <1>
+    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.opentelemetry.instrumentation</groupId>
+                <artifactId>opentelemetry-instrumentation-bom</artifactId>
+                <version>${otelVersion}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.opentelemetry.instrumentation</groupId>
+            <artifactId>opentelemetry-spring-boot-starter</artifactId>
+        </dependency>
+    </dependencies>
+----
+
+Gradle::
++
+[source, gradle]
+----
+ext {
+	set('otelVersion', "2.4.0") <1>
+}
+dependencyManagement {
+  imports {
+    mavenBom("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:${otelVersion}")
+  }
+}
+dependencies {
+  implementation("io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter")
+}
+----
+====
+== intergate with Logging
+Besides instrumenting the Java code to capture traces, the OpenTelemetry Java Agent
+also integrates with SLF4J (and its implementation). It provides trace and span identi-
+fiers as contextual information that can be injected into log messages through the
+MDC abstraction provided by SLF4J. That makes it extremely simple to navigate from
+log messages to traces and vice versa, achieving better visibility into the application
+than querying the telemetry in isolation.
+
+Let’s expand on the default log format used by Spring Boot and add the following
+contextual information:
++
+* Application name (value from the spring.application.name property we con-
+figured for all applications)
+* Trace identifier (value from the trace_id field populated by the OpenTeleme-
+try agent, when enabled)
+* Span identifier (value from the span_id field populated by the OpecnTelemetry
+agent, when enabled)
+
+open the application.yml file, and add the three new pieces of information next to the log level (represented by %5p) following the Logback syntax. 
+[source,yml,attributes]
+----
+logging:
+  pattern:
+    # Includes application name, trace ID, and span ID next to the log level (%5p)
+    level: "%5p [${spring.application.name},%X{trace_id},%X{span_id}]"
+----
+
+== Spring Boot with OpenTelemetry
+=== Docker
+we’ll enable OpenTelemetry only when running applications in containers and rely on environment variables to configure it.
+
+We need three pieces of configuration to successfully enable tracing:
+
+* Instruct the JVM to load the OpenTelemetry Java agent. We can do that via the
+JAVA_TOOL_OPTIONS standard environment variable supported by OpenJDK to
+provide additional configuration to the JVM.
+* Use the application name to tag and categorize traces. We’ll use the OTEL_SERVICE_
+NAME environment variable supported by the OpenTelemetry Java agent.
+* Define the URL of the distributed tracing backend. In our case, it’s Tempo on port 4317,
+and it can be configured via the OTEL_EXPORTER_OTLP_ENDPOINT environment variable supported by the OpenTelemetry Java agent. By default, traces are sent
+over gRPC.
+[source,yml,attributes]
+----
+services
+  catalog-service:
+    depends_on:
+      - tempo <1>
+    image: "catalog-service"
+    container_name: "catalog-service"
+    ports:
+      - 9001:9001
+    environment:
+      # Instructs the JVM to run the OpenTelemetry Java agent from the path where Cloud Native Buildpacks placed the application dependencies
+      - JAVA_TOOL_OPTIONS=-javaagent:/workspace/BOOT-INF/lib/opentelemetry-javaagent-2.4.0.jar  <2>
+      # The name of the application, used to tag the traces produced by Catalog Service
+      - OTEL_SERVICE_NAME=catalog-service  <3>
+      # The URL of the distributed tracing backend supporting the OpenTelemetry protocol (OTLP)
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317  <4>
+      - OTEL_METRICS_EXPORTER=none
+----

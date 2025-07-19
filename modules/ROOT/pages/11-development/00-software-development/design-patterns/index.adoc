@@ -1,0 +1,6 @@
+= Design patterns
+:figures: 11-development/00-software-development/design-patterns
+
+Design patterns are not ready-to-use code snippets but rather general guides on how to solve a particular problem in 
+a way that is flexible and can be reused across different projects. They represent best practices and can be used to speed up the development process by 
+providing a set of proven solutions to certain problems. 

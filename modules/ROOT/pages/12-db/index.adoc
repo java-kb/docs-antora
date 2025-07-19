@@ -1,6 +1,34 @@
 = Persisting and managing data
 :figures: 12-db
 
+Persistence is typically one of the most important topics in any language because it 
+provides a way to save information in the long term for the applications that consume or 
+produce it. In the past, when developers created a single extensive application, problems 
+tended to appear in one place. Perhaps most of the logic resided in stored procedures, 
+but when microservices emerged and became an industry standard, most need to save 
+their information. Hence, a topic’s importance grows more than before with monoliths. 
+Also, during the transition from monoliths to microservices, many non-relational 
+databases are an alternative to solve specific problems, like the cache mechanism for 
+saved information with a different structure.
+
+Persistent information is one of the most important aspects of microservices and 
+applications. You will lose everything if you don’t preserve the data when you deploy or 
+restart or if something happens to your system.
+But there are other things you need to consider because they can affect the 
+performance of the entire platform, adding latency or errors. The following are some 
+problems associated with the inappropriate use or design of a database.
+
+Incrementing the latency to execute the queries and obtain 
+information for a database
+
+* Incrementing the usage of CPU/memory for access to a database for 
+a wrong design in the way to connect
+* Choosing the old version or the incorrect type of database for the 
+kind of information to persist
+
+A wrong decision or not understanding the pros/cons of each 
+type of database and how access to the information could affect your entire system.
+
 Application services, which should be stateless to play well in a cloud environment. However, most applications are useless if they don’t store any state or data somewhere. 
 
 * The state is everything that should be preserved when shutting down a service
@@ -151,3 +179,4 @@ containers will allow you to manage all the services in your system through a un
 interface, such as Kubernetes, handling both compute and storage resources and
 reducing costs. 
 image::{figures}/image.png[alt text]
+

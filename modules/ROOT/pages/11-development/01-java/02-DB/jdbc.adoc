@@ -1,4 +1,66 @@
 = Java DB JDBC
+JDBC, or Java Database Connectivity, provides a common interface to communicate 
+and interact with other databases. More concretely, JDBC offers a way to connect with 
+a database, create and execute statements like creating/dropping/truncating tables, 
+and execute queries like SELECT/INSERT/UPDATE/DELETE. 
+
+Interacting with a database has a set of components or layers.
+
+* **JDBC API**: This layer contains all the interfaces that all the drivers 
+need to implement to allow the Java developers to use them. This 
+layer is one of the most important because you can change from one 
+database to another without changing many things, only the driver of 
+the other database and little changes in the type of columns.
+* **JDBC Driver Manager**: This set of classes acts as connectors between 
+the drivers and the JDBC API, registering and deregistering the 
+available databases, obtaining the connection with databases, and 
+the information related to that connection.
+* **Drivers**: To make the connection between databases, JDBC hides all 
+the logic related to the way to interact with one database in a series of 
+drivers, each of which contains the logic for one database. Typically, 
+the companies that develop these databases create the drivers for 
+most languages.
+
+== JDBC Driver
+The JDBC driver component implements the interfaces defined in the JDBC API to 
+interact with a database. Think of this component as a client-side adapter to convert one 
+database’s specific elements or syntax into the standard that Java can understand.
+JDBC offers four recommended types in different situations, 
+
+=== Type 1: The JDBC-ODBC Bridge
+This type was adopted for the first JDBC drivers because most databases initially 
+supported ODBC access. This driver converts JDBC into ODBC and vice versa acting as 
+an adapter independent of the database. You can think of this as a universal driver that is 
+part of the JDK, so you don’t need to include any dependency in your project.
+This type of driver is only used for developing or testing; it is not used in production 
+environments because of problems related to the performance of converting from JDBC 
+to ODBC and issues with security.
+
+=== Type 2: Client Based
+The next generation of drivers becomes more popular because it removes all the 
+transformation of JDBC into ODBC to do the calls directly using native libraries for each 
+database vendor, which usually reuses the existing C/C++ code to create the libraries.
+The advantages include increased performance because there is no transformation 
+between various formats. There are some drawbacks; for example, the driver must be 
+installed in the client machine.
+
+=== Type 3: Two-Tier Architecture
+Two-tier architecture, network protocol, and pure Java driver with middleware all 
+refer to the same concept. This type uses JDBC, which uses a socket to interact with a 
+middleware server to communicate with a database. This middleware contains all the 
+different databases’ drivers, so installing everything on each machine is unnecessary.
+The main problem of this approach is having a dedicated server to interact with 
+databases, which implies more transference of information, introducing a point of 
+failure. Also, the vendors need to rewrite, which are in C/C++ to pure Java.
+
+=== Type 4: Wire Protocol Drivers
+The wire protocol or native protocol driver is one of the most popular ways to 
+connect directly with a database. In this type, the driver is written entirely in Java and 
+communicates with a database using the protocol defined for each vendor.
+This type offers many advantages, including having an excellent performance 
+compared with the previous one and not requiring that you install anything in the 
+client or the server. But, the main disadvantage is each database has a driver which uses 
+different protocols.
 
 == JDBC URL by Database
 [cols="1,1"]
@@ -10,3 +72,64 @@ value[;property=value]]
 |Oracle |jdbc:oracle:thin:[<user>/<password>]@//<host>[:<port>]/<service>
 |MYSQL |jdbc:mysql://host:port/database?properties
 |=== 
+
+==  Connect with a Database
+There are several approaches, depending on the performance, like using a pool 
+of connections. The basic process to connect with a database consists of the 
+following steps.
+
+1. Import the classes. You must include all the classes required 
+to use JDBC and connect with a database. In most cases, all the 
+classes exist in the java.sql.* package.
+2. Open a connection. Create a connection using DriverManager.
+getConnection(), representing a physical connection with a 
+database.
+3. Execute the query. Create an object Statement that contains the 
+query to execute in a database.
+4. Obtain the data. After executing the query in a database, you 
+need to use ResultSet.getXXX() method to retrieve the information 
+of each column.
+5. Close the connection. You need to explicitly close the connection 
+to a database in all cases without considering if the application 
+produces an exception or not.
+[source,java,attributes]
+----
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class App {
+
+    static final String DB_URL = "jdbc:postgresql://localhost:5432/catalog"; // 1
+    static final String USER = "admin"; // 2
+    static final String PASS = ""; // 2
+    static final String QUERY = "SELECT id, code, name FROM country"; // 3
+
+    public static void main(String[] args) {
+        // Open a connection and close it when finish the execution
+        // The use of try/catch in this way autoclose the resources
+        try(Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(QUERY);) {
+
+            // Obtain the information of one row
+            while (rs.next()) {
+                // Retrieve the data by column
+                int id = rs.getInt("id");
+                String code = rs.getString("code");
+                String name = rs.getString("name");
+
+                System.out.println(String.format("ID: %s, Code: %s, Name: %s", id, code, name));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
+----
+
+
+== Refrences
+https://www.postgresql.org/docs/current/protocol.html

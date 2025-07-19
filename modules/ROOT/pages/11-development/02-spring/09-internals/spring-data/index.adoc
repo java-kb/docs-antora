@@ -1,0 +1,192 @@
+= Spring Data Internals
+
+== Object Mapping
+
+Object mapping is the part of Spring Data responsible for creating property access and 
+mapping. The flow consists of creating a new object using the class’s public constructor 
+and populating all the exposed properties.
+
+Typically, variations depend on the database used to persist the information, 
+such as customizing columns or the name of the fields.
+
+For the creation of objects using Spring Data, the core 
+module detects all the persistent entities interacting with the database and generates 
+a factory class at runtime to create a new instance. Why create a class to instantiate the 
+class instead of using reflection to create the instance and populate all the attributes? 
+The main problem with this approach is related to issues associated with performance. 
+
+suppose we have this entity
+
+[source,java,attributes]
+----
+import jakarta.persicstence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+import java.io.Serializable;
+import java.util.Objects;
+
+@Entity
+@Table(name = "currency") //Optional only if you need to indicate the table's name
+public class Currency implements Serializable {
+	
+	@Id //Identify which is the primary key
+	@GeneratedValue(strategy = GenerationType.SEQUENCE) //Indicate the way to generate the ID
+	private Long id;
+	
+	private String code;
+	private String description;
+	private Boolean enabled;
+	
+	@Column(name = "decimal_places") //Optional: Indicate the name and the length of the column
+	private int decimalPlaces;
+	
+	public Currency() {}
+	
+	public Currency(Long id, String code, String description, Boolean enabled, int decimalPlaces) {
+		this.id = id;
+		this.code = code;
+		this.description = description;
+		this.enabled = enabled;
+		this.decimalPlaces = decimalPlaces;
+	}
+
+	public Long getId() {
+		return id;
+	}
+	
+	public void setId(Long id) {
+		this.id = id;
+	}
+	
+	public String getCode() {
+		return code;
+	}
+	
+	public void setCode(String code) {
+		this.code = code;
+	}
+	
+	public String getDescription() {
+		return description;
+	}
+	
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	
+	public Boolean getEnabled() {
+		return enabled;
+	}
+	
+	public void setEnabled(Boolean enabled) {
+		this.enabled = enabled;
+	}
+	
+	public int getDecimalPlaces() {
+		return decimalPlaces;
+	}
+	
+	public void setDecimalPlaces(int decimalPlaces) {
+		this.decimalPlaces = decimalPlaces;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Currency currency = (Currency) o;
+		return decimalPlaces == currency.decimalPlaces && Objects.equals(id, currency.id) && Objects.equals(code, currency.code) && Objects.equals(description, currency.description) && Objects.equals(enabled, currency.enabled);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, code, description, enabled, decimalPlaces);
+	}
+}
+----
+Behind the scenes, Spring Data takes the entity a creates a new class that implements from ObjectInstantiator
+[source,java,attributes]
+----
+public class CurrencyObjectInstantiator implements ObjectInstantiator {
+    Object newInstance(Object... args) {
+        return new Currency((Long) args[0], (String) args[1], (String) args[2], (Boolean) args[3], (Integer) args[4]);
+    }
+}
+----
+This approach works fine if you follow some rules for all your entities.
+
+• The class needs to have at least one public constructor. You don’t 
+need to create a public constructor that could be the default 
+constructor.
+• When you have more than one public constructor, you need to 
+indicate which is the primary using the @PersistenceCreator 
+annotation.
+• The class isn’t private or a static inner class.
+
+There are a few rules or constraints to obtain more or less a 10% increase in 
+performance but remember that all these classes are only visible at runtime, and Spring 
+Data is in charge of orchestrating, so you don’t have control over them.
+
+The next step is to populate the information that Spring Data obtains from the 
+database. Following the principle of reducing the blocks of code in your application, 
+the core module generates a class in charge at runtime to set all the entity's attributes. 
+[source,java,attributes]
+----
+public class CurrencyPropertyAccessor implements
+PersistentPropertyAccessor {
+    private Currency currency;
+    public void setProperty(PersistentProperty property, Object value) {
+        String name = property.getName();
+        if ("id".equals(name)) {
+            this.currency.setId((Long) value);
+        } else if ("code".equals(name)) {
+            this.currency.setCode((String) value);
+        } else if ("description".equals(name)) {
+            this.currency.setDescription((String) value);
+        }
+        //Others else if conditions, one per each attribute of the entity
+    }
+}
+----
+The property population rules are the same as the object instantiation; if you follow 
+the previous constraints, you should not have any problem with Spring Data. If Spring 
+Data cannot use it this way, try to use reflection so that you do not lose the performance 
+improvements.
+
+This approach is only used when you have a constructor that does not 
+receive all the parameters of the persistent entity or when you have an empty constructor.
+
+== Repositories
+The repositories are the abstraction that Spring Data uses to interact with databases 
+reducing the number of code blocks in your application.
+
+Spring Data offers a list of repositories (all of which are interfaces you can extend), 
+indicating the entity and its ID type. At runtime, the framework creates a proxy class 
+with all the logic necessary to access the database.
+
+The fundamental approach is that a JDK proxy instance is created programmatically using Spring's ProxyFactory API to back the interface and a MethodInterceptor intercepts all calls to the instance and routes the method into the appropriate places:
+
+- If the repository has been initialized with a custom implementation part (see that part of the reference documentation for details), and the method invoked is implemented in that class, the call is routed there.
+- If the method is a query method (see DefaultRepositoryInformation for how that is determined), the store specific query execution mechanism kicks in and executes the query determined to be executed for that method at startup. For that a resolution mechanism is in place that tries to identify explicitly declared queries in various places (using @Query on the method, JPA named queries) eventually falling back to query derivation from the method name. For the query mechanism detection, see JpaQueryLookupStrategy. The parsing logic for the query derivation can be found in PartTree. The store specific translation into an actual query can be seen e.g. in JpaQueryCreator.
+- If none of the above apply the method executed has to be one implemented by a store-specific repository base class (SimpleJpaRepository in case of JPA) and the call is routed into an instance of that.
+
+The method interceptor implementing that routing logic is QueryExecutorMethodInterceptor, the high level routing logic can be found here.
+
+The creation of those proxies is encapsulated into a standard Java based Factory pattern implementation. The high-level proxy creation can be found in RepositoryFactorySupport. The store-specific implementations then add the necessary infrastructure components so that for JPA you can go ahead and just write code like this:
+
+EntityManager em = … // obtain an EntityManager
+JpaRepositoryFactory factory = new JpaRepositoryFactory(em);
+UserRepository repository = factory.getRepository(UserRepository.class);
+
+
+check https://stackoverflow.com/questions/38509882/how-are-spring-data-repositories-actually-implemented
+
+https://medium.com/@AlexanderObregon/how-spring-boot-sets-up-spring-data-repositories-0638ee938133
+
+https://spring.io/blog/2025/05/22/spring-data-ahead-of-time-repositories
+
+https://github.com/spring-projects/spring-data-commons/blob/f3bf3a2598167feefcc2cf6cea52d4f47540c372/src/main/java/org/springframework/data/repository/core/support/RepositoryFactorySupport.java#L191

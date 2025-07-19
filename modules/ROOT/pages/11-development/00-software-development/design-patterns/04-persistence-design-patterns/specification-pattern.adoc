@@ -1,0 +1,11 @@
+=Specification Pattern
+:figures: 11-development/00-software-development/design-patterns/04-persistence-design-patterns
+
+The specification pattern filters or selects a subset of objects based on criteria. For 
+example, think that you want to know all the users that have at least two reservations at 
+your travel agency, so you create a class that receives each user and checks if that user 
+satisfies the conditions or not.
+image::{figures}/Specification-example.png[Specification example]
+Martin Fowler first discussed the specification pattern a long time ago. Now it’s 
+associated directly with the repository pattern, which is in Spring Data to filter the results 
+of the table into a database.

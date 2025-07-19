@@ -1,6 +1,11 @@
 = HashiCorp Vault
 :figures: 03-secret-management/servers/hashicorp-vault
 
+HashiCorp Vault (www.vaultproject.io) is a tool you can use to manage all your credentials, tokens,
+and certificates, both from a CLI and from a convenient GUI. You can integrate it directly with your Spring Boot applications using the Spring Vault project or add it as
+an additional backend for Spring Cloud Config Server.
+
 == Integration with Spring Cloud
+You can either use it to configure all Spring Boot applications directly through the Spring Vault project or make it a backend for Spring Cloud Config Server.
 
 https://docs.spring.io/spring-cloud-config/reference/server/environment-repository/vault-backend.html

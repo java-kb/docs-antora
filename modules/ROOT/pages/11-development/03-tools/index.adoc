@@ -42,4 +42,6 @@ C=US
 == Maven Enforcer Plugin
 Preventing Conflicts with the Dependencies
 
+https://kordamp.org/enforcer-gradle-plugin/#_introduction
+
 https://maven.apache.org/enforcer/maven-enforcer-plugin/usage.html

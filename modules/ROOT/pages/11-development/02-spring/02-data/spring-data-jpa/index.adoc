@@ -5,7 +5,7 @@ Spring Data JPA works with mutating objects, so you can't use Java
 records. JPA entity classes must be marked with the @Entity annotation and
 expose a no-args constructor. JPA identifiers are annotated with @Id and
 @Version from the javax.persistence package instead of org.springframework.data.annotation.
-== Enabling and configuring JDBC 
+== Enabling and configuring JPA 
 . Add dependencies
 +
 [source,gradle,attributes]
@@ -20,7 +20,7 @@ expose a no-args constructor. JPA identifiers are annotated with @Id and
 ----
   <dependency>
     <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-jdbc</artifactId>
+    <artifactId>spring-boot-starter-data-jpa</artifactId>
   </dependency>
   <dependency>
     <groupId>org.postgresql</groupId>
@@ -28,7 +28,7 @@ expose a no-args constructor. JPA identifiers are annotated with @Id and
     <scope>runtime</scope>
   </dependency>
 ----
-. Configuring the connection to a database using JDBC
+. Configuring the connection to a database using JPA
 +
 [source,yml,attributes]
 ----
@@ -46,13 +46,1690 @@ expose a no-args constructor. JPA identifiers are annotated with @Id and
 
 
 == Defining persistent entities with Spring Data
+=== Entity
+Tables are a key element of databases. They are responsible for containing specific types of 
+information, such as product data, users, or invoices. JPA offers a simple way to translate a Java 
+class into a table in the database using different types of annotations. The most important are 
+@Entity and @Table because both help JPA understand all the attributes inside the class that 
+need to be persisted in a table. Another thing to consider with entities is the override of the 
+hashCode and equals methods to prevent any conflicts with the object’s content.
+[source,java,attributes]
+----
+@Entity //This annotation indicates to JPA that it’s something that has a persistent state
+@Table(name = "country") //This annotation is optionally
+public class Country implements Serializable {
+ // Attributes, constructors, setters, and getters for all the attributes
+ // Override the hashcode and equals
+}
+----
+The definition of the name in the @Table annotation is optional when the table’s 
+name is the same in the database with the same letters in the lower or uppercase. In 
+the @Entity annotation, this is not optional because the only way that Spring Data 
+detects that the class has information that needs to persist. Still, it’s a good practice to 
+indicate the name table in all cases because if you decide to change the class name, the 
+application could not work, so with the definition of the table name, the class name is 
+agnostic. You can change it for everything that you want.
 
-== CREATING THE DATABASE SCHEMA
+Also, you can define the schema that contains the table because you can use multiple 
+schemas in JPA. The most common use is to define only one schema for the entire group 
+of tables.
+[source,java,attributes]
+----
+@Table(name = "country", schema = "catalog")
+----
+Each entity needs to follow the rules to be considered valid:
+
+• Each entity needs to have an attribute/class with the @Id annotation 
+to indicate the primary key or the main attribute for search.
+• The entities need to have a constructor without arguments that 
+cannot be defined. JPA uses the default constructor that has all the 
+Java classes, but if you create a constructor with an argument, you 
+need to define it.
+• The classes must not be declared final.
+• All the attributes need to have a setter and getter. 
+• Also, it is good 
+practice to include overriding the hashCode and equals methods.
++ 
+Define the hashCode and equals methods in all your entities because it helps 
+you to know if two instances of an entity are identical, so refer to the same row of 
+a table. If you don’t declare all the comparisons between two or more instances of 
+an entity, compare the position in memory, which could be different. Each instance 
+could have the same information.
+When two objects have the same values and refer to the same row in a database, 
+it is known as database identity
+
+It is not a good practice to modify the value of the attribute that you declare as @Id  after you persist the first time because you could have problems with 
+the cache mechanism that provides Spring Data and Hibernate behind the scenes. 
+
+Another thing to consider is that @Id must have a value because you set the value when 
+you create the object, or you delegate the responsibility to generate the value to the 
+database using one of the key generators
+
+=== Columns
+After you declare the table’s name in your class, the next step is to declare the name and 
+the type of each table column that matches each class attribute. Also, you can define 
+each column’s length, minimum, and maximum and use these definitions to validate if 
+the values in one particular instance are valid or not to persist. And if the column accepts 
+null values or not.
+To indicate the name, length, maximum, and minimum, whether it supports null 
+values or not, JPA offers the @Column annotation, in which you can only use one type 
+over each class attribute.
+
+The name of the columns could be the same or not; for example, the 
+timezone attribute in the table is declared differently.
+
+[source,java,attributes]
+----
+@Column(name = "locale", nullable = false, length = 6)
+private String locale;
+
+@Column(name = "time_zone", nullable = false, length = 10)
+private String timezone;
+----
+
+If you want to declare a default value in the column, you can do it as 
+the attribute enabled assigned a value in the declaration. Another 
+option is to use the columnDefinition property with the specification 
+of the default value.
+
+The Default Value in the Attribute
+[source,java,attributes]
+----
+@Column(name = "enabled", nullable = false)
+private Boolean enabled = Boolean.TRUE;
+----
+The Default Value in the Annotation
+[source,java,attributes]
+----
+@Column(name = "enabled", nullable = false, columnDefinition = "boolean default true")
+private Boolean enabled;
+----
+
+The @ColumnDefinition annotation does the same, but it is directly connected 
+with Hibernate. It's recommended always using the annotations that JPA provides 
+because if Spring Data JPA uses another vendor in the future, parts of your 
+code may no longer compile.
+
+The length property is only valid with the columns that save a string. The 
+columns are numeric, so you can indicate the minimum and maximum 
+values that support using the annotations connected with Spring Validator.
+
+The nullable property is valid only with the primitive’s wrappers.
+
+If you need to declare that a column has a unique value, there is an attribute 
+“unique” in the annotation. By default, the property’s value is false, so you need 
+to declare explicitly that the column is unique. For example, the code of a country 
+could be unique because it represents unambiguously and only one country.
+
+[tabs]
+========
+Cities API::
++
+.Show Code
+[%collapsible]
+======
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.Table;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.Objects;
+
+@Entity //This annotation indicates to JPA that it’s something that has a persistent state
+@Table(name= "country") //This annotation is optionally
+public class Country implements Serializable {
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	private Long id;
+	@Column(name = "code", nullable = false, length = 4)
+	private String code;
+	@Column(name = "name", nullable = false, length = 30)
+	private String name;
+	@Column(name = "locale", nullable = false, length = 6)
+	private String locale;
+	@Column(name = "time_zone", nullable = false)
+	private String timezone;
+	@Column(name = "enabled", nullable = false)
+	private Boolean enabled = Boolean.TRUE;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "currency_id", nullable = false)
+	private Currency currency;
+
+	@OneToMany(fetch = FetchType.LAZY)
+	@JoinColumn(name = "country_id", nullable = false, updatable = false, insertable = false)
+	@OrderBy(value = "code")
+	private List<State> states;
+
+	public Country() {}
+
+	public Country(Long id, String code, String name, String locale, String timezone, Boolean enabled, Currency currency, List<State> states) {
+		this.id = id;
+		this.code = code;
+		this.name = name;
+		this.locale = locale;
+		this.timezone = timezone;
+		this.enabled = enabled;
+		this.currency = currency;
+		this.states = states;
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getCode() {
+		return code;
+	}
+
+	public void setCode(String code) {
+		this.code = code;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getLocale() {
+		return locale;
+	}
+
+	public void setLocale(String locale) {
+		this.locale = locale;
+	}
+
+	public String getTimezone() {
+		return timezone;
+	}
+
+	public void setTimezone(String timezone) {
+		this.timezone = timezone;
+	}
+
+	public Boolean getEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(Boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	public Currency getCurrency() {
+		return currency;
+	}
+
+	public void setCurrency(Currency currency) {
+		this.currency = currency;
+	}
+
+	public List<State> getStates() {
+		return states;
+	}
+
+	public void setStates(List<State> states) {
+		this.states = states;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Country country = (Country) o;
+		return Objects.equals(id, country.id) && Objects.equals(code, country.code) && Objects.equals(name, country.name) && Objects.equals(locale, country.locale) && Objects.equals(timezone, country.timezone) && Objects.equals(enabled, country.enabled) && Objects.equals(currency, country.currency) && Objects.equals(states, country.states);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, code, name, locale, timezone, enabled, currency, states);
+	}
+}
+----
++
+State.java::
++
+[source, java]
+----
+import jakarta.persistence.*;
+
+import java.io.Serializable;
+import java.util.Objects;
+
+@Entity //This annotation indicates to JPA that it’s something that has a persistent state
+@Table(name= "state") //This annotation is optionally
+public class State implements Serializable {
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	private Long id;
+	@Column(name = "code", nullable = false, length = 4)
+	private String code;
+	@Column(name = "name", nullable = false, length = 30)
+	private String name;
+	@Column(name = "enabled", nullable = false)
+	private Boolean enabled = Boolean.TRUE;
+	@ManyToOne
+	@JoinColumn(name = "country_id", insertable = false, updatable = false)
+	private Country country;
+
+	public State() {}
+
+	public State(Long id, String code, String name, Boolean enabled, Country country) {
+		this.id = id;
+		this.code = code;
+		this.name = name;
+		this.enabled = enabled;
+		this.country = country;
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getCode() {
+		return code;
+	}
+
+	public void setCode(String code) {
+		this.code = code;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Boolean getEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(Boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	public Country getCountry() {
+		return country;
+	}
+
+	public void setCountry(Country country) {
+		this.country = country;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		State state = (State) o;
+		return Objects.equals(id, state.id) && Objects.equals(code, state.code) && Objects.equals(name, state.name) && Objects.equals(enabled, state.enabled) && Objects.equals(country, state.country);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, code, name, enabled, country);
+	}
+}
+----
++
+City.java::
++
+[source, java]
+----
+import java.io.Serializable;
+import java.util.Objects;
+
+public class City implements Serializable {
+	private Long id;
+	private String name;
+	private Boolean enabled;
+	private State state;
+
+	public City() {}
+
+	public City(Long id, String name, Boolean enabled, State state) {
+		this.id = id;
+		this.name = name;
+		this.enabled = enabled;
+		this.state = state;
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Boolean getEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(Boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	public State getState() {
+		return state;
+	}
+
+	public void setState(State state) {
+		this.state = state;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		City city = (City) o;
+		return Objects.equals(id, city.id) && Objects.equals(name, city.name) && Objects.equals(enabled, city.enabled) && Objects.equals(state, city.state);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, name, enabled, state);
+	}
+}
+----
++
+Currency.java::
++
+[source, java]
+----
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.io.Serializable;
+import java.util.Objects;
+
+@Entity
+@Table(name = "currency")
+public class Currency extends Base implements Serializable {
+
+	@NotBlank(message = "Code is mandatory")
+	@Column(name = "code", nullable = false, length = 4)
+	private String code;
+
+	@NotBlank(message = "Symbol is mandatory")
+	@Column(name = "symbol", nullable = false, length = 4)
+	private String symbol;
+
+	@NotBlank(message = "Description is mandatory")
+	@Column(name = "description", nullable = false, length = 30)
+	private String description;
+	@NotNull(message = "The state of the currency is mandatory")
+	@Column(name = "enabled", nullable = false)
+	private Boolean enabled = Boolean.TRUE;
+
+	@Min(value = 1, message = "The minimum value is 1")
+	@Max(value = 5 , message = "The maximum value is 5")
+	@Column(name = "decimal_places") //Optional: Indicate the name and the length of the column
+	private int decimalPlaces;
+
+	public Currency() {}
+	
+	public Currency(Long id, String code, String description, Boolean enabled, int decimalPlaces, String symbol) {
+		super(id);
+		this.code = code;
+		this.description = description;
+		this.enabled = enabled;
+		this.decimalPlaces = decimalPlaces;
+		this.symbol = symbol;
+	}
+	
+	public String getCode() {
+		return code;
+	}
+	
+	public void setCode(String code) {
+		this.code = code;
+	}
+	
+	public String getDescription() {
+		return description;
+	}
+	
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	
+	public Boolean getEnabled() {
+		return enabled;
+	}
+	
+	public void setEnabled(Boolean enabled) {
+		this.enabled = enabled;
+	}
+	
+	public int getDecimalPlaces() {
+		return decimalPlaces;
+	}
+	
+	public void setDecimalPlaces(int decimalPlaces) {
+		this.decimalPlaces = decimalPlaces;
+	}
+
+	public String getSymbol() {
+		return symbol;
+	}
+
+	public void setSymbol(String symbol) {
+		this.symbol = symbol;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		if (!super.equals(o)) return false;
+		Currency currency = (Currency) o;
+		return decimalPlaces == currency.decimalPlaces && Objects.equals(code, currency.code) && Objects.equals(symbol, currency.symbol) && Objects.equals(description, currency.description) && Objects.equals(enabled, currency.enabled);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), code, symbol, description, enabled, decimalPlaces);
+	}
+}
+----
+====
+======
+Multiplication microservices::
++
+[source, java]
+----
+----
+
+Polar Book Shop::
++
+[source, java]
+----
+----
+
+========
+
+=== Primitive Types
+In Java, you can use the primitive type or the wrapper; for example, instead of using ``long``, you can use ``java.lang.Long``.
+
+The following Table describes the basic correlations between the SQL types and Java types.
+[source,attributes]
+|===
+| *ANSI SQL Type* | *Java Type*
+| BIGINT | long, java.lang.Long
+| BIT | boolean, java.lang.Boolean
+| CHAR | char, java.lang.Character
+| CHAR (e.g. ‘N’, ‘n’, ‘Y’, ‘y’) | boolean, java.lang.Boolean
+| DOUBLE | double, java.lang.Double
+| FLOAT | float, java.lang.Float
+| INTEGER | int, java.lang.Integer
+| INTEGER (e.g. 0 or 1) | boolean, java.lang.Boolean
+| SMALLINT | short, java.lang.Short
+| TINYINT | byte, java.lang.Byte
+|===  
+There is no rule about how a boolean type needs to be represented. Many databases 
+use various types of columns, like BIT, BYTE, BOOLEAN, or CHAR, to refer to the 
+boolean type
+
+As a recommendation, try to use primitive wrappers (Double, Float, etc.) 
+instead of primitive variables (double, float) when you have a column that allows 
+null values because JPA vendors could have other behavior to try to map null 
+values in a primitive variable (e.g., in Hibernate, a null value in the database could 
+be translated into a 0 if the class has an int variable).
+
+=== Character Types
+When you need to represent a string with more than one character, there are many SQL 
+types that you can use depending on the element size you need to save. 
+The following Table shows 
+the equivalence between the different SQL types and Java classes; many SQL types could 
+use the same class.
+[source,attributes]
+|===  
+| *ANSI SQL Type* | *Java Type*
+| CLOB | String
+| NCLOB | String
+| CHAR | String
+| VARCHAR | String
+| LONGVARCHAR | String
+| NCHAR | String
+| NVARCHAR | String
+| LONGNVARCHAR | String
+|===
+
+BLOB and CLOB are known as LOBs (large object types). Each has the 
+responsibility to save something, but the main idea of both is to save large volumes of information. The following describes each of them.
+
+• A BLOB (binary large object) stores binary files like videos, gifs, and 
+audio files.
+• A CLOB (character large object) stores large files that contain text 
+like PDF documents, text files, and JSON files.
+• Depending on the database, there are several formats; for example, 
+in MySQL, type TEXT represents a CLOB.
+
+=== Date and time types
+If you need to save something connected with a date in a column, there are many SQL 
+types and Java types depending on the precision you need to save it. The following Table shows 
+the equivalence between the different date SQL types and Java classes; many SQL types 
+could use the same class.
+
+[cols="a,2a"]
+|===
+| *ANSI SQL Type* | *Java Type*
+| DATE 
+| 
+* java.sql.Date
+* java.time.LocalDate
+* java.util.Date
+* java.util.Calendar
+| TIME | java.util.Date, java.sql.Time, java.time.OffsetTime
+, java.time.LocalTime
+| TIMESTAMP | java.util.Date,java.util.Calendar, java.time.Instant, java.sql.Timestamp, java.time.LocalDateTime
+| TIMESTAMP WITH TIME ZONE | java.time.OffsetDateTime, java.time.ZonedDateTime
+| TIMESTAMP WITH LOCAL TIME ZONE | java.time.LocalDateTime
+| BIGINT | java.time.Duration
+|===  
+
+JPA 2.2 supports all the new classes in the java.time Java 8 package. It provides many 
+new methods that previously existed in the Joda library. Still, if you use an old version of 
+JPA, you can find in your code a conversion between java.sql.Date and java.util.Date.
+
+=== Binary Types
+When you need to save a large volume of data, like a book, video, audio, or photo, there 
+are many formats in SQL Type to solve the situation. The following Table shows the equivalence 
+between the different SQL types and Java classes.
+|===
+| *ANSI SQL Type* | *Java Type*
+| VARBINARY | byte[], java.lang.Byte[], java.io.Serializable
+| BLOB | java.sql.Blob
+| CLOB | java.sql.Clob
+| NCLOB | java.sql.Clob
+| LONGVARBINARY | byte[], java.lang.Byte[]
+|===
+
+=== Other Types
+Other types are not the group for criteria. In most cases, it is convenient to use it to 
+reduce any conversion after obtaining the information from the database. The following Table
+show some of the most relevant of SQL types and the equivalence with the Java classes.
+|===
+| *ANSI SQL Type* | *Java Type*
+| NUMERIC | java.math.BigInteger, java.math.BigDecimal
+| INTEGER, NUMERIC, SMALLINT, TINYINT, BIGINT, DECIMAL, DOUBLE, FLOAT, CHAR, LONGVARCHAR, VARCHAR | Enum
+| VARCHAR | java.util.Currency, java.lang.Class, java.util.Locale, java.net.URL
+|===
+The enumeration could be saved as many types and mapped directly to an enum 
+in the Java class. The explanation is that you can save the enumeration as a string or an 
+ordinal type like a number and delegate to the framework the responsibility to transform 
+a column’s information into a value of the enumeration
+[tabs]
+======
+Cities API::
++
+To see this concept practically, let’s create a continent enumeration and include an attribute in the Country entity.
++
+[tabs]
+====
+Continent.java::
++
+[source, java]
+----
+public enum Continent {
+    SOUTH_AMERICA, NORTH_AMERICA, EUROPE, ASIA, AFRICA, ANTARCTIC;
+}
+----
+Currency.java::
++
+[source, java]
+----
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+
+@Entity
+@Table(name = "currency") // Optional only if you need to indicate the table's name
+public class Currency implements Serializable {
+    @Enumerated(EnumType.STRING)
+    private Continent continent;
+}
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+
+=== Non-Persistent Attributes
+JPA offers the possibility to indicate attributes that do not need to be persisted in the 
+database. It’s not the best practice, but there are many reasons to do it, for example, an 
+old application with logic inside the entity.
+
+To do this include the @Transient annotation over the attribute.
+[source, java]
+----
+import jakarta.persistence.Transient;
+@Entity
+@Table(name = "currency") // Optional only if you need to indicate the table's name
+public class Currency implements Serializable {
+    @Transient
+    private String temporaryValue;
+}
+----
+
+=== Primary Key and Generators
+The primary key is one of the most discussed topics because there are many ways or 
+approaches to decide which is the best type to use as a primary key. 
+
+- Sometimes, the best 
+option is to use a Long key because you save a short number of rows in the database. 
+- On the other hand, you can have an entity with a huge number of rows, so a good option could use a UUID. Also, another reason to use a UUID is for security because if your application exposes an endpoint that gives all the information of an entity using the ID, you can increment or decrement the ID and obtain the rows of a table instead if you use a UUID reduces the risk that someone knows which are valid UUIDs that exist in the database.
++
+Using a VARCHAR, which is the way to represent a UUID in the database, 
+is less efficient than using a numerical type like BIGINT or INTEGER. Also, the 
+numerical types use less space than VARCHAR.
+If you use VARCHAR to save a UUID, consider the length of the column because 
+sometimes this column has a small size. When you try to persist the information, 
+an exception appears.
+
+After you select the primary key of an entity, the next thing to do is define the 
+strategy to generate the value. To do this, you need to indicate over the declaration of attribute that acts as the primary key the @GeneratedValue annotation and indicates the generation mechanism. Doing this, JPA completes this value before persisting the entity.
+
+[source,java,attributes]
+----
+@Entity
+@Table(name = "currency") // Optional only if you need to indicate the table's name
+public class Currency implements Serializable {
+
+    @Id // Identify which is the primary key
+    @GeneratedValue(strategy = GenerationType.SEQUENCE) // Indicate the way to generate the ID
+    private Long id;
+}
+----
+There are many implementations of table generators to optimize and 
+reduce the risk of collision. Examples include Hilo and Pooled optimizer, which 
+is part of the Hibernate.
+
+JPA offers many strategies to generate the primary key:
+
+**GenerationType.SEQUENCE **
+
+defines a numeric sequence in the 
+database, so before persisting the information in the JPA table, call 
+the sequence to obtain the next number to insert into the table. 
+The main benefit of using the sequence is that you can use it in any 
+column in multiple tables connected directly by one table, but it’s 
+a common practice to use it for a specific purpose. Some databases 
+that support the use of SEQUENCE are Oracle and PostgreSQL.
+
+[tabs]
+====
+PostgreSQL::
++
+[source, sql]
+----
+CREATE TABLE IF NOT EXISTS city
+(
+ id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, <1>
+ name varchar(80) NOT NULL,
+ enabled BOOLEAN DEFAULT true NOT NULL,
+ state_id bigint NOT NULL REFERENCES state(id)
+);
+----
++ 
+Depending on the database version, an alternative could be declared in the 
+generator outside the table’s structure.
++
+[source, sql]
+----
+CREATE SEQUENCE city_id_seq; <1>
+CREATE TABLE IF NOT EXISTS city
+(
+ id bigint DEFAULT NEXTVAL('city_id_seq') NOT NULL, <2>
+ name varchar(80) NOT NULL,
+ enabled BOOLEAN DEFAULT true NOT NULL,
+ state_id bigint NOT NULL REFERENCES state(id)
+);
+----
+Oracle::
++
+[source, sql]
+----
+----
+====
+**GenerationType.IDENTITY** 
+
+is a special behind-the-scenes column 
+that does the same as the SEQUENCE check, which is the next 
+available value. Some databases do not support the definition of a 
+SEQUENCE, so they have an alternative special column like this that 
+is an auto-incremented value.
+
+[tabs]
+====
+PostgreSQL::
++
+[source, sql]
+----
+CREATE TABLE IF NOT EXISTS city
+(
+ id bigint NOT NULL AUTO_INCREMENT, <1>
+ name varchar(80) NOT NULL,
+ enabled BOOLEAN DEFAULT true NOT NULL,
+ state_id bigint NOT NULL state(id),
+ PRIMARY KEY (id)
+);
+----
+Oracle::
++
+[source, sql]
+----
+----
+====
+**GenerationType.TABLE** 
+
+is an alternative approach when you have 
+a database that does not support using SEQUENCE; for example, 
+MySQL 5.7 and lower do not have it. The goal is to have a table in 
+your schema containing one row per entity that needs to generate an 
+ID, which is the next available value.
+
+
+**GenerationType.AUTO** 
+
+is a strategy that considers the database you 
+used and defines which is the best option to use. You can indicate this 
+strategy in the annotation or without anything @GeneratedValue()
+because both cases indicate the same.
+
+=== Relationships
+When you define the structure of your database, many tables have a relationship with 
+others to reduce the number of redundant information. You can see the relationship 
+between tables when you have a foreign key in one table and the primary key in another.
+JPA has a set of annotations to declare the types of relationships between the entities. 
+The relationship could be 
+
+- unidirectional if you can access the information of both 
+entities from one of them; for example, you have the information about the Currency of 
+a Country but not vice versa; 
+- in the other hand, exists a bidirectional relationship when 
+you can navigate from any entity to the other one.
+
+In all the types of relationships, you can indicate if you accept null values or 
+not, which is a way to say that the column in the database could or couldn’t have a 
+value. When you indicate this information in the relationship, it impacts the query 
+that Hibernate generates to obtain the information. For example, in a @ManyToOne relation, if you allow null values, the query uses a LEFT JOIN instead, which indicates 
+the opposite query contains an INNER JOIN. If you don’t indicate anything in the 
+annotation, the column accepts null values.
+
+==== Many To One
+many 
+entities reference one another; for example, many countries could 
+have the same currency in the catalog’s application. Spring Data uses 
+the foreign key in one table to join with the other; for example, the 
+country’s table uses currency_id to join with the column id in the 
+currency table. 
+==== OneToMany
+An alternative to Many To One is @OneToMany which is used when you try to 
+have a bidirectional relationship, but in your tables, both types are the 
+same. 
+
+To do a bidirectional relationship, both entities need to have 
+an attribute that refers to the other entity where one is @ManyToOne, 
+and the other is @OneToMany.
+
+[tabs]
+======
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+@Entity //This annotation indicates to JPA that it’s something that has a persistent state
+@Table(name= "country") //This annotation is optionally
+public class Country implements Serializable {
+
+	@ManyToOne(fetch = FetchType.LAZY) <1>
+	@JoinColumn(name = "currency_id", nullable = false) <2>
+	private Currency currency;
+
+	@OneToMany(fetch = FetchType.LAZY) <3>
+	@JoinColumn(name = "country_id", nullable = false, updatable = false, insertable = false) <4>
+	@OrderBy(value = "code")
+	private List<State> states;
+
+}
+----
++
+State.java::
++
+[source, java]
+----
+@Entity //This annotation indicates to JPA that it’s something that has a persistent state
+@Table(name= "state") //This annotation is optionally
+public class State implements Serializable {
+	@ManyToOne
+	@JoinColumn(name = "country_id", insertable = false, updatable = false)
+	private Country country;
+}
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+
+Polar Book Shop::
++
+[source, java]
+----
+----
+
+======
+
+==== OneToOne
+One table 
+has a foreign key associated with the table’s primary key without 
+having the chance to refer to multiple rows. 
+
+One problem with this type of relation is when you create a bidirectional relation, so both 
+entities refer to the other with a non-null value. This could produce 
+an exception because one entity needs that the other exists in the 
+database, and vice versa is like a deadlock. To solve this problem, 
+one of the entities needs to have the possibility to allow null values 
+so you have a way to persist an entity and, after that, use it to put the 
+reference in the other one.
+
+==== ManyToMany 
+is one of the most complex relationships. If you 
+have previously worked with databases, you know that this type 
+of relation implies creating an intermediate table that contains 
+the primary key of both tables. In the JPA world, these three tables 
+become two entities, and the specific implementation of JPA has the 
+responsibility to understand how the query and hide or abstract how 
+it is implemented in the database.
+
+=== Lazy and Eager Loading
+JPA offers a mechanism to reduce the number of data in memory until you need 
+it. The way to do it is to add a property fetch in the annotation that indicates the 
+relationship between both entities. The property has two potential values.
+
+• *FetchType.LAZY* indicates the implementation of JPA that is not 
+necessary to obtain the information of the relationship until someone 
+invokes the attribute’s get method. Behind the scenes, Hibernate, in 
+this case, inserts a proxy in the attribute representing the relationship 
+which knows the query that needs to be executed to obtain the 
+information. This approach spends less memory in the application 
+and gives you a faster load of information; in the other hand, if you 
+need to obtain always information about the relationship, the cost of 
+executing the operation increases and takes more time.
+• *FetchType.EAGER* indicates the JPA implementation that must 
+obtain all the other entity’s information when executing the query. 
+With this approach, you reduce the time to initialization because 
+when you have one entity in memory, you have all the information; 
+in the other hand, the query execution could take more time and 
+negatively impact the application’s performance.
+
+Both approaches have pros and cons related to performance. The standard is to use 
+all the relationships with FetchType.LAZY to increase the application’s performance and 
+explicitly obtain the information of the other entities.
+
+[tabs]
+======
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+@Entity //This annotation indicates to JPA that it’s something that has a persistent state
+@Table(name= "country") //This annotation is optionally
+public class Country implements Serializable {
+
+	@ManyToOne(fetch = FetchType.LAZY) <1>
+	@JoinColumn(name = "currency_id", nullable = false) 
+	private Currency currency;
+
+	@OneToMany(fetch = FetchType.LAZY) <2>
+	@JoinColumn(name = "country_id", nullable = false, updatable = false, insertable = false)
+	@OrderBy(value = "code")
+	private List<State> states;
+
+}
+----
++
+State.java::
++
+[source, java]
+----
+@Entity //This annotation indicates to JPA that it’s something that has a persistent state
+@Table(name= "state") //This annotation is optionally
+public class State implements Serializable {
+	@ManyToOne
+	@JoinColumn(name = "country_id", insertable = false, updatable = false)
+	private Country country;
+}
+----
+====
++
+Behind the scenes, you see one or two queries, depending on the strategy for 
+fetching from the Country entity, as shown in Table 
++
+[cols="a,2a"]
+|===
+|FetchType.LAZY |FetchType.EAGER
+|
+Hibernate: 
+[source,sql,attributes]
+----
+select country0_.id as id1_0_0_, country0_.
+code as code2_0_0_, country0_.currency_id as 
+currency7_0_0_, country0_.enabled as enabled3_0_0_, 
+country0_.locale as locale4_0_0_, country0_.name as 
+name5_0_0_, country0_.time_zone as time_zon6_0_0_ 
+from country country0_ where country0_.id=?
+----
+Hibernate: 
+[source,sql,attributes]
+----
+select currency0_.id as id1_1_0_, currency0_.
+code as code2_1_0_, currency0_.decimal_places 
+as decimal_3_1_0_, currency0_.description as 
+descript4_1_0_, currency0_.enabled as enabled5_1_0_ 
+from currency currency0_ where currency0_.id=?
+----
+
+|Hibernate: 
+[source,sql,attributes]
+----
+select country0_.id 
+as id1_0_0_, country0_.code as 
+code2_0_0_, country0_.currency_id 
+as currency7_0_0_, country0_.enabled 
+as enabled3_0_0_, country0_.locale 
+as locale4_0_0_, country0_.name as 
+name5_0_0_, country0_.time_zone 
+as time_zon6_0_0_, currency1_.
+id as id1_1_1_, currency1_.code as 
+code2_1_1_, currency1_.decimal_
+places as decimal_3_1_1_, currency1_.
+description as descript4_1_1_, 
+currency1_.enabled as enabled5_1_1_ 
+from country country0_ left outer join 
+currency currency1_ on country0_.
+currency_id=currency1_.id where 
+country0_.id=?
+----
+|===
+Multiplication microservices::
++
+[source, java]
+----
+----
+
+Polar Book Shop::
++
+[source, java]
+----
+----
+
+======
+
+=== prevent a recursive mapping
+When you use MapStruct and do it automatically, the mapper from one object to another 
+invokes all the get methods, so Spring Data suppose that you need all the information of the 
+lazy collections. The main problem in this bidirectional relationship is that it produces an 
+infinite loop, so you need to exclude the field country in the State entity. To solve this, you 
+must modify the ApiMapper class and create a custom mapper
+[tabs]
+======
+Cities API::
++
+[tabs]
+====
+ApiMapper.java::
++
+[source, java]
+----
+package com.apress.catalog.mapper;
+
+import com.apress.catalog.dto.CountryDTO;
+import com.apress.catalog.dto.CurrencyDTO;
+import com.apress.catalog.dto.StateDTO;
+import com.apress.catalog.model.Country;
+import com.apress.catalog.model.Currency;
+import com.apress.catalog.model.State;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
+
+@Mapper(componentModel = "spring")
+public interface ApiMapper {
+
+    ApiMapper INSTANCE = Mappers.getMapper( ApiMapper.class );
+
+    CurrencyDTO entityToDTO(Currency currency);
+
+    Currency DTOToEntity(CurrencyDTO currency);
+
+    CountryDTO entityToDTO(Country country);
+
+    Country DTOToEntity(CountryDTO country);
+
+	//Exclude the country element to prevent a recursive mapping
+    @Mapping(target="country", ignore = true) <1>
+    StateDTO stateToStateDTO(State state);
+
+    State stateDTOToState(StateDTO state);
+}
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+
+=== Ordering
+When you have two or more connected entities, and one has another’s list of elements, JPA or Hibernate executes the query without considering the order. You have two options: 
+
+- order the element in your application 
+- or delegate to the database the responsibility to do it.
+
+To indicate to JPA that the list of entities needs to be ordered for criteria, add the @OrderBy annotation with the column’s name
+[tabs]
+======
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+@Entity //This annotation indicates to JPA that it’s something that has a persistent state
+@Table(name= "country") //This annotation is optionally
+public class Country implements Serializable {
+	@OneToMany(fetch = FetchType.LAZY)
+	@JoinColumn(name = "country_id", nullable = false, updatable = false, insertable = false)
+	@OrderBy(value = "code") <1>
+	private List<State> states;
+}
+----
+====
+With this modification in the entity, when you get over the list of the entities, Spring Data executes a query with the ordering considering the column name that you indicate in the property value.
++
+Hibernate: select states0_.country_id as country_5_2_0_, states0_.id as 
+id1_2_0_, states0_.id as id1_2_1_, states0_.code as code2_2_1_, states0_.
+country_id as country_5_2_1_, states0_.enabled as enabled3_2_1_, states0_.
+name as name4_2_1_ from state states0_ where states0_.country_id=? *order by states0_.code*
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+Finally, this ordering approach always works in the same direction, so if you need different criteria to order the entities, the best solution is to define a custom query in the repository that receives the type of ordering as a parameter.
+
+=== Entity Inhertitance
+Like many object-oriented languages, Java offers the possibility to use inherence to 
+reduce duplicate code and extend the functionality of other classes. JPA is not agnostic of 
+this feature and offers several possibilities to reduce the complexity of your application’s 
+domain in Java code. Behind the scenes, in your database, the complexity could be the 
+same as if you don’t use the inherence.
+
+==== Mapped Superclass
+moving the ID to a superclass is known as 
+a mapped superclass. All the attributes of the abstract class (a requisite of the mapped 
+superclass) are not considered for Spring Data as an entity per se. All attributes of the 
+abstract class are parts of other entities using inherence. But in the database, you see all 
+the columns in the same table
+
+[tabs]
+======
+Cities API::
++
+Let’s go back to our catalog’s application to see a common problem. All the entities 
+have an attribute ID with the same strategy of generating the value, so it’s not something 
+good to have duplicated in a lot of places this element. To reduce the duplicate code, 
+let’s create a Base class that contains the id attribute with the annotation to generate the 
+value
++
+image::{figures}/Entity-Inhertitance-Mapped-superclass-Cities-API.png[Migrating the entities to a strategy of using a Mapped superclass]
++
+[tabs]
+====
+Base.java::
++
+[source, java]
+----
+package com.apress.catalog.model;
+
+import java.io.Serializable;
+
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+
+@MappedSuperclass <1>
+public abstract class Base implements Serializable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    public Base() {
+    }
+
+    public Base(Long id) {
+        this.id = id;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+}
+----
+<1> the @MappedSuperclass annotation, which indicates that the class is not a final entity, so it does not exist in the database. Instead, this class is part of another class that inherits it. 
+Base.java::
+The next step is to modify the Currency entity, removing the Id attribute and extending it for the new Base class
++
+[source, java]
+----
+package com.apress.catalog.model;
+
+import java.io.Serializable;
+
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+
+@MappedSuperclass <1>
+public abstract class Base implements Serializable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    public Base() {
+    }
+
+    public Base(Long id) {
+        this.id = id;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+}
+----
+<1> the @MappedSuperclass annotation, which indicates that the class is not a final entity, so it does not exist in the database. Instead, this class is part of another class that inherits it. 
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+to change the name of one attribute of the concrete class without changing anything more. JPA offers the possibility 
+to override certain attributes of the abstract class indicating the new values; for example, 
+let’s change the name of the ID in the Currency entity to another value.
+[source,java,attributes]
+----
+@Entity
+@Table(name= "currency")
+@AttributeOverride(
+ name = "id",
+ column = @Column(name = "currency_id", nullable = false)) <1>
+ // This implies that you override the name of the id for another one
+public class Currency extends Base implements Serializable {
+ // Attributes, constructors, setters, and getters for all the attributes
+ // Override the hashcode and equals
+}
+----
+==== Table per Class Hierarchy
+This approach represents an entire hierarchy of classes inside a single table. An 
+alternative name for this strategy is single table. JPA uses this strategy as the default if 
+you don’t indicate anything explicitly using the @Inheritance annotation.
+
+A table per class hierarchy implies that you need to add an extra column in the 
+tables of the database which not appear in your entities because JPA needs to know to 
+discriminate if the information of one row is from one class to another.
+[tabs]
+======
+Cities API::
+Let’s introduce a few modifications to your catalog’s applications to represent this 
+specific situation. A new set of entities appear in Figure 4-8, representing that you can 
+have cities and airports that are not directly connected. Both entities extend from the 
+Base class, which no longer has the @MappedSuperclass annotation.
++
+image::{figures}/Entity-Inhertitance-Table-per-Class-Hierarchy-Cities-API[New entities with single table relationship]
++
+There are only two tables because the city and airport are part of one class and the 
+BASE_TYPE column works as a discriminator to know which type of entity represents 
+one row in the database. Remember that the code and name attributes are unique in the 
+different tables.
++
+[tabs]
+====
+Base.java::
++
+[source, java]
+----
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE) <1>
+@DiscriminatorColumn(name = "BASE_TYPE") <2>
+public abstract class Base implements Serializable {
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	private Long id;
+	// Attributes, constructors, setters, and getters for all the attributes
+	// Override the hashcode and equals
+}
+----
++
+The only things you need to modify now are the City and the Airport entities to have 
+the @DiscriminatorValue annotation with the value used in the database to know what 
+entity is in the application.
++
+[source, java]
+----
+@Entity
+@Table(name= "airport")
+@DiscriminatorValue( "AIR") <3>
+public class Airport extends Base implements Serializable { <4>
+	@OneToMany(fetch = FetchType.LAZY)
+	@JoinColumn(name = "AIRPORT_ID")
+	private List<Terminal> terminals;
+	// Attributes, constructors, setters, and getters for all the attributes
+	// Override the hashcode and equals
+}
+----
++
+The city code is about the same but has a different @DiscriminatorValue annotation 
+and attributes, but the logic is the same
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+There are drawbacks to using this strategy; for example, you have several rows that 
+only have columns with the information the other ones have null, so in a way, you 
+lose all the constraints about not null values. Another problem is connected with the 
+normalization of the information, which could impact the performance of the queries 
+because there are many attributes. You decide which are relevant to introduce an index 
+and which are not relevant.
+This strategy introduces problems in the long term for stability, performance, and 
+maintainability, so it’s not recommended to use, at least in the new system.
+
+=== Table per Subclass with Joins
+This strategy is an alternative to the “table per class” hierarchy to solve the problem of having 
+all the information with many rows with null columns in one table. To solve the problem of 
+the previous strategy, this one produces a table per each concrete class of the hierarchy. You 
+can directly access any of the entities using the repositories that provide Spring Data.
+[tabs]
+======
+Cities API::
++
+Following the previous example that introduces modifications to your catalog’s 
+application to represent a hypothetical situation, let’s introduce a little variation in the 
+previous scenario to generate one table per class. Figure 4-9 shows the relationship between tables and the classes with this type of 
+relationship.
++
+image::{figures}/Entity-Inhertitance-Table-per-Subclass-Hierarchy-Cities-API.png[]
++
+There are the same number of classes that entities exist in the catalog’s model where 
+the City and the Airport ID has the same value as the Base table’s primary key. To access 
+the information implies a join between two tables. For example, if you want to access the 
+information of a particular city, you create a repository as always, but behind the scenes, 
+make a request to the Base table and join the City table.
++
+[tabs]
+====
+Base.java::
++
+[source, java]
+----
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED) <1>
+public abstract class Base implements Serializable {
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	private Long id;
+	// Attributes, constructors, setters, and getters for all the attributes
+	// Override the hashcode and equals
+}
+----
++
+The next step is to modify the Airport class to include the attribute to do the joins 
+between tables using the ``@PrimaryKeyJoinColumn`` annotation. This annotation is not 
+required because JPA infers that both tables use the same ID, but if you want to use the ``@AttributeOverride`` annotation, it’s necessary to declare the name of the column.
++
+[source, java]
+----
+@Entity
+@Table(name= "airport")
+@PrimaryKeyJoinColumn(name = "ID") <2>
+public class Airport extends Base implements Serializable { <3>
+	@OneToMany(fetch = FetchType.LAZY)
+	@JoinColumn(name = "AIRPORT_ID")
+	private List<Terminal> terminals;
+	// Attributes, constructors, setters, and getters for all the attributes
+	// Override the hashcode and equals
+}
+----
++
+The city code is about the same but has a different @DiscriminatorValue annotation 
+and attributes, but the logic is the same
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+The advantage of this approach is that 
+
+- you must normalize the database and reduce 
+the number of columns with null values, allowing the use of NOT NULL validations.
+
+The disadvantage is that 
+
+- you must join between tables to obtain all the information, 
+which could be a big pain if you have many records. 
+- Also, this problem appears when 
+you insert or update the rows in this type of table because two sentences are executed 
+per operation. 
+- Another problem with this strategy is manually writing the repository 
+queries because they are more complex.
+
+=== Table per Class
+One of the problems of the previous strategy implies that you need to do a join to obtain 
+all the information; in the table per class strategy, you have the information duplicate 
+between the main entity and the inherited classes. You can access the information of 
+both entities, in this case, Base or Airport/City, without doing a join between tables. This 
+is one of the approaches that does not imply many things to do in your entities. Use the 
+@Inheritance annotation with the InheritanceType.TABLE_PER_CLASS value in the 
+top class. The Inherit classes do not need to include anything; they just extend from the 
+Base class.
+[tabs]
+======
+Cities API::
+Following the previous example, let’s do modifications by moving the “enabled” 
+column to the Base class to have a scenario that gives you a better idea of what happens 
+in both worlds, the database, and the catalog’s application
++
+image::{figures}/Entity-Inhertitance-Table-per-Class--Cities-API.png[]
++
+The City and Airport tables have the same attributes—ID and ENABLED—in all the 
+entities. You save information in the Base table, and one of the tables extends from it. 
+This reduces the complexity. In the classes, the modifications are simple. You need to 
+write the type of inheritance strategy in the Base class and anything else.
++
+[tabs]
+====
+Base.java::
++
+[source, java]
+----
+@Entity
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS) <1>
+public abstract class Base implements Serializable {
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	private Long id;
+	// Attributes, constructors, setters, and getters for all the attributes
+	// Override the hashcode and equals
+}
+----
+In the concrete class, you don’t need to include anything. Just remove all the 
+previous annotations that you used in the other strategies.
+[source, java]
+----
+@Entity
+@Table(name= "airport")
+public class Airport extends Base implements Serializable { <3>
+	@OneToMany(fetch = FetchType.LAZY)
+	@JoinColumn(name = "AIRPORT_ID")
+	private List<Terminal> terminals;
+	// Attributes, constructors, setters, and getters for all the attributes
+	// Override the hashcode and equals
+}
+----
+The city code is about the same but has a different @DiscriminatorValue annotation 
+and attributes, but the logic is the same
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+With this approach, you can create a repository per each table and access the specific 
+information in each entity you want.
+
+One of the cons of this strategy is that you have a lot of information duplicated in 
+different tables. When doing a read operation like a select, you reduce the number of 
+queries or joins necessary to obtain all the information. On the other hand, you need 
+to execute a write operation like INSERT, DELETE, or UPDATE implies that you need to 
+modify two tables to maintain the consistency of the database. All these considerations 
+are valid. You access directly to the entity’s repository.
+
+=== Embeddable Class
+All the previous ways of inherence imply that one class inherits from another one to 
+reduce the duplicate code and model the system in a simpler way to understand. The 
+embeddable class changes the paradigm because you can include a class in another, like 
+an attribute but appear as part of the same table in the database.
+
+[tabs]
+======
+Cities API::
+Following the previous example, let’s do modifications by moving the “enabled” 
+column to the Base class to have a scenario that gives you a better idea of what happens 
+in both worlds, the database, and the catalog’s application
++
+image::{figures}/Entity-Inhertitance-Embeddable-Class-Cities-API.png[Including an embeddable class in the Currency entity]
++
+The first thing to do is create a new class that contains two attributes to audit when a 
+new row is created in the database and when suffering a modification. The class needs to 
+have the @Embeddable annotation, which means that it is not an entity per se because it 
+lives inside another class using the composition.
++
+[tabs]
+====
+Audit.java::
++
+[source, java]
+----
+package com.apress.catalog.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Objects;
+
+@Embeddable <1>
+public class Audit implements Serializable {
+
+    @Column(name = "created_on", nullable = false)
+    private LocalDateTime createdOn;
+
+    @Column(name = "updated_on", nullable = true)
+    private LocalDateTime updatedOn;
+
+    public LocalDateTime getCreatedOn() {
+        return createdOn;
+    }
+
+    public void setCreatedOn(LocalDateTime createdOn) {
+        this.createdOn = createdOn;
+    }
+
+    public LocalDateTime getUpdatedOn() {
+        return updatedOn;
+    }
+
+    public void setUpdatedOn(LocalDateTime updatedOn) {
+        this.updatedOn = updatedOn;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Audit audit = (Audit) o;
+        return Objects.equals(createdOn, audit.createdOn) && Objects.equals(updatedOn, audit.updatedOn);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(createdOn, updatedOn);
+    }
+}
+----
+Currency.java::
+Now that you have a class to include in many other entities, the next step is to 
+modify the Currency entity to embed the Audit class using the @Embedded annotation.
+[source, java]
+----
+@Entity
+@Table(name = "currency")
+public class Currency extends Base {
+
+	@NotBlank(message = "Code is mandatory")
+	@Column(name = "code", nullable = false, length = 4)
+	private String code;
+
+	@NotBlank(message = "Symbol is mandatory")
+	@Column(name = "symbol", nullable = false, length = 4)
+	private String symbol;
+
+	@NotBlank(message = "Description is mandatory")
+	@Column(name = "description", nullable = false, length = 30)
+	private String description;
+	@NotNull(message = "The state of the currency is mandatory")
+	@Column(name = "enabled", nullable = false)
+	private Boolean enabled = Boolean.TRUE;
+
+	@Min(value = 0, message = "The minimum value is 0")
+	@Max(value = 5, message = "The maximum value is 5")
+	@Column(name = "decimal_places") // Optional: Indicate the name and the length of the column
+	private int decimalPlaces;
+
+	@Embedded <2>
+	private Audit audit;
+}
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+This approach offers a way to reuse a class, including many entities, without using 
+the inherence. Inside the application, you see the classes as a composition, so you can 
+split or show the model differently.
+
+== creating the database schema
 Hibernate, the foundation for Spring Data JPA, offers an interesting
 feature for automatically generating schemas from the entities defined in
 Java. it’s better to create
 and evolve relational resources with a more sophisticated tool, like Flyway or Liquibase,
-which will let you version-control your database. 
+which will let you version-control your database.
+
 == Enabling and configuring JPA auditing
 
 When persisting data, it's useful to know the creation date for each row in a table and

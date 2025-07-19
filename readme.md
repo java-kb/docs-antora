@@ -46,6 +46,60 @@ Reactive Applications::
 ----
 ----
 ====
+
+
+[tabs]
+======
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+
+
+[tabs]
+====
+Linux::
++
+[source, console]
+----
+----
+
+Windows::
++
+[source, console]
+----
+----
+
+macOS::
++
+[source, console]
+----
+----
+====
+
+== Run
+=== Locally
+=== Docker
+=== Docker compose
+=== Kubernates
+
 # Run
 npx antora antora-playbook.yml
 

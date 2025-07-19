@@ -1,0 +1,238 @@
+== Chicklist
+
+== System Design
+=== Architecture
+==== Monolithic
+==== Hexagonal architecture
+==== N-Tier architecture
+==== Microservices
+===== Cloud Native Microservices
+====== Pattern Microservice chassis
+====== Pattern Service Template
+====== MICROSERVICES ARCHITECTURE FOR MODERN DIGITAL PLATFORMS
+====== How To Fail at Microservices
+====== The False Dichotomy of Monolith vs. Microservices
+==== Modular monolithic application
+==== Service-Oriented Architecture
+==== Cloud Native
+===== Cloud Native Development
+====== Cloud Native by Paul Fremantle
+==== Hexagonal architecture
+=== Communication Patterns
+==== Event-driven architectures
+=== Java Tech Stack
+
+== Configuration
+=== Configuration Servers
+==== Spring Cloud Config Server
+==== Consul KV
+=== Configuration Libraries
+==== Centralized Configuration
+
+== Proxy
+
+== Secret Management
+=== Secret Management Servers
+==== HashiCorp Vault
+=== Secret Management Libraries
+==== Secret Management Article 1
+
+== Gateway
+=== Gateway Servers
+==== Spring Cloud Gateway
+==== Selecting the right open-source API Gateway technology
+==== What is API Gateway exactly? Spring Cloud Gateway?
+==== What is API Gateway exactly? Spring Cloud Gateway?
+==== How to choose the right API Gateway
+==== How to choose the right API Gateway
+==== Scaling your API with rate limiters
+
+== Circuit Breaker
+
+== Health Check
+=== Health Servers
+=== Helath Libraries
+
+== Service Discovery
+=== Service Discovery Servers
+==== Consul Service Discovery
+==== Kubernetes Service Discovery
+=== Service Discovery Libraries
+
+== Load Balancing
+=== Load Balancing Servers
+==== Kubernetes Load Balancing
+=== Load Balancing Libraries
+
+== Security
+=== OAuth
+=== OpenID Connect
+=== SAML 2.0
+=== Security Servers
+==== Keycloak
+
+== Message Queuing
+=== RabbitMQ Server
+
+== Development
+
+== Development Management
+**Preventing Conflicts with the Dependencies**
+
+To solve this type of problem or restrict the use of the application to certain versions 
+of JDK or Maven, you can use the Enforcer plugin, which has support in Maven or Gradle. The dependencies associated with Spring Boot do not have this problem, but if 
+you add other dependencies, the problem could appear, so just in case, add the plugin
+
+
+=== Object-oriented programming
+
+=== Data structures and Algorithms
+
+=== Design Patterns
+
+=== Java
+
+==== Database
+===== JDBC
+===== JPA
+==== Java Tricks
+
+=== Web
+==== Rest API
+**Documenting the Endpoints**
+
+One of the biggest problems when using another REST API is knowing information 
+about the endpoints like the URL, request/response, and HTTP method. There are 
+different methods to document all this information. The default standard is OpenAPI Specification. Frameworks like Spring Boot and Quarkus offer libraries to document the endpoints and dynamically generate the documentation
+
+=== Spring Framework
+==== Spring Framework Core
+===== Spring Configuration and Profiles
+
+==== Spring Data
+===== Spring Data JDBC
+===== Spring Data JPA
+===== Spring Data R2DBC
+===== Spring Data Redis
+
+==== Spring Framework Web
+===== Spring Rest API
+===== Spring Reactive programming
+
+==== Spring Security
+===== Authentication
+===== Spring OpenID Connect
+===== Spring Security Reactive
+===== Testing Spring Security
+
+==== Spring AMQP
+===== Spring RabbitMQ
+===== Spring Kafka
+
+==== Spring Logging
+
+==== Spring Testing
+===== Spring Unit Testing
+===== Testcontainers
+===== Spring Integration Testing
+===== DB Testing
+===== Reactive Spring Testing
+===== Spring Security Testing
+===== Spring OAauth Testing
+===== Spring Cloud Function Testing
+===== Spring Cloud Stream Testing
+
+==== Spring Cloud
+===== Spring Cloud Function
+===== Spring Cloud Streeam
+
+==== Spring Development
+===== Spring Debugging
+
+==== Spring CookBooks
+===== Change the Spring Boot startup banner
+
+==== Spring Framework Internals
+===== Spring Security Internals
+===== Spring Test Internals
+
+===== How the Spring @Profile annotation works
+=== Testing
+
+=== Tools
+
+=== Frontend Development
+
+=== AI Development
+==== ChatGPT development
+
+== DB
+=== SQL
+==== Postgres
+=== NoSQL
+==== MongoDB
+=== LDAP
+=== DB Migration Tools
+==== Flyway
+==== Liquibase
+
+== Logging
+**Logging All the Details**
+Logging is one of the most relevant features to find and solve problems in pre-productive 
+or productive environments because it gives you information that helps you reproduce 
+or understand the problem.
+
+=== Logging Servers
+==== Grafana Loki
+==== ELK stack
+=== Logging Libraries
+==== Pattern Log aggregation
+
+== Monitoring
+
+== Tracing
+=== Servers
+=== Tracing Libraries
+==== Pattern Distributed tracing
+==== Microservices Distributed Tracing Pattern Enhancing Visibility in Service Communication
+
+== Deployment
+=== Static Code Analysis
+==== Vulnerability Scanning
+=== Packaging
+==== Cloud Native Buildpacks
+===== Containerize Spring Boot
+==== Docker
+===== Containerize Spring Boot
+==== Jib
+===== Containerize Spring Boot
+=== Continuous delivery
+How should we version release candidates?:
+
+- semantic versioning (https://semver.org).
+- calendar versioning (https://calver.org).
+
+==== GitHub Actions
+===== Deploy Spring Using GitHub Actions
+==== tekton
+=== Kubernetes
+==== Local Kubernetes development with Tilt
+==== Deploy Spring to Kubernetes
+
+== Documentation
+=== 
+== Tools
+=== Java Tools
+=== Testing Http Requests
+
+== Interviews
+=== Java Interview
+==== Basic Elements, Primitive Data Types, and Operators
+==== Declarations
+==== Control Flow
+==== Object Oriented Programming
+=== Security Interview
+==== Keycloak Interview
+
+== Definitions
+=== Security

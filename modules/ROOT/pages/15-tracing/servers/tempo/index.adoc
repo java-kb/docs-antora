@@ -1,0 +1,68 @@
+= Tempo
+:figures: 15-tracing/servers/tempo
+
+Tempo, a project that “lets you scale tracing as far as possible with minimal operational cost and less complexity than ever before” (https://grafana.com/
+oss/tempo). Unlike the way we used Prometheus, Tempo follows a push-based strategy where the application itself pushes data to the distributed tracing backend.
+image::{figures}/Distributed-tracing-architecture-using-the-Grafana-stack.png[Distributed tracing architecture for cloud native applications based on the Grafana stack]
+== Running
+=== Locally
+=== Docker
+=== Docker compose
+[source,yml,attributes]
+----
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: tempo
+    command: -config.file=/etc/tempo-config.yml
+    ports:
+      - "3110:3100"     # Tempo
+      - "4317:4317"     # OTel
+    volumes:
+      - ./observability/tempo/tempo.yml:/etc/tempo-config.yml
+----
+**tempo.yml**
+[source,yml,attributes]
+----
+server:
+  http_listen_port: 3100
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+        http:
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo/blocks
+
+usage_report:
+  reporting_enabled: false
+----
+== Kubernates
+When running applications in Kubernetes, we can use dedicated annotations to mark
+which containers the Prometheus server should scrape and inform it about the HTTP
+endpoint and port number to call.
+[source,yml,attributes]
+----
+spec:
+  # How many Pod replicas should  be deployed
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-service
+  template:
+    metadata:
+      labels:
+        app: catalog-service
+      annotations:
+        # Signals that Prometheus should scrape containers in this Pod
+        prometheus.io/scrape: "true" <1>
+        # Identifies the HTTP endpoint that exposes Prometheus metrics
+        prometheus.io/path: /actuator/prometheus <2>
+        # Specifies the port number where the metrics endpoint is available
+        prometheus.io/port: "9001" <3>
+----

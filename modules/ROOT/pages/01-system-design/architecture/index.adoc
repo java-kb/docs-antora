@@ -61,3 +61,7 @@ build a well-structured monolith, make a container out of it, and deploy it to t
 in minutes. On top of that, you can automate all the processes to build the monolith
 and take it to production. Is that a cloud-native nonolith? You won't find that definition
 anywhere, but that doesn't mean it's not a proper solution for your specific case.
+
+== Applications architecture styles
+=== Layers
+=== Hexagonal

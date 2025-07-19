@@ -1,21 +1,58 @@
 = Java DB JPA
 
-== Declaring Entities in Various Databases
+== EJB
+Enterprise JavaBeans, or EJB, is a specification for building portable, scalable, and 
+reusable business applications without reinventing the way to do certain common things 
+like security, access to a database, sending messages across different applications, and 
+many more. In the first versions of Java, some of these features existed in other libraries 
+or a basic version inside the JDK, so when EJB emerged, unify all these features in the 
+same framework.
+One of the biggest differences with the previous approach of using JDBC to access 
+a database is you need an EJB container that runs inside an application server like 
+Glassfish, Wildfly,  and Jetty
+
+== JPA
+The Java Persistence API, or JPA, is a specification15 connected directly with the 
+persistence into databases. To be more specific, JPA provides a set of interfaces that all 
+the providers need to follow to guarantee that there are following the standard so you 
+can change the provider without too much effort.
+
+Using JPA, developers can access the information in a database and execute certain 
+operations like insert, update, delete and retrieve using a Java class that represents the 
+structure of the tables. To do these operations, you need to annotate the classes with 
+annotations representing the most common things in a table, such as the table name, 
+column size, and the relationship between tables.
+
+JPA offers several ways to do the queries to retrieve the information. One is using 
+a SQL statement directly like JDBC with classes to help construct the sentence, and 
+another introduces an abstraction so that you don’t need to write the entire sentence 
+because the provider of JPA generates the sentence dynamically. 
+
+This specification has many implementations, but the most relevant are Hibernate,16
+EclipseLink,17 Apache OpenJPA,18 and Spring Data JPA.19 Each of them implements 
+the specification of JPA but differently, prioritizing things like the performance or the 
+developer experience.
+
+== Object Mapping
+One of the most significant advantages that JPA offers developers is the possibility 
+to map a table with a particular class considering all the possible types of columns 
+and the relationship between tables. Spring Data extends this approach to all NoSQL 
+databases. Each type of database offers its annotations to represent the information to map databases with Java classes.
+
 [cols="a,a,a"]
 |===
 |JPA |MongoDB |Neo4j
 |
 [source,java]
 ----
-@Entity
-@Table(name = "currency")
+@Entity <1>
+@Table(name = "currency") <2>
 public class Currency 
 {
-    @Id
-    @GeneratedValue
-    (strategy = GenerationType.SEQUENCE)
+    @Id <3>
+    @GeneratedValue (strategy = GenerationType.SEQUENCE) <4>
     private Long id;
-    @Column(name = "decimal_places", length = 5)
+    @Column(name = "decimal_places", length = 5) <5>
     private String decimalPlaces; 
     //Other attributes and set/get
 }
@@ -23,8 +60,7 @@ public class Currency
 |
 [source,java]
 ----
-@Document(
-collection="currency)
+@Document(collection="currency)
 public class Currency {
     @Id
     private Long id;
@@ -48,6 +84,9 @@ public class Currency
 |=== 
 
 == Declaring Relationships Among Objects in a Database
+JPA and Spring Data support mapping relationships between an object that could 
+be stored in another object (table, document, node).
+
 [cols="a,a,a"]
 |===
 |JPA |MongoDB |Neo4j
@@ -62,7 +101,7 @@ public class Country {
     (strategy =  GenerationType.SEQUENCE)
     private Long id;
 
-    @OneToMany
+    @OneToMany <1>
     private 
     List<Currency> currencies;
     //Other attributes and set/get
@@ -78,7 +117,7 @@ public class Currency {
     private Long id;
     @Field("decimal_places")
     private String decimalPlaces;
-    private List<Currency> currencies;
+    private List<Currency> currencies;  <1>
     //Other attributes and set/get
 }
 ----
@@ -92,7 +131,7 @@ public class Currency
     private Long id;
     private String decimalPlaces;
     
-    @RelatedTo( type = "has", direction = Direction.OUTGOING)
+    @RelatedTo( type = "has", direction = Direction.OUTGOING)  <1>
     private List<Currency> currencies;
     //Other attributes and set/get
 }

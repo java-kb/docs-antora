@@ -1,6 +1,19 @@
 = Spring Data
 :figures: 11-development/02-spring/02-data
 
+The main problem with all the previous mechanisms of persistence is you don’t have 
+the chance to access both types of databases, relational or non-relational. But Spring 
+Data solves this problem, allowing you to access databases using repositories with an 
+interface to do CRUD operations. Also, you can create concrete that implements the 
+repository interfaces with the idea of doing specific operations not covered by the Spring 
+Data framework. These repositories are available in almost all implementations to access 
+databases to reduce the complexity of using multiple databases in the same application. 
+There are basic repositories that you use to extend the functionality of your repositories. 
+In particular, two are most relevant. CrudRepository has the basic operations for all the 
+entities. PagingAndSortingRepository contains all the logic to obtain the information of 
+one structure in a database using the criteria of pagination and sorting.
+
+image::{figures}/The-structure-of-repositories-depends-on-the-database.png[Spring Data supports MongoDB, Redis, Neo4j, Cassandra, and all the relational databases.]
 Spring Data provides common abstractions and patterns for accessing data,
 making it straightforward to navigate the different modules dedicated to rela-
 tional and non-relational databases.
@@ -51,6 +64,24 @@ Even if all relational databases speak the SQL language and Spring Data JDBC pro
 generic abstractions, each vendor has its own dialect and unique features that make it
 essential to use the same database in production that you use in development and test-
 ing. Otherwise, you may not catch errors that might happen only in production.
+
+== Repository Support
+When you write an application that needs to persist/retrieve information from a 
+database, you create a class or layer that contains all these operations in most cases. 
+There are multiples ways to group these operations: all together in the same class, one 
+class per table, but the most common way to do it is to create a class that represents the 
+DAO pattern, which is discussed more in the next section, with all the operations of one 
+table. This means that you can have multiple classes to access the database, where the 
+main difference is the table you access. To reduce the complexity of having multiple classes with the same code, Spring Data offers the possibility to use an abstraction that 
+contains all these operations, and you only need to indicate the name of the entity/table 
+that you access.
+
+Spring Data offers interfaces that provide common database operations. You need 
+to create an interface that extends from one of that common interfaces and indicate 
+which table or structure you want to access. Behind the scenes, Spring Data transforms 
+this interface into one query to save/retrieve the information depending on the type of 
+database.
+iamge::{figures}/Example-repositories-that-extend-default-Spring-Data-methods.png[]
 +
 == Spring Data JDBC or Spring Data JPA?
 +
@@ -115,19 +146,17 @@ datasource:
 == defining custom queries in Spring Data
 There are two main options for defining custom queries in Spring Data:
 
-* Using the @Query annotation to provide an SQL-like statement that will be exe-
-cuted by the method.
-+
-[,java]
-----
-  @Modifying
-  @Transactional
-  @Query("delete from Book where isbn = :isbn")
-  void deleteByIsbn(String isbn);
-----
+=== Automatic Custom Queries
+Defining query methods following a specific naming convention.
 
-* Defining query methods following a specific naming convention.
 Spring Data JPA provides full support for read and write operations.
++
+The structure of 
+the query is split into two parts: the first one defines the subject of the query and the 
+second one is the predicate. The subject of the query defines which type of operation 
+the query needs to execute instead. The predicate is the attributes part of the clause that 
+filters, orders, or is distinct.
+
 +
 |===
 | Repository method building block | Examples
@@ -151,13 +180,145 @@ Spring Data JPA provides full support for read and write operations.
 | orderByTitleAsc, orderByTitleDesc
 |===
 +
+Following Table describes the most relevant subject keywords. Some of these keywords 
+could not be supported for specific non-relational databases.
+|===
+| Keyword | Description
+| findBy…
+
+getBy…
+
+queryBy…
+| These keywords are generally associated with a select query and return an element or 
+set of elements that can be a Collection or Streamable subtype.
+| countBy… | Returns the number of elements that match the query.
+| existBy… | Returns a boolean type with true if there is something that matches the query.
+| deleteBy… | Removes a set of elements that matches the query but does not return anything.
+|===
+Following Table shows the equivalence between predicate keywords and the database 
+keyword.
+|===
+| Logical Keyword | Keyword expressions
+| LIKE | Like
+| IS_NULL | Null or IsNull
+| LESS_THAN | LessThan
+| GREATER_THAN | GreaterThan
+| AND | And
+| OR | Or
+| AFTER | After or IsAfter
+| BEFORE | Before or IsBefore
+|===
 [,java]
 ----
   Optional<Book> findByIsbn(String isbn);
 
   boolean existsByIsbn(String isbn);
 ----
+=== Manual Custom Queries
+Using the @Query annotation to provide an SQL-like statement that will be executed by the method.
++
+[,java]
+----
+  @Modifying
+  @Transactional
+  @Query("delete from Book where isbn = :isbn")
+  void deleteByIsbn(String isbn);
+----
 
+There are many ways to declare a query:
+
+• Declare it as constant at the top of the interface so that you have all 
+the declarations of methods to understand each of them.
+• Externalize all the queries into a properties file and import them 
+dynamically into each repository. One of the cons of this approach 
+is that you need to have a good organization to know which file 
+contains the queries of each repository.
+• Lastly, have a class that contains all the queries of a specific 
+repository. This approach is useful when you have a lot of queries 
+that are too long. You clear your repository to have only the methods 
+in one place and all the queries in another place. Also, define naming 
+patterns to identify the idea behind each query.
+
+Why do you need to create a manual query if there is a way to do it automatically? 
+- One answer is that you need to improve the performance of the query that Spring Data 
+generates
+- or you don’t need all the attributes of the table. You cover a specific scenario. 
+This situation has the name of Projections. 
+- Another answer is that the query is so 
+complex that not exist keyword to express it. No rule explains all the potential scenarios 
+when you need to use one mechanism instead of another.
+
+=== Implementing Repository Methods(Custom Repository Implementations)
+[source,java,attributes]
+----
+public interface CustomCurrencyJPARepository {
+    List < Currency > myCustomFindMethod(String code);
+}
+
+@Repository
+@Transactional
+public class CustomCurrencyJPARepositoryImpl extends
+CustomCurrencyJPARepository {
+    // Include all the dependencies necessary to access the database
+    List < Currency > myCustomFindMethod(String code) {
+        //Here all the logic related to your custom method
+    }
+}
+----
+you must inject all the dependencies you need to 
+access the database in the constructor. For example, in a relational database, you need to 
+include EntityManager.
+
+another approach exists in the 
+middle between writing the entire query manually or delegating all the responsibility 
+to create the query to Spring Data. The Criteria API offers a way to create queries in a 
+programmatic way preventing errors in the syntaxis. To implement this approach, you 
+must create a custom repository containing all the logic to create the query.
+public interface CustomCurrencyJPARepository {
+    List < Currency > myCustomFindMethod(String code);
+}
+
+[source,java,attributes]
+----
+@Repository
+@Transactional
+public class CustomCurrencyJPARepositoryImpl extends
+CustomCurrencyJPARepository {
+    EntityManager em;
+    public CustomCurrencyRepositoryImpl(EntityManager em) {
+        this.em = em;
+    }
+    List < Currency > myCustomFindMethod(String code) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery < Currency > cq = cb.createQuery(Currency.class);
+        // You need to define the main entity
+        Root < Currency > currency = cq.from(Currency.class);
+        // Define all the conditions of the query
+        Predicate codePredicate = cb.equal(currency.get("code"), code);
+        //You can have more than one where clause
+        cq.where(codePredicate);
+        // Create the query and after that executed
+        TypedQuery < Currency > query = em.createQuery(cq);
+        return query.getResultList();
+    }
+}
+----
+The flow of this method is first to create a criteria builder responsible for creating the 
+elements of the query. After that, you need to indicate which entity you want to obtain 
+as part of the response, in this case, Currency. The next step is to define the root of the 
+query: the table that appears in the FROM XXXX block in the SQL sentence. Also, you 
+can include all the conditions the query needs to match using the predicate conditions, 
+which do not necessarily need to be only one. You can create as many as you want. 
+Lastly, you need to create the query and indicate which type of response you want, which 
+could be a list or one element.
+Chapter 3 Spring Data and Different Types of Persistence
+
+=== specifications
+For JPA, Spring Data offers another possibility to encapsulate all this logic to create 
+the query using classes. The specifications are classes you can create to extend from the 
+Specification interface, which encapsulates the logic of custom queries but does not 
+create an implementation of a repository. This approach helps you only have interfaces 
+representing the layer to access a database
 == Data Auditing
 The Spring Data libraries support auditing to track who created an entity and
 who updated it last. You can enable this feature in both Spring Data JDBC and

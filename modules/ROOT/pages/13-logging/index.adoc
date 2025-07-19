@@ -1,6 +1,30 @@
 = Logging
 :figures: 13-logging
 
+Logs (or event logs) are discrete records of something that happened over time in a
+software application. They are composed of a timestamp necessary to answer the
+question “when did the event happen?” and some information providing details
+about the event and its context, which lets us answer questions like “what happened
+at this time?”, “which thread was processing the event?”, or “which user/tenant was
+in the context?”
+
+Logging is one of the most relevant features to find and solve problems in pre-productive 
+or productive environments because it gives you information that helps you reproduce 
+or understand the problem.
+
+During troubleshooting and debugging tasks, logs are among the essential tools we
+can use to reconstruct what happened at a specific point in time in a single application instance. They’re usually categorized according to the type or severity of the
+event, such as trace, debug, info, warn, and error. It’s a flexible mechanism that lets us log
+only the most severe events in production while still giving us the chance to change
+the log level temporarily during debugging.
+
+The format of a log record can vary, going from simple plain text to a more organized
+collection of key/value pairs to fully structured records produced in a JSON format.
+
+Traditionally we’ve configured logs to be printed out in files located on the host
+machine, which has resulted in applications dealing with filename conventions, file
+rotation, and file sizes. In the cloud we follow the 15-Factor methodology, which recommends treating logs as events streamed to the standard output. Cloud native applications stream logs and are not concerned with how they are processed or stored.
+
 To properly maintain a distributed system like your microservice architecture,
 you need a central place where you can access all the aggregated logs and search across them.
 
@@ -11,6 +35,14 @@ To understand the behavior of an application and troubleshoot problems we should
 We can also configure alerts that are triggered when certain messages appear in the logs.
 
 But at the same time handling a large volume of logs requires substantial infrastructure.
+
+When you move to distributed systems like microservices and complex environments
+like the cloud, managing logs becomes challenging and requires a different solution
+than in more traditional applications. If something goes wrong, where can we find
+data about the failure? Traditional applications would rely on log files stored on the
+host machine. Cloud native applications are deployed in dynamic environments, are
+replicated, and have different life spans. We need to collect the logs from all applications running in the environment and send them to a central component where they
+can be aggregated, stored, and searched.
 
 Basically, the idea is to send all the log outputs from your applications to another
 component in your system, which will consume them and put them all together. Besides,
@@ -24,6 +56,12 @@ to keep the application logic unaware of this pattern. The services should just 
 messages using a common interface (e.g., a Logger in Java). The logging agent that
 channels these logs to the central aggregator works independently, capturing the output
 that the application produces.
+
+How much logging is enough? It depends on the context. In general, it’s better to have too
+much logging than too little. We’ve seen many deployments that just contain changes to
+add more logging, while it’s pretty rare to see the opposite.
+
+
 
 == Examples
 * https://github.com/spring-kb/logging-spring-rabbitmq-logging[A Simple Solution for Log Centralization Using Spring and RabbitMQ]

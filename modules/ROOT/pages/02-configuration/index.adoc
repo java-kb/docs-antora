@@ -73,28 +73,41 @@ suddenly unavailable, all the applications will probably fail to start up. This 
 easily mitigated by scaling the config server, as you would with other applications
 requiring high availability. When using a configuration server, it's fundamental to
 deploy at least two replicas.
-
+== Configuration strategies
 The three main strategies for defining configuration data for cloud native applications are:
 
-[cols=2*]
-|===
-| Configuration strategy
-| Characteristics
+**Property files packaged with the application**
 
-| Property files packaged with the application
-| * These files can act as specifications of what configuration data the application supports. 
-  * These are useful for defining sensible default values, mainly oriented to the development environment.
+* These files can act as specifications of what configuration data the application supports. 
+* These are useful for defining sensible default values, mainly oriented to the development environment.
 
-| Environment variables
-| * Environment variables are supported by any operating system, so they are great for portability. * Most programming languages allow you access to the environment vari- ables. In Java you can access them with the System.getenv() method. In Spring you can also rely on the Environment abstraction. * These are useful for defining configuration data that depends on the infra- structure and platform where the application is deployed, such as active profiles, hostnames, service names, and port numbers.
 
-| Configuration service
-| * Provides configuration data persistence, auditing, and accountability. * Allows secrets management by using encryption or dedicated secret vaults. * This is useful for defining configuration data specific to the application, such as connection pools, credentials, feature flags, thread pools, and URLs to third-party services.
-|===
+**Environment variables**
 
-A configuration server handles aspects like secret encryption, configuration
+* Environment variables are supported by any operating system, so they are great for portability. 
+* Most programming languages allow you access to the environment vari- ables. In Java you can access them with the System.getenv() method. In Spring you can also rely on the Environment abstraction. 
+* These are useful for defining configuration data that depends on the infra- structure and platform where the application is deployed, such as active profiles, hostnames, service names, and port numbers.
+
+
+**Configuration service**
+
+* Provides configuration data persistence, auditing, and accountability. 
+* Allows secrets management by using encryption or dedicated secret vaults. * This is useful for defining configuration data specific to the application, such as connection pools, credentials, feature flags, thread pools, and URLs to third-party services.
+* A configuration server handles aspects like secret encryption, configuration
 traceability, versioning, and context refreshing at runtime with no restart.
 
+Those three strategies are generic enough that we can use them to configure applications for any cloud environment and service model (CaaS, PaaS, FaaS). When it
+comes to Kubernetes, there’s an additional configuration strategy that is provided
+natively by the platform: ConfigMaps and Secrets.
+
+== Securing the configuration server
+Before using configuration server in production, we must ensure that only authenticated and authorized parties can retrieve configuration data. 
+
+One option would be to use the OAuth2 Client credentials flow to secure the interactions between Config Service
+and applications based on an Access Token. It’s an OAuth2 flow specific for protecting service-to-service interactions.
+
+Assuming that applications will communicate over HTTPS, the HTTP Basic authentication strategy would be another viable option. When using this strategy, applications
+can be configured with the username and password via the properties exposed by Spring Cloud Config Client: spring.cloud.config.username and spring.cloud.config.password.
 == Samples
 
 * https://github.com/books-java/Learn-Microservices-with-Spring-Boot-3[Multiplication Microservices Example]

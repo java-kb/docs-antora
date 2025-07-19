@@ -1,0 +1,88 @@
+= Prometheus
+
+Like Loki, Prometheus collects and stores metrics. It even provides a GUI to visualize them and to define alarms, Grafana provides a GUI to visualize them so its better to use for that since it’s a more comprehensive tool.
+
+Metrics are stored as time-series data, containing the timestamp when they were regis-
+tered and, optionally, labels. In Prometheus, labels are key/value pairs that add more
+information to the metric being recorded. For example, a metric registering the number
+of threads used by the application could be enhanced with labels qualifying the state of
+the threads (such as blocked, waiting, or idle). Labels help aggregate and query metrics.
+ 
+Micrometer provides the concept of tags, which are equivalent to Prometheus’s labels.
+
+In Spring Boot you can leverage configuration properties to define common labels for all
+the metrics produced by an application. For example, it’s useful to add an application
+label that tags each metric with the name of the application that produces it.
+
+Unlike Loki, we don’t need a dedicated component to collect metrics from the applications. The Prometheus Server container can both collect and store metrics.
+== Running
+=== Locally
+=== Docker
+=== Docker compose
+[source,yml,attributes]
+----
+  prometheus:
+    image: quay.io/prometheus/prometheus:v2.52.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+----
+prometheus.yml
+[source,text,attributes]
+----
+global:
+  scrape_interval: 2s
+
+scrape_configs:
+  - job_name: 'edge-service'
+    scrape_interval: 2s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'edge-service:9000' ]
+  - job_name: 'catalog-service'
+    scrape_interval: 2s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'catalog-service:9001' ]
+  - job_name: 'order-service'
+    scrape_interval: 2s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'order-service:9002' ]
+  - job_name: 'dispatcher-service'
+    scrape_interval: 2s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'dispatcher-service:9003' ]
+  - job_name: 'config-service'
+    scrape_interval: 2s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'config-service:8888' ]
+----
+== Kubernates
+When running applications in Kubernetes, we can use dedicated annotations to mark
+which containers the Prometheus server should scrape and inform it about the HTTP
+endpoint and port number to call.
+[source,yml,attributes]
+----
+spec:
+  # How many Pod replicas should  be deployed
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-service
+  template:
+    metadata:
+      labels:
+        app: catalog-service
+      annotations:
+        # Signals that Prometheus should scrape containers in this Pod
+        prometheus.io/scrape: "true" <1>
+        # Identifies the HTTP endpoint that exposes Prometheus metrics
+        prometheus.io/path: /actuator/prometheus <2>
+        # Specifies the port number where the metrics endpoint is available
+        prometheus.io/port: "9001" <3>
+----

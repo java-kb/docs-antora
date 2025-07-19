@@ -1,0 +1,42 @@
+= Grafana log visualization
+
+Grafana will use a log aggregation system(such as Loki) as a data source and provide log visualization features. Grafana “allows you to query, visualize, alert on and understand” your telemetry,
+no matter where it is stored (https://grafana.com/oss/grafana).
+== Running
+=== Locally
+=== Docker
+=== Docker compose
+[source,yml,attributes]
+----
+  grafana:
+    image: grafana/grafana-oss:10.4.3
+    container_name: grafana
+    depends_on:
+      - loki
+      - prometheus
+      #- tempo
+    ports:
+      - "3000:3000"
+    environment:
+      # Username and password to access Grafana
+      - GF_SECURITY_ADMIN_USER=user
+      - GF_SECURITY_ADMIN_PASSWORD=password
+    volumes:
+      # Volumes are used to load configuration for data sources and dashboards.
+      - ./observability/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./observability/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./observability/grafana/grafana.ini:/etc/grafana/grafana.ini
+
+----
+grafana.ini
+[source,text,attributes]
+----
+[analytics]
+enabled = false
+reporting_enabled = false
+
+[users]
+default_theme = light
+
+----
+== Kubernates

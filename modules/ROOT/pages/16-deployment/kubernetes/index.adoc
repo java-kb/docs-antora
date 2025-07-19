@@ -582,3 +582,53 @@ When using Kustomize
     kustomize build k8s | kubeconform --strict -
 ----
 
+== Configuration management Tools
+How can we change the values in a ConfigMap depending on the environment? How can we change the container image version? What about Secrets and volumes? Is it possible to update the health probe’s configuration?
+
+Many tools have been introduced in the last few years to improve how we configure and deploy workloads in Kubernetes.
+
+Kustomize (https://kustomize.io) is a declarative tool that helps configure deployments for different environments via a layering approach. It produces standard
+Kubernetes manifests, and it’s built natively in the Kubernetes CLI (kubectl), so you don’t need to install anything else.
+
+Other popular options for managing deployment configuration in Kubernetes are ytt from the Carvel suite (https://carvel.dev/ytt) and Helm(https://helm.sh).
+
+Kustomize’s approach to customizing configuration is based on applying patches. It’s
+quite the opposite of how Helm works (https://helm.sh). Helm requires you to template every part of a manifest that you would like to change (resulting in non-valid
+YAML). After that, you can provide different values for those templates in each environment. If a field is not templated, you can’t customize its value. For that reason,
+it’s not rare to use Helm and Kustomize in sequence, overcoming each other’s shortcomings. Both approaches have pros and cons.
+
+Kustomize is natively available in the Kubernetes CLI, it works with valid YAML files, and it’s purely declarative. Helm is more powerful
+and can also handle complex application rollouts and upgrades that Kubernetes doesn’t support natively. On the other hand, it has a steep learning curve, its templating solution has a few drawbacks, and it’s not declarative.
+
+Another option is ytt from the Carvel suite (https://carvel.dev/ytt). It provides a superior experience, with support for both patches and templates, it works with valid YAML
+files, and its templating strategy is more robust. It takes a bit more effort to get famil-
+iar with ytt than Kustomize, but it’s worth the effort. Because it treats YAML as a first class citizen, ytt can be used to configure and customize any YAML file, even outside
+Kubernetes. Do you use GitHub Actions workflows? Ansible playbooks? Jenkins pipe-
+lines? You can use ytt in all those scenarios.
+
+== Deployment Strategies
+
+Kubernetes provides the infrastructure for implementing different types of deployment strategies. 
+
+=== rolling update strategy
+When we update our application manifests with a new release version
+and apply them to the cluster, Kubernetes performs a rolling update. This strategy consists in incrementally updating Pod instances with new ones and guarantees zero
+downtime for the user.
+
+=== blue/green deployments
+By default, Kubernetes adopts the rolling update strategy, but there are other techniques that you can employ based on the standard Kubernetes resources or you can
+rely on a tool like Knative. For example, you might want to use blue/green deployments,
+consisting of deploying the new version of the software in a second production environment. By doing that, you can test one last time that everything runs correctly.
+When the environment is ready, you move the traffic from the first (blue) to the second (green) production environment.
+
+=== canary release
+Another deployment technique is the canary release. It’s similar to the blue/green
+deployment, but the traffic from the blue to the green environment is moved gradually
+over time. The goal is to roll out the change to a small subset of users first, perform
+some verifications, and then do the same for more and more users until everyone is
+using the new version.
+
+Both blue/green deployments and canary releases provide a straightforward way to roll back changes.
+
+== References
+- chapter 5 of Continuous Delivery for Kubernetes by Mauricio Salatino, published by Manning (https://livebook.manning.com/book/continuous-delivery-for-kubernetes/chapter-5).

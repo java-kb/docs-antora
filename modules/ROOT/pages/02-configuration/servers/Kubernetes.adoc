@@ -1,0 +1,209 @@
+= Kubernetes ConfigMaps
+:figures: 02-configuration/servers/kubernetes
+
+_TL;DR: When Spring Boot applications are deployed to a Kubernetes cluster, you can
+also configure them through ConfigMaps (for non-sensitive configuration
+data) and Secrets (for sensitive configuration data)._
+
+The three strategies stated are generic enough that we can use them to configure applications for any cloud environment and service model (CaaS, PaaS, FaaS). When it
+comes to Kubernetes, there’s an additional configuration strategy that is provided
+natively by the platform: ConfigMaps and Secrets.
+
+The 15-Factor methodology recommends keeping code, configuration, and creden-
+tials always separate. Kubernetes fully embraces that principle and defines two APIs
+to handle configuration and credentials independently: ConfigMaps and Secrets.
+
+These are a very convenient way to define configuration data that depends on the
+infrastructure and platform where the application is deployed: service names (defined
+by Kubernetes Service objects), credentials and certificates for accessing other ser-
+vices running on the platform, graceful shutdown, logging, and monitoring. You
+could use ConfigMaps and Secrets to complement or completely replace what a con-
+figuration service does. Which you choose depends on the context. In any case,
+Spring Boot provides native support for all those options.
+
+if we used environment variables to pass hardcoded configuration to containers running in Kubernetes, they will lack maintainability and structure. ConfigMaps let you store configuration data in a structured, maintainable way. They can be
+version-controlled together with the rest of your Kubernetes deployment manifests
+and have the same nice properties of a dedicated configuration repository, including
+data persistence, auditing, and accountability.
+
+A ConfigMap is “an API object used to store non-confidential data in key-value
+pairs. Pods can consume ConfigMaps as environment variables, command-line arguments, or as configuration files in a volume” (https://kubernetes.io/docs/concepts/configuration/configmap).
+
+You can build a ConfigMap starting with a literal key/value pair string, with a file
+(for example, .properties or .yml), or even with a binary object. When working with Spring Boot applications, the most straightforward way to build a ConfigMap is to
+start with a property file.
+
+The values stored in a ConfigMap can be used to configure containers running in a
+few different ways:
+
+- Use a ConfigMap as a configuration data source to pass command-line argu-
+ments to the container.
+- Use a ConfigMap as a configuration data source to populate environment vari-
+ables for the container.
+- Mount a ConfigMap as a volume in the container.
+
+Passing configuration data as command-line arguments or environment
+variables to containers has its drawbacks, even if it is stored in a ConfigMap. For example, whenever you add a property to a ConfigMap, you must update the Deployment
+manifest. When a ConfigMap is changed, the Pod is not informed about it and must
+be re-created to read the new configuration. Both those issues are solved by mounting
+ConfigMaps as volumes. When a ConfigMap is mounted as a volume to a container, it generates two possible outcomes:
+
+- If the ConfigMap includes an embedded property file, mounting it as a volume
+results in the property file being created in the mounted path. Spring Boot
+automatically finds and includes any property files located in a /config folder
+either in the same root as the application executable or in a subdirectory, so it’s
+the perfect path for mounting a ConfigMap. You can also specify additional
+locations to search for property files via the spring.config.additional-loca-
+tion=<path> configuration property.
+- If the ConfigMap includes key/value pairs, mounting it as a volume results in a
+config tree being created in the mounted path. For each key/value pair, a file is created, named like the key and containing the value. Spring Boot supports
+reading configuration properties from a config tree. You can specify where the
+config tree should be loaded from via the spring.config.import=config-
+tree:<path> property.
+
+imimage::{figures}/Mounting-ConfigMaps-as-volumes-to-Spring-Boot-applications.png[ConfigMaps mounted as volumes can be consumed by Spring Boot as property files or as config trees.]
+When configuring Spring Boot applications, the first option is the most convenient,
+since it uses the same property file format used for the default configuration inside
+the application. 
+
+== Integration with Spring boot
+Spring Boot provides native and flexible support for both ConfigMaps and Secrets.
+
+create a new configmap.yml file in the k8s folder. We’ll use it to apply the following configuration, which
+will overwrite the default values included in the application.yml file packaged with the application:
+
+[source,yml,attributes]
+----
+apiVersion: v1 
+kind: ConfigMap 
+metadata:
+    name: catalog-config 
+    labels: 
+        app: catalog-service
+data: 
+    application.yml: | 
+        polar:
+            greeting: Welcome to the book catalog from a development Kubernetes environment!
+        spring:
+            datasource:
+                url: jdbc:postgresql://polar-postgres/polardb_catalog
+            security:
+                oauth2:
+                resourceserver:
+                    jwt:
+                    issuer-uri: http://polar-keycloak/realms/PolarBookshop
+----
+
+apply
+
+kubectl apply -f k8s/configmap.yml
+
+verify that the ConfigMap has been created correctly with this command:
+
+kubectl get cm -l app=catalog-service
+
+go to the deployment.yml
+file in the k8s folder. We need to apply three changes:
+
+- Remove the environment variables for the values we declared in the ConfigMap.
+- Declare a volume generated from the catalog-config ConfigMap.
+- Specify a volume mount for the catalog-service container to load the Config-
+Map as an application.yml file from /workspace/config. The /workspace folder
+is created and used by Cloud Native Buildpacks to host the application execut-
+ables, so Spring Boot will automatically look for a /config folder in the same
+path and load any property files contained within. There’s no need to configure
+additional locations.
+[source,yml,attributes]
+----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-service
+  labels:
+    app: catalog-service
+spec:
+  # How many Pod replicas should  be deployed
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog-service
+  template:
+    metadata:
+      labels:
+        app: catalog-service
+    spec:
+      containers:
+        - name: catalog-service
+          image: catalog-service
+          env:
+            - name: BPL_JVM_THREAD_COUNT
+              value: "50"
+            - name: SPRING_PROFILES_ACTIVE
+              value: testdata          
+            # moved to ConfigMap
+            #- name: SPRING_CLOUD_CONFIG_URI
+            #   value: http://config#-service
+            # - name: SPRING_DATASOURCE_URL
+          volumeMounts:
+            # Mounts the ConfigMap in the container as a volume
+            - name: catalog-config-volume <1>
+              # Spring Boot will automatically find and include property files from this folder.
+              mountPath: /workspace/config <2>
+      volumes:
+        - name: catalog-config-volume <3>
+          configMap:
+            # The ConfigMap from which to create a volume
+            name: catalog-config <4>
+----
+deploy the application in the local cluster by applying the Deployment and Service manifests:
+
+``kubectl apply -f k8s/deployment.yml -f k8s/service.yml``
+
+verify when Catalog Service is available and ready to accept requests with this command:
+
+``kubectl get deploy -l app=catalog-service``
+
+forward traffic from your local machine to the Kubernetes cluster by running the following command:
+
+``kubectl port-forward service/catalog-service 9001:80``
+
+verify that the polar.greeting value specified in the ConfigMap is used instead of the default one:
+
+``http :9001/``
+
+==  Refreshing configuration at runtime with Spring Cloud Kubernetes
+When using an external configuration service, you’ll probably want a mechanism to
+reload the applications when configuration changes. For example, when using Spring
+Cloud Config, we can implement such a mechanism with Spring Cloud Bus.
+
+In Kubernetes, we need a different approach. When you update a ConfigMap or a
+Secret, Kubernetes takes care of providing containers with the new versions when
+they’re mounted as volumes. If you use environment variables, they will not be
+replaced with the new values. That’s why we usually prefer the volume solution.
+
+The updated ConfigMaps or Secrets are provided to the Pod when they’re mounted
+as volumes, but it’s up to the specific application to refresh the configuration. By
+default, Spring Boot applications read configuration data only at startup time. There
+are three main options for refreshing configuration when it’s provided through Config-
+Maps and Secrets:
+
+=== Rolling restart
+Changing a ConfigMap or a Secret can be followed by a rolling
+restart of all the Pods affected, making the applications reload all the configura-
+tion data. With this option, Kubernetes Pods would remain immutable.
+
+We can rely on Kustomize to trigger a
+restart of the applications whenever a new change is applied to a ConfigMap or a
+Secret.
+=== Spring Cloud Kubernetes Configuration Watcher
+Spring Cloud Kubernetes pro-
+vides a Kubernetes controller called Configuration Watcher that monitors Config-
+Maps and Secrets mounted as volumes to Spring Boot applications. Leveraging
+the Spring Boot Actuator’s /actuator/refresh endpoint or Spring Cloud Bus,
+when any of the ConfigMaps or Secrets is updated, the Configuration Watcher
+will trigger a configuration refresh for the affected applications.
+- Spring Cloud Kubernetes Config Server—Spring Cloud Kubernetes provides a con-
+figuration server with support for using ConfigMaps and Secrets as one of the
+configuration data source options for Spring Cloud Config. You could use such
+a server to load configuration from both a Git repository and Kubernetes objects,
+with the possibility of using the same configuration refresh mechanism for both.

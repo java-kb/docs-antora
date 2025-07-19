@@ -1,6 +1,20 @@
 = Monitoring
 :figures: 14-monitoring
 
+To properly monitor, manage, and troubleshoot an application running in production, we need to be able to answer questions like “how much CPU and RAM is the
+application consuming?”, “how many threads are used over time?”, and “what’s the
+rate of failing requests?” Event logs and health probes can’t help us answer those questions. We need something more. We need more data.
+
+Metrics are numeric data about the application, measured and aggregated in
+regular time intervals. We use metrics to track the occurrence of an event (such as
+an HTTP request being received), count items (such as the number of allocated
+JVM threads), measure the time taken to perform a task (such as the latency of a
+database query), or get the current value of a resource (such as current CPU and
+RAM consumption). This is all valuable information for understanding why an
+application behaves in a certain way. You can monitor metrics and set alerts or notifications for them.
+
+Monitoring involves checking the telemetry available for the application and defining alerts for known failure states. 
+
 Add a service, which would gather statistics about individual operations. Aggregate metrics in centralized metrics service, which provides reporting and alerting. There are two models for aggregating metrics:
 
 * push: the service pushes metrics to the metrics service

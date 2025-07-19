@@ -1,2 +1,11 @@
 = Logging Servers
 :figures: 13-logging/servers
+
+There are different ways to implement logging depending on your budget. Tools like ELK (Elastic Logstash and Kibana) or CloudWatch from AWS are alternatives to having all your application’s logs of the instances in one place. 
+
+== On premise
+== Cloud providers
+There are plenty of options for managing logs in the cloud. Cloud providers have
+their own offerings, like Azure Monitor Logs and Google Cloud Logging. There are
+also many enterprise solutions available on the market, such as Honeycomb, Humio,
+New Relic, Datadog, and Elastic.

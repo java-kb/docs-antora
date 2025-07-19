@@ -1,0 +1,36 @@
+= Managing secrets with Spring Cloud Config
+
+_TL;DR: Spring Cloud Config offers encryption and decryption features for handling
+secrets safely in the configuration repository, using either symmetric or asym-
+metric keys._
+
+The Spring Cloud Config project is well-equipped with features to handle configuration for cloud native applications, including secrets management. The main goal is
+to include secrets in the property files and put them under version control, which can
+only be done if they are encrypted.
+
+Spring Cloud Config Server supports encryption and decryption and exposes two
+dedicated endpoints: /encrypt and /decrypt. Encryption can be based on a symmetric key or asymmetric key pair.
+
+When using a symmetric key, Spring Cloud Config Server decrypts secrets locally
+and sends them decrypted to the client applications. In production, all communications between applications will happen over HTTPS, so the response sent from Config
+Service will be encrypted even if the configuration property is not, making this
+approach secure enough for real-world usage.
+
+You also have the option to send property values encrypted and let the applications themselves decrypt them, but that will require you to configure the symmetric
+key for all applications. You should also consider that decryption is not a cheap operation to perform.
+
+Spring Cloud Config also supports encryption and decryption through asymmetric
+keys. This option provides more robust security than the symmetric alternative but it
+also increases complexity and maintenance costs due to key management tasks. In
+that case, you might want to consider relying on a dedicated secrets management solu-
+tion. For example, you can use one of those offered by cloud providers and rely on the
+Spring Boot integration implemented by Spring Cloud, such as Azure Key Vault
+(Spring Cloud Azure), AWS Parameter Store or AWS Secrets Manager (Spring Cloud
+AWS), or Google Cloud Secret Manager (Spring Cloud GCP).
+
+== Examples
+// TODO Add Examples for Managing secrets with Spring Cloud Config
+
+== Samples
+
+// TODO Add Samples for Managing secrets with Spring Cloud Config

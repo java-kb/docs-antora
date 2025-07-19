@@ -79,6 +79,16 @@ include('../../../../catalog-service/Tiltfile')
 update_settings(max_parallel_updates=1)
 ----
 
+== Using Tilt with Kustomization
+Tilt supports Kustomize, so we can configure it to deploy applications via a Kustomization resource rather than via plain Kubernetes manifests. 
+
+update the Tiltfile in your service project as follows.
+[source,python,attributes]
+----
+# Deploy
+k8s_yaml(kustomize('k8s'))
+----
+
 == Refreences
 * https://tilt.dev/
 * https://paketo.io/docs/howto/java/#using-tilt-with-paketo-buildpacks

@@ -421,13 +421,12 @@ ServerLogoutSuccessHandler class. You might specify a direct URL, but that will 
 work well in a cloud environment due to many variables such as hostnames, service names, and protocols (http vs. https). The Spring Security team knew that, and they
 added support for placeholders that are resolved dynamically at runtime. Instead of
 hardcoding a URL value, you can use the \{baseUrl\} placeholder. When you run Edge
-Service locally, the placeholder will be resolved to http:/ /localhost:9000. If you ran
+Service locally, the placeholder will be resolved to http://localhost:9000. If you ran
 it in the cloud behind a proxy with TLS termination and accessible through the DNS
-name polarbookshop.com, it would automatically be replaced with https:/ /polar-
-bookshop.com.
+name polarbookshop.com, it would automatically be replaced with https://polarbookshop.com.
 
 However, the Client configuration in identity provider requires an exact URL. That’s why
-we added http:/ /localhost:9000 to the list of valid redirect URLs when we regis-
+we added http://localhost:9000 to the list of valid redirect URLs when we regis-
 tered it in identity provider . In production you’ll have to update the list of valid
 redirect URLs in identity provider to match the actual URLs used there.
 

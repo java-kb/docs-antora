@@ -10,6 +10,9 @@ endpoints to access different data about your application, like the configured l
 HTTP traces, audit events, and so on. It can even open a management endpoint that
 allows you to shut down the application.
 
+For Spring Boot applications, you can leverage the Actuator library to expose
+information about their health through a /actuator/health HTTP endpoint, including details about the application’s status and the components in use, like databases, event brokers, and config servers.
+
 Actuator endpoints can be enabled or disabled independently, and they're available
 not only via web interface but also through Java Management eXtensions (JMX). The default configuration
 exposes only two endpoints:
@@ -24,11 +27,121 @@ The health endpoint is the
 one we're interested in for now. It outputs the status of your application, and to resolve
 it, it uses health indicators (https://docs.spring.io/spring-boot/docs/current/
 reference/html/actuator.html#actuator.endpoints.health).
+
+Spring Boot Actuator is a useful library, providing many endpoints for monitoring
+and managing Spring Boot applications. Such endpoints can be exposed through
+HTTP or JMX, but either way we must protect them from unauthorized access. We’ll
+limit ourselves to using the HTTP endpoints, so we can use Spring Security to define
+access policies like those for any other endpoint we’ve worked with so far.
+
+Spring Boot Actuator provides many endpoints to make your applications production-ready. the following table lists some of the most useful management and monitoring endpoints implemented by Actuator:
+[cols="2,5"]
+|===
+| ID | Description
+
+| `auditevents`
+| Exposes audit events information for the current application.
+  Requires an javadoc:org.springframework.boot.actuate.audit.AuditEventRepository[] bean.
+
+| `beans`
+| Displays a complete list of all the Spring beans in your application.
+
+| `caches`
+| Exposes available caches.
+
+| `conditions`
+| Shows the conditions that were evaluated on configuration and auto-configuration classes and the reasons why they did or did not match.
+
+| `configprops`
+| Displays a collated list of all javadoc:org.springframework.boot.context.properties.ConfigurationProperties[format=annotation].
+Subject to xref:actuator/endpoints.adoc#actuator.endpoints.sanitization[sanitization].
+
+| `env`
+| Exposes properties from Spring's javadoc:org.springframework.core.env.ConfigurableEnvironment[].
+Subject to xref:actuator/endpoints.adoc#actuator.endpoints.sanitization[sanitization].
+
+| `flyway`
+| Shows any Flyway database migrations that have been applied.
+  Requires one or more javadoc:org.flywaydb.core.Flyway[] beans.
+
+| `health`
+| Shows application health information.
+
+| `httpexchanges`
+| Displays HTTP exchange information (by default, the last 100 HTTP request-response exchanges).
+  Requires an javadoc:org.springframework.boot.actuate.web.exchanges.HttpExchangeRepository[] bean.
+
+| `info`
+| Displays arbitrary application info.
+
+| `integrationgraph`
+| Shows the Spring Integration graph.
+  Requires a dependency on `spring-integration-core`.
+
+| `loggers`
+| Shows and modifies the configuration of loggers in the application.
+
+| `liquibase`
+| Shows any Liquibase database migrations that have been applied.
+  Requires one or more javadoc:{url-liquibase-javadoc}/liquibase.Liquibase[] beans.
+
+| `metrics`
+| Shows "`metrics`" information for the current application to diagnose the metrics the application has recorded.
+
+| `mappings`
+| Displays a collated list of all javadoc:org.springframework.web.bind.annotation.RequestMapping[format=annotation] paths.
+
+|`quartz`
+|Shows information about Quartz Scheduler jobs.
+Subject to xref:actuator/endpoints.adoc#actuator.endpoints.sanitization[sanitization].
+
+| `scheduledtasks`
+| Displays the scheduled tasks in your application.
+
+| `sessions`
+| Allows retrieval and deletion of user sessions from a Spring Session-backed session store.
+  Requires a servlet-based web application that uses Spring Session.
+
+| `shutdown`
+| Lets the application be gracefully shutdown.
+  Only works when using jar packaging.
+  Disabled by default.
+
+| `startup`
+| Shows the xref:features/spring-application.adoc#features.spring-application.startup-tracking[startup steps data] collected by the javadoc:org.springframework.core.metrics.ApplicationStartup[].
+  Requires the javadoc:org.springframework.boot.SpringApplication[] to be configured with a javadoc:org.springframework.boot.context.metrics.buffering.BufferingApplicationStartup[].
+
+| `threaddump`
+| Performs a thread dump.
+|===
+
+If your application is a web application (Spring MVC, Spring WebFlux, or Jersey), you can use the following additional endpoints:
+
+[cols="2,5"]
+|===
+| ID | Description
+
+| `heapdump`
+| Returns a heap dump file.
+  On a HotSpot JVM, an `HPROF`-format file is returned.
+  On an OpenJ9 JVM, a `PHD`-format file is returned.
+
+| `logfile`
+| Returns the contents of the logfile (if the `logging.file.name` or the `logging.file.path` property has been set).
+  Supports the use of the HTTP `Range` header to retrieve part of the log file's content.
+
+| `prometheus`
+| Exposes metrics in a format that can be scraped by a Prometheus server.
+  Requires a dependency on `micrometer-registry-prometheus`.
+|===
 +
 == Usage
 +
 To add the actuator to a Maven-based project, add the following starter dependency:
-
+[tabs]
+====
+Maven::
++
 [,xml]
 ----
 <dependencies>
@@ -39,5 +152,331 @@ To add the actuator to a Maven-based project, add the following starter dependen
 </dependencies>
 ----
 
-The default configuration exposes the health and info web endpoints on the
-/actuator context.
+Gradle::
++
+[source, gradle]
+----
+dependencies {
+ implementation 'org.springframework.boot:spring-boot-starter-actuator'
+}
+----
+====
+
+The default configuration exposes the health and info web endpoints on the /actuator context. you can enable new HTTP
+endpoints to be implemented by Actuator through the `management.endpoints.web.exposure.include property`
+
+open the application.yml, and configure Actuator to expose the health HTTP endpoint
+[source,yml,attributes]
+----
+management:
+  endpoints:
+    web:
+      exposure:
+        #Exposes the /actuator/refresh endpoint through HTTP
+        include: health
+----
+By default, Spring Boot Actuator only returns the overall health status. Through application properties, however, you can make it provide more specific information regarding several components used by the application. To better protect access to this kind
+of information, you can enable showing health details and components always
+(always) or only when the request is authorized (when_authorized).
+[source,yml,attributes]
+----
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      # Always shows details about the application’s health
+      show-details: always
+      # Always shows information about the components used by the application
+      show-components: always
+----
+The generic health endpoint provided by Spring Boot Actuator is useful for monitor-
+ing and configuring alerts or notifications, since it contains details regarding both the
+application and the integration with its backing services. 
+
+== Monitoring Flyway migrations in Spring Boot
+Flyway keeps the history of all the migrations run on the application in a dedicated table in the database. It would be convenient to extract such information and
+monitor it, so you could be alerted if any migration should fail.
+
+Spring Boot Actuator provides a dedicated endpoint (/actuator/flyway) to display information about all the migrations run by Flyway, including their status, date, type, and version.
+[source,yml,attributes]
+----
+management:
+  endpoints:
+    web:
+      exposure:
+        #Exposes the /actuator/refresh endpoint through HTTP
+        include: flyway, health, prometheus
+----
+
+call the Flyway endpoint:
+
+http :9001/actuator/flyway
+== Exposing application information
+Among all the endpoints implemented by Spring Boot Actuator, /actuator/info is
+the most peculiar one, since it doesn’t return any data. Instead, it’s up to you to define
+what data you consider useful.
+
+One way to contribute data for the endpoint is through configuration properties.
+[source,yml,attributes]
+----
+# Any property starting with the “info.” prefix will be returned by the info endpoint.
+info:
+  system: Polar Bookshop 
+management:
+  endpoints:
+    web:
+      exposure:
+        # Adds info to the list of Actuator endpoints to be exposed over HTTP
+        include: flyway, health, info, prometheus 
+  info:
+  env:
+    # Enables environmental info fetched from “info.” properties
+    enabled: true
+----
+You can also include information that’s generated automatically by Gradle or Maven
+regarding the application build or the last Git commit.
+
+to add details about the application’s build configuration. go to the build.gradle file and configure the springBoot task to generate build information that will be parsed into a BuildProperties object and included in the result from
+the info endpoint.
+[tabs]
+====
+Maven::
++
+[source, xml]
+----
+<build>
+	<plugins>
+		<plugin>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-maven-plugin</artifactId>
+			<version>3.5.3</version>
+			<executions>
+				<execution>
+					<goals>
+						<goal>build-info</goal>
+					</goals>
+				</execution>
+			</executions>
+		</plugin>
+	</plugins>
+</build>
+----
+
+Gradle::
++
+[source, gradle]
+----
+springBoot {
+  buildInfo() 
+}
+----
+====
+Then invoke the info endpoint:
+
+http :9001/actuator/info
+
+You can expose additional information about the operating system and the Java version in use. Both can be enabled via configuration properties.
+[source,yml,attributes]
+----
+management:
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+----
+Then invoke the info endpoint:
+
+http :9001/actuator/info
+== Generating and analyzing heap dumps
+Among the most annoying errors to debug in Java applications, memory leaks are
+probably the first that come to mind. Monitoring tools should alert you when a mem-
+ory leak pattern is detected, usually inferred if the JVM heap usage metric keeps
+increasing over time. If you don’t catch the memory leak in advance, the application
+will throw the dreaded OutOfMemoryError error and crash.
+
+Once you suspect an application might suffer from a memory leak, you must find
+out which objects are held in memory and block the garbage collection. There are different ways to proceed with finding problematic objects. For example, you could
+enable the Java Flight Recorder or attach a profiler like jProfiler to the running application. 
+
+Another way is to take a snapshot of all the Java objects in the JVM heap memory (a heap dump), and analyze it with a specialized tool to find the root cause of the memory leak. Spring Boot Actuator provides a convenient endpoint (/actuator/heapdump) that you can call to generate a heap dump.
+
+[source,yml,attributes]
+----
+# Any property starting with the “info.” prefix will be returned by the info endpoint.
+info:
+  system: Polar Bookshop 
+management:
+  endpoints:
+    web:
+      exposure:
+        # Adds info to the list of Actuator endpoints to be exposed over HTTP
+        include: heapdump
+----
+invoke the heapdump endpoint:
+
+http --download :9001/actuator/heapdump
+
+The command will save a heapdump.bin file in the current directory. You can then
+open it in a dedicated tool for heap analysis like VisualVM (https://visualvm.github.io)
+or JDK Mission Control (https://adoptopenjdk.net/jmc.html).
+== Configuring health probes in Spring Boot
+Besides showing detailed information about the application’s health, Spring Boot
+Actuator automatically detects when the application runs on a Kubernetes environment and enables the health probes to return liveness (/actuator/health/liveness) and readiness (/actuator/health/readiness) states:
+
+* Liveness state—When an application is not live, this means it has entered a faulty
+internal state from which it won’t recover. By default, Kubernetes will try restarting it to fix the problem.
+* Readiness state—When an application is not ready, this means it can’t process
+new requests, either because it’s still initializing all its components (during the
+startup phase) or because it’s overloaded. Kubernetes will stop forwarding
+requests to that instance until it’s ready to accept new requests again.
+
+Kubernetes uses liveness and readiness probes to accomplish its self-healing features in case of failures.
+
+To extend support for the health probes in any environment, you can configure
+Spring Boot Actuator through the dedicated properties. 
+
+[source,yml,attributes]
+----
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      # Always shows details about the application’s health
+      show-details: always
+      # Always shows information about the components used by the application
+      show-components: always
+      # Enables support for the health probes
+      probes: <1>
+        enabled: true
+
+----
+The liveness state of a Spring Boot application indicates whether it’s in a correct or
+broken internal state. If the Spring application context has started successfully, the
+internal state is valid. It doesn’t depend on any external components. Otherwise, it
+will cause cascading failures, since Kubernetes will try to restart the broken instances.
+
+The readiness state of a Spring Boot application indicates whether it’s ready to accept
+traffic and process new requests. During the startup phase or graceful shutdown, the
+application is not ready and will refuse any requests. It might also become temporarily
+not ready if, at some point, it’s overloaded. When it’s not ready, Kubernetes will not
+send any traffic to the application instance.
+
+By default, the readiness probe in Spring Boot doesn’t depend on any external com-
+ponents. You can decide whether any external systems should be included in the read-
+iness probe.
+
+For example, If a Catalog Service is an external system for Order Service. Should you
+include it in the readiness probe? Since Order Service adopts resilience patterns to
+deal with the scenario where Catalog Service is unavailable, you should keep Catalog
+Service out of the readiness probe. When it’s not available, Order Service will keep
+working correctly, but with graceful functionality degradation.
+ 
+Let’s consider another example. Edge Service depends on Redis for storing and
+retrieving web session data. Should you include it in the readiness probe? Since Edge
+Service can’t process any new requests without accessing Redis, including Redis in the
+readiness probe might be a good idea. Spring Boot Actuator will consider both the
+internal state of the application and the integration with Redis to determine whether
+the application is ready to accept new requests.
+[source,yml,attributes]
+----
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      # Always shows details about the application’s health
+      show-details: always
+      # Always shows information about the components used by the application
+      show-components: always
+      # Enables support for the health probes
+      probes:
+        enabled: true
+      group:
+	  # The readiness probe will combine the application’s readiness state and Redis’s availability. 
+        readiness: <1>
+          include: readinessState,redis
+----
+
+To check for health, liveness state and readiness state
+
+[source,console,attributes]
+----
+http :9001/actuator/health
+
+http :9001/actuator/health/liveness
+
+http :9001/actuator/health/readiness
+----
+== Configuring Liveness And Readiness Probes In Kubernetes
+Kubernetes relies on the health probes (liveness and readiness) to accomplish its tasks
+as a container orchestrator. For example, when the desired state of an application is to
+have three replicas, Kubernetes ensures there are always three application instances
+running. If any of them doesn’t return a 200 response from the liveness probe, Kuber-
+netes will restart it. When starting or upgrading an application instance, we’d like the
+process to happen without downtime for the user. Therefore, Kubernetes will not enable an instance in the load balancer until it’s ready to accept new requests (when
+Kubernetes gets a 200 response from the readiness probe).
+
+Since liveness and readiness information is application-specific, Kubernetes
+needs the application itself to declare how to retrieve that information. Relying on
+Actuator, Spring Boot applications provide liveness and readiness probes as HTTP
+endpoints.
+[source,yml,attributes]
+----
+          # Configuration for the liveness probe
+          livenessProbe:
+            # Uses an HTTP GET request to get the liveness state
+            httpGet:
+              # The endpoint to call for the liveness state
+              path: /actuator/health/liveness
+              # The port to use to fetch the liveness state
+              port: 9001
+            # An initial delay before starting checking the liveness state
+            initialDelaySeconds: 10
+            # The frequency for checking the liveness state
+            periodSeconds: 5
+          # Configuration for the readiness probe
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 9001
+            initialDelaySeconds: 5
+            periodSeconds: 15
+----
+Both probes can be configured so that Kubernetes will start using them after an initial
+delay (initialDelaySeconds), and you can also define the frequency with which to
+invoke them (periodSeconds). The initial delay should consider that the application
+will take a few seconds to start, and it will depend on the available computational
+resources. The polling period should not be too long, to reduce the time between the
+application instance entering a faulty state and the platform taking action to self-heal.
+
+== protecting the Spring Boot Actuator endpoints
+There are a few viable solutions for protecting the Spring Boot Actuator endpoints.
+
+For example, you could enable HTTP Basic authentication just for the Actuator endpoints, while all the others will keep using OpenID Connect and OAuth2.
+
+we can keep the Actuator endpoints unauthenticated from inside the Kubernetes cluster and block any access to them from the outside.
+In a real production scenario, it's recommended protecting access to the Actuator endpoints even from within the cluster.
+
+[source,java,attributes]
+----
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+                .authorizeHttpRequests(authorize -> authorize
+                        // Allows unauthenticated access to any Spring Boot Actuator endpoint
+                        .requestMatchers("/actuator/**").permitAll()
+						)
+                .build();
+    }
+----

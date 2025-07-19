@@ -1,0 +1,105 @@
+= Data Access Object (DAO) Design Patterns
+:figures: 11-development/00-software-development/design-patterns/04-persistence-design-patterns
+
+A data access object (DAO) pattern persists and retrieves information for databases. It 
+allows developers to isolate the business layer for the persistence layer, which in most 
+cases is associated with a database but could be anything that has the responsibility of 
+access to the information.
+
+This pattern hides the complexity of performing all the CRUD operations into a 
+database so you can change or introduce modifications without significantly affecting 
+all the rest of the layers. It is not common in Spring Data because most developers use 
+the repository pattern. But some cases related to the performance or operations are not 
+supported for that pattern, so the DAO patterns appear to rescue us from the problem.
+
+image::{figures}/DAO-interface-with-the-implementation.png[how the different interfaces/classes interact to access the database following this pattern.]
+
+When they start to use this pattern, most developers create a generic interface with 
+all the possible methods and create one class to access a specific table and reduce the 
+number of files connected with access to a database.
+[source,java,attributes]
+----
+public class City {
+	
+	private String code;
+	private String name;
+	
+	public City(String code, String name) {
+		this.code = code;
+		this.name = name;
+	}
+
+	public String getCode() {
+		return code;
+	}
+	
+	public void setCode(String code) {
+		this.code = code;
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+}
+----
+
+[source,java,attributes]
+----
+import java.util.List;
+import java.util.Optional;
+
+public interface CommonDao<T> {
+    
+    Optional<T> get(long id);
+
+    List<T> getAll();
+    
+    void save(T t);
+    
+    void delete(T t);
+}
+----
+the implementation is more or less 
+similar in all cases. The difference relates to the name of the table and the queries to 
+access a database, but all the DAO respects the same format.
+[source,java,attributes]
+----
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import com.apress.pattern.model.City;
+
+public class InMemoryCityDao implements CommonDao<City> {
+
+	private List<City> cities = new ArrayList<>();
+	
+    public CityDao() {
+    	cities.add(new City("BUE", "Buenos Aires"));
+    	cities.add(new City("SCL", "Santiago de Chile"));
+    }
+
+	public Optional<City> get(long id) {
+		return Optional.ofNullable(cities.get((int) id));
+	}
+
+	public List<City> getAll() {
+		return cities;
+	}
+
+	public void save(City city) {
+		cities.add(city);
+		
+	}
+
+	public void delete(City city) {
+		cities.remove(city);
+	}
+	
+}
+----

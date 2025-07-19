@@ -1,6 +1,13 @@
 = Singleton
 :figures: 11-development/00-software-development/design-patterns/creational/singleton
 
+A singleton, conceptually, is very simple to grok; there should only ever be one 
+instance of it running. It is good for many use cases: logging, caching, configuration 
+settings, or a database connection manager.
+
+A singleton, conceptually, is very simple to grok; there should only ever be one 
+instance of it running. It is good for many use cases: logging, caching, configuration 
+settings, or a database connection manager.
 == Examples
 
 https://github.com/java-kb/design_patterns

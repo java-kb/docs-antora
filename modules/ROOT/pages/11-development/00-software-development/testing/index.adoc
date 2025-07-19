@@ -4,7 +4,17 @@
 One way of classifying software tests is defined by the Agile Testing Quadrants model originally introduced by Brian Marick, and later described and expanded on by
 Lisa Crispin and Janet Gregory in their books Agile Testing (Addison-Wesley Professional, 2008), More Agile Testing (Addison-Wesley Professional, 2014), and Agile Testing Condensed (Library and Archives Canada, 2019). Their model was also embraced by Jez Humble and Dave Farley in Continuous Delivery (Addison-Wesley Professional,
 2010). The quadrants classify software tests based on whether they are technology or business-facing and whether they support development teams or are used to critique the product.
+
 image::{figures}/image.png[The Agile Testing Quadrants model is helpful in planning a software testing strategy.]
 
-Following continuous delivery practices, we should aim at achieving fully automated
-tests in three out of four quadrants, as shown in figure
+Following continuous delivery practices, we should aim at achieving fully automated tests in three out of four quadrants, as shown in figure
+
+== functional acceptance tests 
+The functional acceptance tests are business-facing tests that support development
+teams, ensuring they are building the right software. They take on the user perspective and
+are usually implemented via executable specifications using a high-level domain-specific lan-
+guage (DSL), which is then translated into a lower-level programming language. For
+example, you could use Cucumber (https://cucumber.io) to write scenarios like “browse
+the book catalog” or “place a book order” in human-friendly plain text. Those scenarios
+can then be executed and verified using a programming language like Java.
+

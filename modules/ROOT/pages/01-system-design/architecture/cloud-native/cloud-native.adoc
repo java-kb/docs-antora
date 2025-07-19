@@ -152,8 +152,21 @@ its services without the user noticing that there has been a failure. In contras
 worst-case scenario, it should still work but with graceful degradation.
 
 === *Observability*
+observability is one of the properties of cloud
+native applications. Observability is a measure of how well we can infer the internal
+state of an application from its outputs.
 
 Observability is about inferring the internal state of an application from its external outputs. Manageability is about changing the internal state and outputs via external inputs. In both cases, the application artifact is never changed. It's immutable.
+
+Monitoring involves checking the telemetry available for the application and
+defining alerts for known failure states. Observability goes beyond that and aims at
+reaching a state where we can ask arbitrary questions about the system without knowing the question in advance. The product team should ensure their applications
+expose relevant information; and the platform team should provide an infrastructure
+for consuming that information and asking questions about their operations.
+
+the 15-Factor methodology, which contains two factors that help build observable applications. Factor 14 suggests treating your applications as space probes and reasoning about what
+kind of telemetry you’d need to monitor and control your applications remotely, such
+as logs, metrics, and traces. Factor 6 recommends treating logs as a stream of events rather than dealing with log files.
 
  ** Monitoring--Monitoring is about measuring specific aspects of an application to get information on its overall health and identify failures.
 +

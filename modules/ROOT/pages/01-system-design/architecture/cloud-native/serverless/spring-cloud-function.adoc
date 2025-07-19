@@ -1,0 +1,244 @@
+= Building serverless applications with Spring Cloud Function
+
+Using Spring Cloud Function to implement the business logic as functions, is an excellent choice, since serverless applications are event-driven.
+
+Spring Cloud Function is very flexible. You can integrate it trans-
+parently with external messaging systems like RabbitMQ and Kafka, which is ca handy feature for
+building serverless applications that are triggered by messages. 
+
+Spring Cloud Function integrates with several communication channels. You can expose functions through exchanges and queues leveraging Spring
+Cloud Stream and you can expose them as HTTP endpoints. The framework also supports RSocket, which is a binary reactive protocol, and CloudEvents, a specification
+standardizing the format and distribution of events in cloud architectures (https://
+cloudevents.io).
+
+Spring Cloud Function lets you expose functions as endpoints triggered by HTTP requests and CloudEvents, which is a specification standardizing the format and distribution of events in cloud architectures.
+
+== Setup Dependencies
+[tabs]
+====
+Maven::
++
+[source, xml]
+----
+----
+
+Gradle::
++
+[source, gradle]
+----
+plugins {
+	id 'org.springframework.boot' version '3.3.11'
+	id 'io.spring.dependency-management' version '1.1.5'
+	id 'java'
+	id 'org.graalvm.buildtools.native' version '0.10.2' <1>
+}
+
+group = 'com.polarbookshop'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17'
+
+description = 'Provides quotes from the books in the library.'
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	set('springCloudVersion', "2023.0.2")
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'org.springframework.cloud:spring-cloud-starter-function-web' <2>
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'io.projectreactor:reactor-test'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	}
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+tasks.named('bootBuildImage') { <3>
+	builder = 'docker.io/paketobuildpacks/builder-jammy-tiny'
+	environment = ['BP_NATIVE_IMAGE': 'true']
+	imageName = "${project.name}"
+
+	docker {
+		publishRegistry {
+			username = project.findProperty("registryUsername")
+			password = project.findProperty("registryToken")
+			url = project.findProperty("registryUrl")
+		}
+	}
+}
+
+----
+====
+<1> Spring Native supports compiling Spring applications to native executables
+using the GraalVM native-image compiler.
+<2> Spring Cloud Function provides the necessary libraries to support business logic
+implementation via functions, export them via several communication channels, and integrate them with serverless platforms.
+<3> Enables the GraalVM support and produces a containerized native image
+
+== Develop
+Spring Cloud Function enhances standard Java functions when they are registered as beans.
+[tabs]
+====
+QuoteService.java::
++
+[source, xml]
+----
+import java.util.List;
+import java.util.Random;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class QuoteService {
+
+	private static final Random random = new Random();
+	private static final List<Quote> quotes = List.of(
+			new Quote("Content A", "Abigail", Genre.ADVENTURE),
+			new Quote("Content B", "Beatrix", Genre.ADVENTURE),
+			new Quote("Content C", "Casper", Genre.FANTASY),
+			new Quote("Content D", "Dobby", Genre.FANTASY),
+			new Quote("Content E", "Eileen", Genre.SCIENCE_FICTION),
+			new Quote("Content F", "Flora", Genre.SCIENCE_FICTION)
+	);
+
+	public Flux<Quote> getAllQuotes() {
+		return Flux.fromIterable(quotes);
+	}
+
+	public Mono<Quote> getRandomQuote() {
+		return Mono.just(quotes.get(random.nextInt(quotes.size() - 1)));
+	}
+
+	public Mono<Quote> getRandomQuoteByGenre(Genre genre) {
+		var quotesForGenre = quotes.stream()
+				.filter(q -> q.genre().equals(genre))
+				.toList();
+		return Mono.just(quotesForGenre.get(random.nextInt(quotesForGenre.size() - 1)));
+	}
+
+}
+----
+
+QuoteFunctions.java::
++
+[source, gradle]
+----
+package com.polarbookshop.quotefunction.functions;
+
+import java.time.Duration;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import com.polarbookshop.quotefunction.domain.Genre;
+import com.polarbookshop.quotefunction.domain.Quote;
+import com.polarbookshop.quotefunction.domain.QuoteService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class QuoteFunctions {
+
+	private static final Logger log = LoggerFactory.getLogger(QuoteFunctions.class);
+
+	// A supplier producing all the quotes
+	@Bean
+	Supplier<Flux<Quote>> allQuotes(QuoteService quoteService) {
+		return () -> {
+			log.info("Getting all quotes");
+			// Quotes are streamed one at a time with a 1-second pause between them.
+			return quoteService.getAllQuotes()
+					.delaySequence(Duration.ofSeconds(1));
+		};
+	}
+
+	// A supplier producing a random quote
+	@Bean
+	Supplier<Mono<Quote>> randomQuote(QuoteService quoteService) {
+		return () -> {
+			log.info("Getting random quote");
+			return quoteService.getRandomQuote();
+		};
+	}
+
+	@Bean
+	Function<Mono<Genre>, Mono<Quote>> genreQuote(QuoteService quoteService) {
+		return mono -> mono.flatMap(genre -> {
+			log.info("Getting quote for type {}", genre);
+			return quoteService.getRandomQuoteByGenre(genre);
+		});
+	}
+
+	// A function logging the quote received as the input
+	@Bean
+	Consumer<Quote> logQuote() {
+		return quote -> log.info("Quote: '{}' by {}", quote.content(), quote.author());
+	}
+
+}
+----
+====
+Spring Cloud Function will automatically expose all the registered functions as HTTP
+endpoints when the Spring web dependencies are on the classpath. Each endpoint
+uses the same name as the function. In general, suppliers can be invoked through GET
+requests and functions and consumers as POST requests.
+
+When only one function is registered as a bean, Spring Cloud Function will automatically
+expose it through the root endpoint. In the case of multiple functions, you can choose
+the function through the spring.cloud.function.definition configuration property.
+
+For example, we could expose the allQuotes function through the root endpoint.
+[source,language,attributes]
+----
+spring:
+  application:
+    name: quote-function
+  cloud:
+    function:
+      definition: allQuotes <1>
+----
+
+you can leverage the
+streaming capabilities of Project Reactor and ask the application to return the response data as they become available. 
+
+http :9102 Accept:text/event-stream --stream
+
+curl -H 'Accept:text/event-stream' localhost:9102
+
+you can build a pipeline by combining functions. When functions are exposed as HTTP endpoints, you can use the comma (,) character to compose functions on the fly. For example, you could combine the genreQuote function with logQuote as follows:
+
+echo 'FANTASY' | http :9102/genreQuote,logQuote
+
+Since logQuote is a consumer, the HTTP response has a 202 status with no body. If
+you check the application logs, you’ll see that the random quote by genre has been
+printed out instead.
+
+== CloudEvents
+CloudEvents can be consumed over HTTP, messaging channels like AMPQ (Rab-
+bitMQ), and RSocket. They ensure a standard way of describing events, thus making
+them portable across a wide variety of technologies, including applications, messaging
+systems, build tools, and platforms.
+
+If your project is already configured to expose functions as HTTP endpoints, you can make it consume CloudEvents without changing any code. Ensure the
+application is up and running, and then send an HTTP request with the additional
+headers defined by the CloudEvents specification:

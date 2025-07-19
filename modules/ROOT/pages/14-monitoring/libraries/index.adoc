@@ -1,0 +1,259 @@
+= Monitoring Libraries
+:figures: 06-health/libraries
+
+== Spring Boot Actuator
+
+Spring Boot Actuator collects application metrics out of the box by leveraging the
+Micrometer library (https://micrometer.io). Micrometer contains instrumentation
+code for collecting valuable metrics from common components in a JVM-based appli-
+cation. It provides a vendor-neutral façade so that you can export the metrics col-
+lected from Micrometer using different formats, such as Prometheus/Open Metrics,
+Humio, Datadog, and VMware Tanzu Observability. Just as SLF4J provides a vendor-
+neutral façade for logging libraries, Micrometer does the same for metrics exporters.
+
+On top of the default Micrometer instrumentation libraries that are configured by
+Spring Boot, you can import additional instrumentation to collect metrics from spe-
+cific libraries like Resilience4J or even define your own without vendor lock-in.
+
+The most common format for exporting metrics is the one used by Prometheus, which
+is “an open-source systems monitoring and alerting toolkit” (https://prometheus.io).
+Just as Loki aggregates and stores event logs, Prometheus does the same with metrics.
+
+Spring Boot Actuator relies on the Micrometer instrumentation and provides auto-
+configuration to generate metrics for various technologies you might use in your
+applications: JVM, loggers, Spring MVC, Spring WebFlux, RestTemplate, WebClient,
+data sources, Hibernate, Spring Data, RabbitMQ, and more.
+
+== Configuring metrics with Spring Boot Actuator and Micrometer
+Spring Boot Actuator auto-configures Micrometer out of the box to collect metrics
+about a Java application. One way of exposing such metrics is by enabling the /actuator/metrics HTTP endpoint implemented by Actuator.
++
+To add the actuator to a Maven-based project, add the following starter dependency:
+[tabs]
+====
+Maven::
++
+[,xml]
+----
+<dependencies>
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-actuator</artifactId>
+	</dependency>
+</dependencies>
+----
+
+Gradle::
++
+[source, gradle]
+----
+dependencies {
+ implementation 'org.springframework.boot:spring-boot-starter-actuator'
+}
+----
+====
+
+The default configuration exposes the health and info web endpoints on the /actuator context.
+
+open the application.yml, and configure Actuator to expose the health HTTP endpoint
+[source,yml,attributes]
+----
+management:
+  endpoints:
+    web:
+      exposure:
+        # Exposes both health and metrics endpoints
+        include: health, metrics  <1>
+----
+call the /actuator/metrics endpoint:
+
+ http :9001/actuator/metrics
+
+The result is a collection of metrics you can further explore by adding the name of a metric to the endpoint (for example, /actuator/metrics/jvm.memory.used).
+== push-based strategy
+You might encounter scenarios where you need to collect metrics from
+ephemeral applications or batch jobs that don’t run long enough to be
+pulled. In that case, Spring Boot lets you adopt a push-based strategy so that
+the application itself sends metrics to the Prometheus server. The official
+documentation explains how to configure such behavior (http://spring.io/
+projects/spring-boot).
+
+== Configuring metrics with Spring Boot Actuator and Spring Cloud Gateway
+When Spring Cloud Gateway is in the classpath, as in the case of Edge Service,
+additional metrics are exported regarding the gateway routes. Some libraries, like
+Resilience4J, contribute dedicated Micrometer instrumentation through specific
+dependencies to register additional metrics.
+
+in the Edge Service project (edge-service), add the following dependency to include Micrometer instrumentation for Resilience4J.
+
+[tabs]
+====
+Maven::
++
+[,xml]
+----
+<dependencies>
+	<dependency>
+		<groupId>io.github.resilience4j</groupId>
+		<artifactId>io.github.resilience4j:resilience4j-micrometer</artifactId>
+	</dependency>
+</dependencies>
+----
+
+Gradle::
++
+[source, gradle]
+----
+dependencies {
+ runtimeOnly 'io.github.resilience4j:resilience4j-micrometer'
+}
+----
+====
+== Tagging and Labeling Metrics
+In Spring Boot you can leverage configuration properties to define common labels for all
+the metrics produced by an application. For example, it’s useful to add an application
+label that tags each metric with the name of the application that produces it.
+
+Since the application name is already defined in the
+spring.application.name property, let’s reuse that instead of duplicating the value.
+
+[source,yml,attributes]
+----
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  endpoint:
+    health:
+      # Always shows details about the application’s health
+      show-details: always
+      # Always shows information about the components used by the application
+      show-components: always
+      # Enables support for the health probes
+      probes:
+        enabled: true
+  metrics: 
+    tags:
+      application: ${spring.application.name} <1>
+----
+
+== Configuring with Prometheus(Grafana observability stack)
+Micrometer provides the instrumentation to generate those metrics, but you might
+want to export them in a different format. After deciding which monitoring solution
+you’d like to use to collect and store the metrics, you’ll need to add a specific dependency on that tool. In the Grafana observability stack, that tool is Prometheus.
+[tabs]
+====
+Maven::
++
+[,xml]
+----
+<dependencies>
+	<dependency>
+		<groupId>io.micrometer</groupId>
+		<artifactId>micrometer-registry-prometheus</artifactId>
+	</dependency>
+</dependencies>
+----
+Gradle::
++
+[source, gradle]
+----
+dependencies {
+ runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+}
+----
+====
+Then update the application.yml file to expose the prometheus Actuator endpoint via
+HTTP. You can also remove the more generic metrics endpoint, since we’re not
+going to use it anymore.
+[source,yml,attributes]
+----
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus <1>
+----
+The default strategy used by Prometheus is pull-based, meaning that a Prometheus
+instance scrapes (pulls) metrics in regular time intervals from the application via a dedi-
+cated endpoint, which is /actuator/prometheus in the Spring Boot scenario. Rerun the
+application (./gradlew bootRun), and call the Prometheus endpoint to check the result:
+
+ http :9001/actuator/prometheus
+
+The result is the same collection of metrics you got from the metrics endpoint, but
+this time they are exported using a format understood by Prometheus. 
+
+This format is based on plain text and is called Prometheus exposition format. Given the
+wide adoption of Prometheus for generating and exporting metrics, this format has
+been polished and standardized in OpenMetrics (https://openmetrics.io), a CNCF-
+incubating project. Spring Boot supports both the original Prometheus format (the
+default behavior) and OpenMetrics, depending on the Accept header of the HTTP
+request. If you’d like to get metrics according to the OpenMetrics format, you need to
+ask for it explicitly:
+ 
+ http :9001/actuator/prometheus \
+ 'Accept:application/openmetrics-text; version=1.0.0; charset=utf-8'
+== Configuring Liveness And Readiness Probes In Kubernetes
+Kubernetes relies on the health probes (liveness and readiness) to accomplish its tasks
+as a container orchestrator. For example, when the desired state of an application is to
+have three replicas, Kubernetes ensures there are always three application instances
+running. If any of them doesn’t return a 200 response from the liveness probe, Kuber-
+netes will restart it. When starting or upgrading an application instance, we’d like the
+process to happen without downtime for the user. Therefore, Kubernetes will not enable an instance in the load balancer until it’s ready to accept new requests (when
+Kubernetes gets a 200 response from the readiness probe).
+
+Since liveness and readiness information is application-specific, Kubernetes
+needs the application itself to declare how to retrieve that information. Relying on
+Actuator, Spring Boot applications provide liveness and readiness probes as HTTP
+endpoints.
+[source,yml,attributes]
+----
+          # Configuration for the liveness probe
+          livenessProbe:
+            # Uses an HTTP GET request to get the liveness state
+            httpGet:
+              # The endpoint to call for the liveness state
+              path: /actuator/health/liveness
+              # The port to use to fetch the liveness state
+              port: 9001
+            # An initial delay before starting checking the liveness state
+            initialDelaySeconds: 10
+            # The frequency for checking the liveness state
+            periodSeconds: 5
+          # Configuration for the readiness probe
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 9001
+            initialDelaySeconds: 5
+            periodSeconds: 15
+----
+Both probes can be configured so that Kubernetes will start using them after an initial
+delay (initialDelaySeconds), and you can also define the frequency with which to
+invoke them (periodSeconds). The initial delay should consider that the application
+will take a few seconds to start, and it will depend on the available computational
+resources. The polling period should not be too long, to reduce the time between the
+application instance entering a faulty state and the platform taking action to self-heal.
+
+== protecting the Spring Boot Actuator endpoints
+There are a few viable solutions for protecting the Spring Boot Actuator endpoints.
+
+For example, you could enable HTTP Basic authentication just for the Actuator endpoints, while all the others will keep using OpenID Connect and OAuth2.
+
+we can keep the Actuator endpoints unauthenticated from inside the Kubernetes cluster and block any access to them from the outside.
+In a real production scenario, it's recommended protecting access to the Actuator endpoints even from within the cluster.
+
+[source,java,attributes]
+----
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+                .authorizeHttpRequests(authorize -> authorize
+                        // Allows unauthenticated access to any Spring Boot Actuator endpoint
+                        .requestMatchers("/actuator/**").permitAll()
+						)
+                .build();
+    }
+----

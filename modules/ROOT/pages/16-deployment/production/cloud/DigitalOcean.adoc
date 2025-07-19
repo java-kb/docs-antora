@@ -1,0 +1,36 @@
+= DigitalOcean
+Before moving on, you need to ensure that you have a DigitalOcean account. Follow the instructions on the official website to create an account and start a free trial (https://try.digitalocean.com/freetrialoffer).
+
+There are two main options for interacting with the DigitalOcean platform. 
+
+- The first one is through the web portal (https://cloud.digitalocean.com), which is very convenient for exploring the available services and their features. 
+- The second option is via ``doctl``, the DigitalOcean CLI.
+
+== installing doctl 
+[tabs]
+====
+Linux::
++
+[source, console]
+----
+brew install doctl
+----
+
+Windows::
++
+[source, console]
+----
+----
+
+macOS::
++
+[source, console]
+----
+brew install doctl
+----
+====
+== Running a Kubernetes cluster on DigitalOcean
+== Running a PostgreSQL database on DigitalOcean
+== Running Redis on DigitalOcean
+== Running RabbitMQ using a Kubernetes Operator
+== Running Keycloak using a Helm chart

@@ -1,0 +1,9 @@
+= Persistence Design Patterns
+:figures: 11-development/00-software-development/design-patterns/04-persistence-design-patterns
+
+== Data Access Object (DAO)
+
+== Repository Pattern
+
+== Data Transfer Object (DTO)
+

@@ -386,6 +386,7 @@ that execute scheduled jobs in the background.
 == 14 Telemetry
 
 Observability is one of the properties of cloud native applications.
+
 Managing a distributed system in the cloud is complex, and the only way
 to manage such complexity is by ensuring that every system component
 provides the correct data to monitor the system’s behavior remotely.
@@ -394,6 +395,10 @@ events. Hoffman uses a very catchy image to stress the importance of
 telemetry: treat your applications like space probes. What kind of
 telemetry would you need to monitor and control your applications
 remotely?
+
+Before going to production, we should ensure our applications are observable and
+that the deployment platform provides all the tools needed to monitor and gain
+insights into the system.
 
 == 15 Authentication and authorization
 

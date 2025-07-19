@@ -1,0 +1,12 @@
+= ArchUnit 
+
+The applications generally have a structure that helps you to understand where you 
+can find logic, such as validations, business logic, entities, and the interfaces/classes to 
+access a database. All of them are important to understand the hierarchy of the layers 
+and which rules you need to follow to create a new feature or application.
+In Java, tools like Archunit22 allow you to define and check if everything in your 
+project follows your defined structure.
+
+ArchUnit is a free, simple and extensible library for checking the architecture of your Java code using any plain Java unit test framework. That is, ArchUnit can check dependencies between packages and classes, layers and slices, check for cyclic dependencies and more. It does so by analyzing given Java bytecode, importing all classes into a Java code structure. 
+
+https://www.archunit.org/

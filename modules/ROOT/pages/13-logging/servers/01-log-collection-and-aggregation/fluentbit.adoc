@@ -1,0 +1,74 @@
+=  Fluent Bit
+ 
+Fluent Bit, an open source and CNCF-graduated project that “enables you to collect logs and metrics from
+multiple sources, enrich them with filters, and distribute them to any defined destination” (https://fluentbit.io). Fluent Bit is a subproject of Fluentd, “an open source data
+collector for unified logging layer” (www.fluentd.org).
+
+Fluent Bit will collect logs from all running containers and forward them to Loki,
+which will store them and make them searchable
+
+== Running
+=== Locally
+=== Docker
+=== Docker compose
+[source,yml,attributes]
+----
+  fluent-bit:
+    image: grafana/fluent-bit-plugin-loki:2.9.8
+    container_name: fluent-bit
+    ports:
+      - "24224:24224"
+    environment:
+      # Defines the Loki URL used to forward log messages
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+    volumes:
+      # Volumes are used to load configuration for collecting and delivering logs.
+      - ./observability/fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+----
+fluent-bit.conf
+[source,text,attributes]
+----
+[INPUT]
+    Name        forward
+    Listen      0.0.0.0
+    Port        24224
+[Output]
+    Name grafana-loki
+    Match *
+    Url ${LOKI_URL}
+    RemoveKeys source,container_id
+    Labels {job="fluent-bit"}
+    LabelKeys container_name
+    BatchWait 1s
+    BatchSize 1001024
+    LineFormat json
+    LogLevel info
+----
+
+=== Kubernates
+
+== Configure
+Fluent Bit can be configured to collect logs from different sources. we canrely on the Fluentd driver available in Docker to collect logs automatically
+from running containers. The Docker platform itself listens to the log events from
+each container and routes them to the specified service. In Docker, a logging driver
+can be configured directly on a container. For example, update the Catalog Service
+configuration in Docker Compose to use the Fluentd logging driver, which will send
+the logs over to the Fluent Bit container.
+[source,yml,attributes]
+----
+  catalog-service:
+    depends_on:
+      - fluent-bit <1>
+    image: "catalog-service"
+    container_name: "catalog-service"
+    ports:
+      - 9001:9001
+    logging: <2>
+      # Which logging driver to use
+      driver: fluentd
+      options:
+        # The address of the Fluent Bit instance where the logs should be routed
+        fluentd-address: 127.0.0.1:24224
+----
+<1> Ensures the Fluent Bit container is started before Catalog Service
+<2> Section to configure the container logging driver

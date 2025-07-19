@@ -1,0 +1,57 @@
+= Deploying serverless applications on the cloud
+
+Applications using Spring Cloud Function can be deployed in a few different ways.
+
+- First of all, since they’re still Spring Boot applications, you can package them as JAR
+artifacts or container images and deploy them on servers or container runtimes like
+Docker or Kubernetes, respectively.
+- Then, when Spring Native is included, you also have the option to compile them to
+native images and run them on servers or container runtimes. 
+- Thanks to instant startup time and reduced memory consumption, you can also seamlessly deploy such
+applications on serverless platforms. 
+
+Spring Cloud Function also supports deploying applications on vendor-specific
+FaaS platforms like AWS Lambda, Azure Functions, and Google Cloud Functions.
+Once you choose a platform, you can add the related adapter provided by the frame-
+work to accomplish the integration. Each adapter works in a slightly different way,
+depending on the specific platform and the configuration required to integrate the
+functions with the underlying infrastructure. The adapters provided by Spring Cloud
+Function don’t require any changes to your business logic, but they might need some
+additional code to configure the integration.
+
+When you use one of those adapters, you must choose which function to integrate
+with the platform. If there’s only one function registered as a bean, that’s the one
+used. If there are more (like in Quote Function), you need to use the ``spring.cloud.function.definition`` property to declare which function the FaaS platform will
+manage.
+
+== Deploying serverless applications with Knative
+Knative is a “Kubernetes-based platform to deploy and manage modern serverless
+workloads” (https://knative.dev). It’s a CNCF project that you can use to deploy standard containerized workloads and event-driven applications. The project offers a superior user experience to developers and higher abstractions that make it simpler to deploy applications on Kubernetes.
+
+You can decide to 
+
+- run your own Knative platform on top of a Kubernetes cluster 
+- or choose a managed service offered by a cloud provider, such as VMware Tanzu Application Platform, Google Cloud Run, or Red Hat OpenShift Serverless. 
++
+Since they are all
+based on open source software and standards, you could migrate from Google Cloud Run to VMware Tanzu Application Platform without changing your application code and with minimal changes to your deployment pipeline.
+
+
+The Knative project consists of two main components: Serving and Eventing:
+
+- **Knative Serving** is for running serverless workloads on Kubernetes. It takes care
+of autoscaling, networking, revisions, and deployment strategies while letting
+engineers focus on the application business logic.
+- **Knative Eventing** provides management for integrating applications with event
+sources and sinks based on the CloudEvents specification, abstracting backends
+like RabbitMQ or Kafka.
+
+Originally, Knative consisted of a third component called “Build” that sub-
+sequently became a standalone product, renamed Tekton (https://tekton.dev)
+and donated to the Continuous Delivery Foundation (https://cd.foundation).
+Tekton is a Kubernetes-native framework for building deployment pipelines
+that support continuous delivery. For example, you could use Tekton instead
+of GitHub Actions.
+
+==  using Knative Serving to run serverless workloads
+===  set up a local development environment comprising both Kubernetes and Knative
