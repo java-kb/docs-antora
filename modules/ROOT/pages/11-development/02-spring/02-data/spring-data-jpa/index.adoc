@@ -1723,12 +1723,430 @@ This approach offers a way to reuse a class, including many entities, without us
 the inherence. Inside the application, you see the classes as a composition, so you can 
 split or show the model differently.
 
-== creating the database schema
+== Validating the Schema
+When you try to persist the information of one entity in the database, consider that 
+all fields have valid values. There is no restriction to send a wrong value or an empty 
+attribute, and the database throws an exception because the query is invalid. This 
+situation implies that data travel across the network to produce the same result you 
+can if you validate your application. Cloud providers like AWS and GCP charge for the 
+information that travels the network, so if you can reduce the number of requests that go 
+directly to the database, you reduce your costs.
+
+To solve this problem, Java introduced specification JSR380, which provides a set of annotations that cover the most relevant validations, like checking if something is null, 
+empty, or has a particular size. The specification only declares the interfaces. For many 
+years, the only implementation was Hibernate Validator. But since Spring Boot 2, Spring Validator4 has been an alternative option.
+
+A good practice is to use the validation in the first layer, a microservice that 
+uses Spring Boot as the controller but is not exclusively. You can use it in another 
+layer, like the service or repositories, if you have an implementation.
+
+The following Table shows the different annotations that exist to validate the value of the fields.
+[cols="1,2",options="header"]
+|===
+|Name |Description
+|*@NotBlank* |Validates that the string is not null or with whitespaces
+|*@NotNull* |Checks if the property is not null
+|*@Min* |Checks if the number is greater or equal to the value
+|*@Max* |Checks if the number is smaller or equal to the value
+|*@AssertTrue* |Validates if the value of the attribute is true or not
+|*@Past and @PastOrPresent* |Validate if the date is in the past or not the present
+|*@Future and @FutureOrPresent* |Validate if the date is in the future, including or not the present
+|*@Positive and @PositiveOrZero* |Validate if the number is positive, including or not the zero
+|*@Negative and @NegativeOrZero* |Validate if the number is negative, including or not the zero
+|===
+
+The first step id adding the dependency to validate the fields.
+[tabs]
+====
+Maven::
++
+[source, xml]
+----
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+----
+
+Gradle::
++
+[source, gradle]
+----
+----
+====
+The next step is to introduce the entity validation to cover all potential scenarios that can produce an exception in the database
+
+[tabs]
+======
+Cities API::
++
+[tabs]
+====
+Currency.java::
++
+[source, java]
+----
+@Entity
+@Table(name = "currency")
+public class Currency extends Base implements Serializable {
+
+	@NotBlank(message = "Code is mandatory") <1>
+	@Column(name = "code", nullable = false, length = 4)
+	private String code;
+
+	@NotBlank(message = "Symbol is mandatory")
+	@Column(name = "symbol", nullable = false, length = 4)
+	private String symbol;
+
+	@NotBlank(message = "Description is mandatory")
+	@Column(name = "description", nullable = false, length = 30)
+	private String description;
+	@NotNull(message = "The state of the currency is mandatory")
+	@Column(name = "enabled", nullable = false)
+	private Boolean enabled = Boolean.TRUE;
+
+	@Min(value = 1, message = "The minimum value is 1")
+	@Max(value = 5 , message = "The maximum value is 5")
+	@Column(name = "decimal_places") //Optional: Indicate the name and the length of the column
+	private int decimalPlaces;
+}
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+The annotation has a message you see when you check if something is wrong. The 
+message is written in English, but you can customize it.
+
+When you define the rules in the entity, the next step is to invoke the validator in the service before persisting the entity and throwing an exception.
+[tabs]
+======
+Cities API::
++
+If you don’t do anything else, the stack trace appears when you request the endpoint 
+to persist the information of the currency. Let’s create classes to obtain a better response. 
+Let’s start creating the DTOs that return the information about the errors.
++
+After that, create a DTO that contains the list of errors because some attributes do 
+not follow the rules.
++
+The next step is to create a class that captures all the exceptions that appear in the 
+application and do something depending on which exceptions are thrown. This class 
+listens to all the exceptions that appear in the application. You need to create a specific 
+behavior for each exception because if not, the application only throws an exception.
++
+re-run the application and invoke the endpoint to create a new currency with 
+an empty body and see what happens.
++
+[tabs]
+====
+CurrencyService.java::
++
+[source, java]
+----
+@Service
+public class CurrencyService {
+
+	CurrencyRepository repository;
+	Validator validator; <1>
+	
+	@Autowired
+	public CurrencyService(CurrencyRepository repository, Validator validator) { <2>
+		this.repository = repository;
+		this.validator = validator;
+	}
+	
+	public CurrencyDTO getById(Long id) {
+		CurrencyDTO response = null;
+		Optional<Currency> currency = repository.findById(id);
+		
+		if(currency.isPresent()) {
+			response = ApiMapper.INSTANCE.entityToDTO(currency.get());
+		}
+		
+		return response;
+	}
+
+	public CurrencyDTO save(CurrencyDTO currency) {
+		return saveInformation(currency);
+	}
+
+	public CurrencyDTO update(CurrencyDTO currency) {
+		return saveInformation(currency);
+	}
+
+	public void delete(Long id) {
+		Optional<Currency> currency = repository.findById(id);
+
+		if(currency.isPresent()) {
+			currency.get().setEnabled(Boolean.FALSE);
+			repository.save(currency.get());
+		}
+	}
+
+	private CurrencyDTO saveInformation(CurrencyDTO currency) {
+		Currency entity = ApiMapper.INSTANCE.DTOToEntity(currency);
+
+		Set<ConstraintViolation<Currency>> violations = validator.validate(entity); <3>
+		if(!violations.isEmpty()) {
+			throw new ConstraintViolationException(violations);
+		}
+
+		Currency savedEntity = repository.save(entity);
+
+		return ApiMapper.INSTANCE.entityToDTO(savedEntity);
+	}
+}
+----
+ViolationDTO.java::
++
+[source, java]
+----
+package com.apress.catalog.dto;
+
+public class ViolationDTO {
+
+    private String field;
+
+    private String message;
+    public ViolationDTO(String field, String message) {
+        this.field = field;
+        this.message = message;
+    }
+
+    public String getField() {
+        return field;
+    }
+
+    public void setField(String field) {
+        this.field = field;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+}
+----
+ValidationErrorDTO.java::
++
+[source, java]
+----
+package com.apress.catalog.dto;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ValidationErrorDTO {
+    private List<ViolationDTO> violations;
+
+    public ValidationErrorDTO() {
+        violations = new ArrayList<>();
+    }
+
+    public List<ViolationDTO> getViolations() {
+        return violations;
+    }
+
+    public void setViolations(List<ViolationDTO> violations) {
+        this.violations = violations;
+    }
+}
+----
+ErrorHandlingControllerAdvice.java::
++
+[source, java]
+----
+package com.apress.catalog.exception;
+
+import com.apress.catalog.dto.ValidationErrorDTO;
+import com.apress.catalog.dto.ViolationDTO;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+
+@ControllerAdvice
+public class ErrorHandlingControllerAdvice {
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    ValidationErrorDTO onConstraintValidationException(
+            ConstraintViolationException e) {
+        ValidationErrorDTO error = new ValidationErrorDTO();
+        for (ConstraintViolation violation : e.getConstraintViolations()) {
+            error.getViolations().add(
+                    new ViolationDTO(violation.getPropertyPath().toString(), violation.getMessage()));
+        }
+        return error;
+    }
+}
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+== Creating the database schema
 Hibernate, the foundation for Spring Data JPA, offers an interesting
 feature for automatically generating schemas from the entities defined in
 Java. it’s better to create
 and evolve relational resources with a more sophisticated tool, like Flyway or Liquibase,
 which will let you version-control your database.
+
+== Listening and Auditing Events
+
+JPA offers a set of annotations related to the events to check what happens in the 
+life cycle of an entity and introduce logs or modifications. 
+[cols="1,2",options="header"]
+|===
+| Event Annotation | Description
+
+| @jakarta.persistence.PrePersist / @jakarta.persistence.PostPersist
+| Called before or after the entity is persisted.
+
+| @jakarta.persistence.PreUpdate / @jakarta.persistence.PostUpdate
+| Called before or after the entity is updated.
+
+| @jakarta.persistence.PreRemove / @jakarta.persistence.PostRemove
+| Called before or after the entity is removed.
+
+| @jakarta.persistence.PostLoad
+| Called after the entity has been loaded successfully.
+|===
+ There is no restriction to using one or more annotations over a method, so 
+you can have the same behavior for @PrePersist and @PreRemove. Also, you can 
+externalize all the logic of the persistence life cycle in one class and annotate the 
+classes with @EntityListeners(MyAuditListener.class).
+[tabs]
+======
+Cities API::
++
+In the catalog’s application, you need createdOn to have a value before sending the 
+insert to the database so let’s move the Audit attribute from the Currency entity to the 
+Base class to have the same behavior in all the classes that extend from the Base. Next, 
+create two methods one assigns a value to createOn and the second to updatedOn using 
+the current date.
++
+[tabs]
+====
+Audit.java::
++
+[source, java]
+----
+@Embeddable
+public class Audit implements Serializable {
+
+    @Column(name = "created_on", nullable = false)
+    private LocalDateTime createdOn;
+
+    @Column(name = "updated_on", nullable = true)
+    private LocalDateTime updatedOn;
+
+    public LocalDateTime getCreatedOn() {
+        return createdOn;
+    }
+
+    public void setCreatedOn(LocalDateTime createdOn) {
+        this.createdOn = createdOn;
+    }
+
+    public LocalDateTime getUpdatedOn() {
+        return updatedOn;
+    }
+
+    public void setUpdatedOn(LocalDateTime updatedOn) {
+        this.updatedOn = updatedOn;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Audit audit = (Audit) o;
+        return Objects.equals(createdOn, audit.createdOn) && Objects.equals(updatedOn, audit.updatedOn);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(createdOn, updatedOn);
+    }
+}
+----
+====
+Base.java::
++
+[source, java]
+----
+@MappedSuperclass
+public abstract class Base implements Serializable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    @Embedded
+    private Audit audit;
+
+    public Base() {
+    }
+
+    public Base(Long id) {
+        this.id = id;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    @PrePersist <1>
+    public void fillCreatedOn() {
+        audit.setCreatedOn(LocalDateTime.now());
+    }
+
+    @PreUpdate <2>
+    public void fillUpdatedOn() {
+        audit.setUpdatedOn(LocalDateTime.now());
+    }
+}
+----
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
 
 == Enabling and configuring JPA auditing
 
@@ -1737,11 +2155,26 @@ the date when it was updated last. After securing an application with authentica
 and authorization, you can even register who created each entity and recently updated
 it. All of that is called database auditing.
 
-In Spring Data JPA, you would use the @EnableJpaAuditing annota-
-tion to enable JPA auditing, and you would annotate the entity class with
-@EntityListeners(AuditingEntityListener.class) to make it listen to audit
-events, which doesn’t happen automatically as in Spring Data JDBC.
+This solution of listening to the events of the JPA life cycle is the standard. In Spring Data, 
+another annotation does about the same but with the idea of auditing when and who does 
+the modifications. You only need to include the @EnableJpaAuditing annotation in your 
+main class and add the listener in the classes you need to audit using @EntityListeners(Aud
+itingEntityListener.class) more or less in the same way that if you use the general approach 
+of JPA.
 
+In Spring Data JPA, you would use the ``@EnableJpaAuditing`` annotation to enable JPA auditing, and you would annotate the entity class with
+``@EntityListeners(AuditingEntityListener.class) ``to make it listen to audit events, which doesn’t happen automatically as in Spring Data JDBC.
+
+[cols="1,2",options="header"]
+|===
+| Event Annotation | Description
+
+| @CreatedDate, @LastModifiedDate
+| Equivalent to @PreUpdate, @PrePersist. Used to capture creation and last modification timestamps.
+
+| @CreatedBy, @LastModifiedBy
+| Used to capture who created or last modified the entity, typically applied to a String attribute.
+|===
 
 [,java]
 ----

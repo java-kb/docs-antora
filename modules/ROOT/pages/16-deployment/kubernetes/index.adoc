@@ -1,6 +1,19 @@
 = Kubernetes
 :figures: 16-deployment/kubernetes
 
+A container engine, such as Docker, is not enough to be able to use containers in a production 
+environment. Something is needed that can ensure that all the containers are up and running 
+and that can scale out containers on a number of servers, thereby providing high availability 
+and increased compute resources. These types of products became known as container orchestrators. A number of products 
+have evolved over the last few years, such as Apache Mesos, Docker in Swarm mode, Amazon 
+ECS, HashiCorp Nomad, and Kubernetes. 
+
+Kubernetes was initially developed by Google. When 
+Google released v1.0 in 2015, it also donated Kubernetes to CNCF (https://www.cncf.io/). 
+During 2018, Kubernetes became kind of a de facto standard, available both pre-packaged for 
+on-premises use and as a service from most of the major cloud providers.
+
+
 *Kubernetes* (often shortened as K8s) is an open source container orchestrator hosted by the CNCF.it's an open source system for automating
 the deployment, scaling, and management of containerized applications (https://
 kubernetes.io).
@@ -631,4 +644,5 @@ using the new version.
 Both blue/green deployments and canary releases provide a straightforward way to roll back changes.
 
 == References
+- link:https://kubernetes.io/blog/2015/04/borg-predecessor-to-kubernetes/[Borg: The Predecessor to Kubernetes]
 - chapter 5 of Continuous Delivery for Kubernetes by Mauricio Salatino, published by Manning (https://livebook.manning.com/book/continuous-delivery-for-kubernetes/chapter-5).

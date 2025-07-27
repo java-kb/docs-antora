@@ -1,4 +1,5 @@
 = Deploying serverless applications on the cloud
+:figures: 16-deployment/continuous-delivery
 
 Applications using Spring Cloud Function can be deployed in a few different ways.
 
@@ -46,12 +47,224 @@ engineers focus on the application business logic.
 sources and sinks based on the CloudEvents specification, abstracting backends
 like RabbitMQ or Kafka.
 
-Originally, Knative consisted of a third component called “Build” that sub-
-sequently became a standalone product, renamed Tekton (https://tekton.dev)
+Originally, Knative consisted of a third component called “Build” that subsequently became a standalone product, renamed Tekton (https://tekton.dev)
 and donated to the Continuous Delivery Foundation (https://cd.foundation).
 Tekton is a Kubernetes-native framework for building deployment pipelines
 that support continuous delivery. For example, you could use Tekton instead
 of GitHub Actions.
 
+Knative takes care of scaling the application without any further configuration. For
+each request, it determines whether more instances are required. When an instance
+stays idle for a specific time period (30 seconds, by default), Knative will shut it down.
+If no request is received for more than 30 seconds, Knative will scale the application to
+zero, meaning there will be no instances of the service running.
+
+When a new request is eventually received, Knative starts a new instance and uses it
+to handle the request. Thanks to Spring Native, the startup time of Quote Function is
+almost instantaneous, so users and clients won’t have to deal with long wait times, as
+would be the case with standard JVM applications. This powerful feature lets you optimize costs and pay only for what you use and need.
+
+Using an open source platform like Knative has the advantage of letting you migrate
+your applications to another cloud provider without any code changes. But that’s not
+all! You can even use the same deployment pipeline as-is, or with minor modifications.
+
 ==  using Knative Serving to run serverless workloads
 ===  set up a local development environment comprising both Kubernetes and Knative
+==== Installing the Knative CLI
+[tabs]
+====
+using quickstart::
++
+[source, console]
+----
+brew install knative/client/kn
+
+brew install knative-extensions/kn-plugins/quickstart
+
+brew install kind
+
+kn quickstart kind
+----
+Deploy the Service by running the command:
+
+kn service create hello \
+--image ghcr.io/knative/helloworld-go:latest \
+--port 8080 \
+--env TARGET=World
+
+Service hello created to latest revision 'hello-0001' is available at URL:
+http://hello.default.${LOADBALANCER_IP}.sslip.io
+
+The value of ${LOADBALANCER_IP} above depends on your type of cluster, for kind it will be 127.0.0.1 for minikube depends on the local tunnel.
+using YAML::
++
+Since Knative runs on top of Kubernetes, we first need a cluster.Open a Terminal window and run the following command:
++
+ minikube start --profile knative
++
+Next, we can install Knative.
++
+``install-knative.sh``
+[source, bash]
+----
+#!/bin/sh
+
+set -euo pipefail
+
+echo "\n📦 Installing Knative CRDs..."
+
+kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.12.2/serving-crds.yaml
+
+echo "\n📦 Installing Knative Serving..."
+
+kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.12.2/serving-core.yaml
+
+echo "\n📦 Installing Kourier Ingress..."
+
+kubectl apply -f https://github.com/knative/net-kourier/releases/download/knative-v1.12.1/kourier.yaml
+
+kubectl patch configmap/config-network \
+  --namespace knative-serving \
+  --type merge \
+  --patch '{"data":{"ingress-class":"kourier.ingress.networking.knative.dev"}}'
+
+echo "\n📦 Configuring DNS..."
+
+kubectl patch configmap/config-domain \
+  --namespace knative-serving \
+  --type merge \
+  --patch '{"data":{"127.0.0.1.sslip.io":""}}'
+
+kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.12.2/serving-default-domain.yaml
+
+echo "\n✅ Knative successfully installed!\n"
+----
++
+Then run
++
+  ./install-knative.sh
+====
+=== Deploying applications with the Knative CLI
+Knative provides a few different options for deploying applications. In production,
+we’ll want to stick to a declarative configuration as we did for standard Kubernetes
+deployments and rely on a GitOps flow to reconcile the desired state (in a Git repository) and actual state (in the Kubernetes cluster).
+
+When experimenting or working locally, we can also take advantage of the Knative
+CLI to deploy applications in an imperative way. From a Terminal window, run the following command to deploy Quote Function. The container image is the one published by the commit stage workflow we defined before. Remember to replace <your_github_username> with your GitHub username in lowercase:
+
+For local images you need to tag the image:
+
+  docker tag quote-function dev.local/quote-function
+
+$ kn service create quote-function \
+ --image ghcr.io/<your_github_username>/quote-function \
+ --port 9102
+
+image::{figures}/Knative-command-for-creating-a-Service-from-a-container-image.png[The Knative command for creating a Service from a container image. Knative will take care of  creating all the resources necessary to deploy the applications on Kubernetes.]
+
+[tabs]
+====
+using Kind::
++
+  kind load docker-image dev.local/quote-function  --name knative
++
+  kn service create quote-function --image  dev.local/quote-function  --port 9102
+using YAML::
++
+For local images
+[source,console,attributes]
+----
+docker tag quote-function dev.local/quote-function
+
+minikube image load dev.local/quote-function --profile knative
+
+kn service create quote-function --image  dev.local/quote-function  --pull-policy Never  --port 9102
+----
+====
+The command will initialize a new quote-function service in the default namespace
+on Kubernetes. It will return the public URL through which the application is
+exposed, in a message like the following:
+[source,console,attributes]
+----
+Creating service 'quote-function' in namespace 'default':
+
+  0.087s The Route is still working to reflect the latest desired specification.
+  0.106s ...
+  0.202s Configuration "quote-function" is waiting for a Revision to become ready.
+  2.006s ...
+  2.075s Ingress has not yet been reconciled.
+  2.177s Waiting for load balancer to be ready
+  2.327s Ready to serve.
+
+Service 'quote-function' created to latest revision 'quote-function-00001' is available at URL:
+http://quote-function.default.127.0.0.1.sslip.io
+----
+
+To test it out! First we need to open a tunnel to the cluster with minikube. The first time you run this command, you might be asked to input your machine password to
+authorize the tunneling to the cluster:
+
+ minikube tunnel --profile knative
+
+Then open a new Terminal window and call the application at the root endpoint to
+fetch the complete list of quotes. The URL to call is the same one returned by the previous command (http://quote-function.default.127.0.0.1.sslip.io), which is
+in the format <service-name>.<namespace>.<domain>:
+
+ http http://quote-function.default.127.0.0.1.sslip.io
+
+
+=== Deploying applications with the Knative manifests
+Kubernetes is an extensible system. Besides using built-in objects like Deployments
+and Pods, we can define our own objects via Custom Resource Definitions (CRDs).
+That is the strategy used by many tools built on top of Kubernetes, including Knative.
+
+One of the benefits of using Knative is a better developer experience and the possibility to declare the desired state for our applications in a more straightforward and
+less verbose way. Rather than dealing with Deployments, Services, and Ingresses, we can work with a single type of resource: the Knative Service.
+
+Knative offers a way to model an application in a single resource declaration: the Knative Service. At first, the naming might not be very clear, since there is already
+a Kubernetes built-in Service type. In reality, the Knative choice is very intuitive because it maps one-to-one the architectural concept with the deployment concept.
+
+define a new kservice.yml file
+
+Remember to replace <your_github_username> with your GitHub username in lowercase.
+
+``kservice.yml``
+[source,yml,attributes]
+----
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  # The name of the Service
+  name: quote-function-using-manifest
+spec:
+  template:
+    spec:
+      containers:
+        # The name of the container
+        - name: quote-function-using-manifest
+          # The image used to run the container. Remember to insert your GitHub username if using online image.
+          # ghcr.io/<your_github_username>/quote-function
+          image: dev.local/quote-function
+          ports:
+            # The port exposed by the container
+            - containerPort: 9102
+          resources:
+            # CPU and memory configuration for the container
+            requests:
+              cpu: "0.1"
+              memory: "128Mi"
+            limits:
+              cpu: "2"
+              memory: "512Mi"
+----
+
+Like any other Kubernetes resource, you can apply a Knative Service manifest to a cluster with kubectl apply -f <manifest-file> or through an automated flow like we did with Argo CD. 
+
+Open a Terminal window, navigate to your Function project, and run the following command to deploy service Function from the Knative Service manifest:
+
+  kubectl apply -f knative/kservice.yml
+
+you can get information about all the created Knative Services and their URLs by running the following command):
+
+  kubectl get ksvc
+
+  kubectl get ksvc quote-function-using-manifest 
