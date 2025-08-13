@@ -1,6 +1,21 @@
 = N-Tier architecture (layered architecture)
 :figures: 01-system-design/architecture
 
+With any nontrivial application, it usually makes sense to organize classes by concern. Per-
+sistence is one concern; others include presentation, workflow, and business logic. A typ-
+ical object-oriented architecture includes layers of code that represent these concerns.
+
+A layered architecture defines interfaces between the code that implements the vari-
+ous concerns, allowing changes to be made to the way one concern is implemented
+without significant disruption to code in the other layers. Layering determines the
+- Layers communicate from top to bottom. A layer is dependent only on the
+interface of the layer directly below it.
+- Each layer is unaware of any other layers except for the layer just below it and
+eventually of the layer above if it receives explicit requests from it.
+Different systems group concerns differently, so they define different layers. The typi-
+cal, proven, high-level application architecture uses three layers: one each for presen-
+tation, business logic, and persistence
+
 This type of architecture is the simplest because it splits the application into different 
 layers like a cake where each layer can only access the elements to the same or the 
 inferior level. These types of architecture mutate from architecture with four layers like 
@@ -9,8 +24,51 @@ There is no universal criterion for the correct number of layers. But, if you co
 three is a small number of layers, Spring Boot is represented by controllers, services, 
 repositories, and the database, which does not appear directly in Spring as layers. 
 
-Benefits
+N-tier architecture, also known as a hierarchical structure with distinct layers, refers to a design
+approach for software systems that organizes the application into multiple layers, typically four:
+Presentation, Business, Persistence, and Data. This architectural model is commonly employed in
+enterprise applications to enhance maintainability by compartmentalizing and promoting modular
+development. Each layer has specific responsibilities.
 
+The Model-View-Controller (MVC) software design pattern separates an application into three
+interconnected components: Model (data and business logic), View (user interface), and Controller
+
+The typical, proven, high-level application architecture uses three layers: one each for presentation, business logic, and persistence
+
+- Presentation layer—The user interface logic is topmost. Code responsible for the
+presentation and control of page and screen navigation is in the presentation
+layer. The user interface code may directly access business entities of the shared
+domain model and render them on the screen, along with controls to execute
+actions. In some architectures, business entity instances might not be directly
+accessible by user interface code, such as when the presentation layer isn’t run-
+ning on the same machine as the rest of the system. In such cases, the presenta-
+tion layer may require its own special data-transfer model, representing only a
+transmittable subset of the domain model. A good example of the presentation
+layer is working with a browser to interact with an application.
+- Business layer—The business layer is generally responsible for implementing any
+business rules or system requirements that are part of the problem domain.
+This layer usually includes some kind of controlling component—code that
+knows when to invoke which business rule. In some systems, this layer has its
+own internal representation of the business domain entities. Alternatively, it
+may rely on a domain model implementation that’s shared with the other layers
+of the application. A good example of the business layer is the code responsible
+for executing the business logic.
+- Persistence layer—The persistence layer is a group of classes and components
+responsible for storing data to, and retrieving it from, one or more data stores.
+This layer needs a model of the business domain entities for which you’d like to
+keep a persistent state. The persistence layer is where the bulk of JPA, Hiber-
+nate, and Spring Data use takes place.
+- Database—The database is usually external. It’s the actual persistent representa-
+tion of the system state. If an SQL database is used, the database includes a
+schema and possibly stored procedures for the execution of business logic close
+to the data. The database is the place where data is persisted for the long term.
+- Helper and utility classes—Every application has a set of infrastructural helper or
+utility classes that are used in every layer of the application. These may include
+general-purpose classes or cross-cutting concern classes (for logging, security,
+and caching). These shared infrastructural elements don’t form a layer because
+they don’t obey the rules for inter-layer dependency in a layered architecture.
+
+== Benefits
 This structure has the following benefits.
 
 • It’s simple to implement and maintain because you only have a 
@@ -23,8 +81,7 @@ affect others.
 can change from one project to another and know where to find 
 something.
 
-Drawbacks
-
+== Drawbacks
 This type of architecture has the following drawbacks.
 
 • Hiding the use cases, it’s difficult to know where all the classes or 
@@ -33,14 +90,6 @@ objects are connected to represent a use case.
 problems with scalability because you can have several classes/
 interfaces in the same package or layer.
 
-N-tier architecture, also known as a hierarchical structure with distinct layers, refers to a design
-approach for software systems that organizes the application into multiple layers, typically four:
-Presentation, Business, Persistence, and Data. This architectural model is commonly employed in
-enterprise applications to enhance maintainability by compartmentalizing and promoting modular
-development. Each layer has specific responsibilities.
-
-The Model-View-Controller (MVC) software design pattern separates an application into three
-interconnected components: Model (data and business logic), View (user interface), and Controller
 (handles user input and updates the Model and View accordingly).
 
 This segmentation facilitates scalability, ease of maintenance, and flexibility in adapting to changing
