@@ -1,7 +1,7 @@
 = Frontend Development
 :figures: 11-development/05-frontend
 
-== Serving Frintend applications
+== Serving Frontend applications in Cloud
 One option is to let Edge Service serve the SPA static resources. Spring Boot applications serving a frontend usually host the source code in src/main/resources. That’s a convenient strategy when using template engines like Thymeleaf, but for SPAs like Angular, I prefer keeping the code in a separate module. SPAs have their own development, build, and release tools, so having a dedicated folder is cleaner and more maintainable. Then you can configure Spring Boot to process the SPA’s static resources
 at build time and include them in the final release.
 

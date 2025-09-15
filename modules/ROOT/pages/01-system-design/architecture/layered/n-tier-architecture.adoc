@@ -1,5 +1,5 @@
 = N-Tier architecture (layered architecture)
-:figures: 01-system-design/architecture
+:figures: 01-system-design/architecture/layered
 
 With any nontrivial application, it usually makes sense to organize classes by concern. Per-
 sistence is one concern; others include presentation, workflow, and business logic. A typ-
@@ -34,6 +34,8 @@ The Model-View-Controller (MVC) software design pattern separates an application
 interconnected components: Model (data and business logic), View (user interface), and Controller
 
 The typical, proven, high-level application architecture uses three layers: one each for presentation, business logic, and persistence
+
+image::{figures}/layered-architecture.png[]
 
 - Presentation layer—The user interface logic is topmost. Code responsible for the
 presentation and control of page and screen navigation is in the presentation

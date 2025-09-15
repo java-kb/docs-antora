@@ -1,0 +1,1529 @@
+= Refactoring
+
+Refactoring is the process of changing a software system in a way that does not
+alter the external behavior of the code yet improves its internal structure. It is a
+disciplined way to clean up code that minimizes the chances of introducing bugs.
+In essence, when you refactor, you are improving the design of the code after it
+has been written.
+
+For much of the history of software development, most people believed that we
+design first, and only when done with design should we code. Over time, the
+code will be modified, and the integrity of the system—its structure according to
+that design—gradually fades. The code slowly sinks from engineering to hacking.
+
+Refactoring is the opposite of this practice. With refactoring, we can take a
+bad, even chaotic, design and rework it into well-structured code. Each step is
+simple—even simplistic. I move a field from one class to another, pull some code
+out of a method to make it into its own method, or push some code up or down
+a hierarchy. Yet the cumulative effect of these small changes can radically improve
+the design. It is the exact reverse of the notion of software decay.
+
+A poorly designed system is hard to
+change—because it is difficult to figure out what to change and how these changes
+will interact with the existing code to get the behavior I want. And if it is hard
+to figure out what to change, there is a good chance that I will make mistakes
+and introduce bugs.
+Thus, if I’m faced with modifying a program with hundreds of lines of code,
+I’d rather it be structured into a set of functions and other program elements that
+allow me to understand more easily what the program is doing. If the program
+lacks structure, it’s usually easier for me to add structure to the program first,
+and then make the change I need.
+
+it’s these changes that drive the need to perform refactoring.
+If the code works and doesn’t ever need to change, it’s perfectly fine to leave it
+alone. It would be nice to improve it, but unless someone needs to understand
+it, it isn’t causing any real harm. Yet as soon as someone does need to under-
+stand how that code works, and struggles to follow it, then you have to do
+something about it.
+
+
+``When you have to add a feature to a program but the code is not structured in a convenient way, first refactor the program to make it easy to add the feature, then add the feature.``
+
+== The First Step in Refactoring
+Whenever We do refactoring, We need to ensure we have a solid set of tests for that section of code. The tests are essential because even though we will follow refactorings structured to avoid most of the opportunities for introducing bugs. The larger a program, the more likely it is that my changes will cause something to break inadvertently
+
+``Before you start refactoring, make sure you have a solid suite of tests. These tests must be self-checking.``
+
+It’s an important habit to test after every refactoring, however simple. Mistakes are easy to make. Testing after each
+change means that when you make a mistake, you only have a small change to consider
+in order to spot the error, which makes it far easier to find and fix. This is the
+essence of the refactoring process: small changes and testing after each change.
+If you try to do too much, making a mistake will force me into a tricky debugging
+episode that can take a long time. Small changes, enabling a tight feedback loop,
+are the key to avoiding that mess.
+
+``Refactoring changes the programs in small steps, so if you make a mistake, it is easy to find where the bug is.
+``
+
+next step is to commit the change to my
+local version control system. I use a version control system, such as git or mercu-
+rial, that allows me to make private commits. I commit after each successful
+refactoring, so I can easily get back to a working state should I mess up later. I
+then squash changes into more significant commits before I push the changes to
+a shared repository.
+
+==  Performance and refactoring
+Most programmers, even experienced ones,
+are poor judges of how code actually performs. Many of our intuitions are broken
+by clever compilers, modern caching techniques, and the like. The performance
+of software usually depends on just a few parts of the code, and changes anywhere
+else don’t make an appreciable difference.
+
+But “mostly” isn’t the same as “alwaysly.” Sometimes a refactoring will have a
+significant performance implication. Even then, I usually go ahead and do it, be-
+cause it’s much easier to tune the performance of well-factored code. If I introduce
+a significant performance issue during refactoring, I spend time on performance
+tuning afterwards. It may be that this leads to reversing some of the refactoring
+I did earlier—but most of the time, due to the refactoring, I can apply a more ef-
+fective performance-tuning enhancement instead. I end up with code that’s both
+clearer and faster.
+
+So, my overall advice on performance with refactoring is: Most of the time you
+should ignore it. *If your refactoring introduces performance slow-downs, finish
+refactoring first and do performance tuning afterwards*.
+
+== Bad Smells in Code
+
+=== Duplicated Code
+Same code structure in more than one place.
+
+=== Long Method
+The longer a procedure is, the more difficult it is to understand.
+
+=== Large Classes
+When a class is trying to do too much, duplicated code cannot be far behind.
+
+=== Long Parameter List
+They are hard to understand, inconsistent, and difficult to use.
+
+=== Divergent Change
+When one class is commonly changed in different ways for different reasons.
+
+=== Shotgun Surgery
+When every time you make a kind of change, you have to make a lot of little changes to a lot of different classes.
+
+=== Feature Envy
+A method that seems more interested in a class other than the one it actually is in.
+
+=== Data Clumps
+Bunches of data (fields, parameters...) that hang around together.
+
+=== Primitive Obsession
+Using primitive types instead of small objects.
+
+=== Switch Statements
+The same switch statement scattered about a program in different places. Use polymorphism.
+
+=== Parallel Inheritance Hierarchies
+Every time you make a subclass of one class, you also have to make a subclass of another.
+
+=== Lazy Class
+A class that isn't doing enough to pay for itself should be eliminated.
+
+=== Speculative Generality
+All sorts of hooks and special cases to handle things that aren't required.
+
+=== Temporary Field
+An instance variable that is set only in certain circumstances.
+
+=== Message Chain
+When a client asks one object for another object, which the client then asks for yet another object...
+
+=== Middle Man
+When an object delegates much of its functionality.
+
+=== Inappropriate Intimacy
+When classes access too much of another class.
+
+=== Alternative Classes with Different Interfaces
+Classes with methods that look too similar.
+
+=== Incomplete Library Class
+When we need extra features in libraries.
+
+=== Data Class
+Don't allow manipulation in Data Classes. Use encapsulation and immutability.
+
+=== Refused Bequest
+Subclasses that don't make use of parent methods.
+
+=== Comments
+Not all comments, but the ones that are there because the code is bad.
+
+== Composing Methods
+
+=== Extract Method
+
+You have a code fragment that can be grouped together.
+
+[source,javascript]
+----
+void printOwing(double amount) {
+    printBanner();
+    //print details
+    System.out.println ("name:" + _name);
+    System.out.println ("amount" + amount);
+}
+----
+
+to
+
+[source,javascript]
+----
+void printOwing(double amount) {
+    printBanner();
+    printDetails(amount);
+}
+
+void printDetails (double amount) {
+    System.out.println ("name:" + _name);
+    System.out.println ("amount" + amount);
+}
+----
+
+*Motivation*
+
+* Increases the chances that other methods can use a method
+* Allows the higher-level methods to read more like a series of comments
+
+[source,javascript]
+----
+void printOwing(double previousAmount) {
+    Enumeration e = _orders.elements();
+    double outstanding = previousAmount * 1.2;
+    printBanner();
+
+    // calculate outstanding
+    while (e.hasMoreElements()) {
+        Order each = (Order) e.nextElement();
+        outstanding += each.getAmount();
+    }
+    printDetails(outstanding);
+}
+----
+
+to
+
+[source,javascript]
+----
+void printOwing(double previousAmount) {
+    printBanner();
+    double outstanding = getOutstanding(previousAmount * 1.2);
+    printDetails(outstanding);
+}
+
+double getOutstanding(double initialValue) {
+    double result = initialValue;
+    Enumeration e = _orders.elements();
+
+    while (e.hasMoreElements()) {
+        Order each = (Order) e.nextElement();
+        result += each.getAmount();
+    }
+    return result;
+}
+----
+
+=== Inline Method
+
+A method's body is just as clear as its name.
+
+[source,javascript]
+----
+int getRating() {
+    return (moreThanFiveLateDeliveries()) ? 2 : 1;
+}
+
+boolean moreThanFiveLateDeliveries() {
+    return _numberOfLateDeliveries > 5;
+}
+----
+
+to
+
+[source,javascript]
+----
+int getRating() {
+    return (_numberOfLateDeliveries > 5) ? 2 : 1;
+}
+----
+
+*Motivation*
+
+* When indirection is needless (simple delegation) becomes irritating.
+* If group of methods are badly factored and grouping them makes it clearer
+
+=== Inline Temp
+
+You have a temp that is assigned to once with a simple expression, and the temp is getting in the way of other refactorings.
+
+[source,javascript]
+----
+double basePrice = anOrder.basePrice();
+return (basePrice > 1000)
+----
+
+to
+
+[source,javascript]
+----
+return (anOrder.basePrice() > 1000)
+----
+
+*Motivation*
+
+* Use it with Replace Temp with Query
+
+=== Replace Temp with Query
+
+You are using a temporary variable to hold the result of an expression.
+
+[source,javascript]
+----
+double basePrice = _quantity * _itemPrice;
+if (basePrice > 1000)
+    return basePrice * 0.95;
+else
+    return basePrice * 0.98;
+----
+
+to
+
+[source,javascript]
+----
+if (basePrice() > 1000)
+    return basePrice() * 0.95;
+else
+    return basePrice() * 0.98;
+...
+double basePrice() {
+    return _quantity * _itemPrice;
+}
+----
+
+*Motivation*
+
+* Replacing the temp with a query method, any method in the class can get at the information.
+* Is a vital step before Extract Method
+
+=== Introduce Explaining Variable
+
+You have a complicated expression
+
+[source,javascript]
+----
+if ( (platform.toUpperCase().indexOf("MAC") > -1) &&
+    (browser.toUpperCase().indexOf("IE") > -1) &&
+    wasInitialized() && resize > 0 )
+{
+    // do something
+}
+----
+
+to
+
+[source,javascript]
+----
+final boolean isMacOs = platform.toUpperCase().indexOf("MAC") >-1;
+final boolean isIEBrowser = browser.toUpperCase().indexOf("IE") >-1;
+final boolean wasResized = resize > 0;
+if (isMacOs && isIEBrowser && wasInitialized() && wasResized) {
+    // do something
+}
+----
+
+*Motivation*
+
+* When expressions are hard to read
+
+=== Split Temporary Variable
+
+You have a temporary variable assigned to more than once, but is not a loop variable nor a collecting temporary variable.
+
+[source,javascript]
+----
+double temp = 2 * (_height + _width);
+System.out.println (temp);
+temp = _height * _width;
+System.out.println (temp);
+----
+
+to
+
+[source,javascript]
+----
+final double perimeter = 2 * (_height + _width);
+System.out.println (perimeter);
+final double area = _height * _width;
+System.out.println (area);
+----
+
+*Motivation*
+
+* Variables should not have more than one responsibility.
+* Using a temp for two different things is very confusing for the reader.
+
+=== Remove Assignments to Parameters
+
+The code assigns to a parameter
+
+[source,javascript]
+----
+int discount (int inputVal, int quantity, int yearToDate) {
+    if (inputVal > 50) inputVal -= 2;
+}
+----
+
+to
+
+[source,javascript]
+----
+int discount (int inputVal, int quantity, int yearToDate) {
+    int result = inputVal;
+    if (inputVal > 50) result -= 2;
+}
+----
+
+*Motivation*
+
+* You can change the internals of object is passed but do not point to another object.
+* Use only the parameter to represent what has been passed.
+
+=== Replace Method with Method Object
+
+You have a long method that uses local variables in such a way that you cannot apply Extract Method.
+
+[source,javascript]
+----
+class Order...
+    double price() {
+        double primaryBasePrice;
+        double secondaryBasePrice;
+        double tertiaryBasePrice;
+        // long computation;
+        ...
+    }
+----
+
+to
+
+[source,javascript]
+----
+class Order...
+    double price(){
+        return new PriceCalculator(this).compute()
+    }
+}
+
+class PriceCalculator...
+compute(){
+    double primaryBasePrice;
+    double secondaryBasePrice;
+    double tertiaryBasePrice;
+    // long computation;
+    return ...
+}
+----
+
+*Motivation*
+
+* When a method has a lot of local variables and applying decomposition is not possible
+
+_This sample does not really need this refactoring, but shows the way to do it._
+
+[source,javascript]
+----
+Class Account
+    int gamma (int inputVal, int quantity, int yearToDate) {
+        int importantValue1 = (inputVal * quantity) + delta();
+        int importantValue2 = (inputVal * yearToDate) + 100;
+        if ((yearToDate - importantValue1) > 100)
+        importantValue2 -= 20;
+        int importantValue3 = importantValue2 * 7;
+        // and so on.
+        return importantValue3 - 2 * importantValue1;
+    }
+}
+----
+
+to
+
+[source,javascript]
+----
+class Gamma...
+    private final Account _account;
+    private int inputVal;
+    private int quantity;
+    private int yearToDate;
+    private int importantValue1;
+    private int importantValue2;
+    private int importantValue3;
+
+    Gamma (Account source, int inputValArg, int quantityArg, int yearToDateArg) {
+        _account = source;
+        inputVal = inputValArg;
+        quantity = quantityArg;
+        yearToDate = yearToDateArg;
+    }
+
+    int compute () {
+        importantValue1 = (inputVal * quantity) + _account.delta();
+        importantValue2 = (inputVal * yearToDate) + 100;
+        if ((yearToDate - importantValue1) > 100)
+        importantValue2 -= 20;
+        int importantValue3 = importantValue2 * 7;
+        // and so on.
+        return importantValue3 - 2 * importantValue1;
+    }
+
+    int gamma (int inputVal, int quantity, int yearToDate) {
+        return new Gamma(this, inputVal, quantity,yearToDate).compute();
+    }
+----
+
+=== Substitute Algorithm
+
+You want to replace an algorithm with one that is clearer.
+
+[source,javascript]
+----
+String foundPerson(String[] people){
+    for (int i = 0; i < people.length; i++) {
+        if (people[i].equals ("Don")){
+            return "Don";
+        }
+        if (people[i].equals ("John")){
+            return "John";
+        }
+        if (people[i].equals ("Kent")){
+            return "Kent";
+        }
+    }
+    return "";
+}
+----
+
+to
+
+[source,javascript]
+----
+String foundPerson(String[] people){
+    List candidates = Arrays.asList(new String[] {"Don", "John","Kent"});
+    for (int i = 0; i<people.length; i++)
+        if (candidates.contains(people[i]))
+            return people[i];
+    return "";
+}
+----
+
+*Motivation*
+
+* Break down something complex into simpler pieces.
+* Makes it easier to apply changes to the algorithm.
+* Substituting a large, complex algorithm is very difficult; making it simple can make the substitution tractable.
+
+== Moving Features Between Elements
+
+=== Move Method
+
+A method is, or will be, using or used by more features of another class than the class on which it is defined.
+
+_Create a new method with a similar body in the class it uses most. Either turn the old method into a simple delegation, or remove it altogether._
+
+[source,javascript]
+----
+class Class1 {
+    aMethod();
+}
+class Class2 { }
+----
+
+to
+
+[source,javascript]
+----
+class Class1 { }
+
+class Class2 {
+    aMethod();
+}
+----
+
+*Motivation*
+
+When classes do too much work or when they collaborate too much and are highly coupled.
+
+=== Move Field
+
+A field is, or will be, used by another class more than the class on which it is defined.
+
+_Create a new field in the target class, and change all its users._
+
+[source,javascript]
+----
+class Class1 {
+    aField
+}
+
+class Class2 { }
+----
+
+to
+
+[source,javascript]
+----
+class Class1 { }
+
+class Class2 {
+    aField
+}
+----
+
+*Motivation*
+
+If a field is used mostly by outer classes and before Extract Class.
+
+=== Extract Class
+
+You have one class doing work that should be done by two.
+
+_Create a new class and move the relevant fields and methods from the old class into the new class._
+
+[source,javascript]
+----
+class Person {
+    name,
+    officeAreaCode,
+    officeNumber,
+    getTelephoneNumber()
+}
+----
+
+to
+
+[source,javascript]
+----
+class Person {
+    name,
+    getTelephoneNumber()
+}
+
+class TelephoneNumber {
+    areaCode,
+    number,
+    getTelephoneNumber()
+}
+----
+
+*Motivation*
+
+Classes grow.
+_Split them when:_
+
+* subsets of methods seem to be together
+* subsets of data usually change together or depend on each other
+
+=== Inline Class
+
+A class isn't doing very much.
+
+_Move all its features into another class and delete it._
+
+[source,javascript]
+----
+class Person {
+    name,
+    getTelephoneNumber()
+}
+
+class TelephoneNumber {
+    areaCode,
+    number,
+    getTelephoneNumber()
+}
+----
+
+to
+
+[source,javascript]
+----
+class Person {
+    name,
+    officeAreaCode,
+    officeNumber,
+    getTelephoneNumber()
+}
+----
+
+*Motivation*
+
+After refactoring, normally there are a bunch of responsibilities moved out of the class, letting the class with little left.
+
+=== Hide Delegate
+
+A client is calling a delegate class of an object.
+
+_Create methods on the server to hide the delegate._
+
+[source,javascript]
+----
+class ClientClass {
+    //Dependencies
+    Person person = new Person()
+    Department department = new Department()
+    person.doSomething()
+    department.doSomething()
+}
+----
+
+to
+
+[source,javascript]
+----
+class ClientClass {
+    Person person = new Person()
+    person.doSomething()
+}
+
+class Person{
+    Department department = new Department()
+    department.doSomething()
+}
+----
+
+_The solution_
+
+[source,javascript]
+----
+class ClientClass{
+    Server server = new Server()
+    server.doSomething()
+}
+
+class Server{
+    Delegate delegate = new Delegate()
+    void doSomething(){
+        delegate.doSomething()
+    }
+}
+// The delegate is hidden to the client class.
+// Changes won't be propagated to the client they will only affect the server
+class Delegate{
+    void doSomething(){...}
+}
+----
+
+*Motivation*
+
+Key of encapsulation.
+Classes should know as little as possible of other classes.
+
+[source,javascript]
+----
+manager = john.getDepartment().getManager();
+----
+
+[source,javascript]
+----
+class Person {
+    Department _department;
+    public Department getDepartment() {
+        return _department;
+    }
+    public void setDepartment(Department arg) {
+        _department = arg;
+    }
+}
+
+class Department {
+    private String _chargeCode;
+    private Person _manager;
+    public Department (Person manager) {
+        _manager = manager;
+    }
+    public Person getManager() {
+        return _manager;
+    }
+    ...
+}
+----
+
+to
+
+[source,javascript]
+----
+manager = john.getManager();
+----
+
+[source,javascript]
+----
+class Person {
+    ...
+    public Person getManager() {
+        return _department.getManager();
+    }
+}
+----
+
+=== Remove Middle Man
+
+A class is doing too much simple delegation.
+
+_Get the client to call the delegate directly._
+
+[source,javascript]
+----
+class ClientClass {
+    Person person = new Person()
+    person.doSomething()
+}
+
+class Person{
+    Department department = new Department()
+    department.doSomething()
+}
+----
+
+to
+
+[source,javascript]
+----
+class ClientClass {
+    //Dependencies
+    Person person = new Person()
+    Department department = new Department()
+    person.doSomething()
+    department.doSomething()
+}
+----
+
+*Motivation*
+
+When the "Middle man" (the server) does too much, it is time for the client to call the delegate directly.
+
+=== Introduce Foreign Method
+
+A server class you are using needs an additional method, but you can't modify the class.
+
+_Create a method in the client class with an instance of the server class as its first argument._
+
+[source,javascript]
+----
+Date newStart = new Date(previousEnd.getYear(),previousEnd.getMonth(),previousEnd.getDate()+1);
+----
+
+to
+
+[source,javascript]
+----
+Date newStart = nextDay(previousEnd);
+
+private static Date nextDay(Date date){
+    return new Date(date.getYear(),date.getMonth(),date.getDate()+1);
+}
+----
+
+*Motivation*
+
+When there is a lack of a method in a class that you use a lot and you cannot change that class.
+
+=== Introduce Local Extension
+
+A server class you are using needs several additional methods, but you can't modify the class.
+
+_Create a new class that contains these extra methods. Make this extension class a subclass or a wrapper of the original._
+
+[source,javascript]
+----
+class ClientClass(){
+
+    Date date = new Date()
+    nextDate = nextDay(date);
+
+    private static Date nextDay(Date date){
+        return new Date(date.getYear(),date.getMonth(),date.getDate()+1);
+    }
+}
+----
+
+to
+
+[source,javascript]
+----
+class ClientClass() {
+    MfDate date = new MfDate()
+    nextDate = nextDate(date)
+}
+class MfDate() extends Date {
+    ...
+    private static Date nextDay(Date date){
+        return new Date(date.getYear(),date.getMonth(),date.getDate()+1);
+    }
+}
+----
+
+*Motivation*
+
+When plenty of Introduce Foreign Method need to be added to a class.
+
+== Examples
+[tabs]
+====
+Refactoring Improving the Design of Existing Code 2nd::
++
+Image a company of theatrical players who go out to various events performing
+plays. Typically, a customer will request a few plays and the company charges
+them based on the size of the audience and the kind of play they perform. There
+are currently two kinds of plays that the company performs: tragedies and
+comedies. As well as providing a bill for the performance, the company gives its
+customers “volume credits” which they can use for discounts on future perfor-
+mances—think of it as a customer loyalty mechanism.
++
+The performers store data about their plays in a simple JSON file that looks
+something like this:
+plays.json…
+[source,json,attributes]
+----
+ {
+ "hamlet": {"name": "Hamlet", "type": "tragedy"},
+ "as-like": {"name": "As You Like It", "type": "comedy"},
+ "othello": {"name": "Othello", "type": "tragedy"}
+ }
+----
+
+The data for their bills also comes in a JSON file:
++
+invoices.json…
+[source,json,attributes]
+----
+ [
+ {
+ "customer": "BigCo",
+ "performances": [
+ {
+ "playID": "hamlet",
+ "audience": 55
+ },
+ {
+ "playID": "as-like",
+ "audience": 35
+ },
+ {
+ "playID": "othello",
+ "audience": 40
+ }
+ ]
+ }
+ ]
+----
+The code that prints the bill is this simple function:
+[source, javascript]
+----
+function statement (invoice, plays) {
+ let totalAmount = 0;
+ let volumeCredits = 0;
+ let result = `Statement for ${invoice.customer}\n`;
+ const format = new Intl.NumberFormat("en-US",
+ { style: "currency", currency: "USD",
+ minimumFractionDigits: 2 }).format;
+for (let perf of invoice.performances) {
+ const play = plays[perf.playID];
+ let thisAmount = 0;
+ switch (play.type) {
+ case "tragedy":
+ thisAmount = 40000;
+ if (perf.audience > 30) {
+ thisAmount += 1000 * (perf.audience - 30);
+ }
+ break;
+ case "comedy":
+ thisAmount = 30000;
+ if (perf.audience > 20) {
+ thisAmount += 10000 + 500 * (perf.audience - 20);
+ }
+ thisAmount += 300 * perf.audience;
+ break;
+ default:
+ throw new Error(`unknown type: ${play.type}`);
+ }
+ // add volume credits
+ volumeCredits += Math.max(perf.audience - 30, 0);
+ // add extra credit for every ten comedy attendees
+ if ("comedy" === play.type) volumeCredits += Math.floor(perf.audience / 5);
+ // print line for this order
+ result += ` ${play.name}: ${format(thisAmount/100)} (${perf.audience} seats)\n`;
+ totalAmount += thisAmount;
+ }
+ result += `Amount owed is ${format(totalAmount/100)}\n`;
+ result += `You earned ${volumeCredits} credits\n`;
+ return result;
+ }
+----
+Running that code on the test data files above results in the following output:
++
+ Statement for BigCo
+ Hamlet: $650.00 (55 seats)
+ As You Like It: $580.00 (35 seats)
+ Othello: $500.00 (40 seats)
+ Amount owed is $1,730.00
+ You earned 47 credits
++
+When refactoring a long function like this, I mentally try to identify points that
+separate different parts of the overall behavior. The first chunk that leaps to my
+eye is the switch statement in the middle.
++
+As I look at this chunk, I conclude that it’s calculating the charge for one per-
+formance. That conclusion is a piece of insight about the code. 
++
+The way to put that understanding into code is to turn that chunk of code into
+its own function, naming it after what it does—something like amountFor(aPerformance).
++
+When I want to turn a chunk of code into a function like this, I have a procedure
+for doing it that minimizes my chances of getting it wrong. I wrote down this
+procedure and, to make it easy to reference, named it Extract Function (106).
++
+rocedure and, to make it easy to reference, named it Extract Function (106).
+First, I need to look in the fragment for any variables that will no longer be in
+scope once I’ve extracted the code into its own function. In this case, I have three:
+perf, play, and thisAmount. The first two are used by the extracted code, but not
+modified, so I can pass them in as parameters. Modified variables need more
+care. Here, there is only one, so I can return it. I can also bring its initialization
+inside the extracted code. All of which yields this:
++
+[source,javascript,attributes]
+----
+function amountFor(perf, play) {
+ let thisAmount = 0;
+ switch (play.type) {
+ case "tragedy":
+ thisAmount = 40000;
+ if (perf.audience > 30) {
+ thisAmount += 1000 * (perf.audience - 30);
+ }
+ break;
+ case "comedy":
+ thisAmount = 30000;
+ if (perf.audience > 20) {
+ thisAmount += 10000 + 500 * (perf.audience - 20);
+ }
+ thisAmount += 300 * perf.audience;
+ break;
+ default:
+ throw new Error(`unknown type: ${play.type}`);
+ }
+ return thisAmount;
+ }
+----
+The original statement code now calls this function to populate thisAmount:
++
+[source,javascript,attributes]
+----
+function statement (invoice, plays) {
+ let totalAmount = 0;
+ let volumeCredits = 0;
+ let result = `Statement for ${invoice.customer}\n`;
+ const format = new Intl.NumberFormat("en-US",
+ { style: "currency", currency: "USD",
+ minimumFractionDigits: 2 }).format;
+ for (let perf of invoice.performances) {
+ const play = plays[perf.playID];
+ let thisAmount = amountFor(perf, play);
+ // add volume credits
+ volumeCredits += Math.max(perf.audience - 30, 0);
+ // add extra credit for every ten comedy attendees
+ if ("comedy" === play.type) volumeCredits += Math.floor(perf.audience / 5);
+ // print line for this order
+ result += ` ${play.name}: ${format(thisAmount/100)} (${perf.audience} seats)\n`;
+ totalAmount += thisAmount;
+ }
+ result += `Amount owed is ${format(totalAmount/100)}\n`;
+ result += `You earned ${volumeCredits} credits\n`;
+ return result;
+}
+----
+Once I’ve made this change, I immediately compile and test to see if I’ve broken
+anything.
++
+Once I’ve used Extract Function (106), I take a look at what I’ve extracted to see
+if there are any quick and easy things I can do to clarify the extracted function.
+The first thing I do is rename some of the variables to make them clearer, such
+as changing thisAmount to result.
+[source,javascript,attributes]
+----
+ function amountFor(perf, play) {
+ let result = 0;
+ switch (play.type) {
+ case "tragedy":
+result = 40000;
+ if (perf.audience > 30) {
+result += 1000 * (perf.audience - 30);
+ }
+ break;
+ case "comedy":
+result = 30000;
+ if (perf.audience > 20) {
+result += 10000 + 500 * (perf.audience - 20);
+ }
+result += 300 * perf.audience;
+ break;
+ default:
+ throw new Error(`unknown type: ${play.type}`);
+ }
+ return result;
+ }
+----
+It’s my coding standard to always call the return value from a function “result”.
+That way I always know its role. Again, I compile, test, and commit. Then I move
+onto the first argument.
++
+[source,javascript,attributes]
+----
+function amountFor(aPerformance, play) {
+ let result = 0;
+ switch (play.type) {
+ case "tragedy":
+ result = 40000;
+ if (aPerformance.audience > 30) {
+ result += 1000 * (aPerformance.audience - 30);
+ }
+ break;
+ case "comedy":
+ result = 30000;
+ if (aPerformance.audience > 20) {
+ result += 10000 + 500 * (aPerformance.audience - 20);
+ }
+ result += 300 * aPerformance.audience;
+ break;
+ default:
+ throw new Error(`unknown type: ${play.type}`);
+ }
+ return result;
+ }
+----
+Again, this is following my coding style. With a dynamically typed language
+such as JavaScript, it’s useful to keep track of types—hence, my default name for
+a parameter includes the type name. I use an indefinite article with it unless there
+is some specific role information to capture in the name. I learned this convention
+from Kent Beck [Beck SBPP] and continue to find it helpful.
++
+Is this renaming worth the effort? Ab-
+solutely. Good code should clearly com-
+municate what it is doing, and variable
+names are a key to clear code. Never be
+afraid to change names to improve
+clarity. 
++
+The next item to consider for renaming is the play parameter.
++
+As I consider the parameters to amountFor, I look to see where they come from.
+aPerformance comes from the loop variable, so naturally changes with each iteration through the loop. But play is computed from the performance, so there’s no need
+to pass it in as a parameter at all—I can just recalculate it within amountFor. When
+I’m breaking down a long function, I like to get rid of variables like play, because
+temporary variables create a lot of locally scoped names that complicate
+extractions. The refactoring I will use here is Replace Temp with Query (178).
++
+I begin by extracting the right-hand side of the assignment into a function.
++
+[source,javascript,attributes]
+----
+function playFor(aPerformance) {
+ return plays[aPerformance.playID];
+}
+----
+[source,javascript,attributes]
+----
+ function statement (invoice, plays) {
+ let totalAmount = 0;
+ let volumeCredits = 0;
+ let result = `Statement for ${invoice.customer}\n`;
+ const format = new Intl.NumberFormat("en-US",
+ { style: "currency", currency: "USD",
+ minimumFractionDigits: 2 }).format;
+ for (let perf of invoice.performances) {
+ const play = playFor(perf);
+ let thisAmount = amountFor(perf, play);
+ // add volume credits
+ volumeCredits += Math.max(perf.audience - 30, 0);
+ // add extra credit for every ten comedy attendees
+ if ("comedy" === play.type) volumeCredits += Math.floor(perf.audience / 5);
+ // print line for this order
+ result += ` ${play.name}: ${format(thisAmount/100)} (${perf.audience} seats)\n`;
+ totalAmount += thisAmount;
+ }
+ result += `Amount owed is ${format(totalAmount/100)}\n`;
+ result += `You earned ${volumeCredits} credits\n`;
+ return result;
+ }
+----
+I compile-test-commit, and then use Inline Variable (123).
+[source,javascript,attributes]
+----
+let thisAmount = amountFor(perf, playFor(perf));
+----
+I compile-test-commit. With that inlined, I can then apply Change Function
+Declaration (124) to amountFor to remove the play parameter. I do this in two steps.
++
+First, I use the new function inside amountFor.
+[source,javascript,attributes]
+----
+ function amountFor(aPerformance, play) {
+ let result = 0;
+ switch (playFor(aPerformance).type) {
+ case "tragedy":
+ result = 40000;
+ if (aPerformance.audience > 30) {
+ result += 1000 * (aPerformance.audience - 30);
+ }
+ break;
+ case "comedy":
+ result = 30000;
+ if (aPerformance.audience > 20) {
+ result += 10000 + 500 * (aPerformance.audience - 20);
+ }
+ result += 300 * aPerformance.audience;
+ break;
+ default:
+ throw new Error(`unknown type: ${playFor(aPerformance).type}`);
+ }
+ return result;
+ }
+----
+I compile-test-commit, and then delete the parameter.
+[source,javascript,attributes]
+----
+ function amountFor(aPerformance) {
+ let result = 0;
+ switch (playFor(aPerformance).type) {
+ case "tragedy":
+ result = 40000;
+ if (aPerformance.audience > 30) {
+ result += 1000 * (aPerformance.audience - 30);
+ }
+ break;
+ case "comedy":
+ result = 30000;
+ if (aPerformance.audience > 20) {
+ result += 10000 + 500 * (aPerformance.audience - 20);
+ }
+ result += 300 * aPerformance.audience;
+ break;
+ default:
+ throw new Error(`unknown type: ${playFor(aPerformance).type}`);
+ }
+ return result;
+ }
+ function statement (invoice, plays) {
+ let totalAmount = 0;
+ let volumeCredits = 0;
+ let result = `Statement for ${invoice.customer}\n`;
+ const format = new Intl.NumberFormat("en-US",
+ { style: "currency", currency: "USD",
+ minimumFractionDigits: 2 }).format;
+ for (let perf of invoice.performances) {
+ const play = playFor(perf);
+ let thisAmount = amountFor(perf);
+ // add volume credits
+ volumeCredits += Math.max(perf.audience - 30, 0);
+ // add extra credit for every ten comedy attendees
+ if ("comedy" === play.type) volumeCredits += Math.floor(perf.audience / 5);
+ // print line for this order
+ result += ` ${play.name}: ${format(thisAmount/100)} (${perf.audience} seats)\n`;
+ totalAmount += thisAmount;
+ }
+ result += `Amount owed is ${format(totalAmount/100)}\n`;
+ result += `You earned ${volumeCredits} credits\n`;
+ return result;
+ }
+----
+This refactoring alarms some programmers. Previously, the code to look up
+the play was executed once in each loop iteration; now, it’s executed thrice. I’ll
+talk about the interplay of refactoring and performance later, but for the moment
+I’ll just observe that this change is unlikely to significantly affect performance,
+and even if it were, it is much easier to improve the performance of a well-factored
+code base.
++
+Now that I’m done with the arguments to amountFor, I look back at where it’s
+called. It’s being used to set a temporary variable that’s not updated again, so I
+apply Inline Variable (123).
+[source,javascript,attributes]
+----
+function statement (invoice, plays) {
+ let totalAmount = 0;
+ let volumeCredits = 0;
+ let result = `Statement for ${invoice.customer}\n`;
+ const format = new Intl.NumberFormat("en-US",
+ { style: "currency", currency: "USD",
+ minimumFractionDigits: 2 }).format;
+ for (let perf of invoice.performances) {
+ // add volume credits
+ volumeCredits += Math.max(perf.audience - 30, 0);
+ // add extra credit for every ten comedy attendees
+ if ("comedy" === playFor(perf).type) volumeCredits += Math.floor(perf.audience / 5);
+ // print line for this order
+ result += ` ${playFor(perf).name}: ${format(amountFor(perf)/100)} (${perf.audience} seats)\n`;
+ totalAmount += amountFor(perf);
+ }
+ result += `Amount owed is ${format(totalAmount/100)}\n`;
+ result += `You earned ${volumeCredits} credits\n`;
+ return result;
+}
+----
+Now I get the benefit from removing the play variable as it makes it easier to
+extract the volume credits calculation by removing one of the locally scoped
+variables.
++
+I still have to deal with the other two. Again, perf is easy to pass in, but
+volumeCredits is a bit more tricky as it is an accumulator updated in each pass of
+the loop. So my best bet is to initialize a shadow of it inside the extracted function
+and return it.
+[source,javascript,attributes]
+----
+function volumeCreditsFor(perf) { <1>
+ let volumeCredits = 0;
+ volumeCredits += Math.max(perf.audience - 30, 0);
+ if ("comedy" === playFor(perf).type) volumeCredits += Math.floor(perf.audience / 5);
+ return volumeCredits;
+ }
+function statement (invoice, plays) {
+ let totalAmount = 0;
+ let volumeCredits = 0;
+ let result = `Statement for ${invoice.customer}\n`;
+ const format = new Intl.NumberFormat("en-US",
+ { style: "currency", currency: "USD",
+ minimumFractionDigits: 2 }).format;
+ for (let perf of invoice.performances) {
+ volumeCredits += volumeCreditsFor(perf); <2>
+ // print line for this order
+ result += ` ${playFor(perf).name}: ${format(amountFor(perf)/100)} (${perf.audience} seats)\n`;
+ totalAmount += amountFor(perf);
+ }
+ result += `Amount owed is ${format(totalAmount/100)}\n`;
+ result += `You earned ${volumeCredits} credits\n`;
+ return result;
+}
+----
+I remove the unnecessary (and, in this case, downright misleading) comment.
++
+I compile-test-commit that, and then rename the variables inside the new function.
+[source,javascript,attributes]
+----
+function volumeCreditsFor(aPerformance) {
+ let result = 0; <1>
+result += Math.max(aPerformance.audience - 30, 0);
+ if ("comedy" === playFor(aPerformance).type) result += Math.floor(aPerformance.audience / 5);
+ return result; <2>
+ }
+----
+As I suggested before, temporary variables can be a problem. They are only
+useful within their own routine, and therefore they encourage long, complex
+routines. My next move, then, is to replace some of them. The easiest one is
+format. This is a case of assigning a function to a temp, which I prefer to replace
+with a declared function.
+[source,javascript,attributes]
+----
+function format(aNumber) {
+ return new Intl.NumberFormat("en-US",
+ { style: "currency", currency: "USD",
+ minimumFractionDigits: 2 }).format(aNumber);
+ }
+function statement (invoice, plays) {
+ let totalAmount = 0;
+ let volumeCredits = 0;
+ let result = `Statement for ${invoice.customer}\n`;
+ for (let perf of invoice.performances) {
+ volumeCredits += volumeCreditsFor(perf);
+ // print line for this order
+ result += ` ${playFor(perf).name}: ${format(amountFor(perf)/100)} (${perf.audience} seats)\n`;
+ totalAmount += amountFor(perf);
+ }
+ result += `Amount owed is ${format(totalAmount/100)}\n`;
+ result += `You earned ${volumeCredits} credits\n`;
+ return result;
+}
+----
+I’m not keen on the name—“format” doesn’t really convey enough of what it’s
+doing. “formatAsUSD” would be a bit too long-winded since it’s being used in a
+string template, particularly within this small scope. I think the fact that it’s for-
+matting a currency amount is the thing to highlight here, so I pick a name that
+suggests that and apply Change Function Declaration (124).
+[source,javascript,attributes]
+----
+function usd(aNumber) { <1>
+ return new Intl.NumberFormat("en-US",
+ { style: "currency", currency: "USD",
+ minimumFractionDigits: 2 }).format(aNumber/100);
+ }
+ function statement (invoice, plays) {
+ let totalAmount = 0;
+ let volumeCredits = 0;
+ let result = `Statement for ${invoice.customer}\n`;
+ for (let perf of invoice.performances) {
+ volumeCredits += volumeCreditsFor(perf);
+ // print line for this order
+ result += ` ${playFor(perf).name}: ${usd(amountFor(perf))} (${perf.audience} seats)\n`;
+ totalAmount += amountFor(perf);
+ }
+ result += `Amount owed is ${usd(totalAmount)}\n`;
+ result += `You earned ${volumeCredits} credits\n`;
+ return result;
+ }
+----
+My next target variable is volumeCredits. This is a trickier case, as it’s built up during
+the iterations of the loop. My first move, then, is to use Split Loop (227) to
+separate the accumulation of volumeCredits.
+[source,javascript,attributes]
+----
+ function statement (invoice, plays) {
+ let totalAmount = 0;
+ let volumeCredits = 0;
+ let result = `Statement for ${invoice.customer}\n`;
+ for (let perf of invoice.performances) { <1>
+ // print line for this order
+ result += ` ${playFor(perf).name}: ${usd(amountFor(perf))} (${perf.audience} seats)\n`;
+ totalAmount += amountFor(perf);
+ }
+ for (let perf of invoice.performances) { <2>
+ volumeCredits += volumeCreditsFor(perf);
+ }
+ result += `Amount owed is ${usd(totalAmount)}\n`;
+ result += `You earned ${volumeCredits} credits\n`;
+ return result;
+ }
+----
+With that done, I can use Slide Statements (223) to move the declaration of the variable next to the loop.
+[source,javascript,attributes]
+----
+function statement (invoice, plays) {
+ let totalAmount = 0;
+ let result = `Statement for ${invoice.customer}\n`;
+ for (let perf of invoice.performances) {
+ // print line for this order
+ result += ` ${playFor(perf).name}: ${usd(amountFor(perf))} (${perf.audience} seats)\n`;
+ totalAmount += amountFor(perf);
+ }
+ let volumeCredits = 0; <1>
+ for (let perf of invoice.performances) {
+ volumeCredits += volumeCreditsFor(perf);
+ }
+ result += `Amount owed is ${usd(totalAmount)}\n`;
+ result += `You earned ${volumeCredits} credits\n`;
+ return result;
+}
+----
+Gathering together everything that updates the volumeCredits variable makes it
+easier to do Replace Temp with Query (178). As before, the first step is to apply
+Extract Function (106) to the overall calculation of the variable.
+[source,javascript,attributes]
+----
+function totalVolumeCredits() {
+ let volumeCredits = 0;
+ for (let perf of invoice.performances) {
+ volumeCredits += volumeCreditsFor(perf); <1>
+ }
+ return volumeCredits;
+ }
+ function statement (invoice, plays) {
+ let totalAmount = 0;
+ let result = `Statement for ${invoice.customer}\n`;
+ for (let perf of invoice.performances) {
+ // print line for this order
+ result += ` ${playFor(perf).name}: ${usd(amountFor(perf))} (${perf.audience} seats)\n`;
+ totalAmount += amountFor(perf);
+ }
+ let volumeCredits = totalVolumeCredits();
+ result += `Amount owed is ${usd(totalAmount)}\n`;
+ result += `You earned ${volumeCredits} credits\n`;
+ return result;
+ }
+----
+Once everything is extracted, I can apply Inline Variable (123):
+[source,javascript,attributes]
+----
+ function statement (invoice, plays) {
+ let totalAmount = 0;
+ let result = `Statement for ${invoice.customer}\n`;
+ for (let perf of invoice.performances) {
+ // print line for this order
+ result += ` ${playFor(perf).name}: ${usd(amountFor(perf))} (${perf.audience} seats)\n`;
+ totalAmount += amountFor(perf);
+ }
+ result += `Amount owed is ${usd(totalAmount)}\n`;
+ result += `You earned ${totalVolumeCredits()} credits\n`; <1>
+ return result;
+ }
+----
+The the overall state of the code
+[source,javascript,attributes]
+----
+function statement(invoice, plays) {
+    let result = `Statement for ${invoice.customer}\n`;
+    for (let perf of invoice.performances) {
+        result += ` ${playFor(perf).name}: ${usd(amountFor(perf))} (${perf.audience} seats)\n`;
+    }
+    result += `Amount owed is ${usd(totalAmount())}\n`;
+    result += `You earned ${totalVolumeCredits()} credits\n`;
+    return result;
+    function totalAmount() {
+        let result = 0;
+        for (let perf of invoice.performances) {
+            result += amountFor(perf);
+        }
+        return result;
+    }
+    function totalVolumeCredits() {
+        let result = 0;
+        for (let perf of invoice.performances) {
+            result += volumeCreditsFor(perf);
+        }
+        return result;
+    }
+    function usd(aNumber) {
+        return new Intl.NumberFormat("en-US",
+            {
+                style: "currency", currency: "USD",
+                minimumFractionDigits: 2
+            }).format(aNumber / 100);
+    }
+    function volumeCreditsFor(aPerformance) {
+        let result = 0;
+        result += Math.max(aPerformance.audience - 30, 0);
+        if ("comedy" === playFor(aPerformance).type) result += Math.floor(aPerformance.audience / 5);
+        return result;
+    }
+    function playFor(aPerformance) {
+        return plays[aPerformance.playID];
+    }
+    function amountFor(aPerformance) {
+        let result = 0;
+        switch (playFor(aPerformance).type) {
+            case "tragedy":
+                result = 40000;
+                if (aPerformance.audience > 30) {
+                    result += 1000 * (aPerformance.audience - 30);
+                }
+                break;
+            case "comedy":
+                result = 30000;
+                if (aPerformance.audience > 20) {
+                    result += 10000 + 500 * (aPerformance.audience - 20);
+                }
+                result += 300 * aPerformance.audience;
+                break;
+            default:
+                throw new Error(`unknown type: ${playFor(aPerformance).type}`);
+        }
+        return result;
+    }
+}
+----
+[source,javascript,attributes]
+----
+----
+Gradle::
++
+[source, gradle]
+----
+----
+====
+== References
+- Refactoring: Improving the Design of Existing Code (2nd Edition) (Addison-Wesley Signature Series(Fowler))

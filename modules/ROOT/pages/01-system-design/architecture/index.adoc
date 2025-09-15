@@ -65,3 +65,160 @@ anywhere, but that doesn't mean it's not a proper solution for your specific cas
 == Applications architecture styles
 === Layers
 === Hexagonal
+
+== Analyzing the business domain
+you, with the help of domain experts, should analyze the business prob-
+lems your software system needs to solve, identifying the relevant main entities and
+their interactions. The main goal behind the analysis and design of a domain model is
+to capture the essence of the business information for the application’s purpose.
+
+Entities are usually notions understood by users of the system: payment, customer,
+order, item, bid, and so forth. Some entities may be abstractions of less concrete
+things the user thinks about, such as a pricing algorithm, but even these are usually
+understandable to the user. You can find all these entities in the conceptual view of
+the business, sometimes called an information model.
+
+From this business model, engineers and architects of object-oriented software create an object-oriented model, still at the conceptual level (no Java code). This model
+may be as simple as a mental image that exists only in the mind of the developer, or it
+may be as elaborate as a UML class diagram.
+
+This model contains entities that you’re bound to find in any typical e-commerce sys-
+tem: category, item, and user. This domain model represents all the entities and their
+relationships (and perhaps their attributes). This kind of object-oriented model of
+entities from the problem domain, encompassing only those entities that are of inter-
+est to the user, is called a domain model. It’s an abstract view of the real world.
+
+image::{figures}/image.png[class diagram of a typical online auction model]
+
+Instead of using an object-oriented model, engineers and architects may start the
+application design with a data model. This can be expressed with an entity-relationship diagram, and it will contain the CATEGORY, ITEM, and USER entities, together with the
+relationships between them. We usually say that, concerning persistence, there is little
+difference between the two types of models; they’re merely different starting points. In
+the end, which modeling language you use is secondary; we’re most interested in the
+structure of and relationships between the business entities. We care about the rules that
+have to be applied to guarantee the integrity of the data (for example, the multiplicity
+of relationships included in the model) and the code procedures used to manipulate
+the data (usually not included in the model).
+[tabs]
+======
+CaveatEmptor::
++
+For the rest of the book, we’ll use a much more sophisticated example application—CaveatEmptor, an online auction system—to demonstrate JPA, Hibernate, and later Spring Data. (Caveat emptor means “Let the buyer beware.”)
++
+The CaveatEmptor example is an online auction application that demonstrates ORM
+techniques, JPA, Hibernate, and Spring Data functionality. We won’t pay much atten-
+tion to the user interface in this book (it could be web-based or a rich client); we’ll
+concentrate instead on the data access code.
++
+The CaveatEmptor site will allow users to auction many different kinds of items, from
+electronic equipment to airline tickets. Auctions proceed according to the English
+auction strategy: users continue to place bids on an item until the bid period for that
+item expires, and the highest bidder wins.
++
+In any store, goods are categorized by type and grouped with similar goods into
+sections and onto shelves. The auction catalog requires some kind of hierarchy of
+item categories so that a buyer can browse the categories or arbitrarily search by cate-
+gory and item attributes. Lists of items will appear in the category browser and search
+result screens. Selecting an item from a list will take the buyer to an item-detail view
+where an item may have images attached to it.
++
+An auction consists of a sequence of bids, and one is the winning bid. User details
+will include name, address, and billing information. 
++
+The result of this analysis, the high-level overview of the domain model, is shown
+in next figure. Let’s briefly discuss some interesting features of this model: 
+
+image::{figures}/caveatemptor-domain-model-and-their-relationships.png[Persistent classes of the CaveatEmptor domain model and their relationships]
+
+- Each item can be auctioned only once, so you don’t need to make Item distinct
+from any auction entities. Instead, you have a single auction item entity named
+Item. Thus, Bid is associated directly with Item. You model the Address infor-
+mation of a User as a separate class—a User may have three addresses for home,
+billing, and shipping. You allow the user to have many BillingDetails. Sub-
+classes of an abstract class represent the various billing strategies (allowing for
+future extension).
+- The application may nest a Category inside another Category, and so on. A
+recursive association, from the Category entity to itself, expresses this relation-
+ship. Note that a single Category may have multiple child categories but at
+most one parent. Each Item belongs to at least one Category. 
+- This representation isn’t the complete domain model; it’s only the classes for
+which you need persistence capabilities. You’ll want to store and load instances
+of Category, Item, User, and so on. We have simplified this high-level overview
+a little; we’ll make modifications to these classes when needed for more com-
+plex examples.
+- The entities in a domain model should encapsulate state and behavior. For
+example, the User entity should define the name and address of a customer and
+the logic required to calculate the shipping costs for items (to this particular
+customer).
+- There might be other classes in the domain model that only have transient run-
+time instances. Consider a WinningBidStrategy class encapsulating the fact
+that the highest bidder wins an auction. This might be called by the business
+layer (controller) code when checking the state of an auction. At some point
+you might have to figure out how the tax should be calculated for sold items or
+how the system should approve a new user account. We don’t consider such
+business rules or domain model behavior to be unimportant; rather, those con-
+cerns are mostly orthogonal to the problem of persistence.
+
+Cities API::
++
+
+Multiplication microservices::
++
+
+Polar Book Shop::
++
+
+======
+Object persistence with full ORM is most suitable for applications based on a rich
+domain model. If your application doesn’t implement complex business rules or com-
+plex interactions between entities, or if you have few entities, you may not need a
+domain model. Many simple and some not-so-simple problems are perfectly suited
+to table-oriented solutions, where the application is designed around the database
+data model instead of around an object-oriented domain model and the logic is often
+executed in the database (with stored procedures).
+
+== Implementing the domain model
+Let’s start with an issue that any implementation must deal with: the separation of
+concerns—which layer is concerned with what responsibility. The domain model
+implementation is usually a central, organizing component; it’s reused heavily when-
+ever you implement new application functionality. For this reason, you should go to
+some lengths to ensure that non-business concerns don’t leak into the domain model
+implementation
+
+Addressing leakage of concerns
+When concerns such as persistence, transaction management, or authorization start
+to appear in the domain model classes, this is an example of leakage of concerns. The
+domain model implementation is important code that shouldn’t depend on orthogo-
+nal APIs. For example, code in the domain model shouldn’t call the database directly
+or through an intermediate abstraction. This will allow you to reuse the domain
+model classes virtually anywhere.
+ The architecture of the application includes the following layers:
+
+-  The presentation layer can access instances and attributes of domain model
+entities when rendering views. The user may use the front end (such as a
+browser) to interact with the application. This concern should be separate from
+the concerns of the other layers.
+-  The controller components in the business layer can access the state of domain
+model entities and call methods of these entities. This is where the business cal-
+culations and logic are executed. This concern should be separate from the
+concerns of the other layers.
+-  The persistence layer can load instances of domain model entities from and
+store them to the database, preserving their state. This is where the information
+is persisted for a long time. This concern should also be separate from the con-
+cerns of the other layers.
+Preventing the leakage of concerns makes it easy to unit test the domain model with-
+out the need for a particular runtime environment or container or for mocking any
+service dependencies. You can write unit tests that verify the correct behavior of your
+domain model classes without any special test harness. (Here we’re talking about unit
+tests such as “calculate the shipping cost and tax,” not performance and integration
+tests such as “load from the database” and “store in the database.”)
+
+The Jakarta EE standard solves the problem of leaky concerns with metadata such
+as annotations within your code or external XML descriptors. This approach allows the
+runtime container to implement some predefined cross-cutting concerns—security,
+concurrency, persistence, transactions, and remoteness—in a generic way by intercept-
+ing calls to application components.
+
+JPA defines the entity class as the primary programming artifact. This programming
+model enables transparent persistence, and a JPA provider such as Hibernate also
+offers automated persistence. 

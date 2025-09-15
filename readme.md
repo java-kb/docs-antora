@@ -50,6 +50,16 @@ Reactive Applications::
 
 [tabs]
 ======
+CaveatEmptor::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
 Cities API::
 +
 [tabs]

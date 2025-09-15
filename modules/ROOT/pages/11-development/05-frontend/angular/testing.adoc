@@ -1,0 +1,275 @@
+= Angular Testing
+
+Angular provides built-in support for testing, making it easy to write and execute tests for Angular 
+applications. The Angular testing framework provides a set of tools and features that make it easy to 
+write unit tests, integration tests, and end-to-end tests for Angular applications. These tests can be run 
+automatically as part of the build process, ensuring that the application is always tested and reliable.
+
+TDD plays a critical role in Angular development. By writing tests first, developers can ensure that 
+the code is correct and meets the requirements defined in the tests. This ensures that the application 
+is reliable and reduces the risk of bugs and errors. TDD also encourages developers to write clean, 
+maintainable code that is easy to modify and extend, making it easier to maintain and update the 
+application over time.
+
+== files related to writing tests
+
+=== *.spec.ts files
+*.spec.ts files contain the actual test cases that will be run against your code. These files are the 
+backbone of testing in Angular as they define the individual test cases that will ensure your code 
+works as expected. 
+
+The name of the file should match the name of the file being tested, and it should 
+be located in the same directory as the file being tested. 
+
+The tests in these files are organized into test 
+suites, which are defined using the describe() function. Each test case is defined using the it()
+function. For example, if you were testing a component named MyComponent, you would create a 
+file named my-component.spec.ts and define the test cases for that component within that file.
+
+The describe() function is used to group related test cases together, and it takes two parameters: a 
+string that describes the test suite and a function that defines the test cases within that suite. 
+
+The it()
+function is used to define individual test cases, and it takes two parameters: a string that describes the 
+test case and a function that contains the code for the test case. Within the test case function, you can 
+use the expect() function to define the expected behavior of your code. For example, you might 
+use expect(component.title).toEqual('My Title') to test that the title property 
+of a component has the expected value.
+
+*.spec.ts files also typically import the component or service being tested, as well as any necessary 
+dependencies. For example, if you were testing a component that used the HttpClient service, you 
+would need to import both the component and HttpClientTestingModule from @angular/
+common/http/testing.
+
+[source,typescript,attributes]
+----
+import { provideZonelessChangeDetection } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { App } from './app';
+
+describe('App', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [App],
+      providers: [provideZonelessChangeDetection()]
+    }).compileComponents();
+  });
+
+  it('should create the app', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    expect(app).toBeTruthy();
+  });
+
+  it('should render title', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, getting-started-angular-tdd');
+  });
+});
+----
+
+
+=== The karma.conf.js file
+The karma.conf.js file is used to configure the Karma test runner, which is used to run your 
+test cases. Karma is a popular test runner for Angular applications, and it provides a simple way to 
+run your tests in a variety of browsers. The karma.conf.js file specifies the files that should be 
+included in the test run, as well as the browsers that should be used to run the tests.
+
+The karma.conf.js file typically exports a configuration object that specifies these settings. The 
+configuration object contains several properties, such as frameworks, files, reporters, and browsers. 
+These properties allow you to configure various aspects of the test run, such as which testing framework 
+to use, which files to include in the test run, which reporters to use to display test results, and which 
+browsers to use to run the tests.
+
+For example, a typical karma.conf.js file might look like this:
+[source,typescript,attributes]
+----
+// Karma configuration file, see link for more information
+// https://karma-runner.github.io/1.0/config/configuration-file.html
+
+module.exports = function (config) {
+  config.set({
+    basePath: '',
+    frameworks: ['jasmine'],
+    plugins: [
+      require('karma-jasmine'),
+      require('karma-chrome-launcher'),
+      require('karma-jasmine-html-reporter'),
+      require('karma-coverage'),
+    ],
+    client: {
+      jasmine: {
+        // you can add configuration options for Jasmine here
+        // the possible options are listed at https://jasmine.github.io/api/edge/Configuration.html
+        // for example, you can disable the random execution with `random: false`
+        // or set a specific seed with `seed: 4321`
+      },
+    },
+    jasmineHtmlReporter: {
+      suppressAll: true // removes the duplicated traces
+    },
+    coverageReporter: {
+      dir: require('path').join(__dirname, './coverage/getting-started-angular-tdd'),
+      subdir: '.',
+      reporters: [
+        { type: 'html' },
+        { type: 'text-summary' }
+      ]
+    },
+    reporters: ['progress', 'kjhtml'],
+    browsers: ['firefox'],
+    restartOnFileChange: true
+  });
+};
+----
+
+=== The tsconfig.spec.json file
+The tsconfig.spec.json file is used to configure the TypeScript compiler for your test cases. 
+It specifies the compiler options that should be used when compiling your test files. This file typically 
+extends the main tsconfig.json file for your project but may include additional settings specific 
+to testing.
+[source,typescript,attributes]
+----
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "types": [
+      "jasmine"
+    ]
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
+}
+----
+This file extends the main tsconfig.json file and specifies the compiler options that should be 
+used for test files.
+
+== Jasmine
+Jasmine is a behavior-driven development (BDD) framework for testing JavaScript code. It provides 
+a simple and readable syntax for writing tests, making it easier to understand and maintain the code. 
+With Jasmine, developers can define test suites and test cases, and then use various matchers to check 
+the expected behavior of their code.
+
+== Karma
+Karma, on the other hand, is a test runner that allows developers to execute their tests in multiple 
+browsers and environments. It provides a seamless integration with Jasmine, allowing developers to 
+easily run their Jasmine tests in different browsers and get real-time feedback on the test results. Karma 
+also offers additional features, such as code coverage reporting and continuous integration support.
+Using Jasmine and Karma together can greatly enhance the testing process for Angular applications. 
+Developers can write comprehensive test suites using Jasmine’s expressive syntax, and then use Karma 
+to run these tests in various browsers, ensuring compatibility across different environments. This 
+helps catch any potential issues or bugs early on and promotes a more robust and reliable application.
+
+== Writing your first unit tests in an Angular project
+Create a new component called CalculatorComponent by running the following command:
+
+ ng g c calculator
+
+After creating the component with the preceding command line, a calculator.component.
+spec.ts file will be created in the src/ app/calculator folder. When you open the 
+file, you’ll see the following code by default:
+[source,javascript,attributes]
+----
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { Calculator } from './calculator';
+
+describe('Calculator', () => {
+  let component: Calculator;
+  let fixture: ComponentFixture<Calculator>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [Calculator]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(Calculator);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+----
+In the preceding generated code, we have a test suite where we have used the describe
+function, providing a descriptive name for the component under test. Within the test 
+suite, we have a beforeEach block to set up the test environment. The TestBed.
+configureTestingModule method is used to configure the test module and provide 
+the necessary dependencies. The calculator variable is then assigned to an instance of 
+CalculatorComponent using the TestBed.inject method.
+
+CalculatorComponent component will enable us to perform basic arithmetic 
+operations. To write a unit test using TDD, we’ll start by creating a test case that verifies the 
+component’s expected behavior.
+
+Now, we’ll write the actual test case using the it function. In this case, we’ll test the add
+method of CalculatorComponent by passing it two numbers and expecting the result to 
+be 5. The expect function is used to define the expected behavior and check the actual result. 
+The following code must be added to the test suite – that is, inside the describe function:
+[source,javascript,attributes]
+----
+  it('should add two numbers correctly', () => {
+    const result = component.add(2, 3);
+    expect(result).toBe(5)
+  });
+----
+This is normal as it hasn’t been created yet.
+Upon returning to our Karma server, we’ll see that our test case isn’t displayed in 
+CalculatorComponent and that in the terminal, we have an error related to the non-existence 
+of the function and a message indicating that no test has succeeded.
+
+Next, we will implement the add function in calculator.component.ts. Having 
+defined our first test case, we can proceed to implement calculator.component.ts for 
+the test to pass. Following the TDD approach, write the minimum amount of code necessary 
+to pass the tests:
+[source,javascript,attributes]
+----
+  add(a: number, b: number) {
+    return a + b;
+  }
+----
+Once the tests have passed, you can refactor the code to improve its design, readability, and maintainability. 
+Refactoring is an essential step in the TDD process as it helps eliminate duplication and improves 
+code structure and overall quality. It is essential to ensure that tests continue to run after refactoring. 
+Regularly reviewing and updating tests as the code base evolves will help maintain the integrity and 
+reliability of unit tests.
+
+== Code coverage and test result analysis with Karma
+Code coverage and test result analysis are essential aspects of the software development process. By 
+measuring code coverage, developers can assess the effectiveness of their unit tests and identify areas 
+that require additional testing. Karma, a popular testing framework in the JavaScript ecosystem, 
+provides built-in support for code coverage and test result analysis. 
+
+[source,json,attributes]
+----
+    coverageReporter: {
+      dir: require('path').join(__dirname, './coverage/getting-started-angular-tdd'),
+      subdir: '.',
+      reporters: [
+        { type: 'html' },
+        { type: 'text-summary' }
+      ]
+    },
+    reporters: ['progress', 'kjhtml'],
+----
+This configuration specifies the reporters to be used (progress for test progress and coverage
+for code coverage). The coverageReporter section defines the output directory and the 
+types of reports to generate (HTML and Text Summary).
+
+After configuring Karma for code coverage, run your tests as usual. Karma will now generate 
+code coverage reports alongside the test results. These coverage reports provide insights into 
+which parts of your code base are covered by tests and which areas require additional testing.
+
+Once the tests have finished running, navigate to the coverage directory to view the generated 
+reports. Open the HTML report (coverage/report-html/index.html) in a web 
+browser to visualize the code coverage details. The report highlights covered lines, uncovered 
+lines, and overall coverage percentages. 
