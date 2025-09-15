@@ -77,7 +77,243 @@ class CatalogServiceApplicationTests {
 }
 ----
 == Integration tests with @SpringBootTest and Testcontainers
+[tabs]
+====
+Imperative Applications::
++
+[source, java]
+----
+----
 
+Reactive Applications::
++
+[source, java]
+----
+----
+====
+
+
+[tabs]
+======
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Microservices with Spring Boot 3 and Spring Cloud::
++
+The tests of the APIs exposed by the core microservices have been updated since the previous chapter 
+with tests covering the create and delete API operations.
+The added tests are similar in all three core microservices, so we will only go through the source code 
+for the service tests in the product microservice.
+To ensure a known state for each test, a setup method, setupDb(), is declared and annotated with 
+@BeforeEach, so it is executed before each test. The setup method removes any previously created 
+entities:
+	@Autowired
+	private ProductRepository repository;
+	@BeforeEach
+	void setupDb() {
+	repository.deleteAll();
+	}
++
+The test method for the create API verifies that a product entity can be retrieved after it has been cre-
+ated and that creating another product entity with the same productId results in an expected error, 
+UNPROCESSABLE_ENTITY, in the response to the API request:
++
+The test method for the delete API verifies that a product entity can be deleted and that a second delete 
+request is idempotent—it also returns the status code OK, even though the entity no longer exists in 
+the database:
++
+To simplify sending the create, read, and delete requests to the API and verify the response status, three helper methods have been created:
++
+• postAndVerifyProduct()
+• getAndVerifyProduct()
+• deleteAndVerifyProduct()
++
+The helper method performs the actual HTTP request and verifies the response code and content 
+type of the response body. Added to that, the helper method also returns the body of the response 
+for further investigations by the caller, if required. 
+[tabs]
+====
+MongoDbTestBase.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.product.persistence;
+
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MongoDBContainer;
+
+public abstract class MongoDbTestBase {
+    private static MongoDBContainer database = new MongoDBContainer("mongo:6.0.4");
+
+    static {
+        database.start();
+    }
+
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.mongodb.host", database::getContainerIpAddress);
+        registry.add("spring.data.mongodb.port", () -> database.getMappedPort(27017));
+        registry.add("spring.data.mongodb.database", () -> "test");
+    }
+}
+
+----
+ProductServiceApplicationTests.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.product;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static reactor.core.publisher.Mono.just;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import se.magnus.api.core.product.Product;
+import se.magnus.microservices.core.product.persistence.MongoDbTestBase;
+import se.magnus.microservices.core.product.persistence.ProductRepository;
+
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+class ProductServiceApplicationTests extends MongoDbTestBase {
+
+	@Autowired
+	private WebTestClient client;
+
+	@Autowired
+	private ProductRepository repository;
+
+	@BeforeEach
+	void setupDb() {
+		repository.deleteAll();
+	}
+
+	@Test
+	void getProductById() {
+
+		int productId = 1;
+
+		postAndVerifyProduct(productId, OK);
+
+		assertTrue(repository.findByProductId(productId).isPresent());
+
+		getAndVerifyProduct(productId, OK).jsonPath("$.productId").isEqualTo(productId);
+	}
+
+	@Test
+	void duplicateError() {
+
+		int productId = 1;
+
+		postAndVerifyProduct(productId, OK);
+
+		assertTrue(repository.findByProductId(productId).isPresent());
+
+		postAndVerifyProduct(productId, UNPROCESSABLE_ENTITY)
+				.jsonPath("$.path").isEqualTo("/product")
+				.jsonPath("$.message").isEqualTo("Duplicate key, Product Id: " + productId);
+	}
+
+	@Test
+	void deleteProduct() {
+
+		int productId = 1;
+
+		postAndVerifyProduct(productId, OK);
+		assertTrue(repository.findByProductId(productId).isPresent());
+
+		deleteAndVerifyProduct(productId, OK);
+		assertFalse(repository.findByProductId(productId).isPresent());
+
+		deleteAndVerifyProduct(productId, OK);
+	}
+
+	@Test
+	void getProductInvalidParameterString() {
+
+		getAndVerifyProduct("/no-integer", BAD_REQUEST)
+				.jsonPath("$.path").isEqualTo("/product/no-integer")
+				.jsonPath("$.message").isEqualTo("Type mismatch.");
+	}
+
+	@Test
+	void getProductNotFound() {
+
+		int productIdNotFound = 13;
+		getAndVerifyProduct(productIdNotFound, NOT_FOUND)
+				.jsonPath("$.path").isEqualTo("/product/" + productIdNotFound)
+				.jsonPath("$.message").isEqualTo("No product found for productId: " + productIdNotFound);
+	}
+
+	@Test
+	void getProductInvalidParameterNegativeValue() {
+
+		int productIdInvalid = -1;
+
+		getAndVerifyProduct(productIdInvalid, UNPROCESSABLE_ENTITY)
+				.jsonPath("$.path").isEqualTo("/product/" + productIdInvalid)
+				.jsonPath("$.message").isEqualTo("Invalid productId: " + productIdInvalid);
+	}
+
+	private WebTestClient.BodyContentSpec getAndVerifyProduct(int productId, HttpStatus expectedStatus) {
+		return getAndVerifyProduct("/" + productId, expectedStatus);
+	}
+
+	private WebTestClient.BodyContentSpec getAndVerifyProduct(String productIdPath, HttpStatus expectedStatus) {
+		return client.get()
+				.uri("/product" + productIdPath)
+				.accept(APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isEqualTo(expectedStatus)
+				.expectHeader().contentType(APPLICATION_JSON)
+				.expectBody();
+	}
+
+	private WebTestClient.BodyContentSpec postAndVerifyProduct(int productId, HttpStatus expectedStatus) {
+		Product product = new Product(productId, "Name " + productId, productId, "SA");
+		return client.post()
+				.uri("/product")
+				.body(just(product), Product.class)
+				.accept(APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isEqualTo(expectedStatus)
+				.expectHeader().contentType(APPLICATION_JSON)
+				.expectBody();
+	}
+
+	private WebTestClient.BodyContentSpec deleteAndVerifyProduct(int productId, HttpStatus expectedStatus) {
+		return client.delete()
+				.uri("/product/" + productId)
+				.accept(APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isEqualTo(expectedStatus)
+				.expectBody();
+	}
+}
+----
+====
+Polar Book Shop::
++
 [,java]
 ----
 import com.polarbookshop.catalogservice.domain.Book;
@@ -200,6 +436,7 @@ class CatalogServiceApplicationTests {
 
 }
 ----
+======
 
 == @WebMvcTest
 

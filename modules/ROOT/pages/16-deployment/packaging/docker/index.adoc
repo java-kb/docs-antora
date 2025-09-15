@@ -5,9 +5,17 @@ The Open Container Initiative (OCI), a Linux Foundation project, defines industr
 standards for working with containers (https://opencontainers.org). In particular, the
 OCI Image Specification defines how to build container images, the OCI Runtime
 Specification defines how to run those container images, and the OCI Distribution
-Specification defines how to distribute them. The tool we’ll use to work with contain-
-ers is Docker (www.docker.com), which is compliant with the OCI specifications.
+Specification defines how to distribute them. The tool we’ll use to work with containers is Docker (www.docker.com), which is compliant with the OCI specifications.
 
+containers are actually processed in a Linux host that uses Linux namespaces to provide isolation between containers, and Linux Control Groups (cgroups) are used to limit the amount of CPU and memory that
+a container is allowed to consume.
+
+Compared to a virtual machine that uses a hypervisor to run a complete copy of an operating system
+in each virtual machine, the overhead in a container is a fraction of the overhead in a virtual machine.
+This leads to much faster startup times and a significantly lower footprint. Containers are, however,
+not considered to be as secure as virtual machines. 
+
+image::{figures}/virtual-machines-versus-containers.png[Virtual machines versus containers]
 
 *Docker* is an open source platform that provides the ability to package and run an application in a loosely isolated environment called a container
 

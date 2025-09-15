@@ -83,7 +83,7 @@ this interface into one query to save/retrieve the information depending on the 
 database.
 iamge::{figures}/Example-repositories-that-extend-default-Spring-Data-methods.png[]
 +
-== Spring Data JDBC or Spring Data JPA?
+== Spring Data JDBC vs Spring Data JPA
 +
 Spring Data offers two main options for integrating applications with a relational database over the JDBC driver: Spring Data JDBC and Spring Data JPA. How to choose
 between the two? As always, the answer is that it depends on your requirements and
@@ -111,6 +111,7 @@ You should considering your requirements, and then deciding which module suits t
 ----
 
 * Hibernate, the foundation for Spring Data JPA, offers automatically generating schemas from the entities defined in Java.
+
 
 == Connection pooling
 Opening and closing database connections are relatively expensive operations, so you
@@ -143,6 +144,124 @@ datasource:
     # The maximum number of connections HikariCP will keep in the pool
     maximum-pool-size: 5
 ----
+
+== Logging the database connection URL
+When scaling up the number of microservices where each microservice connects to its own database, 
+it can be hard to keep track of what database each microservice actually uses. To avoid this confusion, a good practice is to add a LOG statement directly after the startup of a microservice that logs connection information that is used to connect to the database.
+[tabs]
+====
+SQL::
++
+[source, java]
+----
+package se.magnus.microservices.core.review;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.ComponentScan;
+
+@SpringBootApplication
+@ComponentScan("se.magnus")
+public class ReviewServiceApplication {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ReviewServiceApplication.class);
+
+  public static void main(String[] args) {
+    ConfigurableApplicationContext ctx = SpringApplication.run(ReviewServiceApplication.class, args);
+
+    String postgresUri = ctx.getEnvironment().getProperty("spring.datasource.url");
+    LOG.info("Connected to POSTGRES: " + postgresUri);
+  }
+}
+----
+
+NOSql::
++
+[source, java]
+----
+package se.magnus.microservices.core.product;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.ComponentScan;
+
+@SpringBootApplication
+/*
+ * To enable Spring Boot’s autoconfiguration feature to detect Spring Beans in
+ * the api and util
+ * projects, we also need to add a @ComponentScan annotation to the main
+ * application class, which
+ * includes the packages of the api and util projects:
+ */
+@ComponentScan("se.magnus")
+public class ProductServiceApplication {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ProductServiceApplication.class);
+
+  public static void main(String[] args) {
+    ConfigurableApplicationContext ctx = SpringApplication.run(ProductServiceApplication.class, args);
+
+    String mongodDbHost = ctx.getEnvironment().getProperty("spring.data.mongodb.host");
+    String mongodDbPort = ctx.getEnvironment().getProperty("spring.data.mongodb.port");
+    LOG.info("Connected to MongoDb: " + mongodDbHost + ":" + mongodDbPort);
+  }
+}
+----
+====
+
+== Defining repositories
+Spring Data comes with a set of interfaces for defining repositories:
+
+The CrudRepository interface provides standard methods for performing basic create, read, 
+update, and delete operations on the data stored in the databases.
+• The PagingAndSortingRepository interface adds support for paging and sorting to the 
+CrudRepository interface.
+
+[tabs]
+======
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Microservices with Spring Boot 3 and Spring Cloud::
++
+We will use the interfaces CrudRepository and PagingAndSortingRepository. We will use the CrudRepository interface as the base for the Recommendation and Review repositories 
+and also the PagingAndSortingRepository interface as the base for the Product repository.
++
+We will also add a few extra query methods to our repositories for looking up entities using the business key, productId.
++
+[tabs]
+====
+Country.java::
+
++
+[source, java]
+----
+----
+====
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
 == defining custom queries in Spring Data
 There are two main options for defining custom queries in Spring Data:
 

@@ -131,9 +131,12 @@
 ***** xref:11-development/01-java/01-basics/articles/01-identity-and-equality-in-java/object-identity-and-equality-in-java.adoc[Object Identity and Object Equality in Java]
 ***** xref:11-development/01-java/01-basics/articles/redefining-java-object-equality.adoc[Redefining Java Object Equality]
 ***** xref:11-development/01-java/01-basics/articles/02-hashcode-and-equals/hashcode-and-equals.adoc[hashcode and equals in Java]
+
 *** xref:11-development/01-java/02-DB/index.adoc[Database]
 **** xref:11-development/01-java//02-DB/jdbc.adoc[JDBC]
 **** xref:11-development/01-java//02-DB/jpa.adoc[JPA]
+**** xref:11-development/01-java//02-DB/mapping.adoc[Mapping]
+**** xref:11-development/01-java//02-DB/hibernate.adoc[Hibernate]
 *** xref:11-development/01-java/java-tricks.adoc[Java Tricks]
 
 ** xref:11-development/02-spring/index.adoc[Spring Framework]
@@ -143,6 +146,7 @@
 *** xref:11-development/02-spring/02-data/index.adoc[Spring Data]
 **** xref:11-development/02-spring/02-data/spring-data-jdbc/index.adoc[Spring Data JDBC]
 **** xref:11-development/02-spring/02-data/spring-data-jpa/index.adoc[Spring Data JPA]
+**** xref:11-development/02-spring/02-data/spring-data-mongodb/index.adoc[Spring Data Mongodb]
 **** xref:11-development/02-spring/02-data/spring-data-r2dbc/index.adoc[Spring Data R2DBC]
 **** xref:11-development/02-spring/02-data/spring-data-redis/index.adoc[Spring Data Redis]
 
@@ -201,9 +205,12 @@
 * xref:12-db/index.adoc[DB]
 ** xref:12-db/sql/index.adoc[SQL]
 *** xref:12-db/sql/postgres.adoc[Postgres]
+*** xref:12-db/sql/mysql.adoc[MySQL]
+
 ** xref:12-db/nosql/index.adoc[NoSQL]
 *** xref:12-db/nosql/mongodb.adoc[MongoDB]
 ** xref:12-db/ldap/index.adoc[LDAP]
+
 ** xref:12-db/migration-tools/index.adoc[DB Migration Tools]
 *** xref:12-db/migration-tools/Flyway/index.adoc[Flyway]
 *** xref:12-db/migration-tools/liquibase/index.adoc[Liquibase]
@@ -234,6 +241,7 @@
 ** xref:16-deployment/packaging/index.adoc[Packaging]
 *** xref:16-deployment/packaging/buildpacks/index.adoc[Cloud Native Buildpacks]
 **** xref:16-deployment/packaging/buildpacks/containerize-spring-boot.adoc[Containerize Spring Boot]
+
 *** xref:16-deployment/packaging/docker/index.adoc[Docker]
 **** xref:16-deployment/packaging/docker/containerize-spring-boot.adoc[Containerize Spring Boot]
 *** xref:16-deployment/packaging/jib/index.adoc[Jib]

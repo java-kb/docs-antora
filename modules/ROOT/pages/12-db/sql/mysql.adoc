@@ -1,0 +1,77 @@
+= MySQL
+figures: 12-db/sql
+
+== Self-Managed
+=== Running a MySQL Database
+
+Run MySQL as a Docker container
+
+[,bash]
+----
+docker run -d \
+    --name polar-mysql \
+    -e MYSQL_ROOT_PASSWORD=rootpassword \
+    -e MYSQL_USER=user \
+    -e MYSQL_PASSWORD=password \
+    -e MYSQL_DATABASE=polardb_catalog \
+    -p 3306:3306 \
+    mysql:8.0
+----
+
+stop the container
+[,bash]
+----
+docker stop polar-mysql
+----
+start it again with 
+[,bash]
+----
+docker start polar-mysql
+----
+If you want to start over, you can remove the container with 
+[,bash]
+----
+docker rm -fv polar-mysql
+----
+and create it again with the previous docker run command.
+
+=== Database Commands
+
+Start an interactive MySQL console:
+
+[,bash]
+----
+docker exec -it polar-mysql mysql -uuser -ppassword polardb_catalog
+----
+
+to access it with a command like this:
+[,bash]
+----
+docker-compose exec mysql mysql -uuser -ppassword polardb_catalog -e "select * from book"
+----
+
+|===
+| MySQL Command | Description
+
+| `SHOW DATABASES;`
+| List all databases.
+
+| `USE polardb_catalog;`
+| Connect to specific database.
+
+| `SHOW TABLES;`
+| List all tables.
+
+| `DESCRIBE book;`
+| Show the `book` table schema.
+
+| `EXIT;`
+| Quit interactive MySQL console.
+|===
+
+From within the MySQL console, you can also fetch all the data stored in the `book` table.
+
+[,bash]
+----
+SELECT * FROM book;
+----

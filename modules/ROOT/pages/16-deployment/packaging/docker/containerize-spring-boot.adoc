@@ -20,6 +20,10 @@ mvn clean package spring-boot:repackage
 called Dockerfile (with no extension) in the root folder. That file will contain the rec-
 ipe for containerizing your application.
 +
+[tabs]
+====
+Maven::
++
 [,docker]
 ----
 FROM openjdk:17
@@ -32,6 +36,26 @@ COPY ${JAR_FILE} catalog-service.jar
 
 ENTRYPOINT ["java", "-jar", "catalog-service.jar"]
 ----
+
+Gradle::
++
+[source, gradle]
+----
+[,docker]
+----
+FROM openjdk:17
+
+WORKDIR /workspace
+
+ADD JAR_FILE=./build/libs/*.jar
+
+COPY ${JAR_FILE} catalog-service.jar
+
+ENTRYPOINT ["java", "-jar", "catalog-service.jar"]
+----
+----
+====
+
 * build the container image by running this command:for gradle
 +
 ```bash
@@ -57,6 +81,31 @@ http://localhost:9001/catalog. You should see the catalog service’s home page.
 * verify that the application is running by opening a browser and navigating to
 http://localhost:8001/catalog/actuator/health. You should see the catalog service’s health status.
 
+This simple approach has a few disadvantages:
+
+• We are using the full JDK of Java SE 17, including compilers and other development tools. That makes the Docker images unnecessarily large and, from a security perspective, we don’t want to bring more tools into the image than necessary.
++
+Regarding the lack of a Docker image for Java SE 17 JRE from the OpenJDK project, there are other
+open source projects that package the OpenJDK binaries into Docker images. One of the most widely
+used projects is Eclipse Temurin (https://adoptium.net/temurin/). The Temurin project provides
+both full JDK editions and minimized JRE editions of their Docker images.
+• The fat JAR file takes time to unpackage when the Docker container starts up. A better approach
+is to instead unpackage the fat JAR when the Docker image is built.
+• The fat JAR file is very big, as we will see below, some 20 MB. If we want to make repeatable
+changes to the application code in the Docker images during development, this will result in
+suboptimal usage of the Docker build command. Since Docker images are built in layers, we
+will get one very big layer that needs to be replaced each time, even in the case where only a
+single Java class is changed in the application code.
+• A better approach is to divide the content into different layers, where files that do not change
+so frequently are added in the first layer, and files that change the most are placed in the last
+layer. This will result in good use of Docker’s caching mechanism for layers. For the first stable
+layers that are not changed when some application code is changed, Docker will simply use
+the cache instead of rebuilding them. This will result in faster builds of the microservices’
+Docker images.
++
+When it comes to handling the suboptimal packaging of fat JAR files in Docker images, Spring Boot
+addressed this issue in v2.3.0, making it possible to extract the content of a fat JAR file into a number
+of folders. see next section
 
 === Containerizing Spring Boot using layered-JAR mode
 
@@ -91,9 +140,16 @@ following layers, starting from the lowest:
 We'll divide the work into two stages. In the first stage we extract the layers from
 the JAR file. The second stage is where we place each JAR layer into a separate image layer. In the end, the result of the first stage is discarded (including the original JAR file), while the second stage will produce the final container image.
 
+The Spring Boot documentation recommends creating one Docker layer for each folder in the order
+listed above. After replacing the JDK-based Docker image with a JRE-based image and adding instructions for exploding the fat JAR file into proper layers in the Docker image, the Dockerfile looks like this:
+
+[tabs]
+====
+Maven::
++
 [,docker]
 ----
-FROM openjdk:17 AS builder
+FROM eclipse-temurin:17.0.5_8-jre-focal AS builder
 
 WORKDIR /workspace
 
@@ -103,7 +159,7 @@ COPY ${JAR_FILE} catalog-service.jar
 
 RUN java -Djarmode=layertools -jar catalog-service.jar extract
 
-FROM openjdk:17
+FROM eclipse-temurin:17.0.5_8-jre-focal
 
 RUN useradd spring
 
@@ -118,6 +174,78 @@ COPY --from=builder workspace/application/ ./
 
 ENTRYPOINT ["java", "org.springframework.boot.loader.JarLauncher"]
 ----
+
+Gradle::
++
+[source, gradle]
+----
+FROM eclipse-temurin:17.0.5_8-jre-focal as builder
+WORKDIR extracted
+ADD ./build/libs/*.jar app.jar
+RUN java -Djarmode=layertools -jar app.jar extract
+
+FROM eclipse-temurin:17.0.5_8-jre-focal
+WORKDIR application
+COPY --from=builder extracted/dependencies/ ./
+COPY --from=builder extracted/spring-boot-loader/ ./
+COPY --from=builder extracted/snapshot-dependencies/ ./
+COPY --from=builder extracted/application/ ./
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "org.springframework.boot.loader.JarLauncher"]
+----
+====
+To handle the extraction of the fat JAR file in the Dockerfile we use a multi-stage build, meaning that
+there is a first step, named builder, that handles the extraction. The second stage builds the actual
+Docker image that will be used at runtime, picking the files as required from the first stage. Using this
+technique, we can handle all packaging logic in the Dockerfile but, at the same time, keep the size of
+the final Docker image to a minimum:
+
+1. The first stage starts with the line:
+FROM eclipse-temurin:17.0.5_8-jre-focal as builder
+From this line, we can see that a Docker image from the Temurin project is used and that it
+contains Java SE JRE for v17.0.5_8. We can also see that the stage is named builder.
+2. The builder stage sets the working directory to extracted and adds the fat JAR file from the
+Gradle build library, build/libs, to that folder.
+3. The builder stage then runs the command java -Djarmode=layertools -jar app.jar
+extract, which will perform the extraction of the fat JAR file into its working directory, the
+extracted folder.
+4. The next and final stage starts with the line:
+FROM eclipse-temurin:17.0.5_8-jre-focal
+It uses the same base Docker image as in the first stage, and the application folder as its
+working directory. It copies the exploded files from the builder stage, folder by folder, into
+the application folder. This creates one layer per folder, as described above. The parameter
+--from=builder is used to instruct Docker to pick the files from the file system in the builder
+stage.
+5. After exposing the proper ports, 8080 in this case, the Dockerfile wraps up by telling Docker what
+Java class to run to start the microservice in the exploded format, that is, `org.springframework.boot.loader.JarLauncher`.
+
+=== Building a Docker image
+To build the Docker image, we first need to build our deployment artifact (that is, the fat JAR file) for
+product-service:
+
+[source,bash,attributes]
+----
+./gradlew :microservices:product-service:build
+----
+We can find the fat JAR file in the Gradle build library, build/libs
+ls -l microservices/productservice/build/libs 
+
+you can view its actual content by using the 
+
+unzip -l microservices/product-service/build/libs/product-service-1.0.0-SNAPSHOT.jar
+
+we can build the Docker image and name it product-service, as follows:
+
+docker build -t product-service .
+
+Docker will use the Dockerfile in the current directory to build Docker Engine. The image will be
+tagged with the name product-service and stored locally inside the Docker engine
+
+Verify that we got a Docker image, as expected, by using the following command:
+
+docker images | grep product-service
 
 == Using Docker Compose to manage the container life cycle
 

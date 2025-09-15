@@ -1,6 +1,13 @@
 = Persisting and managing data
 :figures: 12-db
 
+== Persistence
+Most applications require persistent data. Persistence is one of the fundamental concepts in application development. If an information system didn’t preserve data when
+it was powered off, the system would be of little practical use. Object persistence means
+individual objects can outlive the application process; they can be saved to a data store
+and be re-created at a later point in time. When we talk about persistence in Java, we’re
+generally talking about mapping and storing object instances in a database using SQL.
+
 Persistence is typically one of the most important topics in any language because it 
 provides a way to save information in the long term for the applications that consume or 
 produce it. In the past, when developers created a single extensive application, problems 
@@ -85,6 +92,25 @@ nonfunctional requirements of your system
 == SQL vs. NoSQL
 
 https://en.wikipedia.org/wiki/CAP_theorem
+When you work with an SQL database in a Java application, you issue SQL statements
+to the database via the Java Database Connectivity (JDBC) API. Whether the SQL was
+written by hand and embedded in the Java code or generated on the fly by Java code,
+you use the JDBC API to bind arguments when preparing query parameters, executing a query, scrolling through query results, retrieving values from a result set, and so
+on. These are low-level data access tasks; as application engineers, we’re more interested in the business problem that requires this data access. What we’d really like to
+write is code that saves and retrieves instances of our classes, relieving us of this lowlevel labor.
+Because these data access tasks are often so tedious, we have to ask: are the relational
+data model and (especially) SQL the right choices for persistence in object-oriented
+applications? We can answer this question unequivocally: yes! There are many reasons
+why SQL databases dominate the computing industry—relational database management systems are the only proven generic data management technology, and they’re
+almost always a requirement in Java projects.
+
+Note that we aren’t claiming that relational technology is always the best solution.
+Many data management requirements warrant a completely different approach. example, internet-scale distributed systems (web search engines, content distribution
+networks, peer-to-peer sharing, instant messaging) have to deal with exceptional transaction volumes. Many of these systems don’t require that after a data update completes, all processes see the same updated data (strong transactional consistency).
+Users might be happy with weak consistency; after an update, there might be a window of inconsistency before all processes see the updated data. In contrast, some scientific applications work with enormous but very specialized datasets. Such systems
+and their unique challenges typically require equally unique and often custom-made
+persistence solutions. Generic data management tools such as ACID-compliant transactional SQL databases, JDBC, Hibernate, and Spring Data would play only a minor
+role for these types of systems.
 
 |===
 | Characteristics | Relational (or SQL) Database | NoSQL Database

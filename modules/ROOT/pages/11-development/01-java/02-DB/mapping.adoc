@@ -1,0 +1,568 @@
+=  Java bean mapping
+
+== MapStruct
+
+MapStruct is a Java annotation processor that simplifies the creation of type-safe and performant mappers for Java bean classes. It achieves this by generating the mapping code at compile-time, eliminating the need for manual mapping implementations.
+
+=== Configuration for MapStruct
+
+[tabs]
+====
+Maven::
++
+To integrate MapStruct into a Maven project, you need to include the mapstruct and mapstruct-processor dependencies in your pom.xml file. The mapstruct dependency provides the annotations, while mapstruct-processor contains the annotation processor that generates the mapper implementations.
++
+[source, xml]
+----
+<dependencies>
+    <dependency>
+        <groupId>org.mapstruct</groupId>
+        <artifactId>mapstruct</artifactId>
+        <version>${mapstruct.version}</version>
+    </dependency>
+</dependencies>
+
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>${maven-compiler-plugin.version}</version>
+            <configuration>
+                <annotationProcessorPaths>
+                    <path>
+                        <groupId>org.mapstruct</groupId>
+                        <artifactId>mapstruct-processor</artifactId>
+                        <version>${mapstruct.version}</version>
+                    </path>
+                    <!-- Add other annotation processors if needed, e.g., Lombok -->
+                    <!-- <path>
+                        <groupId>org.projectlombok</groupId>
+                        <artifactId>lombok</artifactId>
+                        <version>${lombok.version}</version>
+                    </path> -->
+                </annotationProcessorPaths>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+----
+
+Gradle::
++
+we will start by defining a variable holding the version information 
+in the build file for each core microservice, build.gradle:
++
+    ext {
+    mapstructVersion = "1.5.3.Final"
+    }
++
+Next, we declare a dependency on MapStruct:
++
+    implementation "org.mapstruct:mapstruct:${mapstructVersion}"
++
+Since MapStruct generates the implementation of the bean mappings at compile time by processing 
+MapStruct annotations, we need to add an annotationProcessor and a testAnnotationProcessor
+dependency:
++
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+    testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
++
+To make the compile-time generation work in popular IDEs such as IntelliJ IDEA, we also need to add 
+the following dependency:
++
+    compileOnly "org.mapstruct:mapstruct-processor:${mapstructVersion}"
++
+[source, gradle]
+----
+ext {
+    mapstructVersion = "1.5.3.Final"
+}
+
+dependencies {
+    implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+
+    compileOnly "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+    testAnnotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+}
+----
+====
+
+[tabs]
+======
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Microservices with Spring Boot 3 and Spring Cloud::
++
+ The use of MapStruct is similar 
+in all three core microservices, so we will only go through the source code for the mapper object in 
+the product microservice.
++
+The following can be noted from the code:
++
+• The entityToApi() method maps entity objects to the API model object. Since the entity class 
+does not have a field for serviceAddress, the entityToApi() method is annotated to ignore 
+the serviceAddress field in the API model object.
+• The apiToEntity() method maps API model objects to entity objects. In the same way, the 
+apiToEntity() method is annotated to ignore the id and version fields that are missing in 
+the API model class.
++
+Not only does MapStruct support mapping fields by name but it can also be directed to map fields 
+with different names. In the mapper class for the recommendation service, the rating entity field is 
+mapped to the API model field, rate, using the following annotations:
++
+ @Mapping(target = "rate", source="entity.rating"),
+ Recommendation entityToApi(RecommendationEntity entity);
+ @Mapping(target = "rating", source="api.rate"),
+ RecommendationEntity apiToEntity(Recommendation api);
++
+[tabs]
+====
+ProductEntity.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.product.persistence;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "products")
+public class ProductEntity {
+
+  @Id private String id;
+
+  @Version private Integer version;
+
+  @Indexed(unique = true)
+  private int productId;
+
+  private String name;
+  private int weight;
+
+  public ProductEntity() {}
+
+  public ProductEntity(int productId, String name, int weight) {
+    this.productId = productId;
+    this.name = name;
+    this.weight = weight;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  public Integer getVersion() {
+    return version;
+  }
+
+  public void setVersion(Integer version) {
+    this.version = version;
+  }
+
+  public int getProductId() {
+    return productId;
+  }
+
+  public void setProductId(int productId) {
+    this.productId = productId;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public int getWeight() {
+    return weight;
+  }
+
+  public void setWeight(int weight) {
+    this.weight = weight;
+  }
+}
+----
+Product.java::
++
+[source, java]
+----
+package se.magnus.api.core.product;
+
+public class Product {
+  private int productId;
+  private String name;
+  private int weight;
+  private String serviceAddress;
+
+  public Product() {
+    productId = 0;
+    name = null;
+    weight = 0;
+    serviceAddress = null;
+  }
+
+  public Product(int productId, String name, int weight, String serviceAddress) {
+    this.productId = productId;
+    this.name = name;
+    this.weight = weight;
+    this.serviceAddress = serviceAddress;
+  }
+
+  public int getProductId() {
+    return productId;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public int getWeight() {
+    return weight;
+  }
+
+  public String getServiceAddress() {
+    return serviceAddress;
+  }
+
+  public void setProductId(int productId) {
+    this.productId = productId;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public void setWeight(int weight) {
+    this.weight = weight;
+  }
+
+  public void setServiceAddress(String serviceAddress) {
+    this.serviceAddress = serviceAddress;
+  }
+}
+----
+ProductMapper.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.product.services;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Mappings;
+import se.magnus.api.core.product.Product;
+import se.magnus.microservices.core.product.persistence.ProductEntity;
+
+@Mapper(componentModel = "spring")
+public interface ProductMapper {
+
+    @Mappings({
+            @Mapping(target = "serviceAddress", ignore = true)
+    })
+    Product entityToApi(ProductEntity entity);
+
+    @Mappings({
+            @Mapping(target = "id", ignore = true), @Mapping(target = "version", ignore = true)
+    })
+    ProductEntity apiToEntity(Product api);
+}
+----
+Recommendation.java::
++
+[source, java]
+----
+package se.magnus.api.core.recommendation;
+
+public class Recommendation {
+  private final int productId;
+  private final int recommendationId;
+  private final String author;
+  private final int rate;
+  private final String content;
+  private final String serviceAddress;
+
+  public Recommendation() {
+    productId = 0;
+    recommendationId = 0;
+    author = null;
+    rate = 0;
+    content = null;
+    serviceAddress = null;
+  }
+
+  public Recommendation(
+    int productId,
+    int recommendationId,
+    String author,
+    int rate,
+    String content,
+    String serviceAddress) {
+
+    this.productId = productId;
+    this.recommendationId = recommendationId;
+    this.author = author;
+    this.rate = rate;
+    this.content = content;
+    this.serviceAddress = serviceAddress;
+  }
+
+  public int getProductId() {
+    return productId;
+  }
+
+  public int getRecommendationId() {
+    return recommendationId;
+  }
+
+  public String getAuthor() {
+    return author;
+  }
+
+  public int getRate() {
+    return rate;
+  }
+
+  public String getContent() {
+    return content;
+  }
+
+  public String getServiceAddress() {
+    return serviceAddress;
+  }
+}
+
+----
+RecommendationEntity.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.recommendation.persistence;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "recommendations")
+@CompoundIndex(name = "prod-rec-id", unique = true, def = "{'productId': 1, 'recommendationId' : 1}")
+public class RecommendationEntity {
+
+    @Id
+    private String id;
+
+    @Version
+    private Integer version;
+
+    private int productId;
+    private int recommendationId;
+    private String author;
+    private int rating;
+    private String content;
+
+    public RecommendationEntity() {
+    }
+
+    public RecommendationEntity(int productId, int recommendationId, String author, int rating, String content) {
+        this.productId = productId;
+        this.recommendationId = recommendationId;
+        this.author = author;
+        this.rating = rating;
+        this.content = content;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public int getProductId() {
+        return productId;
+    }
+
+    public int getRecommendationId() {
+        return recommendationId;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+
+    public void setProductId(int productId) {
+        this.productId = productId;
+    }
+
+    public void setRecommendationId(int recommendationId) {
+        this.recommendationId = recommendationId;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public void setRating(int rating) {
+        this.rating = rating;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+}
+
+----
+RecommendationMapper.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.recommendation.services;
+
+import java.util.List;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Mappings;
+import se.magnus.api.core.recommendation.Recommendation;
+import se.magnus.microservices.core.recommendation.persistence.RecommendationEntity;
+
+@Mapper(componentModel = "spring")
+public interface RecommendationMapper {
+
+    @Mappings({
+            @Mapping(target = "rate", source = "entity.rating"),
+            @Mapping(target = "serviceAddress", ignore = true)
+    })
+    Recommendation entityToApi(RecommendationEntity entity);
+
+    @Mappings({
+            @Mapping(target = "rating", source = "api.rate"),
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "version", ignore = true)
+    })
+    RecommendationEntity apiToEntity(Recommendation api);
+
+    List<Recommendation> entityListToApiList(List<RecommendationEntity> entity);
+
+    List<RecommendationEntity> apiListToEntityList(List<Recommendation> api);
+}
+----
+====
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+
+After a successful Gradle build, the generated mapping implementation can be found in the build/
+classes folder for each project. For example, ProductMapperImpl.java in the product-service project.
+
+=== Testing the Mapper
+[tabs]
+======
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Microservices with Spring Boot 3 and Spring Cloud::
++
+[tabs]
+====
+ProductMapperTest.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.product.services;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
+import se.magnus.api.core.product.Product;
+import se.magnus.microservices.core.product.persistence.ProductEntity;
+import se.magnus.microservices.core.product.services.ProductMapper;
+
+public class ProductMapperTest {
+    private ProductMapper mapper = Mappers.getMapper(ProductMapper.class);
+
+    @Test
+    void mapperTests() {
+
+        assertNotNull(mapper);
+
+        Product api = new Product(1, "n", 1, "sa");
+
+        ProductEntity entity = mapper.apiToEntity(api);
+
+        assertEquals(api.getProductId(), entity.getProductId());
+        assertEquals(api.getProductId(), entity.getProductId());
+        assertEquals(api.getName(), entity.getName());
+        assertEquals(api.getWeight(), entity.getWeight());
+
+        Product api2 = mapper.entityToApi(entity);
+
+        assertEquals(api.getProductId(), api2.getProductId());
+        assertEquals(api.getProductId(), api2.getProductId());
+        assertEquals(api.getName(), api2.getName());
+        assertEquals(api.getWeight(), api2.getWeight());
+        assertNull(api2.getServiceAddress());
+    }
+}
+
+----
+====
+Polar Book Shop::
++
+[source, java]
+----
+----
+======

@@ -1,12 +1,19 @@
 = Testcontainers
 :figures: 11-development/02-spring/07-testing
 
-Testcontainers (https://testcontainers.org) is a Java library for testing. It supports
-JUnit and provides lightweight, throwaway containers such as databases, message brokers, and web servers. It's perfect for implementing integration tests with the actual backing services used in production. The result is more reliable and stable tests, which lead to higher-quality applications and favor continuous delivery practices.
+To handle the startup and tear-down of databases during the execution of the integration tests, we can use Testcontainers. 
 
-. Adding dependency on Testcontainers
+Testcontainers (https://testcontainers.org) is a Java library for testing. It supports
+JUnit and provides lightweight, throwaway containers such as databases, message brokers, and web servers. It's perfect for implementing integration tests with the actual backing services used in production. The result is more reliable and stable tests, which lead to higher-quality applications and favor continuous delivery practices. Testcontainers can be configured to automatically start up Docker containers when JUnit tests 
+are started and tear down the containers when the tests are complete.
+
+
+== Adding dependency on Testcontainers
+[tabs]
+====
+Maven::
 +
-[,xml]
+[source, xml]
 ----
  <properties>
      <testcontainersVersion>1.17.3</testcontainersVersion>
@@ -31,3 +38,33 @@ JUnit and provides lightweight, throwaway containers such as databases, message 
      </dependency>
  </dependencies>
 ----
+
+Gradle::
++
+[source, gradle]
+----
+----
+====
+
+== Configure log output from Testcontainers
+By default, the log output from Testcontainers is rather extensive. A Logback configuration file can 
+be placed in the src/test/resource folder to limit the amount of log output. 
+
+*src/test/resources/logback-test.xml:*
+<?xml version="1.0" encoding="UTF-8" ?>
+[source,xml,attributes]
+----
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>
+----
+
+• The config file includes two config files provided by Spring Boot to define the default values, 
+and a log appender is configured that can write log events to the console.
+• The config file limits log output to the INFO log level, discarding the DEBUG and TRACE log records 
+emitted by the Testcontainers library.

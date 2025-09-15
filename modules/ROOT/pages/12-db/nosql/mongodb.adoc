@@ -2,3 +2,84 @@
 :figures: 12-db/nosql
 
 MongoDB is a free and open-source cross-platform document-oriented database program. Classified as a NoSQL database program, MongoDB uses JSON-like documents with schemas. MongoDB is developed by MongoDB Inc. and is located at https://github.com/mongodb/mongo
+
+== Self-Managed
+=== Running a MongoDB Database
+
+Run MongoDB as a Docker container
+
+[,bash]
+----
+docker run -d \
+    --name polar-mongo \
+    -e MONGO_INITDB_ROOT_USERNAME=root \
+    -e MONGO_INITDB_ROOT_PASSWORD=rootpassword \
+    -e MONGO_INITDB_DATABASE=polardb_catalog \
+    -p 27017:27017 \
+    mongo:7.0
+----
+
+stop the container
+[,bash]
+----
+docker stop polar-mongo
+----
+start it again with 
+[,bash]
+----
+docker start polar-mongo
+----
+If you want to start over, you can remove the container with 
+[,bash]
+----
+docker rm -fv polar-mongo
+----
+and create it again with the previous docker run command.
+
+=== Database Commands
+
+Start an interactive MongoDB shell:
+
+[,bash]
+----
+docker exec -it polar-mongo mongosh -u root -p rootpassword --authenticationDatabase admin polardb_catalog
+----
+
+to access it with a command like this:
+[,bash]
+----
+docker-compose exec mongo mongosh -u root -p rootpassword --authenticationDatabase admin polardb_catalog
+----
+
+|===
+| MongoDB Command | Description
+
+| `show dbs`
+| List all databases.
+
+| `use polardb_catalog`
+| Connect to specific database.
+
+| `show collections`
+| List all collections.
+
+| `db.book.find()`
+| Show all documents in the `book` collection.
+
+| `exit`
+| Quit interactive MongoDB shell.
+|===
+
+From within the MongoDB shell, you can also fetch all the data stored in the `book` collection.
+
+[,bash]
+----
+db.book.find()
+----
+
+== Cloud Based
+=== Azure Database for PostgreSQL
+=== Amazon RDS for PostgreSQL
+=== Google Cloud SQL for PostgreSQL
+=== Alibaba Cloud ApsaraDB RDS for PostgreSQL
+=== DigitalOcean PostgreSQL

@@ -65,6 +65,16 @@ Multiplication microservices::
 [source, java]
 ----
 ----
+Microservices with Spring Boot 3 and Spring Cloud::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
 Polar Book Shop::
 +
 [source, java]

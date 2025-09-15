@@ -1,220 +1,26 @@
-= Spring Data JPA
-:figures: 11-development/02-spring/02-data/spring-data-jpa
+= Spring Data mongodb
+:figures: 11-development/02-spring/02-data/spring-data-mongodb
 
 Spring Data JPA works with mutating objects, so you can't use Java
 records. JPA entity classes must be marked with the @Entity annotation and
 expose a no-args constructor. JPA identifiers are annotated with @Id and
 @Version from the javax.persistence package instead of org.springframework.data.annotation.
-
 == Enabling and configuring JPA 
-=== Using Spring Dat JPA
 . Add dependencies
 +
 [source,gradle,attributes]
 ----
-  dependencies {
-  ...
-  implementation 'org.springframework.data:spring-data-jpa'
-  runtimeOnly 'org.postgresql:postgresql'
-  }
 ----
 [source,xml,attributes]
 ----
-		<dependency>
-			<groupId>org.springframework.data</groupId>
-			<artifactId>spring-data-jpa</artifactId> <1>
-			<version>2.7.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.hibernate</groupId>
-			<artifactId>hibernate-entitymanager</artifactId>
-			<version>5.6.9.Final</version>
-		</dependency>
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>42.6.0</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-test</artifactId> <2>
-			<version>5.3.20</version>
-		</dependency>
-----
-<1> The spring-data-jpa module provides repository support for JPA and includes
-transitive dependencies on other modules we’ll need, such as spring-core and
-spring-context.
-<2> We also need the spring-test dependency to run the tests.
-. The standard configuration file for Spring Data JPA is a Java class that creates and sets
-up the beans needed by Spring Data. The configuration can be done using either an XML file or Java code.
-[source,java,attributes]
-----
-package org.mine.kb.spring.data.jpa.config;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.orm.jpa.JpaTransactionManager;
-import org.springframework.orm.jpa.JpaVendorAdapter;
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
-import org.springframework.orm.jpa.vendor.Database;
-import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
-
-import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
-import java.util.Properties;
-
-@EnableJpaRepositories("com.manning.javapersistence.ch02.repositories")
-public class SpringDataConfiguration {
-    @Bean
-    public DataSource dataSource() {
-        DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        dataSource.setUrl("jdbc:mysql://localhost:3306/CH02?serverTimezone=UTC");
-        dataSource.setUsername("root");
-        dataSource.setPassword("");
-        return dataSource;
-    }
-
-    @Bean
-    public JpaTransactionManager transactionManager(EntityManagerFactory emf) {
-        return new JpaTransactionManager(emf);
-    }
-
-    @Bean
-    public JpaVendorAdapter jpaVendorAdapter() {
-        HibernateJpaVendorAdapter jpaVendorAdapter = new HibernateJpaVendorAdapter();
-        jpaVendorAdapter.setDatabase(Database.MYSQL);
-        jpaVendorAdapter.setShowSql(true);
-        return jpaVendorAdapter;
-    }
-
-    @Bean
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
-        LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
-        localContainerEntityManagerFactoryBean.setDataSource(dataSource());
-        Properties properties = new Properties();
-        properties.put("hibernate.hbm2ddl.auto", "create");
-        localContainerEntityManagerFactoryBean.setJpaProperties(properties);
-        localContainerEntityManagerFactoryBean.setJpaVendorAdapter(jpaVendorAdapter());
-        localContainerEntityManagerFactoryBean.setPackagesToScan("com.manning.javapersistence.ch02");
-        return localContainerEntityManagerFactoryBean;
-    }
-}
-----
-The @EnableJpaRepositories annotation enables scanning of the package
-received as an argument for Spring Data repositories.
-Create a data source bean.
-Specify the JDBC properties—the driver.
-The URL of the database.
-The username.
-Create a transaction manager bean based on an entity manager factory. Every
-interaction with the database should occur within transaction boundaries, and
-Spring Data needs a transaction manager bean.
-Create the JPA vendor adapter bean needed by JPA to interact with Hibernate.
-Configure this vendor adapter to access a POSTGRESQL database.
-Show the SQL code while it is executed.
-Create a LocalContainerEntityManagerFactoryBean. This is a factory bean that
-produces an EntityManagerFactory following the JPA standard container boot-
-strap contract.
-Set the data source.
-Set the database to be created from scratch every time the program is executed.
-Set the vendor adapter.
-Set the packages to scan for entity classes. As the Message entity is located in
-com.manning.javapersistence.ch02, we set this package to be scanned.
-. Spring Data JPA provides support for JPA-based data access layers by reducing the
-boilerplate code and creating implementations for the repository interfaces. We only
-need to define our own repository interface to extend one of the Spring Data
-interfaces.
-[source,java,attributes]
-----
-package org.mine.kb.spring.data.jpa.repository;
-
-import org.springframework.data.repository.CrudRepository;
-import org.mine.kb.spring.data.jpa.model.*;
-
-public interface MessageRepository extends CrudRepository<Message, Long> {
-
-}
-----
-
-. Testing
-+
-[source,java,attributes]
-----
-  spring:
-    datasource:
-      username: user
-      password: password
-      url: jdbc:postgresql://localhost:5432/polardb_catalog
-      hikari:
-        # The maximum time (ms) to spend waiting to get a connection from the pool
-        connection-timeout: 2000 #ms
-        # The maximum number of connections HikariCP will keep in the pool
-        maximum-pool-size: 5
-----
-Extend the test using SpringExtension. This extension is used to integrate the
-Spring test context with the JUnit 5 Jupiter test.
-The Spring test context is configured using the beans defined in the previously
-presented SpringDataConfiguration class.
-A MessageRepository bean is injected by Spring through autowiring. This is pos-
-sible as the com.manning.javapersistence.ch02.repositories package where
-MessageRepository is located was used as the argument of the @EnableJpaRepos-
-itories annotation in listing 2.8. If we call messageRepository.getClass(), we’ll
-see that it returns something like com.sun.proxy.$Proxy41—a proxy generated
-by Spring Data, as explained in figure 2.4.
-Create a new instance of the mapped domain model class Message, and set its text
-property.
-Persist the message object. The save method is inherited from the CrudReposi-
-tory interface, and its body will be generated by Spring Data JPA when the proxy
-class is created. It will simply save a Message entity to the database.
-Retrieve the messages from the repository. The findAll method is inherited from
-the CrudRepository interface, and its body will be generated by Spring Data JPA when the proxy class is created. It will simply return all entities belonging to the
-Message class.
-Check the size of the list of messages retrieved from the database and that the mes-
-sage we persisted is in the database.
-Use the JUnit 5 assertAll method, which checks all the assertions that are passed
-to it, even if some of them fail. The two assertions that we verify are conceptually
-related.
-=== Using Spring Boot
-. Add dependencies
-+
-[source,gradle,attributes]
-----
-  dependencies {
-  ...
-  implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
-  runtimeOnly 'org.postgresql:postgresql'
-  }
-----
-[source,xml,attributes]
-----
-  <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-jpa</artifactId>
-  </dependency>
-  <dependency>
-    <groupId>org.postgresql</groupId>
-    <artifactId>postgresql</artifactId>
-    <scope>runtime</scope>
-  </dependency>
 ----
 . Configuring the connection to a database using JPA
 +
 [source,yml,attributes]
 ----
-  spring:
-    datasource:
-      username: user
-      password: password
-      url: jdbc:postgresql://localhost:5432/polardb_catalog
-      hikari:
-        # The maximum time (ms) to spend waiting to get a connection from the pool
-        connection-timeout: 2000 #ms
-        # The maximum number of connections HikariCP will keep in the pool
-        maximum-pool-size: 5
 ----
+
+
 == Defining persistent entities with Spring Data
 === Entity
 Tables are a key element of databases. They are responsible for containing specific types of 
@@ -225,12 +31,6 @@ need to be persisted in a table. Another thing to consider with entities is the 
 hashCode and equals methods to prevent any conflicts with the object’s content.
 [source,java,attributes]
 ----
-@Entity //This annotation indicates to JPA that it’s something that has a persistent state
-@Table(name = "country") //This annotation is optionally
-public class Country implements Serializable {
- // Attributes, constructors, setters, and getters for all the attributes
- // Override the hashcode and equals
-}
 ----
 The definition of the name in the @Table annotation is optional when the table’s 
 name is the same in the database with the same letters in the lower or uppercase. In 
@@ -245,7 +45,6 @@ schemas in JPA. The most common use is to define only one schema for the entire
 of tables.
 [source,java,attributes]
 ----
-@Table(name = "country", schema = "catalog")
 ----
 Each entity needs to follow the rules to be considered valid:
 
@@ -290,11 +89,6 @@ timezone attribute in the table is declared differently.
 
 [source,java,attributes]
 ----
-@Column(name = "locale", nullable = false, length = 6)
-private String locale;
-
-@Column(name = "time_zone", nullable = false, length = 10)
-private String timezone;
 ----
 
 If you want to declare a default value in the column, you can do it as 
@@ -305,14 +99,10 @@ of the default value.
 The Default Value in the Attribute
 [source,java,attributes]
 ----
-@Column(name = "enabled", nullable = false)
-private Boolean enabled = Boolean.TRUE;
 ----
 The Default Value in the Annotation
 [source,java,attributes]
 ----
-@Column(name = "enabled", nullable = false, columnDefinition = "boolean default true")
-private Boolean enabled;
 ----
 
 The @ColumnDefinition annotation does the same, but it is directly connected 
@@ -326,10 +116,50 @@ values that support using the annotations connected with Spring Validator.
 
 The nullable property is valid only with the primitive’s wrappers.
 
-If you need to declare that a column has a unique value, there is an attribute 
-“unique” in the annotation. By default, the property’s value is false, so you need 
-to declare explicitly that the column is unique. For example, the code of a country 
-could be unique because it represents unambiguously and only one country.
+Unlike relational databases, MongoDB does not offer the option to create constraints. Therefore, our only option is to create unique indexes. However, automatic index creation in Spring Data is turned off by default. Firstly, let’s go ahead and turn it on in our application.properties:
+
+spring.data.mongodb.auto-index-creation=true
+
+With that configuration, indexes will be created on boot time if they do not yet exist. But, we have to remember that we cannot create a unique index after we already have duplicate values. This would result in an exception being thrown during the startup of our application.
+
+The @Indexed annotation allows us to mark fields as having an index. And since we configured automatic index creation, we won’t have to create them ourselves. By default, an index is not unique. Therefore, we have to turn it on via the unique property. Let’s see it in action by creating our first example:
+
+[source,java,attributes]
+----
+@Document
+public class Company {
+    @Id
+    private String id;
+
+    private String name;
+
+    @Indexed(unique = true)
+    private String email;
+
+    // getters and setters
+}
+----
+Notice we can still have our @Id annotation, which is completely independent of our index. And that’s all we need to have a document with a unique field. As a result, if we insert more than one document with the same email, it will result in a DuplicateKeyException:
+[source,java,attributes]
+----
+@Test
+public void givenUniqueIndex_whenInsertingDupe_thenExceptionIsThrown() {
+    Company a = new Company();
+    a.setName("Name");
+    a.setEmail("a@mail.com");
+
+    companyRepo.insert(a);
+
+    Company b = new Company();
+    b.setName("Other");
+    b.setEmail("a@mail.com");
+    assertThrows(DuplicateKeyException.class, () -> {
+        companyRepo.insert(b);
+    });
+}
+----
+This approach is useful when we want to enforce uniqueness but still have a unique ID field generated automatically.
+
 
 [tabs]
 ========
@@ -344,399 +174,24 @@ Country.java::
 +
 [source, java]
 ----
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
-import jakarta.persistence.Table;
-
-import java.io.Serializable;
-import java.util.List;
-import java.util.Objects;
-
-@Entity //This annotation indicates to JPA that it’s something that has a persistent state
-@Table(name= "country") //This annotation is optionally
-public class Country implements Serializable {
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private Long id;
-	@Column(name = "code", nullable = false, length = 4)
-	private String code;
-	@Column(name = "name", nullable = false, length = 30)
-	private String name;
-	@Column(name = "locale", nullable = false, length = 6)
-	private String locale;
-	@Column(name = "time_zone", nullable = false)
-	private String timezone;
-	@Column(name = "enabled", nullable = false)
-	private Boolean enabled = Boolean.TRUE;
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "currency_id", nullable = false)
-	private Currency currency;
-
-	@OneToMany(fetch = FetchType.LAZY)
-	@JoinColumn(name = "country_id", nullable = false, updatable = false, insertable = false)
-	@OrderBy(value = "code")
-	private List<State> states;
-
-	public Country() {}
-
-	public Country(Long id, String code, String name, String locale, String timezone, Boolean enabled, Currency currency, List<State> states) {
-		this.id = id;
-		this.code = code;
-		this.name = name;
-		this.locale = locale;
-		this.timezone = timezone;
-		this.enabled = enabled;
-		this.currency = currency;
-		this.states = states;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public String getCode() {
-		return code;
-	}
-
-	public void setCode(String code) {
-		this.code = code;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getLocale() {
-		return locale;
-	}
-
-	public void setLocale(String locale) {
-		this.locale = locale;
-	}
-
-	public String getTimezone() {
-		return timezone;
-	}
-
-	public void setTimezone(String timezone) {
-		this.timezone = timezone;
-	}
-
-	public Boolean getEnabled() {
-		return enabled;
-	}
-
-	public void setEnabled(Boolean enabled) {
-		this.enabled = enabled;
-	}
-
-	public Currency getCurrency() {
-		return currency;
-	}
-
-	public void setCurrency(Currency currency) {
-		this.currency = currency;
-	}
-
-	public List<State> getStates() {
-		return states;
-	}
-
-	public void setStates(List<State> states) {
-		this.states = states;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		Country country = (Country) o;
-		return Objects.equals(id, country.id) && Objects.equals(code, country.code) && Objects.equals(name, country.name) && Objects.equals(locale, country.locale) && Objects.equals(timezone, country.timezone) && Objects.equals(enabled, country.enabled) && Objects.equals(currency, country.currency) && Objects.equals(states, country.states);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(id, code, name, locale, timezone, enabled, currency, states);
-	}
-}
 ----
 +
 State.java::
 +
 [source, java]
 ----
-import jakarta.persistence.*;
-
-import java.io.Serializable;
-import java.util.Objects;
-
-@Entity //This annotation indicates to JPA that it’s something that has a persistent state
-@Table(name= "state") //This annotation is optionally
-public class State implements Serializable {
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private Long id;
-	@Column(name = "code", nullable = false, length = 4)
-	private String code;
-	@Column(name = "name", nullable = false, length = 30)
-	private String name;
-	@Column(name = "enabled", nullable = false)
-	private Boolean enabled = Boolean.TRUE;
-	@ManyToOne
-	@JoinColumn(name = "country_id", insertable = false, updatable = false)
-	private Country country;
-
-	public State() {}
-
-	public State(Long id, String code, String name, Boolean enabled, Country country) {
-		this.id = id;
-		this.code = code;
-		this.name = name;
-		this.enabled = enabled;
-		this.country = country;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public String getCode() {
-		return code;
-	}
-
-	public void setCode(String code) {
-		this.code = code;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public Boolean getEnabled() {
-		return enabled;
-	}
-
-	public void setEnabled(Boolean enabled) {
-		this.enabled = enabled;
-	}
-
-	public Country getCountry() {
-		return country;
-	}
-
-	public void setCountry(Country country) {
-		this.country = country;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		State state = (State) o;
-		return Objects.equals(id, state.id) && Objects.equals(code, state.code) && Objects.equals(name, state.name) && Objects.equals(enabled, state.enabled) && Objects.equals(country, state.country);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(id, code, name, enabled, country);
-	}
-}
 ----
 +
 City.java::
 +
 [source, java]
 ----
-import java.io.Serializable;
-import java.util.Objects;
-
-public class City implements Serializable {
-	private Long id;
-	private String name;
-	private Boolean enabled;
-	private State state;
-
-	public City() {}
-
-	public City(Long id, String name, Boolean enabled, State state) {
-		this.id = id;
-		this.name = name;
-		this.enabled = enabled;
-		this.state = state;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public Boolean getEnabled() {
-		return enabled;
-	}
-
-	public void setEnabled(Boolean enabled) {
-		this.enabled = enabled;
-	}
-
-	public State getState() {
-		return state;
-	}
-
-	public void setState(State state) {
-		this.state = state;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		City city = (City) o;
-		return Objects.equals(id, city.id) && Objects.equals(name, city.name) && Objects.equals(enabled, city.enabled) && Objects.equals(state, city.state);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(id, name, enabled, state);
-	}
-}
 ----
 +
 Currency.java::
 +
 [source, java]
 ----
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import java.io.Serializable;
-import java.util.Objects;
-
-@Entity
-@Table(name = "currency")
-public class Currency extends Base implements Serializable {
-
-	@NotBlank(message = "Code is mandatory")
-	@Column(name = "code", nullable = false, length = 4)
-	private String code;
-
-	@NotBlank(message = "Symbol is mandatory")
-	@Column(name = "symbol", nullable = false, length = 4)
-	private String symbol;
-
-	@NotBlank(message = "Description is mandatory")
-	@Column(name = "description", nullable = false, length = 30)
-	private String description;
-	@NotNull(message = "The state of the currency is mandatory")
-	@Column(name = "enabled", nullable = false)
-	private Boolean enabled = Boolean.TRUE;
-
-	@Min(value = 1, message = "The minimum value is 1")
-	@Max(value = 5 , message = "The maximum value is 5")
-	@Column(name = "decimal_places") //Optional: Indicate the name and the length of the column
-	private int decimalPlaces;
-
-	public Currency() {}
-	
-	public Currency(Long id, String code, String description, Boolean enabled, int decimalPlaces, String symbol) {
-		super(id);
-		this.code = code;
-		this.description = description;
-		this.enabled = enabled;
-		this.decimalPlaces = decimalPlaces;
-		this.symbol = symbol;
-	}
-	
-	public String getCode() {
-		return code;
-	}
-	
-	public void setCode(String code) {
-		this.code = code;
-	}
-	
-	public String getDescription() {
-		return description;
-	}
-	
-	public void setDescription(String description) {
-		this.description = description;
-	}
-	
-	public Boolean getEnabled() {
-		return enabled;
-	}
-	
-	public void setEnabled(Boolean enabled) {
-		this.enabled = enabled;
-	}
-	
-	public int getDecimalPlaces() {
-		return decimalPlaces;
-	}
-	
-	public void setDecimalPlaces(int decimalPlaces) {
-		this.decimalPlaces = decimalPlaces;
-	}
-
-	public String getSymbol() {
-		return symbol;
-	}
-
-	public void setSymbol(String symbol) {
-		this.symbol = symbol;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		if (!super.equals(o)) return false;
-		Currency currency = (Currency) o;
-		return decimalPlaces == currency.decimalPlaces && Objects.equals(code, currency.code) && Objects.equals(symbol, currency.symbol) && Objects.equals(description, currency.description) && Objects.equals(enabled, currency.enabled);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(super.hashCode(), code, symbol, description, enabled, decimalPlaces);
-	}
-}
 ----
 ====
 ======
@@ -745,7 +200,178 @@ Multiplication microservices::
 [source, java]
 ----
 ----
+Microservices with Spring Boot 3 and Spring Cloud:
++
+[tabs]
+====
+ProductEntity.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.product.persistence;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
+@Document(collection = "products")
+public class ProductEntity {
+
+  @Id private String id;
+
+  @Version private Integer version;
+
+  @Indexed(unique = true)
+  private int productId;
+
+  private String name;
+  private int weight;
+
+  public ProductEntity() {}
+
+  public ProductEntity(int productId, String name, int weight) {
+    this.productId = productId;
+    this.name = name;
+    this.weight = weight;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  public Integer getVersion() {
+    return version;
+  }
+
+  public void setVersion(Integer version) {
+    this.version = version;
+  }
+
+  public int getProductId() {
+    return productId;
+  }
+
+  public void setProductId(int productId) {
+    this.productId = productId;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public int getWeight() {
+    return weight;
+  }
+
+  public void setWeight(int weight) {
+    this.weight = weight;
+  }
+}
+----
+RecommendationEntity.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.recommendation.persistence;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "recommendations")
+@CompoundIndex(name = "prod-rec-id", unique = true, def = "{'productId': 1, 'recommendationId' : 1}")
+public class RecommendationEntity {
+
+    @Id
+    private String id;
+
+    @Version
+    private Integer version;
+
+    private int productId;
+    private int recommendationId;
+    private String author;
+    private int rating;
+    private String content;
+
+    public RecommendationEntity() {
+    }
+
+    public RecommendationEntity(int productId, int recommendationId, String author, int rating, String content) {
+        this.productId = productId;
+        this.recommendationId = recommendationId;
+        this.author = author;
+        this.rating = rating;
+        this.content = content;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public int getProductId() {
+        return productId;
+    }
+
+    public int getRecommendationId() {
+        return recommendationId;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+
+    public void setProductId(int productId) {
+        this.productId = productId;
+    }
+
+    public void setRecommendationId(int recommendationId) {
+        this.recommendationId = recommendationId;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public void setRating(int rating) {
+        this.rating = rating;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+}
+
+====
 Polar Book Shop::
 +
 [source, java]
@@ -869,31 +495,17 @@ a column’s information into a value of the enumeration
 ======
 Cities API::
 +
-To see this concept practically, let’s create a continent enumeration and include an attribute in the Country entity.
-+
 [tabs]
 ====
 Continent.java::
 +
 [source, java]
 ----
-public enum Continent {
-    SOUTH_AMERICA, NORTH_AMERICA, EUROPE, ASIA, AFRICA, ANTARCTIC;
-}
 ----
 Currency.java::
 +
 [source, java]
 ----
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-
-@Entity
-@Table(name = "currency") // Optional only if you need to indicate the table's name
-public class Currency implements Serializable {
-    @Enumerated(EnumType.STRING)
-    private Continent continent;
-}
 ----
 ====
 Multiplication microservices::
@@ -916,13 +528,6 @@ old application with logic inside the entity.
 To do this include the @Transient annotation over the attribute.
 [source, java]
 ----
-import jakarta.persistence.Transient;
-@Entity
-@Table(name = "currency") // Optional only if you need to indicate the table's name
-public class Currency implements Serializable {
-    @Transient
-    private String temporaryValue;
-}
 ----
 
 === Primary Key and Generators
@@ -953,14 +558,6 @@ strategy to generate the value. To do this, you need to indicate over the declar
 
 [source,java,attributes]
 ----
-@Entity
-@Table(name = "currency") // Optional only if you need to indicate the table's name
-public class Currency implements Serializable {
-
-    @Id // Identify which is the primary key
-    @GeneratedValue(strategy = GenerationType.SEQUENCE) // Indicate the way to generate the ID
-    private Long id;
-}
 ----
 There are many implementations of table generators to optimize and 
 reduce the risk of collision. Examples include Hilo and Pooled optimizer, which 
@@ -984,13 +581,6 @@ PostgreSQL::
 +
 [source, sql]
 ----
-CREATE TABLE IF NOT EXISTS city
-(
- id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, <1>
- name varchar(80) NOT NULL,
- enabled BOOLEAN DEFAULT true NOT NULL,
- state_id bigint NOT NULL REFERENCES state(id)
-);
 ----
 + 
 Depending on the database version, an alternative could be declared in the 
@@ -998,14 +588,6 @@ generator outside the table’s structure.
 +
 [source, sql]
 ----
-CREATE SEQUENCE city_id_seq; <1>
-CREATE TABLE IF NOT EXISTS city
-(
- id bigint DEFAULT NEXTVAL('city_id_seq') NOT NULL, <2>
- name varchar(80) NOT NULL,
- enabled BOOLEAN DEFAULT true NOT NULL,
- state_id bigint NOT NULL REFERENCES state(id)
-);
 ----
 Oracle::
 +
@@ -1027,14 +609,6 @@ PostgreSQL::
 +
 [source, sql]
 ----
-CREATE TABLE IF NOT EXISTS city
-(
- id bigint NOT NULL AUTO_INCREMENT, <1>
- name varchar(80) NOT NULL,
- enabled BOOLEAN DEFAULT true NOT NULL,
- state_id bigint NOT NULL state(id),
- PRIMARY KEY (id)
-);
 ----
 Oracle::
 +
@@ -1112,33 +686,12 @@ Country.java::
 +
 [source, java]
 ----
-@Entity //This annotation indicates to JPA that it’s something that has a persistent state
-@Table(name= "country") //This annotation is optionally
-public class Country implements Serializable {
-
-	@ManyToOne(fetch = FetchType.LAZY) <1>
-	@JoinColumn(name = "currency_id", nullable = false) <2>
-	private Currency currency;
-
-	@OneToMany(fetch = FetchType.LAZY) <3>
-	@JoinColumn(name = "country_id", nullable = false, updatable = false, insertable = false) <4>
-	@OrderBy(value = "code")
-	private List<State> states;
-
-}
 ----
 +
 State.java::
 +
 [source, java]
 ----
-@Entity //This annotation indicates to JPA that it’s something that has a persistent state
-@Table(name= "state") //This annotation is optionally
-public class State implements Serializable {
-	@ManyToOne
-	@JoinColumn(name = "country_id", insertable = false, updatable = false)
-	private Country country;
-}
 ----
 ====
 Multiplication microservices::
@@ -1212,33 +765,12 @@ Country.java::
 +
 [source, java]
 ----
-@Entity //This annotation indicates to JPA that it’s something that has a persistent state
-@Table(name= "country") //This annotation is optionally
-public class Country implements Serializable {
-
-	@ManyToOne(fetch = FetchType.LAZY) <1>
-	@JoinColumn(name = "currency_id", nullable = false) 
-	private Currency currency;
-
-	@OneToMany(fetch = FetchType.LAZY) <2>
-	@JoinColumn(name = "country_id", nullable = false, updatable = false, insertable = false)
-	@OrderBy(value = "code")
-	private List<State> states;
-
-}
 ----
 +
 State.java::
 +
 [source, java]
 ----
-@Entity //This annotation indicates to JPA that it’s something that has a persistent state
-@Table(name= "state") //This annotation is optionally
-public class State implements Serializable {
-	@ManyToOne
-	@JoinColumn(name = "country_id", insertable = false, updatable = false)
-	private Country country;
-}
 ----
 ====
 +
@@ -1252,43 +784,15 @@ fetching from the Country entity, as shown in Table 
 Hibernate: 
 [source,sql,attributes]
 ----
-select country0_.id as id1_0_0_, country0_.
-code as code2_0_0_, country0_.currency_id as 
-currency7_0_0_, country0_.enabled as enabled3_0_0_, 
-country0_.locale as locale4_0_0_, country0_.name as 
-name5_0_0_, country0_.time_zone as time_zon6_0_0_ 
-from country country0_ where country0_.id=?
 ----
 Hibernate: 
 [source,sql,attributes]
 ----
-select currency0_.id as id1_1_0_, currency0_.
-code as code2_1_0_, currency0_.decimal_places 
-as decimal_3_1_0_, currency0_.description as 
-descript4_1_0_, currency0_.enabled as enabled5_1_0_ 
-from currency currency0_ where currency0_.id=?
 ----
 
 |Hibernate: 
 [source,sql,attributes]
 ----
-select country0_.id 
-as id1_0_0_, country0_.code as 
-code2_0_0_, country0_.currency_id 
-as currency7_0_0_, country0_.enabled 
-as enabled3_0_0_, country0_.locale 
-as locale4_0_0_, country0_.name as 
-name5_0_0_, country0_.time_zone 
-as time_zon6_0_0_, currency1_.
-id as id1_1_1_, currency1_.code as 
-code2_1_1_, currency1_.decimal_
-places as decimal_3_1_1_, currency1_.
-description as descript4_1_1_, 
-currency1_.enabled as enabled5_1_1_ 
-from country country0_ left outer join 
-currency currency1_ on country0_.
-currency_id=currency1_.id where 
-country0_.id=?
 ----
 |===
 Multiplication microservices::
@@ -1321,37 +825,6 @@ ApiMapper.java::
 +
 [source, java]
 ----
-package com.apress.catalog.mapper;
-
-import com.apress.catalog.dto.CountryDTO;
-import com.apress.catalog.dto.CurrencyDTO;
-import com.apress.catalog.dto.StateDTO;
-import com.apress.catalog.model.Country;
-import com.apress.catalog.model.Currency;
-import com.apress.catalog.model.State;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
-
-@Mapper(componentModel = "spring")
-public interface ApiMapper {
-
-    ApiMapper INSTANCE = Mappers.getMapper( ApiMapper.class );
-
-    CurrencyDTO entityToDTO(Currency currency);
-
-    Currency DTOToEntity(CurrencyDTO currency);
-
-    CountryDTO entityToDTO(Country country);
-
-    Country DTOToEntity(CountryDTO country);
-
-	//Exclude the country element to prevent a recursive mapping
-    @Mapping(target="country", ignore = true) <1>
-    StateDTO stateToStateDTO(State state);
-
-    State stateDTOToState(StateDTO state);
-}
 ----
 ====
 Multiplication microservices::
@@ -1383,14 +856,6 @@ Country.java::
 +
 [source, java]
 ----
-@Entity //This annotation indicates to JPA that it’s something that has a persistent state
-@Table(name= "country") //This annotation is optionally
-public class Country implements Serializable {
-	@OneToMany(fetch = FetchType.LAZY)
-	@JoinColumn(name = "country_id", nullable = false, updatable = false, insertable = false)
-	@OrderBy(value = "code") <1>
-	private List<State> states;
-}
 ----
 ====
 With this modification in the entity, when you get over the list of the entities, Spring Data executes a query with the ordering considering the column name that you indicate in the property value.
@@ -1444,36 +909,6 @@ Base.java::
 +
 [source, java]
 ----
-package com.apress.catalog.model;
-
-import java.io.Serializable;
-
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
-
-@MappedSuperclass <1>
-public abstract class Base implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long id;
-
-    public Base() {
-    }
-
-    public Base(Long id) {
-        this.id = id;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-}
 ----
 <1> the @MappedSuperclass annotation, which indicates that the class is not a final entity, so it does not exist in the database. Instead, this class is part of another class that inherits it. 
 Base.java::
@@ -1481,36 +916,6 @@ The next step is to modify the Currency entity, removing the Id attribute and ex
 +
 [source, java]
 ----
-package com.apress.catalog.model;
-
-import java.io.Serializable;
-
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
-
-@MappedSuperclass <1>
-public abstract class Base implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long id;
-
-    public Base() {
-    }
-
-    public Base(Long id) {
-        this.id = id;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-}
 ----
 <1> the @MappedSuperclass annotation, which indicates that the class is not a final entity, so it does not exist in the database. Instead, this class is part of another class that inherits it. 
 ====
@@ -1530,16 +935,6 @@ to override certain attributes of the abstract class indicating the new values; 
 let’s change the name of the ID in the Currency entity to another value.
 [source,java,attributes]
 ----
-@Entity
-@Table(name= "currency")
-@AttributeOverride(
- name = "id",
- column = @Column(name = "currency_id", nullable = false)) <1>
- // This implies that you override the name of the id for another one
-public class Currency extends Base implements Serializable {
- // Attributes, constructors, setters, and getters for all the attributes
- // Override the hashcode and equals
-}
 ----
 ==== Table per Class Hierarchy
 This approach represents an entire hierarchy of classes inside a single table. An 
@@ -1570,16 +965,6 @@ Base.java::
 +
 [source, java]
 ----
-@Entity
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE) <1>
-@DiscriminatorColumn(name = "BASE_TYPE") <2>
-public abstract class Base implements Serializable {
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private Long id;
-	// Attributes, constructors, setters, and getters for all the attributes
-	// Override the hashcode and equals
-}
 ----
 +
 The only things you need to modify now are the City and the Airport entities to have 
@@ -1588,16 +973,6 @@ entity is in the application.
 +
 [source, java]
 ----
-@Entity
-@Table(name= "airport")
-@DiscriminatorValue( "AIR") <3>
-public class Airport extends Base implements Serializable { <4>
-	@OneToMany(fetch = FetchType.LAZY)
-	@JoinColumn(name = "AIRPORT_ID")
-	private List<Terminal> terminals;
-	// Attributes, constructors, setters, and getters for all the attributes
-	// Override the hashcode and equals
-}
 ----
 +
 The city code is about the same but has a different @DiscriminatorValue annotation 
@@ -1651,15 +1026,6 @@ Base.java::
 +
 [source, java]
 ----
-@Entity
-@Inheritance(strategy = InheritanceType.JOINED) <1>
-public abstract class Base implements Serializable {
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private Long id;
-	// Attributes, constructors, setters, and getters for all the attributes
-	// Override the hashcode and equals
-}
 ----
 +
 The next step is to modify the Airport class to include the attribute to do the joins 
@@ -1668,16 +1034,6 @@ required because JPA infers that both tables use the same ID, but if you want to
 +
 [source, java]
 ----
-@Entity
-@Table(name= "airport")
-@PrimaryKeyJoinColumn(name = "ID") <2>
-public class Airport extends Base implements Serializable { <3>
-	@OneToMany(fetch = FetchType.LAZY)
-	@JoinColumn(name = "AIRPORT_ID")
-	private List<Terminal> terminals;
-	// Attributes, constructors, setters, and getters for all the attributes
-	// Override the hashcode and equals
-}
 ----
 +
 The city code is about the same but has a different @DiscriminatorValue annotation 
@@ -1738,29 +1094,11 @@ Base.java::
 +
 [source, java]
 ----
-@Entity
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS) <1>
-public abstract class Base implements Serializable {
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private Long id;
-	// Attributes, constructors, setters, and getters for all the attributes
-	// Override the hashcode and equals
-}
 ----
 In the concrete class, you don’t need to include anything. Just remove all the 
 previous annotations that you used in the other strategies.
 [source, java]
 ----
-@Entity
-@Table(name= "airport")
-public class Airport extends Base implements Serializable { <3>
-	@OneToMany(fetch = FetchType.LAZY)
-	@JoinColumn(name = "AIRPORT_ID")
-	private List<Terminal> terminals;
-	// Attributes, constructors, setters, and getters for all the attributes
-	// Override the hashcode and equals
-}
 ----
 The city code is about the same but has a different @DiscriminatorValue annotation 
 and attributes, but the logic is the same
@@ -1812,86 +1150,12 @@ Audit.java::
 +
 [source, java]
 ----
-package com.apress.catalog.model;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Objects;
-
-@Embeddable <1>
-public class Audit implements Serializable {
-
-    @Column(name = "created_on", nullable = false)
-    private LocalDateTime createdOn;
-
-    @Column(name = "updated_on", nullable = true)
-    private LocalDateTime updatedOn;
-
-    public LocalDateTime getCreatedOn() {
-        return createdOn;
-    }
-
-    public void setCreatedOn(LocalDateTime createdOn) {
-        this.createdOn = createdOn;
-    }
-
-    public LocalDateTime getUpdatedOn() {
-        return updatedOn;
-    }
-
-    public void setUpdatedOn(LocalDateTime updatedOn) {
-        this.updatedOn = updatedOn;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Audit audit = (Audit) o;
-        return Objects.equals(createdOn, audit.createdOn) && Objects.equals(updatedOn, audit.updatedOn);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(createdOn, updatedOn);
-    }
-}
 ----
 Currency.java::
 Now that you have a class to include in many other entities, the next step is to 
 modify the Currency entity to embed the Audit class using the @Embedded annotation.
 [source, java]
 ----
-@Entity
-@Table(name = "currency")
-public class Currency extends Base {
-
-	@NotBlank(message = "Code is mandatory")
-	@Column(name = "code", nullable = false, length = 4)
-	private String code;
-
-	@NotBlank(message = "Symbol is mandatory")
-	@Column(name = "symbol", nullable = false, length = 4)
-	private String symbol;
-
-	@NotBlank(message = "Description is mandatory")
-	@Column(name = "description", nullable = false, length = 30)
-	private String description;
-	@NotNull(message = "The state of the currency is mandatory")
-	@Column(name = "enabled", nullable = false)
-	private Boolean enabled = Boolean.TRUE;
-
-	@Min(value = 0, message = "The minimum value is 0")
-	@Max(value = 5, message = "The maximum value is 5")
-	@Column(name = "decimal_places") // Optional: Indicate the name and the length of the column
-	private int decimalPlaces;
-
-	@Embedded <2>
-	private Audit audit;
-}
 ----
 ====
 Multiplication microservices::
@@ -1931,25 +1195,12 @@ events, which doesn’t happen automatically as in Spring Data JDBC.
 
 [,java]
 ----
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-
-@Configuration
-@EnableJpaAuditing
-public class DataConfig {
-}
 ----
 
 and you would annotate the entity class with @EntityListeners(AuditingEntityListener.class) to make it listen to audit events, which doesn't happen automatically as in Spring Data JDBC.
 
 [,java]
 ----
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-@Entity
-@EntityListeners(AuditingEntityListener.class)
-public class Book {
-}
 ----
 
 Spring Data provides convenient annotations that we can use on dedicated fields to capture the information from such events (audit
@@ -1957,10 +1208,5 @@ metadata) and store it in the database as part of the entity.
 
 [,java]
 ----
-@CreatedDate
-private Instant createdDate;
-
-@LastModifiedDate
-private Instant lastModifiedDate;
 ----
 
