@@ -60,7 +60,7 @@ public class Currency
 |
 [source,java]
 ----
-@Document(collection="currency)
+@Document(collection="currency")
 public class Currency {
     @Id
     private Long id;
@@ -137,3 +137,442 @@ public class Currency
 }
 ----
 |=== 
+
+== Transparent and automated persistence
+We use the term transparent to refer to a complete separation of concerns between the
+persistent classes of the domain model and the persistence layer. The persistent
+classes are unaware of—and have no dependency on—the persistence mechanism.
+From inside the persistent classes, there is no reference to the outside persistence
+mechanism. We use the term automatic to refer to a persistence solution (your anno-
+tated domain, the layer, and the mechanism) that relieves you of handling low-level
+mechanical details, such as writing most SQL statements and working with the JDBC
+API.
+
+In a system with transparent persistence, instances of entities aren’t aware of the
+underlying data store; they need not even be aware that they’re being persisted or
+retrieved. JPA externalizes persistence concerns to a generic persistence manager API.
+Hence, most of your code, and certainly your complex business logic, doesn’t have to
+concern itself with the current state of a domain model entity instance in a single
+thread of execution. We regard transparency as a requirement because it makes an
+application easier to build and maintain. Transparent persistence should be one of
+the primary goals of any ORM solution.
+
+Clearly, no automated persistence solution is completely transparent: every auto-
+mated persistence layer, including JPA and Hibernate, imposes some requirements on
+the persistent classes. For example, JPA requires that collection-valued attributes be
+typed to an interface such as java.util.Set or java.util.List and not to an actual
+implementation such as java.util.HashSet (this is good practice anyway). Similarly,
+a JPA entity class has to have a special attribute, called the database identifier (which is
+also less of a restriction but is usually convenient).
+
+Our preferred programming model for achieving this is POJO.
+
+
+[tabs]
+======
+CaveatEmptor::
++
+As a real-world use case, let’s analyze how transparent and automated persistence
+is reflected at the level of the Item class.
++
+The Item class of the CaveatEmptor domain model shouldn’t have any runtime
+dependency on any Jakarta Persistence or Hibernate API. Furthermore, JPA doesn’t
+require that any special superclasses or interfaces be inherited or implemented by
+persistent classes. Nor are any special classes used to implement attributes and associa-
+tions. You can reuse persistent classes outside the context of persistence, such as in
+unit tests or in the presentation layer. You can create instances in any runtime envi-
+ronment with the regular Java new operator, preserving testability and reusability.
++
+[source, java]
+----
+package com.manning.javapersistence.ch03.metadataxmljpa;
+
+import javax.validation.constraints.Future;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.util.Date;
+
+public class Item {
+
+    private Long id;
+
+    @NotNull
+    @Size(
+            min = 2,
+            max = 255,
+            message = "Name is required, maximum 255 characters."
+    )
+    private String name;
+
+    @Future
+    private Date auctionEnd;
+
+    public Long getId() {
+      return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Date getAuctionEnd() {
+        return auctionEnd;
+    }
+
+    public void setAuctionEnd(Date auctionEnd) {
+        this.auctionEnd = auctionEnd;
+    }
+}
+----
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+
+== Writing persistence-capable classes
+Supporting fine-grained and rich domain models is a major Hibernate objective. This
+is one reason we work with POJOs. In general, using fine-grained objects means hav-
+ing more classes than tables.
+
+A persistence-capable plain old Java class declares attributes, which represent state,
+and business methods, which define behavior. Some attributes represent associations
+to other persistence-capable classes.
+
+The following listing shows a POJO implementation of the User entity of the
+domain model
+[source, java]
+----
+public class User {
+
+    private String username;
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+}
+----
+- The class can be abstract and, if needed, extend a non-persistent class or implement
+an interface. 
+- It must be a top-level class, not be nested within another class. 
+- The
+persistence-capable class and any of its methods shouldn’t be final (this is a requirement
+of the JPA specification). Hibernate is not so strict, and it will allow you to declare final
+classes as entities or as entities with final methods that access persistent fields. However,
+this is not a good practice, as this will prevent Hibernate from using the proxy pattern
+for performance improvement. In general, you should follow the JPA requirements if
+you would like your application to remain portable between different JPA providers.
+- Hibernate and JPA require a constructor with no arguments for every persistent
+class. Alternatively, if you do not write a constructor at all, Hibernate will use the
+default Java constructor. Hibernate calls classes using the Java Reflection API on such
+no-argument constructors to create instances. The constructor need not be public,
+but it has to be at least package-visible for Hibernate to use runtime-generated proxies
+for performance optimization.
+- The properties of the POJO implement the attributes of the business entities, such
+as the username of User. You’ll usually implement properties as private or protected
+member fields, together with public or protected property accessor methods: for each
+field you’ll need a method for retrieving its value and another for setting its value.
+These methods are known as the getter and setter, respectively. 
++
+The JavaBean specification defines the guidelines for naming accessor methods;
+this allows generic tools like Hibernate to easily discover and manipulate property val-
+ues. A getter method name begins with get, followed by the name of the property
+(with the first letter in uppercase). A setter method name begins with set and simi-
+larly is followed by the name of the property. You may begin getter method names for
+Boolean properties with is instead of get.
++
+Hibernate doesn’t require accessor methods. You can choose how the state of an
+instance of your persistent classes should be persisted. Hibernate will either directly
+access fields or call accessor methods. Your class design isn’t disturbed much by these
+considerations. You can make some accessor methods non-public or completely
+remove them and then configure Hibernate to rely on field access for these properties.
++
+Although trivial accessor methods are common, one of the reasons we like to use
+JavaBeans-style accessor methods is that they provide encapsulation: you can change the
+hidden internal implementation of an attribute without making any changes to the
+public interface. If you configure Hibernate to access attributes through methods, you
+abstract the internal data structure of the class—the instance variables—from the design
+of the database. For example, if your database stores the name of a user as a single NAME column,
+but your User class has firstname and lastname fields, you can add the following per-
+sistent name property to the class
++
+[source, java]
+----
+
+import java.util.StringTokenizer;
+
+public class User {
+
+    private String firstname;
+    private String lastname;
+
+    public String getName() { <1>
+        return firstname + ' ' + lastname;
+    }
+
+    public void setName(String name) { <2>
+        StringTokenizer tokenizer = new StringTokenizer(name);
+        firstname = tokenizer.nextToken();
+        lastname = tokenizer.nextToken();
+    }
+
+}
+----
++
+a custom type converter in the persistence service is a better way
+to handle many of these kinds of situations. It helps to have several options.
++
+Another issue to consider is dirty checking. Hibernate automatically detects state
+changes so that it can synchronize the updated state with the database. It’s usually safe
+to return a different instance from the getter method than the instance passed by
+Hibernate to the setter. Hibernate compares them by value—not by object identity— to determine whether the attribute’s persistent state needs to be updated. For example, the following getter method doesn’t result in unnecessary SQL UPDATEs:
++
+[source, java]
+----
+public String getFirstname() { 
+ return new String(firstname);
+}
+----
++
+There is an important point to note about dirty checking when persisting collections. If
+you have an Item entity with a Set<Bid> field that’s accessed through the setBids setter, this code will result in an unnecessary SQL UPDATE:
++
+[source, java]
+----
+item.setBids(bids);
+em.persist(item);
+item.setBids(bids);
+----
++
+This happens because Hibernate has its own collection implementations: ``PersistentSet``, ``PersistentList``, or ``PersistentMap``. Providing setters for an entire collection is not good practice anyway.
++
+when your accessor methods throw them exceptions, If Hibernate uses accessor methods when loading and storing instances, and a RuntimeException (unchecked) is thrown, the current transaction is rolled back, and the excep-
+tion is yours to handle in the code that called the Jakarta Persistence (or native
+Hibernate) API. If you throw a checked application exception, Hibernate wraps the
+exception into a RuntimeException.
++
+JPA requires interfaces for collection-typed properties, where you
+must use java.util.Set, java.util.List, or java.util.Collection rather than
+HashSet, for example. It’s good practice to program to collection interfaces anyway,
+rather than concrete implementations,
+== Implementing POJO associations
+You can create properties to express associations between classes, and you will (typically) call accessor methods to navigate from instance to instance at runtime. 
+
+[tabs]
+======
+CaveatEmptor::
++
+Let’s consider the associations defined by the
+Item and Bid persistent classes, 
+[source,java,attributes]
+----
+public class Bid {
+
+    private Item item;
+
+    public Item getItem() {
+        return item;
+    }
+
+    void setItem(Item item) {
+        this.item = item;
+    }
+
+}
+----
+
+The item property allows navigation from a Bid to the related Item. This is an association with many-to-one multiplicity; users can make many bids for each item.
+[source,java,attributes]
+----
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+public class Item {
+    private Set<Bid> bids = new HashSet<>();
+
+    public Set<Bid> getBids() {
+        return Collections.unmodifiableSet(bids);
+    }
+
+    public void addBid(Bid bid) {
+        if (bid == null)
+            throw new NullPointerException("Can't add null Bid");
+        if (bid.getItem() != null)
+            throw new IllegalStateException("Bid is already assigned to an Item");
+        bids.add(bid);
+        bid.setItem(this);
+    }
+}
+----
+This association between the two classes allows for bidirectional navigation: the many-to-
+one is from this perspective a one-to-many multiplicity. One item can have many bids—
+they are of the same type but were generated during the auction by different users
+and with different amounts.
+[cols="1,1,1,1", options="header"]
+|===
+|Item |Bid |User |Amount
+|1    |1   |John |100
+|1    |2   |Mike |120
+|1    |3   |John |140
+|===
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+You can choose a Set and initialize the field to a new HashSet, because the application disallows duplicate bids. This is good practice, because you’ll avoid any
+NullPointer-Exceptions when someone is accessing the property of a new Item,
+which will have an empty set of bids.
+
+The JPA provider is also required to set a non-
+empty value on any mapped collection-valued property, such as when an Item without
+bids is loaded from the database. (It doesn’t have to use a HashSet; the implementa-
+tion is up to the provider. Hibernate has its own collection implementations with additional capabilities, such as dirty checking.)
+
+*Shouldn’t collections on an item be stored in a list?*
+The first reaction is often to preserve the order of elements as they’re entered by
+users, because this may also be the order in which you will show them later. Cer-
+tainly, in an auction application, there has to be a defined order in which the user
+sees bids for an item, such as the highest bid first or the newest bid last. You might
+even work with a java.util.List in your user interface code to sort and display bids
+for an item. 
+That doesn’t mean this display order should be durable, however. The data integrity
+isn’t affected by the order in which bids are displayed. You’ll need to store the
+amount of each bid, so you can always find the highest bid, and you’ll need to store
+a timestamp for when each bid is created, so you can always find the newest bid.
+When in doubt, keep your system flexible, and sort the data when it’s retrieved from
+the data store (in a query) or shown to the user (in Java code), not when it’s stored.
+
+Accessor methods for associations need to be declared public only if they’re part of
+the external interface of the persistent class used by the application logic to create a
+link between two instances. 
+
+managing the link
+between an Item and a Bid is much more complicated in Java code than it is in an
+SQL database, with declarative foreign key constraints. In our experience, engineers
+are often unaware of this complication, which arises from a network object model
+with bidirectional references (pointers). Let’s walk through the issue step by step.
+
+The basic procedure for linking a Bid with an Item looks like this:
+    anItem.getBids().add(aBid);
+    aBid.setItem(anItem);
+Whenever you create this bidirectional link, two actions are required:
+
+- You must add the Bid to the bids collection of the Item.
+- The item property of the Bid must be set.
+
+JPA doesn’t manage persistent associations. If you want to manipulate an association,
+you must write the same code you would write without Hibernate. If an association is
+bidirectional, you must consider both sides of the relationship. If you ever have problems understanding the behavior of associations in JPA, just ask yourself, “What
+would I do without Hibernate?” Hibernate doesn’t change the regular Java semantics.
+
+We recommend that you add convenience methods to group these operations,
+allowing reuse and helping ensure correctness, and in the end guaranteeing data
+integrity (a Bid is required to have a reference to an Item). 
+[source,java,attributes]
+----
+    public void addBid(Bid bid) {
+        if (bid == null)
+            throw new NullPointerException("Can't add null Bid");
+        if (bid.getItem() != null)
+            throw new IllegalStateException("Bid is already assigned to an Item");
+        bids.add(bid);
+        bid.setItem(this);
+    }
+----
+The addBid() method not only reduces the lines of code when dealing with Item and
+Bid instances but also enforces the cardinality of the association. You avoid errors that
+arise from leaving out one of the two required actions. You should always provide this
+kind of grouping of operations for associations, if possible. If you compare this with
+the relational model of foreign keys in an SQL database, you can easily see how a net-
+work and a pointer model complicate a simple operation: instead of a declarative constraint, you need procedural code to guarantee data integrity.
+
+Because you want addBid() to be the only externally visible mutator method for
+the bids of an item (possibly in addition to a removeBid() method), consider making
+the Bid#setItem() method package-visible.
+
+The Item#getBids() getter method should not return a modifiable collection, so
+that clients can’t use the collection to make changes that aren’t reflected on the other
+side. Bids added directly to the collection may belong to an item, but they wouldn’t have a reference to that item, which would create an inconsistent state, according to the data-
+base constraints. To prevent this problem, you can wrap the internal collection before
+returning it from the getter method with ``Collections.unmodifiableCollection(c)``
+and ``Collections.unmodifiableSet(s)``. The client will then get an exception if it tries
+to modify the collection You can therefore force every modification to go through the
+relationship management method, guaranteeing integrity. It is always good practice to
+return an unmodifiable collection from your classes so that the client does not have
+direct access to it.
+
+An alternative strategy is to use immutable instances. For example, you could
+enforce integrity by requiring an Item argument in the constructor of Bid
+[source,java,attributes]
+----
+public class Bid {
+
+    private Item item;
+
+    public Bid() {
+    }
+
+    public Bid(Item item) {
+        this.item = item;
+        item.bids.add(this); // Bidirectional
+    }
+
+    public Item getItem() {
+        return item;
+    }
+
+}
+----
+In this constructor, the item field is set; no further modification of the field value should occur. The collection on the other side is also updated for a bidirectional relationship, while the bids field from the Item class is now package-private. There is no Bid#setItem() method.
+
+There are several problems with this approach, however. First, Hibernate can’t call
+this constructor. You need to add a no-argument constructor for Hibernate, and it
+needs to be at least package-visible. Furthermore, because there is no setItem()
+method, Hibernate would have to be configured to access the item field directly. This
+means the field can’t be final, so the class isn’t guaranteed to be immutable.
+
+It’s up to you how many convenience methods and layers you want to wrap around the persistent association properties or fields, but we recommend being consistent and applying the same strategy to all your domain model classes.
+
