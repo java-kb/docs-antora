@@ -24,3 +24,276 @@ Spring REST Docs (https://github.com/ePages-de/restdocs-api-spec).
 * The springdoc-openapi community-driven project helps automate the gener-
 ation of API documentation according to the OpenAPI 3 format (https://
 springdoc.org).
+
+== springdoc-openapi
+Using springdoc-openapi makes it possible to keep the documentation of the API together with the
+source code that implements the API. With springdoc-openapi, you can create the API documentation
+on the fly at runtime by inspecting Java annotations in the code. This is an important feature.
+If the API documentation is maintained in a separate life cycle from the Java source code, they will
+diverge from each other over time. In many cases, this will happen sooner than expected.
+
+Added to creating the API specification on the fly, springdoc-openapi also comes with an embedded
+API viewer called Swagger UI.
+
+As always, it is important to separate the interface of a component from its implementation. In terms of
+documenting a RESTful API, we should add the API documentation to the Java interface that describes
+the API, and not to the Java class that implements the API. 
+
+To simplify updating the textual parts of
+the API documentation (for example, longer descriptions), we can place the descriptions in property
+files instead of in the Java code directly.
+
+To enable springdoc-openapi to create the API documentation, we need to add some dependencies
+to our build files and add some annotations to the Java interfaces that define the RESTful services. we will also place the descriptive parts of the API documentation in a property file.
+
+As well as reading ``@Tag``,``@Operation``, along with ``@ApiResponse`` annotations at runtime, springdoc-openapi will also inspect Spring annotations, such as the ``@GetMapping`` annotation, to understand what input arguments the operation
+takes and what the response will look like if a successful response is produced. To understand the
+structure of potential error responses, springdoc-openapi will look for ``@RestControllerAdvice`` and
+``@ExceptionHandler`` annotations
+
+=== Adding springdoc-openapi to the source code
+[tabs]
+====
+For the api project, we only need
+the module that contains the annotations we will use to document the API. 
++
+implementation 'org.springdoc:springdoc-openapi-starter-common:2.0.2'
++
+depends on service project a more fully featured module that contains both
+the Swagger UI viewer and support for Spring MVC/WebFlux. We can add the dependency to the build file,
+build.gradle, as follows:
++
+implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.0.2'
+Maven::
++
+[source, xml]
+----
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-common</artifactId>
+    <version>2.0.2</version>
+</dependency>
+----
+[source, xml]
+----
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+    <version>2.0.2</version>
+</dependency>
+----
+Gradle::
++
+[source, gradle]
+----
+implementation 'org.springdoc:springdoc-openapi-starter-common:2.0.2'
+----
++
+[source, gradle]
+----
+implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.0.2'
+----
+====
+=== Adding OpenAPI configuration
+First, we need to define a Spring bean that returns an OpenAPI bean. The configuration contains general descriptive information about the API, such as:
+
+• The name, description, version, and contact information for the API
+• Terms of usage and license information
+• Links to external information regarding the API, if any
+
+The property file also contains some configuration for springdoc-openapi:
+
+• springdoc.swagger-ui.path and springdoc.api-docs.path are used to specify that the URLs used by the embedded Swagger UI viewer are available under the path /openapi. 
+• springdoc.packagesToScan and springdoc.pathsToMatch control where in the code base springdoc-openapi will search for annotations. The narrower the scope we can give springdoc-openapi, the faster the scan will be performed
+
+To document the actual API and its RESTful operations, we will add an ``@Tag`` annotation to the Java
+interface declaration in the api project. For each RESTful operation in the API, we will add an ``@Operation`` annotation, along with ``@ApiResponse`` annotations on the corresponding Java method, to describe the operation and its expected responses.
+
+The documentation of the API on the resource level, corresponding to the Java interface declaration,
+looks as follows:
+@Tag(name = "ProductComposite", description =
+"REST API for composite product information.")
+public interface ProductCompositeService {
+For the API operation, we have extracted the actual text used in the @Operation and @ApiResponse
+annotations to the property file. The annotations contain property placeholders, like ${name-of-theproperty}, that springdoc-openapi will use to look up the actual text from the property file at runtime.
+[tabs]
+====
+application.yml::
++
+[source, yml]
+----
+springdoc:
+  swagger-ui.path: /openapi/swagger-ui.html
+  api-docs.path: /openapi/v3/api-docs
+  packagesToScan: se.magnus.microservices.composite.product
+  pathsToMatch: /**
+
+api:
+  common:
+    version: 1.0.0
+    title: Sample API
+    description: Description of the API...
+    termsOfService: MY TERMS OF SERVICE
+    license: MY LICENSE
+    licenseUrl: MY LICENSE URL
+
+    externalDocDesc: MY WIKI PAGE
+    externalDocUrl: MY WIKI URL
+    contact:
+      name: NAME OF CONTACT
+      url: URL TO CONTACT
+      email: contact@mail.com
+
+  responseCodes:
+    ok.description: OK
+    badRequest.description: Bad Request, invalid format of the request. See response message for more information
+    notFound.description: Not found, the specified id does not exist
+    unprocessableEntity.description: Unprocessable entity, input parameters caused the processing to fail. See response message for more information
+
+  product-composite:
+
+    get-composite-product:
+      description: Returns a composite view of the specified product id
+      notes: |
+        # Normal response
+        If the requested product id is found the method will return information regarding:
+        1. Base product information
+        1. Reviews
+        1. Recommendations
+        1. Service Addresses\n(technical information regarding the addresses of the microservices that created the response)
+
+        # Expected partial and error responses
+        In the following cases, only a partial response be created (used to simplify testing of error conditions)
+
+        ## Product id 113
+        200 - Ok, but no recommendations will be returned
+
+        ## Product id 213
+        200 - Ok, but no reviews will be returned
+
+        ## Non numerical product id
+        400 - A **Bad Request** error will be returned
+
+        ## Product id 13
+        404 - A **Not Found** error will be returned
+
+        ## Negative product ids
+        422 - An **Unprocessable Entity** error will be returned
+----
+
+OpenAPIConfiguration.java::
++
+[source, java]
+----
+
+import io.swagger.v3.oas.models.ExternalDocumentation;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.web.client.RestTemplate;
+
+@Configuration
+public class OpenAPIConfiguration {
+
+  @Value("${api.common.version}")         String apiVersion;
+  @Value("${api.common.title}")           String apiTitle;
+  @Value("${api.common.description}")     String apiDescription;
+  @Value("${api.common.termsOfService}")  String apiTermsOfService;
+  @Value("${api.common.license}")         String apiLicense;
+  @Value("${api.common.licenseUrl}")      String apiLicenseUrl;
+  @Value("${api.common.externalDocDesc}") String apiExternalDocDesc;
+  @Value("${api.common.externalDocUrl}")  String apiExternalDocUrl;
+  @Value("${api.common.contact.name}")    String apiContactName;
+  @Value("${api.common.contact.url}")     String apiContactUrl;
+  @Value("${api.common.contact.email}")   String apiContactEmail;
+
+  /**
+  * Will exposed on $HOST:$PORT/swagger-ui.html
+  *
+  * @return the common OpenAPI documentation
+  */
+  @Bean
+  public OpenAPI getOpenApiDocumentation() {
+    return new OpenAPI()
+      .info(new Info().title(apiTitle)
+        .description(apiDescription)
+        .version(apiVersion)
+        .contact(new Contact()
+          .name(apiContactName)
+          .url(apiContactUrl)
+          .email(apiContactEmail))
+        .termsOfService(apiTermsOfService)
+        .license(new License()
+          .name(apiLicense)
+          .url(apiLicenseUrl)))
+      .externalDocs(new ExternalDocumentation()
+        .description(apiExternalDocDesc)
+        .url(apiExternalDocUrl));
+  }
+
+}
+----
+
+ProductCompositeService.java::
++
+From this code, springdoc-openapi will be able to extract the following information
+about the operation:
++
+• The operation accepts HTTP GET requests to the URL /product-composite/{productid},
+where the last part of the URL, {productid}, is used as an input parameter to the request.
+• A successful response will produce a JSON structure corresponding to the Java class,
+ProductAggregate.
+• In the event of an error, an HTTP error code of either 400, 404, or 422 will be returned together
+with error information in the body, as described by @ExceptionHandler in the Java class Glob
+alControllerExceptionHandler.java
++
+[source, java]
+----
+package se.magnus.api.composite.product;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+@Tag(name = "ProductComposite", description = "REST API for composite product information.")
+public interface ProductCompositeService {
+
+  /**
+   * Sample usage: "curl $HOST:$PORT/product-composite/1".
+   *
+   * @param productId Id of the product
+   * @return the composite product info, if found, else null
+   */
+  @Operation(summary = "${api.product-composite.get-composite-product.description}", description = "${api.product-composite.get-composite-product.notes}")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "${api.responseCodes.ok.description}"),
+      @ApiResponse(responseCode = "400", description = "${api.responseCodes.badRequest.description}"),
+      @ApiResponse(responseCode = "404", description = "${api.responseCodes.notFound.description}"),
+      @ApiResponse(responseCode = "422", description = "${api.responseCodes.unprocessableEntity.description}")
+  })
+  @GetMapping(value = "/product-composite/{productId}", produces = "application/json")
+  ProductAggregate getProduct(@PathVariable int productId);
+}
+----
+====
+=== Securing Access to APIs
+Even though Swagger UI is very useful during development and test phases, it is typically
+not exposed in public for APIs in a production environment, for security reasons. In many
+cases, APIs are exposed publicly using an API gateway. Today, most API gateway products
+support exposing API documentation based on an OpenAPI document. So instead of exposing Swagger UI, the API’s OpenAPI documentation (generated by springdoc-openapi)
+is exported to an API Gateway that can publish the API documentation in a secure way.
+
+If APIs are expected to be consumed by third-party developers, a developer portal can be
+set up containing documentation and tools, used for self-registration, for example. Swagger
+UI can be used in a developer portal to allow developers to learn about the API by reading
+the documentation and also trying out the APIs using a test instance.
+

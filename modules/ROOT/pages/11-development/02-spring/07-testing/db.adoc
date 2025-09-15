@@ -1,40 +1,184 @@
 = Database Testing
 :figures: 11-development/02-spring/07-testing
 
-Spring Boot allows you to run integration tests by
-loading only the Spring components used by a specific application slice (slice tests)
+When writing persistence tests, we want to start a database when the tests begin and tear it down 
+when the tests are complete. However, we don’t want the tests to wait for other resources to start up, 
+for example, a web server such as Netty (which is required at runtime).
 
-The @DataJdbcTest annotation makes
-each test method run in a transaction and rolls it back at its end, keeping the database
-clean.
+Spring Boot allows you to run integration tests by loading only the Spring components used by a specific application slice (slice tests)
 
-== Configuring Testcontainers for PostgreSQL
-. Adding dependency on Testcontainers
-+
-[,xml]
+Spring Boot comes with two class-level annotations tailored to this specific requirement:
+
+• @DataMongoTest: This annotation starts up a MongoDB database when the test starts.
+• @DataJpaTest: This annotation starts up a SQL database when the test starts:
+
+
+The @DataJdbcTest annotation makes each test method run in a transaction and rolls it back at its end, keeping the database clean and to minimize the risk of negative side effects on other tests.  automatic rollback can be disabled with the 
+class-level annotation ``@Transactional(propagation = NOT_SUPPORTED)``
+
+when using the @DataMongoTest and @DataJpaTest annotations instead of the @SpringBootTest
+annotation to only start up the MongoDB and SQL database during the integration test, there is one 
+more thing to consider. The @DataJpaTest annotation is designed to start an embedded database by 
+default. Since we want to use a containerized database, we have to disable this feature. 
+For the @DataJpaTest annotation, this can be done by using an @AutoConfigureTestDatabase anno-
+tation like this:
+[source,java,attributes]
 ----
- <properties>
-     <testcontainersVersion>1.17.3</testcontainersVersion>
- </properties>
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+class PersistenceTests extends MySqlTestBase {
+}
+----
 
- <dependencyManagement>
-     <dependencies>
-         <dependency>
-             <groupId>org.testcontainers</groupId>
-             <artifactId>testcontainers-bom</artifactId>
-             <version>${testcontainersVersion}</version>
-             <type>pom</type>
-             <scope>import</scope>
-         </dependency>
-     </dependencies>
- </dependencyManagement>
- <dependencies>
-     <dependency>
-         <groupId>org.testcontainers</groupId>
-         <artifactId>postgresql</artifactId>
-         <scope>test</scope>
-     </dependency>
- </dependencies>
+== Configuring Testcontainers 
+To enable Testcontainers in an existing test class for a Spring Boot application, we can add the ``@Testcontainers`` annotation to the test class. Using the @Container
+annotation, we can, for example, declare that the Review microservice’s integration tests will use a Docker container running MySQL/PostgresSQL.
+[,java]
+----
+@SpringBootTest
+@Testcontainers
+class SampleTests {
+ @Container
+ private static MySQLContainer database = 
+ new MySQLContainer("mysql:8.0.32");
+}
+----
+A disadvantage of this approach is that each test class will use its own Docker container. Bringing up 
+MySQL in a Docker container takes a few seconds, typically 10 seconds on my Mac. Running multiple test classes that use the same type of test container will add this latency for each test class. To avoid this extra latency, we can use the Single Container Pattern (see https://www.testcontainers.
+org/test_framework_integration/manual_lifecycle_control/#singleton-containers). Follow-
+ing this pattern, a base class is used to launch a single Docker container.
+[tabs]
+====
+MongoDb::
++
+[source, java]
+----
+package se.magnus.microservices.core.review.persistence;
+
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.JdbcDatabaseContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
+
+public class DBTestBase {
+
+    private static final JdbcDatabaseContainer<?> database = new PostgreSQLContainer<>("postgres:14.12");
+    
+    static {
+        database.start();
+    }
+
+    @DynamicPropertySource
+    static void databaseProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", database::getJdbcUrl);
+        registry.add("spring.datasource.username", database::getUsername);
+        registry.add("spring.datasource.password", database::getPassword);
+    }
+
+}
+----
+MySQL::
++
+[source,java,attributes]
+----
+package se.magnus.microservices.core.review;
+
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.JdbcDatabaseContainer;
+import org.testcontainers.containers.MySQLContainer;
+
+public abstract class MySqlTestBase {
+
+  // Extend startup timeout since a MySQLContainer with MySQL 8 starts very slow on Win10/WSL2
+  private static JdbcDatabaseContainer database = new MySQLContainer("mysql:8.0.32").withStartupTimeoutSeconds(300);
+
+  static {
+    database.start();
+  }
+
+  @DynamicPropertySource
+  static void databaseProperties(DynamicPropertyRegistry registry) {
+    registry.add("spring.datasource.url", database::getJdbcUrl);
+    registry.add("spring.datasource.username", database::getUsername);
+    registry.add("spring.datasource.password", database::getPassword);
+  }
+
+}
+----
+R2dbc::
++
+[source, java]
+----
+//Identifies a test class that focuses on R2DBC components
+@DataR2dbcTest
+// Imports R2DBC configuration needed to enable auditing
+@Import(DataConfig.class)
+// Activates automatic startup and cleanup of test containers
+@Testcontainers
+class OrderRepositoryR2dbcTests {
+
+    // Identifies a PostgreSQL container for testing
+    @Container
+    static PostgreSQLContainer<?> postgresql = new PostgreSQLContainer<>(DockerImageName.parse("postgres:14.12"));
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    // Overwrites R2DBC and Flyway configuration to point to the test PostgreSQL instance
+    @DynamicPropertySource
+    static void postgresqlProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.r2dbc.url", OrderRepositoryR2dbcTests::r2dbcUrl);
+        registry.add("spring.r2dbc.username", postgresql::getUsername);
+        registry.add("spring.r2dbc.password", postgresql::getPassword);
+        registry.add("spring.flyway.url", postgresql::getJdbcUrl);
+    }
+
+    // Builds an R2DBC connection string, because Testcontainers doesn’t provide one out of the box as it does for JDBC
+    private static String r2dbcUrl() {
+        return String.format("r2dbc:postgresql://%s:%s/%s", postgresql.getHost(),
+                postgresql.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT), postgresql.getDatabaseName());
+    }
+}
+----
+MongoDb::
++
+[source, java]
+----
+package se.magnus.microservices.core.product;
+
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MongoDBContainer;
+
+public abstract class MongoDbTestBase {
+  private static MongoDBContainer database = new MongoDBContainer("mongo:6.0.4");
+  
+  static {
+    database.start();
+  } 
+  
+  @DynamicPropertySource
+  static void setProperties(DynamicPropertyRegistry registry) {
+    registry.add("spring.data.mongodb.host", database::getContainerIpAddress);
+    registry.add("spring.data.mongodb.port", () -> database.getMappedPort(27017));
+    registry.add("spring.data.mongodb.database", () -> "test");
+  }
+}
+----
+====
+Explanations for the preceding source code:
+
+• The database container is declared in the same way as in the preceding example, with the 
+addition of an extended wait period of five minutes for the container to start up.
+• A static block is used to start the database container before any JUnit code is invoked.
+• The database container will get some properties defined when started up, such as which port to 
+use. To register these dynamically created properties in the application context, a static method ``databaseProperties()`` is defined. The method is annotated with ``@DynamicPropertySource`` to override the database configuration in the application context, such as the configuration from an application.yml file. The test classes use the base class as follows:
+[source,java,attributes]
+----
+class PersistenceTests extends MySqlTestBase {}
+class ReviewServiceApplicationTests extends MySqlTestBase { }
+}
 ----
 
 . Create a new application-integration.yml file in src/test/resources, and add the
@@ -53,6 +197,463 @@ annotation. That will trigger Spring Boot to include all Spring Data JDBC entiti
 repositories in the application context. It will also auto-configure JdbcAggregate-
 Template, a lower-level object we can use to set up the context for each test case instead
 of using the repository (the object under testing).
++
+== Testing Optimistic locking
+== Tesing Duplicates error
+== Testing Paging
+
+[tabs]
+======
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Multiplication microservices::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Microservices with Spring Boot 3 and Spring Cloud::
++
+The persistence tests for the three core microservices are similar to each other, so we will only go 
+through the persistence tests for the product microservice.
+The test class, PersistenceTests, declares a method, setupDb(), annotated with @BeforeEach, which 
+is executed before each test method. The setup method removes any entities from previous tests in 
+the database and inserts an entity that the test methods can use as the base for their tests:
+
+[tabs]
+====
+DBTestBase.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.review.persistence;
+
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.JdbcDatabaseContainer;
+import org.testcontainers.containers.PostgreSQLContainer;
+
+public class DBTestBase {
+
+    private static final JdbcDatabaseContainer<?> database = new PostgreSQLContainer<>("postgres:14.12");
+    
+    static {
+        database.start();
+    }
+
+    @DynamicPropertySource
+    static void databaseProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", database::getJdbcUrl);
+        registry.add("spring.datasource.username", database::getUsername);
+        registry.add("spring.datasource.password", database::getPassword);
+    }
+
+}
+
+----
+ReviewRepositoryTest.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.review.persistence;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
+
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.transaction.annotation.Transactional;
+import se.magnus.microservices.core.review.persistence.ReviewEntity;
+import se.magnus.microservices.core.review.persistence.ReviewRepository;
+
+@DataJpaTest
+@Transactional(propagation = NOT_SUPPORTED)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+public class ReviewRepositoryTest extends DBTestBase {
+
+    @Autowired
+    private ReviewRepository repository;
+
+    private ReviewEntity savedEntity;
+
+    @BeforeEach
+    void setupDb() {
+        repository.deleteAll();
+
+        ReviewEntity entity = new ReviewEntity(1, 2, "a", "s", "c");
+        savedEntity = repository.save(entity);
+
+        assertEqualsReview(entity, savedEntity);
+    }
+
+    @Test
+    void create() {
+
+        ReviewEntity newEntity = new ReviewEntity(1, 3, "a", "s", "c");
+        repository.save(newEntity);
+
+        ReviewEntity foundEntity = repository.findById(newEntity.getId()).get();
+        assertEqualsReview(newEntity, foundEntity);
+
+        assertEquals(2, repository.count());
+    }
+
+    @Test
+    void update() {
+        savedEntity.setAuthor("a2");
+        repository.save(savedEntity);
+
+        ReviewEntity foundEntity = repository.findById(savedEntity.getId()).get();
+        assertEquals(1, (long) foundEntity.getVersion());
+        assertEquals("a2", foundEntity.getAuthor());
+    }
+
+    @Test
+    void delete() {
+        repository.delete(savedEntity);
+        assertFalse(repository.existsById(savedEntity.getId()));
+    }
+
+    @Test
+    void getByProductId() {
+        List<ReviewEntity> entityList = repository.findByProductId(savedEntity.getProductId());
+
+        assertThat(entityList, hasSize(1));
+        assertEqualsReview(savedEntity, entityList.get(0));
+    }
+
+    @Test
+    void duplicateError() {
+        assertThrows(DataIntegrityViolationException.class, () -> {
+            ReviewEntity entity = new ReviewEntity(1, 2, "a", "s", "c");
+            repository.save(entity);
+        });
+
+    }
+
+    @Test
+    void optimisticLockError() {
+
+        // Store the saved entity in two separate entity objects
+        ReviewEntity entity1 = repository.findById(savedEntity.getId()).get();
+        ReviewEntity entity2 = repository.findById(savedEntity.getId()).get();
+
+        // Update the entity using the first entity object
+        entity1.setAuthor("a1");
+        repository.save(entity1);
+
+        // Update the entity using the second entity object.
+        // This should fail since the second entity now holds an old version number,
+        // i.e. an Optimistic Lock Error
+        assertThrows(OptimisticLockingFailureException.class, () -> {
+            entity2.setAuthor("a2");
+            repository.save(entity2);
+        });
+
+        // Get the updated entity from the database and verify its new sate
+        ReviewEntity updatedEntity = repository.findById(savedEntity.getId()).get();
+        assertEquals(1, (int) updatedEntity.getVersion());
+        assertEquals("a1", updatedEntity.getAuthor());
+    }
+
+    private void assertEqualsReview(ReviewEntity expectedEntity, ReviewEntity actualEntity) {
+        assertEquals(expectedEntity.getId(), actualEntity.getId());
+        assertEquals(expectedEntity.getVersion(), actualEntity.getVersion());
+        assertEquals(expectedEntity.getProductId(), actualEntity.getProductId());
+        assertEquals(expectedEntity.getReviewId(), actualEntity.getReviewId());
+        assertEquals(expectedEntity.getAuthor(), actualEntity.getAuthor());
+        assertEquals(expectedEntity.getSubject(), actualEntity.getSubject());
+        assertEquals(expectedEntity.getContent(), actualEntity.getContent());
+    }
+}
+----
+MongoDbTestBase.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.recommendation.persistence;
+
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MongoDBContainer;
+
+public abstract class MongoDbTestBase {
+    private static MongoDBContainer database = new MongoDBContainer("mongo:6.0.4");
+
+    static {
+        database.start();
+    }
+
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.mongodb.host", database::getContainerIpAddress);
+        registry.add("spring.data.mongodb.port", () -> database.getMappedPort(27017));
+        registry.add("spring.data.mongodb.database", () -> "test");
+    }
+}
+
+----
+ProductRepositoryTest.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.product.persistence;
+
+import static java.util.stream.IntStream.rangeClosed;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.data.domain.Sort.Direction.ASC;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+@DataMongoTest
+class ProductRepositoryTest extends MongoDbTestBase {
+
+    @Autowired
+    private ProductRepository repository;
+
+    private ProductEntity savedEntity;
+
+    @BeforeEach
+    void setupDb() {
+        repository.deleteAll();
+
+        ProductEntity entity = new ProductEntity(1, "n", 1);
+        savedEntity = repository.save(entity);
+
+        assertEqualsProduct(entity, savedEntity);
+    }
+
+    /*
+     * This test creates a new entity, verifies that it can be found using the
+     * findById method, and wraps up
+     * by asserting that there are two entities stored in the database, the one
+     * created by the setup method
+     * and the one created by the test itself.
+     * 
+     */
+    @Test
+    void create() {
+
+        ProductEntity newEntity = new ProductEntity(2, "n", 2);
+        repository.save(newEntity);
+
+        ProductEntity foundEntity = repository.findById(newEntity.getId()).get();
+        assertEqualsProduct(newEntity, foundEntity);
+
+        assertEquals(2, repository.count());
+    }
+
+    /*
+     * This test updates the entity created by the setup method, reads it again from
+     * the database using the
+     * standard findById() method, and asserts that it contains expected values for
+     * some of its fields. Note
+     * that, when an entity is created, its version field is set to 0 by Spring
+     * Data, so we expect it to be 1 after
+     * the update.
+     */
+    @Test
+    void update() {
+        savedEntity.setName("n2");
+        repository.save(savedEntity);
+
+        ProductEntity foundEntity = repository.findById(savedEntity.getId()).get();
+        assertEquals(1, (long) foundEntity.getVersion());
+        assertEquals("n2", foundEntity.getName());
+    }
+
+    /*
+     * This test deletes the entity created by the setup method and verifies that it
+     * no longer exists in the
+     * database.
+     * 
+     */
+    @Test
+    void delete() {
+        repository.delete(savedEntity);
+        assertFalse(repository.existsById(savedEntity.getId()));
+    }
+
+    /*
+     * This test uses the findByProductId() method to get the entity created by the
+     * setup method, verifies
+     * that it was found, and then uses the local helper method,
+     * assertEqualsProduct(), to verify that the
+     * entity returned by findByProductId() looks the same as the entity stored by
+     * the setup method.
+     * 
+     */
+    @Test
+    void getByProductId() {
+        Optional<ProductEntity> entity = repository.findByProductId(savedEntity.getProductId());
+
+        assertTrue(entity.isPresent());
+        assertEqualsProduct(savedEntity, entity.get());
+    }
+
+    /*
+     * a test that
+     * verifies that duplicates are handled correctly
+     * The test tries to store an entity with the same business key as used by the
+     * entity created by the setup
+     * method. The test will fail if the save operation succeeds, or if the save
+     * fails with an exception other
+     * than the expected DuplicateKeyException.
+     */
+    @Test
+    void duplicateError() {
+        assertThrows(DuplicateKeyException.class, () -> {
+            ProductEntity entity = new ProductEntity(savedEntity.getProductId(), "n", 1);
+            repository.save(entity);
+            assertEquals(2, repository.count());
+        });
+    }
+
+    /*
+     * The other negative test is, in my opinion, the most interesting test in the
+     * test class. It is a test that ver-
+     * ifies correct error handling in the case of updates of stale data—it verifies
+     * that the optimistic locking
+     * mechanism works.
+     * The following is observed from the code:
+     * • First, the test reads the same entity twice and stores it in two different
+     * variables, entity1 and
+     * entity2.
+     * • Next, it uses one of the variables, entity1, to update the entity. The
+     * update of the entity in the
+     * database will cause the version field of the entity to be increased
+     * automatically by Spring Data.
+     * The other variable, entity2, now contains stale data, manifested by its
+     * version field, which
+     * holds a lower value than the corresponding value in the database.
+     * • When the test tries to update the entity using the variable entity2, which
+     * contains stale data,
+     * it is expected to fail by throwing an OptimisticLockingFailureException
+     * exception.
+     * • The test wraps up by asserting that the entity in the database reflects the
+     * first update, that is,
+     * contains the name "n1", and that the version field has the value 1; only one
+     * update has been
+     * performed on the entity in the database.
+     * 
+     */
+    @Test
+    void optimisticLockError() {
+
+        // Store the saved entity in two separate entity objects
+        ProductEntity entity1 = repository.findById(savedEntity.getId()).get();
+        ProductEntity entity2 = repository.findById(savedEntity.getId()).get();
+
+        // Update the entity using the first entity object
+        entity1.setName("n1");
+        repository.save(entity1);
+
+        // Update the entity using the second entity object.
+        // This should fail since the second entity now holds an old version number,
+        // i.e. an Optimistic Lock Error
+        assertThrows(OptimisticLockingFailureException.class, () -> {
+            entity2.setName("n2");
+            repository.save(entity2);
+        });
+
+        // Get the updated entity from the database and verify its new sate
+        ProductEntity updatedEntity = repository.findById(savedEntity.getId()).get();
+        assertEquals(1, (int) updatedEntity.getVersion());
+        assertEquals("n1", updatedEntity.getName());
+    }
+
+    /*
+     * Finally, the product service contains a test that demonstrates the usage of
+     * built-in support for sorting
+     * and paging in Spring Data:
+     * 
+     * • The test starts by removing any existing data, then inserts 10 entities
+     * with the productId field
+     * ranging from 1001 to 1010.
+     * • Next, it creates PageRequest, requesting a page count of 4 entities per
+     * page and a sort order
+     * based on ProductId in ascending order.
+     * • Finally, it uses a helper method, testNextPage, to read the expected three
+     * pages, verifying
+     * the expected product IDs on each page and verifying that Spring Data
+     * correctly reports back
+     * whether more pages exist or not.
+     * 
+     */
+    @Test
+    void paging() {
+
+        repository.deleteAll();
+
+        List<ProductEntity> newProducts = rangeClosed(1001, 1010)
+                .mapToObj(i -> new ProductEntity(i, "name " + i, i))
+                .collect(Collectors.toList());
+        repository.saveAll(newProducts);
+
+        Pageable nextPage = PageRequest.of(0, 4, ASC, "productId");
+        nextPage = testNextPage(nextPage, "[1001, 1002, 1003, 1004]", true);
+        nextPage = testNextPage(nextPage, "[1005, 1006, 1007, 1008]", true);
+        nextPage = testNextPage(nextPage, "[1009, 1010]", false);
+    }
+
+    /*
+     * The helper method uses the page request object, nextPage, to get the next
+     * page from the repository
+     * method, findAll(). Based on the result, it extracts the product IDs from the
+     * returned entities into a
+     * string and compares it to the expected list of product IDs. Finally, it
+     * returns the next page.
+     */
+    private Pageable testNextPage(Pageable nextPage, String expectedProductIds, boolean expectsNextPage) {
+        Page<ProductEntity> productPage = repository.findAll(nextPage);
+        assertEquals(expectedProductIds,
+                productPage.getContent().stream().map(p -> p.getProductId()).collect(Collectors.toList()).toString());
+        assertEquals(expectsNextPage, productPage.hasNext());
+        return productPage.nextPageable();
+    }
+
+    private void assertEqualsProduct(ProductEntity expectedEntity, ProductEntity actualEntity) {
+        assertEquals(expectedEntity.getId(), actualEntity.getId());
+        assertEquals(expectedEntity.getVersion(), actualEntity.getVersion());
+        assertEquals(expectedEntity.getProductId(), actualEntity.getProductId());
+        assertEquals(expectedEntity.getName(), actualEntity.getName());
+        assertEquals(expectedEntity.getWeight(), actualEntity.getWeight());
+    }
+}
+----
+====
+Polar Book Shop::
 +
 [source,java,attributes]
 ----
@@ -221,3 +822,4 @@ class BookRepositoryJdbcTests {
 
 }
 ----
+======

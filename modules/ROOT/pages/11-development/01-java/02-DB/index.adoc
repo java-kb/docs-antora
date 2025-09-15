@@ -1,2 +1,425 @@
 = Database Development
+:figures: 11-development/java/db
 
+== object/relational persistence
+Instead of directly working
+with the rows and columns of a java.sql.ResultSet, the business logic of the application will interact with the application-specific object-oriented domain model. If the
+SQL database schema of an online auction system has ITEM and BID tables, for example, the Java application defines corresponding Item and Bid classes. Instead of reading and writing the value of a particular row and column with the ResultSet API, the
+application loads and stores instances of Item and Bid classes.
+At runtime, the application therefore operates with instances of these classes. Each
+instance of a Bid has a reference to an auction Item, and each Item may have a collection
+of references to Bid instances. The business logic isn’t executed in the database (as an
+SQL stored procedure); it’s implemented in Java and executed in the application tier.
+This allows the business logic to use sophisticated object-oriented concepts such as
+inheritance and polymorphism. For example, we could use well-known design patterns
+such as strategy, mediator, and composite (see Design Patterns: Elements of Reusable ObjectOriented Software [Gamma, 1994]), all of which depend on polymorphic method calls.
+
+Now a warning: not all Java applications are designed this way, nor should they be.
+Simple applications may be much better off without a domain model. Use the JDBC
+ResultSet if that’s all you need. Call existing stored procedures, and read their SQL
+result sets, too. Many applications need to execute procedures that modify large sets
+of data, close to the data. You might also implement some reporting functionality with
+plain SQL queries and render the results directly onscreen. SQL and the JDBC API
+are perfectly serviceable for dealing with tabular data representations, and the JDBC
+RowSet makes CRUD operations even easier. Working with such a representation of
+persistent data is straightforward and well understood.
+
+But for applications with nontrivial business logic, the domain model approach
+helps to improve code reuse and maintainability significantly. In practice, both strategies are common and needed.
+
+Comparison of working with JPA, native Hibernate, and Spring Data JPA
+Comparison of working with JPA, native Hibernate, and Spring Data JPA
+[cols="a,a"]
+|===
+|Framework |Characteristics
+|JPA |
+- Uses the general JPA API and requires a persistence provider.
+- We can switch between persistence providers from the configuration.
+- Requires explicit management of the EntityManagerFactory, EntityManager, and transactions.
+- The configuration and the amount of code to be written is similar to the native Hibernate native approach.
+- We can switch to the JPA approach by constructing an EntityManagerFactory from a native Hibernate configuration.
+|Native Hibernate|
+- Uses the native Hibernate API. You are locked into using this chosen framework.
+- Builds its configuration starting with the default Hibernate configuration files (hibernate .cfg.xml or hibernate.properties).
+- Requires explicit management of the SessionFactory, Session, and transactions.
+- The configuration and the amount of code to be written are similar to the JPA approach.
+- We can switch to the native Hibernate native approach by unwrapping a SessionFactory from an EntityManagerFactory or a Session from an EntityManager.
+|Spring Data JPA
+|
+- Needs additional Spring Data dependencies in the project.
+- The configuration will also take care of the creation of beans needed for the project, including the transaction manager.
+- The repository interface only needs to be declared, and Spring Data will create an implementation for it as a proxy class with generated methods that interact with the database.
+- The necessary repository is injected and not explicitly created by the programmer.
+- This approach requires the least amount of code to be written, as the configuration takes care of most of the burden.
+|===
+== paradigm mismatch
+For several decades, developers have spoken of a paradigm mismatch. The paradigms
+referred to are object modeling and relational modeling, or, more practically, objectoriented programming and SQL. This mismatch explains why every enterprise project
+expends so much effort on persistence-related concerns. With this conception, you can
+begin to see the problems—some well understood and some less well understood—that
+must be solved in an application that combines an object-oriented domain model
+and a persistent relational model.
+
+Suppose you have to design and implement an online e-commerce application. In
+this application, you need a class to represent information about a user of the system,
+and you need another class to represent
+information about the user’s billing details, a User has many BillingDetails. This is a composition, indicated by the full diamond. A composition is the type of association where
+an object (BillingDetails in our case) cannot conceptually exist without the container (User in our case). You can navigate the relationship between the classes in
+both directions; this means you can iterate through collections or call methods to get
+to the “other” side of the relationship.  The classes representing these entities may be
+extremely simple:
+
+*Path: Ch01/e-commerce/src/com/manning/javapersistence/ch01/User.java*
+
+[source,java,attributes]
+----
+public class User {
+private String username;
+private String address;
+private Set<BillingDetails> billingDetails = new HashSet<>();
+// Constructor, accessor methods (getters/setters), business methods
+}
+----
+
+*Path: Ch01/e-commerce/src/com/manning/javapersistence/ch01/BillingDetails.java*
+[source,java,attributes]
+----
+public class BillingDetails {
+private String account;
+private String bankname;
+private User user;
+// Constructor, accessor methods (getters/setters), business methods
+}
+----
+It’s easy to come up with an SQL schema design for this case (the syntax of the following queries is applicable to MySQL):
+[source,sql,attributes]
+----
+CREATE TABLE USERS (
+USERNAME VARCHAR(15) NOT NULL PRIMARY KEY,
+ADDRESS VARCHAR(255) NOT NULL
+);
+CREATE TABLE BILLINGDETAILS (
+ACCOUNT VARCHAR(15) NOT NULL PRIMARY KEY,
+BANKNAME VARCHAR(255) NOT NULL,
+USERNAME VARCHAR(15) NOT NULL,
+FOREIGN KEY (USERNAME) REFERENCES USERS(USERNAME)
+);
+----
+The foreign key–constrained column USERNAME in BILLINGDETAILS represents the
+relationship between the two entities. For this simple domain model, the object/
+relational mismatch is barely in evidence; it’s straightforward to write JDBC code to
+insert, update, and delete information about users and billing details.
+Now let’s see what happens when we consider something a little more realistic.
+The paradigm mismatch will be visible when we add more entities and entity relationships to the application.
+
+=== The problem of granularity
+The most obvious problem with the current implementation is that we’ve designed an
+address as a simple String value. In most systems, it’s necessary to store street, city,
+state, country, and ZIP code information separately. Of course, you could add these
+properties directly to the User class, but because other classes in the system will likely
+also carry address information, it makes more sense to create an Address class to
+reuse it. 
+
+The relationship between User and
+Address is an aggregation, indicated by
+the empty diamond. Should we also add
+an ADDRESS table? Not necessarily; it’s common to keep address information in the
+USERS table, in individual columns. This
+design is likely to perform better because a
+table join isn’t needed if you want to
+retrieve the user and address in a single
+query. The nicest solution may be to create
+a new SQL data type to represent addresses and to add a single column of that new
+type in the USERS table, instead of adding several new columns.
+This choice of adding either several columns or a single column of a new SQL data
+type is a problem of granularity. Broadly speaking, granularity refers to the relative size
+of the types you’re working with.
+
+Adding a new data type to the database catalog to
+store Address Java instances in a single column sounds like the best approach:
+[source,sql,attributes]
+----
+CREATE TABLE USERS (
+USERNAME VARCHAR(15) NOT NULL PRIMARY KEY,
+ADDRESS ADDRESS NOT NULL
+);
+----
+
+A new Address type (class) in Java and a new ADDRESS SQL data type should guarantee
+interoperability. But you’ll find various problems if you check on the support for userdefined data types (UDTs) in today’s SQL database management systems.
+UDT support is one of several so-called object/relational extensions to traditional
+SQL. This term alone is confusing, because it means the database management system
+has (or is supposed to support) a sophisticated data type system. Unfortunately, UDT
+support is a somewhat obscure feature of most SQL DBMSs, and it certainly isn’t portable between different products. Furthermore, the SQL standard supports userdefined data types, but poorly.
+
+This limitation isn’t the fault of the relational data model. You can consider the
+failure to standardize such an important piece of functionality to be a result of the
+object/relational database wars between vendors in the mid-1990s. Today most engineers accept that SQL products have limited type systems—no questions asked. Even
+with a sophisticated UDT system in your SQL DBMS, you would still likely duplicate
+the type declarations, writing the new type in Java and again in SQL. Attempts to find
+a better solution for the Java space, such as SQLJ, unfortunately have not had much
+success. DBMS products rarely support deploying and executing Java classes directly
+on the database, and if support is available, it’s typically limited to very basic functionality in everyday usage.
+
+For these and whatever other reasons, the use of UDTs or Java types in an SQL
+database isn’t common practice at this time, and it’s unlikely that you’ll encounter a
+legacy schema that makes extensive use of UDTs. We therefore can’t and won’t store
+instances of our new Address class in a single new column that has the same data type
+as the Java layer.
+
+The pragmatic solution for this problem has several columns of built-in vendordefined SQL types (such as Boolean, numeric, and string data types). You’d usually
+define the USERS table as follows:
+[source,sql,attributes]
+----
+CREATE TABLE USERS (
+USERNAME VARCHAR(15) NOT NULL PRIMARY KEY,
+ADDRESS_STREET VARCHAR(255) NOT NULL,
+ADDRESS_ZIPCODE VARCHAR(5) NOT NULL,
+ADDRESS_CITY VARCHAR(255) NOT NULL
+);
+----
+
+Classes in the Java domain model come in a range of levels of granularity: from coarsegrained entity classes like User to finer-grained classes like Address, down to simple
+SwissZipCode extending AbstractNumericZipCode (or whatever your desired level of
+abstraction is). In contrast, just two levels of type granularity are visible in the SQL
+database: relation types created by you, like USERS and BILLINGDETAILS, and built-in
+data types such as VARCHAR, BIGINT, and TIMESTAMP.
+
+Many simple persistence mechanisms fail to recognize this mismatch and so end
+up forcing the less flexible representation of SQL products on the object-oriented
+model, effectively flattening it. It turns out that the granularity problem isn’t especially difficult to solve, even if it’s visible in so many existing systems. One solution is to use Fine-grained domain models
+
+=== The problem of inheritance
+A much more difficult and interesting problem arises when we consider domain
+models that rely on inheritance, a feature of object-oriented design you may use to bill
+the users of your e-commerce application in new and interesting ways.
+
+In Java, you implement type inheritance using superclasses and subclasses. To illustrate why this can present a mismatch problem, let’s modify our e-commerce application so that we now can accept not only bank account billing, but also credit cards.
+The most natural way to reflect this change in the model is to use inheritance for the
+BillingDetails superclass, along with multiple concrete subclasses: CreditCard,
+BankAccount. Each of these subclasses defines slightly different data (and completely
+different functionality that acts on that data).
+
+What changes must we make to support this updated Java class structure? Can we
+create a CREDITCARD table that extends BILLINGDETAILS? SQL database products don’t
+generally implement table inheritance (or even data type inheritance), and if they do
+implement it, they don’t follow a standard syntax.
+
+We haven’t finished with inheritance. As soon as we introduce inheritance into the
+model, we have the possibility of polymorphism. The User class has a polymorphic association with the BillingDetails superclass. At runtime, a User instance may reference
+an instance of any of the subclasses of BillingDetails. Similarly, we want to be able
+to write polymorphic queries that refer to the BillingDetails class and have the query
+return instances of its subclasses.
+
+SQL databases lack an obvious way (or at least a standardized way) to represent a
+polymorphic association. A foreign key constraint refers to exactly one target table; it
+isn’t straightforward to define a foreign key that refers to multiple tables.
+
+The result of this mismatch of subtypes is that the inheritance structure in a model
+must be persisted in an SQL database that doesn’t offer an inheritance mechanism. ORM solutions such as Hibernate solve the problem of
+persisting a class hierarchy to an SQL database table or tables, and solve how polymorphic
+behavior can be implemented. Fortunately, this problem is now well understood in
+the community, and most solutions support approximately the same functionality.
+
+=== The problem of identity
+You probably noticed that the example defined USERNAME as the primary key of the
+USERS table. Was that a good choice? How do you handle identical objects in Java?
+Although the problem of identity may not be obvious at first, you’ll encounter it
+often in your growing and expanding e-commerce system, such as when you need to
+check whether two instances are identical. There are three ways to tackle this problem: two in the Java world and one in the SQL database. As expected, they work together only with some help 
+Java defines two different notions of sameness:
+
+- Instance identity (roughly equivalent to a memory location, checked with a == b)
+- Instance equality, as determined by the implementation of the equals() method (also called equality by value), neither equals() nor == is always equivalent to a comparison of primary key values. It’s common for several non-identical instances in Java to simultaneously represent the same row of a database, such as in
+concurrently running application threads. Furthermore, some subtle difficulties are involved in implementing equals() correctly for a persistent class and in understanding when this might be necessary.
+
+Let’s use an example to discuss another problem related to database identity. In
+the table definition for USERS, USERNAME is the primary key. Unfortunately, this decision makes it difficult to change a user’s name; you need to update not only the row in
+USERS but also the foreign key values in (many) rows of BILLINGDETAILS. To solve this
+problem, its recommended that you use surrogate keys whenever you
+can’t find a good natural key. We’ll also discuss what makes a good primary key. A surrogate key column is a primary key column with no meaning to the application user. in other words, a key that isn’t presented to the application user. Its only purpose is to identify data inside the application.
+For example, you may change your table definitions to look like this:
+[source,sql,attributes]
+----
+CREATE TABLE USERS (
+ID BIGINT NOT NULL PRIMARY KEY,
+USERNAME VARCHAR(15) NOT NULL UNIQUE,
+. . .
+);
+CREATE TABLE BILLINGDETAILS (
+ID BIGINT NOT NULL PRIMARY KEY,
+ACCOUNT VARCHAR(15) NOT NULL,
+BANKNAME VARCHAR(255) NOT NULL,
+USER_ID BIGINT NOT NULL,
+FOREIGN KEY (USER_ID) REFERENCES USERS(ID)
+);
+----
+The ID columns contain system-generated values. These columns were introduced
+purely for the benefit of the data model, so how (if at all) should they be represented
+in the Java domain model? We’ll discuss this question in section 5.2, and we’ll find a
+solution with ORM.
+
+In the context of persistence, identity is closely related to how the system handles
+caching and transactions. Different persistence solutions have chosen different strategies, and this has been an area of confusion. 
+
+=== The problem of associations
+how the relationships between
+entities are mapped and handled. Is the foreign key constraint in the database all
+you need? In the domain model, associations represent the relationships between entities. The
+User, Address, and BillingDetails classes are all associated; but unlike Address,
+BillingDetails stands on its own. BillingDetails instances are stored in their own
+table. Association mapping and the management of entity associations are central
+concepts in any object persistence solution.
+
+Object references are inherently directional; the association is from one instance to
+the other. They’re pointers. If an association between instances should be navigable in
+both directions, you must define the association twice, once in each of the associated
+classes. 
+
+Path: User.java
+[source,java,attributes]
+----
+public class User {
+    private Set<BillingDetails> billingDetails = new HashSet<>(); <1>
+}
+----
+
+Path: BillingDetails.java
+[source,java,attributes]
+----
+public class BillingDetails {
+    private User user; <2>
+}
+----
+Navigation in a particular direction has no meaning for a relational data model
+because you can create data associations with join and projection operators. The challenge is to map a completely open data model that is independent of the application
+that works with the data to an application-dependent navigational model—a constrained view of the associations needed by this particular application.
+
+Java associations can have many-to-many multiplicity.
+
+Path: User.java
+[source,java,attributes]
+----
+public class User {
+    private Set<BillingDetails> billingDetails = new HashSet<>(); <1>
+}
+----
+
+Path: BillingDetails.java
+[source,java,attributes]
+----
+public class BillingDetails {
+    private Set<User> users = new HashSet<>(); <2>
+}
+----
+However, the foreign key declaration on the BILLINGDETAILS table is a many-to-one
+association: each bank account is linked to a particular user, but each user may have
+multiple linked bank accounts.
+If you wish to represent a many-to-many association in an SQL database, you must
+introduce a new table, usually called a link table. In most cases, this table doesn’t
+appear anywhere in the domain model. For this example, if you consider the relationship between the user and the billing information to be many-to-many, you would
+define the link table as follows:
+[source,sql,attributes]
+----
+CREATE TABLE USER_BILLINGDETAILS (
+USER_ID BIGINT,
+BILLINGDETAILS_ID BIGINT,
+PRIMARY KEY (USER_ID, BILLINGDETAILS_ID),
+FOREIGN KEY (USER_ID) REFERENCES USERS(ID),
+FOREIGN KEY (BILLINGDETAILS_ID) REFERENCES BILLINGDETAILS(ID)
+);
+----
+You no longer need the USER_ID foreign key column and constraint on the BILLINGDETAILS table; this additional table now manages the links between the two entities.
+
+=== The problem of data navigation
+So far, the problems we’ve considered are mainly structural: you can see them by
+considering a purely static view of the system. Perhaps the most difficult problem in
+object persistence is a dynamic problem: how data is accessed at runtime.
+
+There is a fundamental difference between how you access data in Java code and within
+a relational database. In Java, when you access a user’s billing information, you
+call ``someUser.getBillingDetails().iterator().next()`` or something similar. Or,
+starting from Java 8, you may call s``omeUser.getBillingDetails().stream().filter(someCondition).map(someMapping).forEach(billingDetails-> {doSomething
+(billingDetails)})``. This is the most natural way to access object-oriented data, and
+it’s often described as walking the object network. You navigate from one instance to another, even iterating collections, following prepared pointers between classes.
+Unfortunately, this isn’t an efficient way to retrieve data from an SQL database.
+
+The single most important thing you can do to improve the performance of data
+access code is to minimize the number of requests to the database. The most obvious way to
+do this is to minimize the number of SQL queries. (Of course, other, more sophisticated, ways—such as extensive caching—follow as a second step.)
+
+Therefore, efficient access to relational data with SQL usually requires joins
+between the tables of interest. The number of tables included in the join when retrieving data determines the depth of the object network you can navigate in memory. For
+example, if you need to retrieve a User and aren’t interested in the user’s billing information, you can write this simple query:
+[source,sql,attributes]
+----
+SELECT * FROM USERS WHERE ID = 123
+----
+
+On the other hand, if you need to retrieve a User and then subsequently visit each of
+the associated BillingDetails instances (let’s say, to list the user’s bank accounts),
+you would write a different query:
+[source,sql,attributes]
+----
+SELECT * FROM USERS, BILLINGDETAILS
+WHERE USERS.ID = 123 AND
+BILLINGDETAILS.ID = USERS.ID
+----
+As you can see, to use joins efficiently you need to know what portion of the object
+network you plan to access before you start navigating the object network! Careful,
+though: if you retrieve too much data (probably more than you might need), you’re
+wasting memory in the application tier. You may also overwhelm the SQL database
+with huge Cartesian product result sets. Imagine retrieving not only users and bank
+accounts in one query, but also all orders paid from each bank account, the products
+in each order, and so on.
+
+Any object persistence solution permits you to fetch the data of associated instances
+only when the association is first accessed in the Java code. This is known as lazy loading:
+retrieving data only on demand. This piecemeal style of data access is fundamentally
+inefficient in the context of an SQL database, because it requires executing one statement for each node or collection of the object network that is accessed. This is the
+dreaded n+1 selects problem. In our example, you will need one select to retrieve a User
+and then n selects for each of the n associated BillingDetails instances.
+
+This mismatch in the way you access data in Java code and within a relational database is perhaps the single most common source of performance problems in Java
+information systems. Avoiding the Cartesian product and n+1 selects problems is still a
+problem for many Java programmers. Hibernate provides sophisticated features for
+efficiently and transparently fetching networks of objects from the database to the
+application accessing them. 
+
+== object/relational mapping (ORM)
+object/relational mapping (ORM) is the automated (and transparent)
+persistence of objects in a Java application to the tables in an RDBMS (relational database management system), using metadata that describes the mapping between the
+classes of the application and the schema of the SQL database. In essence, ORM works
+by transforming (reversibly) data from one representation to another. A program
+using ORM will provide the meta-information about how to map the objects from the
+memory to the database, and the effective transformation will be fulfilled by ORM.
+
+== JPA
+JPA (Jakarta Persistence API, formerly Java Persistence API) is a specification defining an API that manages the persistence of objects and object/relational mappings.
+Hibernate is the most popular implementation of this specification. So, JPA will specify what must be done to persist objects, while Hibernate will determine how to do it.
+Spring Data Commons, as part of the Spring Data family, provides the core Spring
+framework concepts that support all Spring Data modules. Spring Data JPA, another
+project from the Spring Data family, is an additional layer on top of JPA implementations (such as Hibernate). Not only can Spring Data JPA use all the capabilities of JPA,
+but it adds its own capabilities, such as generating database queries from method
+names. 
+
+To use Hibernate effectively, you must be able to view and interpret the SQL statements it issues and understand their performance implications. To take advantage of
+the benefits of Spring Data, you must be able to anticipate how the boilerplate code
+and the generated queries are created.
+
+The JPA specification defines the following:
+- A facility for specifying mapping metadata—how persistent classes and their
+properties relate to the database schema. JPA relies heavily on Java annotations
+in domain model classes, but you can also write mappings in XML files.
+- APIs for performing basic CRUD operations on instances of persistent classes,
+most prominently ``javax.persistence.EntityManager`` for storing and loading
+data.
+- A language and APIs for specifying queries that refer to classes and properties
+of classes. This language is the Jakarta Persistence Query Language (JPQL) and
+it looks similar to SQL. The standardized API allows for the programmatic creation of criteria queries without string manipulation.
+- How the persistence engine interacts with transactional instances to perform
+dirty checking, association fetching, and other optimization functions. The JPA
+specification covers some basic caching strategies.
+
+Hibernate implements JPA and supports all the standardized mappings, queries, and
+programming interfaces. 

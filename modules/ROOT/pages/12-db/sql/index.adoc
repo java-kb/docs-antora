@@ -1,2 +1,47 @@
 = RDBM
 :figures: 12-db/sql
+
+Relational database management systems have SQL-based application programming interfaces, so we call today’s relational database products SQL database management systems (DBMS) or,
+when we’re talking about particular systems, SQL databases.
+
+Relational technology is a well-known technology, and this alone is sufficient reason for many organizations to choose it. Relational databases are also an incredibly
+flexible and robust approach to data management. Due to the well-researched theoretical foundation of the relational data model, relational databases can guarantee
+and protect the integrity of stored data, along with having other desirable characteristics.
+
+Relational DBMSs aren’t specific to Java, nor is an SQL database specific to a particular application. This important principle is known as data independence. In other
+words, data usually lives longer than an application does. Relational technology provides a
+way of sharing data among different applications, or among different parts of the
+same overall system (a data entry application and a reporting application, for example). Relational technology is a common denominator of many disparate systems and
+technology platforms. Hence, the relational data model is often the foundation for
+the enterprise-wide representation of business entities.
+
+== SQL
+SQL is used as a data definition language (DDL), with syntax for
+creating, altering, and dropping artifacts such as tables and constraints in the catalog of
+the DBMS. When this schema is ready, you can use SQL as a data manipulation language
+(DML) to perform operations on data, including insertions, updates, and deletions. You
+can retrieve data by executing data query language (DQL) statements with restrictions,
+projections, and Cartesian products. For efficient reporting, you can use SQL to join,
+aggregate, and group data as necessary. You can even nest SQL statements inside each
+other—a technique that uses subselects. When your business requirements change,
+you’ll have to modify the database schema again with DDL statements after data has
+been stored; this is known as schema evolution. You may also use SQL as a data control
+language (DCL) to grant and revoke access to the database or parts of it.
+
+== data-integrity
+To understand why relational systems, and the data-integrity guarantees associated
+with them, are difficult to scale, we recommend that you first familiarize yourself with
+the CAP theorem. According to this rule, a distributed system cannot be consistent,
+available, and tolerant against partition failures all at the same time.
+A system may guarantee that all nodes will see the same data at the same time and
+that data read and write requests are always answered. But when a part of the system fails due to a host, network, or data center problem, you must either give up
+strong consistency or 100% availability. In practice, this means you need a strategy
+that detects partition failures and restores either consistency or availability to a certain degree (for example, by making some part of the system temporarily unavailable
+so data synchronization can occur in the background). Often, the data, the user, or
+the operation will determine whether strong consistency is necessary.
+== References
+- E.F. Codd’s five-decade-old introduction of the relational model, “A Relational Model of Data for Large Shared Data Banks” (Codd,1970).
+- C.J. Date’s SQL and Relational Theory (Date, 2015).
+- Fundamentals of Database Systems by Ramez Elmasri and Shamkant B. Navathe(Elmasri, 2016) 
+- SQL Tuning by Dan Tow (Tow, 2003).
+- SQL Antipatterns: Avoiding the Pitfalls of Database Programming, by Bill Karwin (Karwin, 2010)

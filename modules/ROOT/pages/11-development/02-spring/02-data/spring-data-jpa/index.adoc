@@ -5,7 +5,179 @@ Spring Data JPA works with mutating objects, so you can't use Java
 records. JPA entity classes must be marked with the @Entity annotation and
 expose a no-args constructor. JPA identifiers are annotated with @Id and
 @Version from the javax.persistence package instead of org.springframework.data.annotation.
+
 == Enabling and configuring JPA 
+=== Using Spring Dat JPA
+. Add dependencies
++
+[source,gradle,attributes]
+----
+  dependencies {
+  ...
+  implementation 'org.springframework.data:spring-data-jpa'
+  runtimeOnly 'org.postgresql:postgresql'
+  }
+----
+[source,xml,attributes]
+----
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-jpa</artifactId> <1>
+			<version>2.7.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-entitymanager</artifactId>
+			<version>5.6.9.Final</version>
+		</dependency>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>42.6.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId> <2>
+			<version>5.3.20</version>
+		</dependency>
+----
+<1> The spring-data-jpa module provides repository support for JPA and includes
+transitive dependencies on other modules we’ll need, such as spring-core and
+spring-context.
+<2> We also need the spring-test dependency to run the tests.
+. The standard configuration file for Spring Data JPA is a Java class that creates and sets
+up the beans needed by Spring Data. The configuration can be done using either an XML file or Java code.
+[source,java,attributes]
+----
+package org.mine.kb.spring.data.jpa.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.JpaVendorAdapter;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.Database;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+
+import javax.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
+import java.util.Properties;
+
+@EnableJpaRepositories("com.manning.javapersistence.ch02.repositories")
+public class SpringDataConfiguration {
+    @Bean
+    public DataSource dataSource() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        dataSource.setUrl("jdbc:mysql://localhost:3306/CH02?serverTimezone=UTC");
+        dataSource.setUsername("root");
+        dataSource.setPassword("");
+        return dataSource;
+    }
+
+    @Bean
+    public JpaTransactionManager transactionManager(EntityManagerFactory emf) {
+        return new JpaTransactionManager(emf);
+    }
+
+    @Bean
+    public JpaVendorAdapter jpaVendorAdapter() {
+        HibernateJpaVendorAdapter jpaVendorAdapter = new HibernateJpaVendorAdapter();
+        jpaVendorAdapter.setDatabase(Database.MYSQL);
+        jpaVendorAdapter.setShowSql(true);
+        return jpaVendorAdapter;
+    }
+
+    @Bean
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
+        LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
+        localContainerEntityManagerFactoryBean.setDataSource(dataSource());
+        Properties properties = new Properties();
+        properties.put("hibernate.hbm2ddl.auto", "create");
+        localContainerEntityManagerFactoryBean.setJpaProperties(properties);
+        localContainerEntityManagerFactoryBean.setJpaVendorAdapter(jpaVendorAdapter());
+        localContainerEntityManagerFactoryBean.setPackagesToScan("com.manning.javapersistence.ch02");
+        return localContainerEntityManagerFactoryBean;
+    }
+}
+----
+The @EnableJpaRepositories annotation enables scanning of the package
+received as an argument for Spring Data repositories.
+Create a data source bean.
+Specify the JDBC properties—the driver.
+The URL of the database.
+The username.
+Create a transaction manager bean based on an entity manager factory. Every
+interaction with the database should occur within transaction boundaries, and
+Spring Data needs a transaction manager bean.
+Create the JPA vendor adapter bean needed by JPA to interact with Hibernate.
+Configure this vendor adapter to access a POSTGRESQL database.
+Show the SQL code while it is executed.
+Create a LocalContainerEntityManagerFactoryBean. This is a factory bean that
+produces an EntityManagerFactory following the JPA standard container boot-
+strap contract.
+Set the data source.
+Set the database to be created from scratch every time the program is executed.
+Set the vendor adapter.
+Set the packages to scan for entity classes. As the Message entity is located in
+com.manning.javapersistence.ch02, we set this package to be scanned.
+. Spring Data JPA provides support for JPA-based data access layers by reducing the
+boilerplate code and creating implementations for the repository interfaces. We only
+need to define our own repository interface to extend one of the Spring Data
+interfaces.
+[source,java,attributes]
+----
+package org.mine.kb.spring.data.jpa.repository;
+
+import org.springframework.data.repository.CrudRepository;
+import org.mine.kb.spring.data.jpa.model.*;
+
+public interface MessageRepository extends CrudRepository<Message, Long> {
+
+}
+----
+
+. Testing
++
+[source,java,attributes]
+----
+  spring:
+    datasource:
+      username: user
+      password: password
+      url: jdbc:postgresql://localhost:5432/polardb_catalog
+      hikari:
+        # The maximum time (ms) to spend waiting to get a connection from the pool
+        connection-timeout: 2000 #ms
+        # The maximum number of connections HikariCP will keep in the pool
+        maximum-pool-size: 5
+----
+Extend the test using SpringExtension. This extension is used to integrate the
+Spring test context with the JUnit 5 Jupiter test.
+The Spring test context is configured using the beans defined in the previously
+presented SpringDataConfiguration class.
+A MessageRepository bean is injected by Spring through autowiring. This is pos-
+sible as the com.manning.javapersistence.ch02.repositories package where
+MessageRepository is located was used as the argument of the @EnableJpaRepos-
+itories annotation in listing 2.8. If we call messageRepository.getClass(), we’ll
+see that it returns something like com.sun.proxy.$Proxy41—a proxy generated
+by Spring Data, as explained in figure 2.4.
+Create a new instance of the mapped domain model class Message, and set its text
+property.
+Persist the message object. The save method is inherited from the CrudReposi-
+tory interface, and its body will be generated by Spring Data JPA when the proxy
+class is created. It will simply save a Message entity to the database.
+Retrieve the messages from the repository. The findAll method is inherited from
+the CrudRepository interface, and its body will be generated by Spring Data JPA when the proxy class is created. It will simply return all entities belonging to the
+Message class.
+Check the size of the list of messages retrieved from the database and that the mes-
+sage we persisted is in the database.
+Use the JUnit 5 assertAll method, which checks all the assertions that are passed
+to it, even if some of them fail. The two assertions that we verify are conceptually
+related.
+=== Using Spring Boot
 . Add dependencies
 +
 [source,gradle,attributes]
@@ -43,8 +215,6 @@ expose a no-args constructor. JPA identifiers are annotated with @Id and
         # The maximum number of connections HikariCP will keep in the pool
         maximum-pool-size: 5
 ----
-
-
 == Defining persistent entities with Spring Data
 === Entity
 Tables are a key element of databases. They are responsible for containing specific types of 
@@ -770,6 +940,14 @@ If you use VARCHAR to save a UUID, consider the length of the column because
 sometimes this column has a small size. When you try to persist the information, 
 an exception appears.
 
+The id field is used to hold the database identity of each stored entity, corresponding to the primary 
+key when using a relational database. We will delegate the responsibility of generating unique values 
+for the id field to Spring Data. Depending on the database used, Spring Data can delegate this responsibility to the database engine or handle it on its own. In either case, the application code does 
+not need to consider how a unique database id value is set. The id field is not exposed in the API, as 
+a best practice from a security perspective. The fields in the model classes that identify an entity will 
+be assigned a unique index in the corresponding entity class, to ensure consistency in the database 
+from a business perspective.
+
 After you select the primary key of an entity, the next thing to do is define the 
 strategy to generate the value. To do this, you need to indicate over the declaration of attribute that acts as the primary key the @GeneratedValue annotation and indicates the generation mechanism. Doing this, JPA completes this value before persisting the entity.
 
@@ -879,6 +1057,14 @@ is a strategy that considers the database you
 used and defines which is the best option to use. You can indicate this 
 strategy in the annotation or without anything @GeneratedValue()
 because both cases indicate the same.
+
+== optimistic locking
+
+The version field is used to implement optimistic locking, allowing Spring Data to verify that updates of 
+an entity in the database do not overwrite a concurrent update. If the value of the version field stored 
+in the database is higher than the value of the version field in an update request, this indicates that 
+the update is performed on stale data—the information to be updated has been updated by someone 
+else since it was read from the database. Attempts to perform updates based on stale data will be prevented by Spring Data. 
 
 === Relationships
 When you define the structure of your database, many tables have a relationship with 
@@ -2210,5 +2396,4 @@ private Instant createdDate;
 @LastModifiedDate
 private Instant lastModifiedDate;
 ----
-
 
