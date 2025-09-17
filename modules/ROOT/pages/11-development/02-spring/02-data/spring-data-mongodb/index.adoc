@@ -276,6 +276,7 @@ public class ProductEntity {
   }
 }
 ----
+
 RecommendationEntity.java::
 +
 [source, java]
@@ -370,8 +371,9 @@ public class RecommendationEntity {
         this.content = content;
     }
 }
-
+----
 ====
+
 Polar Book Shop::
 +
 [source, java]
@@ -901,7 +903,7 @@ good to have duplicated in a lot of places this element. To reduce the duplicate
 let’s create a Base class that contains the id attribute with the annotation to generate the 
 value
 +
-image::{figures}/Entity-Inhertitance-Mapped-superclass-Cities-API.png[Migrating the entities to a strategy of using a Mapped superclass]
+//image::{figures}/Entity-Inhertitance-Mapped-superclass-Cities-API.png[Migrating the entities to a strategy of using a Mapped superclass]
 +
 [tabs]
 ====
@@ -952,7 +954,7 @@ specific situation. A new set of entities appear in Figure 4-8, representing th
 have cities and airports that are not directly connected. Both entities extend from the 
 Base class, which no longer has the @MappedSuperclass annotation.
 +
-image::{figures}/Entity-Inhertitance-Table-per-Class-Hierarchy-Cities-API[New entities with single table relationship]
+//image::{figures}/Entity-Inhertitance-Table-per-Class-Hierarchy-Cities-API[New entities with single table relationship]
 +
 There are only two tables because the city and airport are part of one class and the 
 BASE_TYPE column works as a discriminator to know which type of entity represents 
@@ -1012,7 +1014,7 @@ application to represent a hypothetical situation, let’s introduce a little va
 previous scenario to generate one table per class. Figure 4-9 shows the relationship between tables and the classes with this type of 
 relationship.
 +
-image::{figures}/Entity-Inhertitance-Table-per-Subclass-Hierarchy-Cities-API.png[]
+//image::{figures}/Entity-Inhertitance-Table-per-Subclass-Hierarchy-Cities-API.png[]
 +
 There are the same number of classes that entities exist in the catalog’s model where 
 the City and the Airport ID has the same value as the Base table’s primary key. To access 
@@ -1081,7 +1083,7 @@ Following the previous example, let’s do modifications by moving the “enable
 column to the Base class to have a scenario that gives you a better idea of what happens 
 in both worlds, the database, and the catalog’s application
 +
-image::{figures}/Entity-Inhertitance-Table-per-Class--Cities-API.png[]
+//image::{figures}/Entity-Inhertitance-Table-per-Class--Cities-API.png[]
 +
 The City and Airport tables have the same attributes—ID and ENABLED—in all the 
 entities. You save information in the Base table, and one of the tables extends from it. 
@@ -1137,7 +1139,7 @@ Following the previous example, let’s do modifications by moving the “enable
 column to the Base class to have a scenario that gives you a better idea of what happens 
 in both worlds, the database, and the catalog’s application
 +
-image::{figures}/Entity-Inhertitance-Embeddable-Class-Cities-API.png[Including an embeddable class in the Currency entity]
+//image::{figures}/Entity-Inhertitance-Embeddable-Class-Cities-API.png[Including an embeddable class in the Currency entity]
 +
 The first thing to do is create a new class that contains two attributes to audit when a 
 new row is created in the database and when suffering a modification. The class needs to 

@@ -1,5 +1,5 @@
 = Communication Patterns
-:figures: 01-system-design
+:figures: 01-system-design/communication-patterns
 
 A summary of how you can combine patterns and tools. Keep in mind
 that this is just a recommendation. you might have your own
@@ -145,3 +145,63 @@ consider both the benefits and drawbacks.
 When you expect high traffic and concurrency with fewer computational
 resources, the reactive paradigm can improve the application’s scalability, resil-
 ience, and cost-effectiveness at the expense of a steeper initial learning curve.
+
+When developing reactive microservices, it is not always obvious when to use non-blocking synchro-
+nous APIs and when to use event-driven asynchronous services. In general, to make a microservice 
+robust and scalable, it is important to make it as autonomous as possible, for example, by minimizing 
+its runtime dependencies. This is also known as loose coupling. Therefore, the asynchronous mes-
+sage passing of events is preferable over synchronous APIs. This is because the microservice will only 
+depend on access to the messaging system at runtime, instead of being dependent on synchronous 
+access to a number of other microservices.
+There are, however, a number of cases where synchronous APIs could be favorable. For example:
+
+• For read operations where an end user is waiting for a response
+• Where the client platforms are more suitable for consuming synchronous APIs, for example, 
+mobile apps or SPA web applications
+• Where the clients will connect to the service from other organizations – where it might be 
+hard to agree on a common messaging system to use across organizations
+
+[tabs]
+======
+CaveatEmptor::
++
+
+Cities API::
++
+
+Multiplication microservices::
++
+
+Microservices with Spring Boot 3 and Spring Cloud::
++
+However, one major concern was identified . Updating (creating or deleting) a composite 
+entity—an entity whose parts are stored in a number of microservices—using synchronous APIs can 
+lead to inconsistencies, if not all involved microservices are updated successfully. This is, in general, 
+not acceptable. This leads us into reactive microservices, where we will look into why and how to build 
+reactive microservices, that is, microservices that are scalable and robust.
++
+For the system landscape in this book, we will use the following:
++
+• The create, read, and delete services exposed by the product composite microservice will be 
+based on non-blocking synchronous APIs. The composite microservice is assumed to have 
+clients on both web and mobile platforms, as well as clients coming from other organizations 
+rather than the ones that operate the system landscape. Therefore, synchronous APIs seem 
+like a natural match.
+• The read services provided by the core microservices will also be developed as non-blocking 
+synchronous APIs since there is an end user waiting for their responses.
+• The create and delete services provided by the core microservices will be developed as 
+event-driven asynchronous services, meaning that they will listen for create and delete events 
+on topics dedicated to each microservice.
+• The synchronous APIs provided by the composite microservices to create and delete aggregated 
+product information will publish create and delete events on these topics. If the publish opera-
+tion succeeds, it will return with a 202 (Accepted) response; otherwise, an error response will 
+be returned. The 202 response differs from a normal 200 (OK) response – it indicates that the 
+request has been accepted, but not fully processed. Instead, the processing will be completed 
+asynchronously and independently of the 202 response.
++
+images::{figures}/Microservices-with-Spring-Boot-and-Spring-Cloud-communication-pattern.png
+
+Polar Book Shop::
++
+
+======

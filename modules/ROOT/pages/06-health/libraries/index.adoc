@@ -41,7 +41,7 @@ Spring Boot Actuator provides many endpoints to make your applications productio
 
 | `auditevents`
 | Exposes audit events information for the current application.
-  Requires an javadoc:org.springframework.boot.actuate.audit.AuditEventRepository[] bean.
+  Requires an org.springframework.boot.actuate.audit.AuditEventRepository[] bean.
 
 | `beans`
 | Displays a complete list of all the Spring beans in your application.
@@ -53,23 +53,23 @@ Spring Boot Actuator provides many endpoints to make your applications productio
 | Shows the conditions that were evaluated on configuration and auto-configuration classes and the reasons why they did or did not match.
 
 | `configprops`
-| Displays a collated list of all javadoc:org.springframework.boot.context.properties.ConfigurationProperties[format=annotation].
-Subject to xref:actuator/endpoints.adoc#actuator.endpoints.sanitization[sanitization].
+| Displays a collated list of all org.springframework.boot.context.properties.ConfigurationProperties[format=annotation].
+Subject to actuator/endpoints.adoc#actuator.endpoints.sanitization[sanitization].
 
 | `env`
-| Exposes properties from Spring's javadoc:org.springframework.core.env.ConfigurableEnvironment[].
-Subject to xref:actuator/endpoints.adoc#actuator.endpoints.sanitization[sanitization].
+| Exposes properties from Spring's org.springframework.core.env.ConfigurableEnvironment[].
+Subject to actuator/endpoints.adoc#actuator.endpoints.sanitization[sanitization].
 
 | `flyway`
 | Shows any Flyway database migrations that have been applied.
-  Requires one or more javadoc:org.flywaydb.core.Flyway[] beans.
+  Requires one or more org.flywaydb.core.Flyway[] beans.
 
 | `health`
 | Shows application health information.
 
 | `httpexchanges`
 | Displays HTTP exchange information (by default, the last 100 HTTP request-response exchanges).
-  Requires an javadoc:org.springframework.boot.actuate.web.exchanges.HttpExchangeRepository[] bean.
+  Requires an org.springframework.boot.actuate.web.exchanges.HttpExchangeRepository[] bean.
 
 | `info`
 | Displays arbitrary application info.
@@ -83,17 +83,17 @@ Subject to xref:actuator/endpoints.adoc#actuator.endpoints.sanitization[sanitiza
 
 | `liquibase`
 | Shows any Liquibase database migrations that have been applied.
-  Requires one or more javadoc:{url-liquibase-javadoc}/liquibase.Liquibase[] beans.
+  Requires one or more {url-liquibase-javadoc}/liquibase.Liquibase[] beans.
 
 | `metrics`
 | Shows "`metrics`" information for the current application to diagnose the metrics the application has recorded.
 
 | `mappings`
-| Displays a collated list of all javadoc:org.springframework.web.bind.annotation.RequestMapping[format=annotation] paths.
+| Displays a collated list of all org.springframework.web.bind.annotation.RequestMapping[format=annotation] paths.
 
 |`quartz`
 |Shows information about Quartz Scheduler jobs.
-Subject to xref:actuator/endpoints.adoc#actuator.endpoints.sanitization[sanitization].
+Subject to actuator/endpoints.adoc#actuator.endpoints.sanitization[sanitization].
 
 | `scheduledtasks`
 | Displays the scheduled tasks in your application.
@@ -108,8 +108,8 @@ Subject to xref:actuator/endpoints.adoc#actuator.endpoints.sanitization[sanitiza
   Disabled by default.
 
 | `startup`
-| Shows the xref:features/spring-application.adoc#features.spring-application.startup-tracking[startup steps data] collected by the javadoc:org.springframework.core.metrics.ApplicationStartup[].
-  Requires the javadoc:org.springframework.boot.SpringApplication[] to be configured with a javadoc:org.springframework.boot.context.metrics.buffering.BufferingApplicationStartup[].
+| Shows the features/spring-application.adoc#features.spring-application.startup-tracking[startup steps data] collected by the org.springframework.core.metrics.ApplicationStartup[].
+  Requires the org.springframework.boot.SpringApplication[] to be configured with a org.springframework.boot.context.metrics.buffering.BufferingApplicationStartup[].
 
 | `threaddump`
 | Performs a thread dump.

@@ -6,8 +6,9 @@ records. JPA entity classes must be marked with the @Entity annotation and
 expose a no-args constructor. JPA identifiers are annotated with @Id and
 @Version from the javax.persistence package instead of org.springframework.data.annotation.
 
+
 == Enabling and configuring JPA 
-=== Using Spring Dat JPA
+=== Using Spring Data JPA
 . Add dependencies
 +
 [source,gradle,attributes]
@@ -215,6 +216,13 @@ related.
         # The maximum number of connections HikariCP will keep in the pool
         maximum-pool-size: 5
 ----
+== Database Initialization
+The spring.jpa.hibernate.ddl-auto property is used to tell Spring Data JPA to create new 
+or update existing SQL tables during startup.
+It is strongly recommended to set the spring.jpa.hibernate.ddl-auto
+property to none or validate in a production environment—this prevents Spring 
+Data JPA from manipulating the structure of the SQL tables. For more informa-
+tion, see https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#howto-database-initialization.
 == Defining persistent entities with Spring Data
 === Entity
 Tables are a key element of databases. They are responsible for containing specific types of 
@@ -1557,7 +1565,7 @@ specific situation. A new set of entities appear in Figure 4-8, representing th
 have cities and airports that are not directly connected. Both entities extend from the 
 Base class, which no longer has the @MappedSuperclass annotation.
 +
-image::{figures}/Entity-Inhertitance-Table-per-Class-Hierarchy-Cities-API[New entities with single table relationship]
+image::{figures}/Entity-Inhertitance-Table-per-Class-Hierarchy-Cities-API.png[New entities with single table relationship]
 +
 There are only two tables because the city and airport are part of one class and the 
 BASE_TYPE column works as a discriminator to know which type of entity represents 

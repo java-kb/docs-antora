@@ -179,6 +179,139 @@ Docker Compose provides a better experience than the Docker CLI. Instead of a co
 ```bash
 docker RUN useradd spring USER spring 
 ```
+[tabs]
+======
+CaveatEmptor::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Microservices with Spring Boot 3 and Spring Cloud::
++
+Adding databases to the Docker Compose landscape
++
+Now, we have all of the source code in place. Before we can start up the microservice landscape and 
+try out the new APIs together with the new persistence layer, we must start up some databases.
+We will bring MongoDB and MySQL into the system landscape controlled by Docker Compose and add 
+configuration to our microservices so that they can find their databases when running.
++
+• We will use the official Docker image for MongoDB v6.0.4 and MySQL 8.0.32 and forward their 
+default ports 27017 and 3306 to the Docker host, also made available on localhost when using 
+Docker Desktop for Mac.
+• For Postgres, we also declare some environment variables, defining the following:
+• The root password
+• The name of the database that will be created on container startup
+• A username and password for a user that is set up for the database on container startup
+• We also declare a health check that Docker will run to determine the status of the MongoDB 
+and MySQL databases.
+To avoid microservices trying to connect to databases before they are up and running, the product
+and recommendation services are declared as dependent on the MongoDB database, as follows:
++
+depends_on:
+ mongodb:
+ condition: service_healthy
++
+For the same reason, the review service is declared as dependent on the postgres database:
+depends_on:
+ postgres:
+ condition: service_healthy
++
+This means that Docker Compose will not start up the microservice containers until the database 
+containers are launched and reported as healthy by their health checks.
+[tabs]
+====
+docker-compose.yml::
++
+[source, yml]
+----
+services:
+  product:
+    build: microservices/product-service
+    mem_limit: 512m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      mongodb:
+        condition: service_healthy
+  recommendation:
+    build: microservices/recommendation-service
+    mem_limit: 512m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      mongodb:
+        condition: service_healthy
+  review:
+    build: microservices/review-service
+    mem_limit: 512m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      postgres:
+        condition: service_healthy
+  product-composite:
+    build: microservices/product-composite-service
+    mem_limit: 512m
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pwd
+      - POSTGRES_DB=review-db
+    ports:
+      - "5432:5432"
+    mem_limit: 512m
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U user -d mydatabase"]
+        interval: 5s
+        timeout: 5s
+        retries: 60
+        start_period: 10s # Optional: give the container time to start before checks begin
+  mongodb:
+    image: mongo:6.0.4
+    mem_limit: 512m
+    ports:
+      - "27017:27017"
+    command: mongod
+    healthcheck:
+      test: "mongostat -n 1"
+      interval: 5s
+      timeout: 2s
+      retries: 60
+----
+====
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
 == Containerizing applications with Docker
 Before deploying an application to the cloud, however, you should containerize it as Containers provide isolation from the surrounding
 environment, and they’re equipped with all the dependencies required by the appli-

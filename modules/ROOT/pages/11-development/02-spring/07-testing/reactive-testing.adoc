@@ -43,6 +43,31 @@ dependencies {
 ----
 
 == Testing data persistence with @DataR2dbcTest and Testcontainers
+When it comes to testing the persistence layer, we have to make some changes. Since our persistence 
+methods now return a Mono or Flux object, the test methods have to wait for the response to be avail-
+able in the returned reactive objects. The test methods can either use an explicit call to the block()
+method on the Mono/Flux object to wait until a response is available, or they can use the StepVerifier
+helper class from Project Reactor to declare a verifiable sequence of asynchronous events.
+Let’s see how we can change the following test code to work for the reactive version of the repository:
+[source,java,attributes]
+----
+ProductEntity foundEntity = repository.findById(newEntity.getId()).get();
+assertEqualsProduct(newEntity, foundEntity);
+----
+We can use the block() method on the Mono object returned by the repository.findById() method 
+and keep the imperative programming style, as shown here:
+ProductEntity foundEntity = repository.findById(newEntity.getId()).block();
+assertEqualsProduct(newEntity, foundEntity);
+Alternatively, we can use the StepVerifier class to set up a sequence of processing steps that both 
+executes the repository find operation and also verifies the result. The sequence is initialized by the 
+final call to the verifyComplete() method like this:
+[source,java,attributes]
+----
+StepVerifier.create(repository.findById(newEntity.getId()))
+ .expectNextMatches(foundEntity -> areProductEqual(newEntity, foundEntity))
+ .verifyComplete();
+----
+
 The approach is the same you used in testing the data layer, but there are two main differences. First, you will use the StepVerifier
 utility to test the Repository behavior reactively. Second, you will define a PostgreSQL test container instance explicitly.
 
@@ -114,6 +139,7 @@ The WebFlux slice can be tested similarly to how you tested the MVC layer and us
 
 you can use the @MockBean Spring annotation to mock the
 OrderService class and have Spring add it to the Spring context used in the test.
+
 [source,java,attributes]
 ----
 @RestController

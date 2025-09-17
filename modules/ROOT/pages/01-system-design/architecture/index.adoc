@@ -128,7 +128,7 @@ will include name, address, and billing information.
 The result of this analysis, the high-level overview of the domain model, is shown
 in next figure. Let’s briefly discuss some interesting features of this model: 
 
-image::{figures}/caveatemptor-domain-model-and-their-relationships.png[Persistent classes of the CaveatEmptor domain model and their relationships]
+//image::{figures}/caveatemptor-domain-model-and-their-relationships.png[Persistent classes of the CaveatEmptor domain model and their relationships]
 
 - Each item can be auctioned only once, so you don’t need to make Item distinct
 from any auction entities. Instead, you have a single auction item entity named

@@ -36,19 +36,56 @@ docker rm -fv polar-mysql
 and create it again with the previous docker run command.
 
 === Database Commands
+[tabs]
+======
+CaveatEmptor::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Microservices with Spring Boot 3 and Spring Cloud::
++
+To start the MySQL CLI tool, mysql, inside the mysql container and log in to review-db using the user created at startup, run the following command:
+[,bash]
+----
+docker-compose exec mysql mysql -uuser -p review-db
+----
+Enter exit to leave the mysql CLI.
 
+Polar Book Shop::
++
 Start an interactive MySQL console:
-
 [,bash]
 ----
 docker exec -it polar-mysql mysql -uuser -ppassword polardb_catalog
 ----
-
++
 to access it with a command like this:
 [,bash]
 ----
 docker-compose exec mysql mysql -uuser -ppassword polardb_catalog -e "select * from book"
 ----
+======
 
 |===
 | MySQL Command | Description

@@ -221,7 +221,7 @@ The production stage consists of two main steps:
 2. Deploy the application to the production environment.
 3. An optional third step would be to run some final automated tests to verify that the deployment was successful. Perhaps you could reuse the same system tests that you will have included in the acceptance stage to verify the deployment in a staging environment.
 
-For GitHub Actions refer to xref:modules/ROOT/pages/16-deployment/continuous-delivery/github-actions/github-actions.adoc#production-stage[Deployment pipeline(production-stage)]
+For GitHub Actions refer to xref:16-deployment/continuous-delivery/github-actions/github-actions.adoc#production-stage[Deployment pipeline(production-stage)]
 
 ==  Continuous deployment with GitOps
 Traditionally, continuous deployment is implemented by adding a further step to the

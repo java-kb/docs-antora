@@ -38,7 +38,7 @@ drive software development by writing tests before implementing the production
 code. 
 
 == Testing APIs manually
-
+=== Testing locally
 we can test API manually by performing the following steps:
 
 1. Build and start the microservices as background processes.
@@ -86,6 +86,81 @@ Finally, you can shut down the microservices with the following command:
 If you are using an IDE such as Visual Studio Code with Spring Tool Suite, you can use their support
 for the Spring Boot Dashboard to start and stop your microservices with one click.
 
+=== Testing using Docker compose
+[tabs]
+======
+CaveatEmptor::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Microservices with Spring Boot 3 and Spring Cloud::
++
+Now, we have everything in place to test the microservices together. We will build new Docker images 
+and start up the system landscape using Docker Compose based on the Docker images. Next, we will 
+use the Swagger UI viewer to run some manual tests. Finally, we will use the database CLI tools to see 
+what data was inserted into the databases.
+Build and start the system landscape with the following command:
+[source,console,attributes]
+----
+cd $BOOK_HOME/Chapter06
+./gradlew build && docker-compose build && docker-compose up
+----
+Open Swagger UI in a web browser, http://localhost:8080/openapi/swagger-ui.html, and perform 
+the following steps on the web page:
++
+1. Click on the ProductComposite service and the POST method to expand them.
+2. Click on the Try it out button and go down to the body field.
+3. Replace the default value, 0, of the productId field with 123456.
+4. Scroll down to the Execute button and click on it.
+5. Verify that the returned response code is 200.
++
+We can also use the database CLI tools to see the actual content in the different databases.
+Look up the content in the product service, that is, the products collection in MongoDB, with the 
+following command:
+[source,console,attributes]
+----
+docker-compose exec mongodb mongosh product-db --quiet --eval "db.products.find()"
+----
+Look up the content in the recommendation service, that is, the recommendations collection in Mon-
+goDB, with the following command:
+[source,console,attributes]
+----
+docker-compose exec mongodb mongosh recommendation-db --quiet --eval "db.recommendations.find()"
+----
+Look up the content in the review service, that is, the reviews table in MySQL, with the following 
+command:
+[source,console,attributes]
+----
+docker-compose exec mysql mysql -uuser -p review-db -e "select * from reviews"
+----
+The mysql CLI tool will prompt you for a password; you can find it in the docker-compose.yml file. 
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
 == Adding semi-automated tests of a microservice landscape
 Being able to automatically run unit and integration tests for each microservice in isolation using
 plain Java, JUnit, and Gradle is very useful during development, but insufficient when we move over
@@ -229,6 +304,18 @@ waits 3 seconds between each attempt and gives up after 100 attempts, stopping t
 Next, all the tests are executed as they were previously. Afterward, the script will tear down the landscape if it finds the stop argument in the invocation parameters:
 
 The test script has also changed the default port from 7000, which we used when we ran the microservices without Docker, to 8080, which is used by our Docker containers.
+
+The automated tests of the microservice landscape, test-em-all.bash, need to be updated so that 
+they ensure that the database of each microservice has a known state before it runs the tests.
+The script is extended with a setup function, setupTestdata(), which uses the composite create and 
+delete APIs to set up test data used by the tests.
+
+It uses a helper function, recreateComposite(), to perform the actual requests to the delete and 
+create APIs:
+The setupTestdata function is called directly after the waitForService function:
+  waitForService curl -X DELETE http://$HOST:$PORT/product-composite/13
+  setupTestdata
+The main purpose of the waitForService function is to verify that all microservices are up and running. 
 [source,bash,attributes]
 ------
 #!/usr/bin/env bash

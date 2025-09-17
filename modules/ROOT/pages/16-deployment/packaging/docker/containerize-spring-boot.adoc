@@ -212,7 +212,7 @@ Gradle build library, build/libs, to that folder.
 extract, which will perform the extraction of the fat JAR file into its working directory, the
 extracted folder.
 4. The next and final stage starts with the line:
-FROM eclipse-temurin:17.0.5_8-jre-focal
+  FROM eclipse-temurin:17.0.5_8-jre-focal
 It uses the same base Docker image as in the first stage, and the application folder as its
 working directory. It copies the exploded files from the builder stage, folder by folder, into
 the application folder. This creates one layer per folder, as described above. The parameter

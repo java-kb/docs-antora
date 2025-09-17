@@ -249,6 +249,21 @@ measuring code coverage, developers can assess the effectiveness of their unit t
 that require additional testing. Karma, a popular testing framework in the JavaScript ecosystem, 
 provides built-in support for code coverage and test result analysis. 
 
+Code coverage and test result analysis are essential aspects of the software development process. By 
+measuring code coverage, developers can assess the effectiveness of their unit tests and identify areas 
+that require additional testing. Karma, a popular testing framework in the JavaScript ecosystem, 
+provides built-in support for code coverage and test result analysis. In this section, we’ll learn how 
+to leverage Karma to measure code coverage, generate detailed reports, and analyze test results. By 
+utilizing these features, developers can ensure comprehensive testing and improve the overall quality 
+and reliability of their code.
+
+Here are the different steps Angular performs for us:
+
+1. Step 1 – setting up Karma with code coverage:
+To utilize code coverage with Karma, start by installing the necessary dependencies:
+  npm install --save-dev karma-coverage
+2. Step 2 – Next, configure Karma to generate code coverage reports. Update your Karma configuration 
+file (karma.conf.js) with the following changes:
 [source,json,attributes]
 ----
     coverageReporter: {
@@ -264,12 +279,283 @@ provides built-in support for code coverage and test result analysis.
 This configuration specifies the reporters to be used (progress for test progress and coverage
 for code coverage). The coverageReporter section defines the output directory and the 
 types of reports to generate (HTML and Text Summary).
-
+3. Step 3 – running tests and generating code coverage reports:
++
 After configuring Karma for code coverage, run your tests as usual. Karma will now generate 
 code coverage reports alongside the test results. These coverage reports provide insights into 
 which parts of your code base are covered by tests and which areas require additional testing.
-
++
 Once the tests have finished running, navigate to the coverage directory to view the generated 
 reports. Open the HTML report (coverage/report-html/index.html) in a web 
 browser to visualize the code coverage details. The report highlights covered lines, uncovered 
 lines, and overall coverage percentages. 
+4. Step 4 – analyzing the test results:
++
+Karma also offers features to analyze the test results, including test reporting and integration 
+with popular continuous integration (CI) tools. By leveraging these capabilities, developers can 
+gain insights into test failures, identify patterns, and track the overall health of their test suite.
+Karma provides various reporters that offer different levels of detail in the test output. For 
+example, mocha-reporter displays detailed information about test failures, including stack 
+traces and error messages, whereas junit-reporter generates JUnit-style XML reports 
+that can be consumed by CI tools for further analysis.
+To integrate Karma with CI tools, configure the respective plugin or reporter in your Karma 
+configuration file. For example, to generate JUnit reports for Jenkins, add the karma-junit-
+reporter plugin and configure it accordingly.
+5. Step 5 – utilizing thresholds and quality gates:
+Karma allows developers to define thresholds and quality gates for code coverage and test 
+results. By setting these thresholds, developers can establish the minimum requirements for 
+code coverage and test success rates. This ensures that the code base maintains a certain level 
+of quality and reduces the risk of shipping untested or poorly covered code.
++
+To set thresholds for code coverage, update your Karma configuration file as follows:
+[source,javascript,attributes]
+----
+module.exports = function(config) {
+ config.set({
+ // ...
+ coverageReporter: {
+ // ...
+ check: {
+ global: {
+ statements: 80,
+ branches: 80,
+ functions: 80,
+ lines: 80
+ }
+ }
+ },
+ // ...
+ });
+};
+----
+
+In this example, the thresholds have been set to 80% for statements, branches, functions, and
+lines. If any of these thresholds are not met, Karma will report a failed test result.
+
+=== Code coverage visualization
+Let’s run the following command in our project’s terminal:
+  ng test –code-coverage
+
+== Testing Components
+=== Testing lifecycle hooks
+Angular provides several lifecycle hooks that allow us to perform actions at specific stages of a component’s lifecycle. Testing these hooks ensures that our components behave as expected:
+
+• ngOnInit(): The ngOnInit() hook is called after the component has been initialized. we can use this hook to set the initial values and perform any 
+necessary setup.To test ngOnInit(), we can verify whether the initial values are correctly 
+set and whether any necessary setup is performed.
+• ngOnChanges(): The ngOnChanges() hook is called whenever there are changes to 
+the component’s input properties. we can use this hook to 
+update the component state based on the changes. To test ngOnChanges(), we can simulate 
+changes to the input properties and verify whether the component state is updated accordingly.
+• ngOnDestroy(): The ngOnDestroy() hook is called just before the component is 
+destroyed. we can use this hook to clean up any resources 
+or subscriptions. To test ngOnDestroy(), we can simulate the component destruction and 
+verify whether the necessary cleanup actions are performed.
+[tabs]
+====
+calculator.component.ts::
++
+[source, javascript]
+----
+export class Calculator {
+  result!: number;
+
+  ngOnInit(): void {
+    this.result = 0;
+  }
+}
+----
+
+calculator.component.spec.ts::
++
+[source, javascript]
+----
+it('should initialize result to 0', () => {
+    calculator.ngOnInit();
+    expect(calculator.result).toEqual(0);
+  });
+----
+====
+
+== Testing Services
+=== Testing testing methods
+
+[tabs]
+====
+calculator.service.ts::
++
+[source, javascript]
+----
+import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CalculatorService {
+  private resultSubject = new BehaviorSubject<number>(0);
+  public result$ = this.resultSubject.asObservable();
+
+  constructor() { }
+
+  add(a: number, b: number): number {
+    return a + b;
+  }
+
+  substract(a: number, b: number): number {
+    return a - b;
+  }
+
+  multiply(a: number, b: number): number {
+    return a * b;
+  }
+
+  divide(a: number, b: number): number {
+    return a / b;
+  }
+}
+----
+
+calculator.service.spec.ts::
++
+[source, javascript]
+----
+import { TestBed } from '@angular/core/testing';
+
+import { CalculatorService } from './calculator.service';
+import { provideZonelessChangeDetection } from '@angular/core';
+
+describe('Calculator', () => {
+  let service: CalculatorService;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [],
+      providers: [provideZonelessChangeDetection()
+      ]
+    })
+    service = TestBed.inject(CalculatorService);
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+});
+----
+
+calculator.component.ts::
++
+[source, javascript]
+----
+ add(a: number, b: number): void {
+    this.result = this.calculatorService.add(a, b);
+  }
+----
+
+calculator.component.spec.ts::
++
+[source, javascript]
+----
+  it('should add two numbers correctly', () => {
+    spyOn(calculatorService, 'add').and.callThrough();
+    calculator.add(2, 3);
+    expect(calculatorService.add).toHaveBeenCalledWith(2, 3);
+    expect(calculator.result).toBe(5);
+  });
+----
+====
+
+=== Testing HTTP requests
+=== Testing observables
+=== Testing error handling
+
+== Testing directives
+
+In our current calculator application development project, we’re going to use a directive to apply a 
+color to the calculation result displayed on the screen.
+
+To handle color changes in our Angular calculator application, we’re going to create a custom directive. 
+Directives allow us to extend the functionality of HTML elements and encapsulate specific behaviors.
+In this case, we’ll create a directive called colorChange that will be responsible for handling color 
+transitions. The directive will accept an input parameter specifying the color to be changed. It will 
+then apply the CSS styles required to achieve the desired effect.
+
+When we want to use a directive on an HTML tag that takes a property as a parameter, here’s what it looks like:
+  <p [colorChange]="color"> </p>
+According to the preceding code, colorChange is our directive. It takes color as a parameter. This 
+implies that color is an attribute of our component. 
+[tabs]
+====
+calculator.component.ts::
++
+[source, javascript]
+----
+export class CalculatorComponent {
+  color = 'red';
+}
+----
+
+calculator.component.html::
++
+[source, html]
+----
+<p [colorChange]="color"> {{ result }} </p>
+----
+
+color-change.directive.ts::
++
+[source, javascript]
+----
+import { Directive, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
+
+@Directive({
+  selector: '[colorChange]',
+  standalone: true
+})
+export class ColorChangeDirective implements OnInit {
+  @Input() colorChange!: string;
+  
+  constructor(private elementRef: ElementRef, private renderer: Renderer2) { }
+
+  ngOnInit() {
+    this.renderer.setStyle(this.elementRef.nativeElement, 'color', this.colorChange);
+  }
+}
+
+----
+
+color-change.directive.spec.ts::
++
+[source, javascript]
+----
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CalculatorComponent } from '../../calculator/calculator.component';
+import { By } from '@angular/platform-browser';
+import { provideZonelessChangeDetection } from '@angular/core';
+
+describe('ColorChangeDirective', () => {
+  let fixture: ComponentFixture<CalculatorComponent>;
+  let calculator: CalculatorComponent;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      providers: [provideZonelessChangeDetection()
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(CalculatorComponent);
+    calculator = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should apply the specified color', () => {
+    const element: HTMLElement = fixture.debugElement.query(By.css('p')).nativeElement;
+    const color: string = 'red';
+    calculator.color = color;
+    fixture.detectChanges();
+
+    expect(element.style.color).toBe(color);
+  });
+});
+----
+====

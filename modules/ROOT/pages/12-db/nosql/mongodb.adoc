@@ -37,7 +37,43 @@ docker rm -fv polar-mongo
 and create it again with the previous docker run command.
 
 === Database Commands
-
+[tabs]
+======
+CaveatEmptor::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+Multiplication microservices::
++
+[source, java]
+----
+----
+Microservices with Spring Boot 3 and Spring Cloud::
++
+To start the MongoDB CLI tool, mongo, inside the mongodb container, run the following command:
+[,bash]
+----
+docker-compose exec mongodb mongosh ––quiet
+----
+Enter exit to leave the mongo CLI.
+Polar Book Shop::
++
 Start an interactive MongoDB shell:
 
 [,bash]
@@ -50,6 +86,8 @@ to access it with a command like this:
 ----
 docker-compose exec mongo mongosh -u root -p rootpassword --authenticationDatabase admin polardb_catalog
 ----
+======
+
 
 |===
 | MongoDB Command | Description
