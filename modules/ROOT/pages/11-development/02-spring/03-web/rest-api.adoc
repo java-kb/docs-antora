@@ -3,7 +3,9 @@
 
 After implementing the business logic, we can expose the use cases through a REST
 API. 
+
 == defining REST endpoints
+
 === using @RestController classes
 The first step is to define the REST endpoints. In Spring, you can do that by using
 @RestController classes or by using router functions. The first approach is more
@@ -51,6 +53,7 @@ public class BookController {
     }
 }   
 ----
+
 The @RestController annotation is a convenience annotation that combines the
 @Controller and @ResponseBody annotations. It indicates that the class is a controller
 and that the methods return JSON responses instead of views. The @RequestMapping
@@ -107,6 +110,7 @@ endpoint can consume and produce, respectively. This is useful for defining the 
 type of the request and response bodies, such as application/json or application/xml.
 
 === using @GetMapping, @PostMapping, @PutMapping, and @DeleteMapping
+
 === using router functions
 The router functions are a more functional and declarative way to define REST
 endpoints in Spring. They are based on the functional programming paradigm and

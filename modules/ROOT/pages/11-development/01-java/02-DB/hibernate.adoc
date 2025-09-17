@@ -634,10 +634,10 @@ public class HibernateToJPATest {
 }
 ----
 +
-<1> Create a new Hibernate configuration.
+//// <1> Create a new Hibernate configuration.
 <2> Call the configure method, which adds the content of the default hibernate.cfg.xml file to the configuration, and then explicitly add Message as an annotated class.
 <3> Create a new hash map to be filled in with the existing properties.
 <4> Get all the property names from the Hibernate configuration.
 <5> Add the property names one by one to the previously created map.
-<6> Return a new EntityManagerFactory, providing to it the ``java-db-hibernate-tutorial03-switching-jpa-hibernate-test`` persistence unit name and the previously created map of properties
+<6> Return a new EntityManagerFactory, providing to it the ``java-db-hibernate-tutorial03-switching-jpa-hibernate-test`` persistence unit name and the previously created map of properties ////
 ====

@@ -911,6 +911,7 @@ Base.java::
 +
 [source, java]
 ----
+<1>
 ----
 <1> the @MappedSuperclass annotation, which indicates that the class is not a final entity, so it does not exist in the database. Instead, this class is part of another class that inherits it. 
 Base.java::
@@ -918,6 +919,7 @@ The next step is to modify the Currency entity, removing the Id attribute and ex
 +
 [source, java]
 ----
+<1>
 ----
 <1> the @MappedSuperclass annotation, which indicates that the class is not a final entity, so it does not exist in the database. Instead, this class is part of another class that inherits it. 
 ====

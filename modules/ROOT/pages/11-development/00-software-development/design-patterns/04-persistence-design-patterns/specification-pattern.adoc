@@ -1,4 +1,4 @@
-=Specification Pattern
+=  Specification Pattern
 :figures: 11-development/00-software-development/design-patterns/04-persistence-design-patterns
 
 The specification pattern filters or selects a subset of objects based on criteria. For 

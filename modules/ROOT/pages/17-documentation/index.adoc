@@ -245,8 +245,8 @@ ProductCompositeService.java::
 From this code, springdoc-openapi will be able to extract the following information
 about the operation:
 +
-• The operation accepts HTTP GET requests to the URL /product-composite/{productid},
-where the last part of the URL, {productid}, is used as an input parameter to the request.
+• The operation accepts HTTP GET requests to the URL \/product-composite\/\{productid\},
+where the last part of the URL, \{productid\}, is used as an input parameter to the request.
 • A successful response will produce a JSON structure corresponding to the Java class,
 ProductAggregate.
 • In the event of an error, an HTTP error code of either 400, 404, or 422 will be returned together

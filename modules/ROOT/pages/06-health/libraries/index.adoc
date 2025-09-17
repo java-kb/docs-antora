@@ -83,7 +83,7 @@ Subject to actuator/endpoints.adoc#actuator.endpoints.sanitization[sanitization]
 
 | `liquibase`
 | Shows any Liquibase database migrations that have been applied.
-  Requires one or more {url-liquibase-javadoc}/liquibase.Liquibase[] beans.
+  Requires one or more liquibase.Liquibase[] beans.
 
 | `metrics`
 | Shows "`metrics`" information for the current application to diagnose the metrics the application has recorded.

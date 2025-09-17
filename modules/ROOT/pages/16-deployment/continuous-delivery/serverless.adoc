@@ -86,16 +86,16 @@ brew install kind
 kn quickstart kind
 ----
 Deploy the Service by running the command:
-
+[source, console]
+----
 kn service create hello \
 --image ghcr.io/knative/helloworld-go:latest \
 --port 8080 \
 --env TARGET=World
+----
+Service hello created to latest revision 'hello-0001' is available at URL: http://hello.default.\$\{LOADBALANCER_IP\}.sslip.io
 
-Service hello created to latest revision 'hello-0001' is available at URL:
-http://hello.default.${LOADBALANCER_IP}.sslip.io
-
-The value of ${LOADBALANCER_IP} above depends on your type of cluster, for kind it will be 127.0.0.1 for minikube depends on the local tunnel.
+The value of \$\{LOADBALANCER_IP\} above depends on your type of cluster, for kind it will be 127.0.0.1 for minikube depends on the local tunnel.
 using YAML::
 +
 Since Knative runs on top of Kubernetes, we first need a cluster.Open a Terminal window and run the following command:

@@ -33,4 +33,4 @@ ui:
   supplemental_files: ./ui
 runtime:
   log:
-    failure_level: warn
+    failure_level: error
