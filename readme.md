@@ -50,16 +50,19 @@ Reactive Applications::
 
 [tabs]
 ======
+
 CaveatEmptor::
 +
 [tabs]
 ====
+
 Country.java::
 +
 [source, java]
 ----
 ----
 ====
+
 Cities API::
 +
 [tabs]
@@ -70,11 +73,13 @@ Country.java::
 ----
 ----
 ====
+
 Multiplication microservices::
 +
 [source, java]
 ----
 ----
+
 Microservices with Spring Boot 3 and Spring Cloud::
 +
 [tabs]
@@ -85,6 +90,7 @@ Country.java::
 ----
 ----
 ====
+
 Polar Book Shop::
 +
 [source, java]
@@ -92,6 +98,29 @@ Polar Book Shop::
 ----
 ======
 
+
+[tabs]
+======
+
+Calaculator Example::
++
+[tabs]
+====
+
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Another Example::
++
+[source, java]
+----
+----
+
+======
 
 [tabs]
 ====

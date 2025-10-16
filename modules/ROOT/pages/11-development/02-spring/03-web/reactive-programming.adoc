@@ -184,6 +184,1335 @@ public interface ProductRepository extends ReactiveCrudRepository<ProductEntity,
 }
 ----
 
+When it comes to testing the persistence layer, we have to make some changes. Since our persistence 
+methods now return a Mono or Flux object, the test methods have to wait for the response to be avail-
+able in the returned reactive objects. The test methods can either use an explicit call to the block()
+method on the Mono/Flux object to wait until a response is available, or they can use the StepVerifier
+helper class from Project Reactor to declare a verifiable sequence of asynchronous events
+
+[source,java,attributes]
+----
+ProductEntity foundEntity = repository.findById(newEntity.getId()).get();
+assertEqualsProduct(newEntity, foundEntity);
+----
+
+We can use the block() method on the Mono object returned by the repository.findById() method 
+and keep the imperative programming style, as shown here:
+[source,java,attributes]
+----
+ProductEntity foundEntity = repository.findById(newEntity.getId()).block();
+assertEqualsProduct(newEntity, foundEntity);
+----
+Alternatively, we can use the StepVerifier class to set up a sequence of processing steps that both 
+executes the repository find operation and also verifies the result. The sequence is initialized by the 
+final call to the verifyComplete() method like this:
+[source,java,attributes]
+----
+StepVerifier.create(repository.findById(newEntity.getId()))
+ .expectNextMatches(foundEntity -> areProductEqual(newEntity, foundEntity))
+ .verifyComplete();
+----
+[tabs]
+======
+
+CaveatEmptor::
++
+[tabs]
+====
+
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Multiplication microservices::
++
+[source, java]
+----
+----
+
+Microservices with Spring Boot 3 and Spring Cloud::
++
+[tabs]
+====
+ProductRepositoryTest.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.product.persistence;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.OptimisticLockingFailureException;
+
+import reactor.test.StepVerifier;
+
+@DataMongoTest
+class ProductRepositoryTest extends MongoDbTestBase {
+
+    @Autowired
+    private ProductRepository repository;
+
+    private ProductEntity savedEntity;
+
+    @BeforeEach
+    void setupDb() {
+        StepVerifier.create(repository.deleteAll()).verifyComplete();
+
+        ProductEntity entity = new ProductEntity(1, "n", 1);
+        StepVerifier.create(repository.save(entity))
+                .expectNextMatches(createdEntity -> {
+                    savedEntity = createdEntity;
+                    return areProductEqual(entity, savedEntity);
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void create() {
+        ProductEntity newEntity = new ProductEntity(2, "n", 2);
+
+        StepVerifier.create(repository.save(newEntity))
+                .expectNextMatches(createdEntity -> newEntity.getProductId() == createdEntity.getProductId())
+                .verifyComplete();
+
+        StepVerifier.create(repository.findById(newEntity.getId()))
+                .expectNextMatches(foundEntity -> areProductEqual(newEntity, foundEntity))
+                .verifyComplete();
+
+        StepVerifier.create(repository.count()).expectNext(2L).verifyComplete();
+    }
+
+    @Test
+    void update() {
+        savedEntity.setName("n2");
+        StepVerifier.create(repository.save(savedEntity))
+                .expectNextMatches(updatedEntity -> updatedEntity.getName().equals("n2"))
+                .verifyComplete();
+
+        StepVerifier.create(repository.findById(savedEntity.getId()))
+                .expectNextMatches(foundEntity -> foundEntity.getVersion() == 1
+                        && foundEntity.getName().equals("n2"))
+                .verifyComplete();
+    }
+
+    @Test
+    void delete() {
+        StepVerifier.create(repository.delete(savedEntity)).verifyComplete();
+        StepVerifier.create(repository.existsById(savedEntity.getId())).expectNext(false).verifyComplete();
+    }
+
+    @Test
+    void getByProductId() {
+
+        StepVerifier.create(repository.findByProductId(savedEntity.getProductId()))
+                .expectNextMatches(foundEntity -> areProductEqual(savedEntity, foundEntity))
+                .verifyComplete();
+    }
+
+    @Test
+    void duplicateError() {
+        ProductEntity entity = new ProductEntity(savedEntity.getProductId(), "n", 1);
+        StepVerifier.create(repository.save(entity)).expectError(DuplicateKeyException.class).verify();
+    }
+
+    @Test
+    void optimisticLockError() {
+
+        // Store the saved entity in two separate entity objects
+        ProductEntity entity1 = repository.findById(savedEntity.getId()).block();
+        ProductEntity entity2 = repository.findById(savedEntity.getId()).block();
+
+        // Update the entity using the first entity object
+        entity1.setName("n1");
+        repository.save(entity1).block();
+
+        // Update the entity using the second entity object.
+        // This should fail since the second entity now holds a old version number, i.e.
+        // a Optimistic Lock Error
+        StepVerifier.create(repository.save(entity2)).expectError(OptimisticLockingFailureException.class).verify();
+
+        // Get the updated entity from the database and verify its new sate
+        StepVerifier.create(repository.findById(savedEntity.getId()))
+                .expectNextMatches(foundEntity -> foundEntity.getVersion() == 1
+                        && foundEntity.getName().equals("n1"))
+                .verifyComplete();
+    }
+
+    private boolean areProductEqual(ProductEntity expectedEntity, ProductEntity actualEntity) {
+        return (expectedEntity.getId().equals(actualEntity.getId()))
+                && (expectedEntity.getVersion() == actualEntity.getVersion())
+                && (expectedEntity.getProductId() == actualEntity.getProductId())
+                && (expectedEntity.getName().equals(actualEntity.getName()))
+                && (expectedEntity.getWeight() == actualEntity.getWeight());
+    }
+}
+----
+
+RecommendationRepositoryTest.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.recommendation.persistence;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import se.magnus.microservices.core.recommendation.persistence.RecommendationEntity;
+import se.magnus.microservices.core.recommendation.persistence.RecommendationRepository;
+
+@DataMongoTest
+public class RecommendationRepositoryTest extends MongoDbTestBase {
+
+    @Autowired
+    private RecommendationRepository repository;
+
+    private RecommendationEntity savedEntity;
+
+    @BeforeEach
+    void setupDb() {
+        repository.deleteAll().block();
+
+        RecommendationEntity entity = new RecommendationEntity(1, 2, "a", 3, "c");
+        savedEntity = repository.save(entity).block();
+
+        assertEqualsRecommendation(entity, savedEntity);
+    }
+
+    @Test
+    void create() {
+
+        RecommendationEntity newEntity = new RecommendationEntity(1, 3, "a", 3, "c");
+        repository.save(newEntity).block();
+
+        RecommendationEntity foundEntity = repository.findById(newEntity.getId()).block();
+        assertEqualsRecommendation(newEntity, foundEntity);
+
+        assertEquals(2, (long) repository.count().block());
+    }
+
+    @Test
+    void update() {
+        savedEntity.setAuthor("a2");
+        repository.save(savedEntity).block();
+
+        RecommendationEntity foundEntity = repository.findById(savedEntity.getId()).block();
+        assertEquals(1, (long) foundEntity.getVersion());
+        assertEquals("a2", foundEntity.getAuthor());
+    }
+
+    @Test
+    void delete() {
+        repository.delete(savedEntity).block();
+        assertFalse(repository.existsById(savedEntity.getId()).block());
+    }
+
+    @Test
+    void getByProductId() {
+        List<RecommendationEntity> entityList = repository.findByProductId(savedEntity.getProductId()).collectList()
+                .block();
+
+        assertThat(entityList, hasSize(1));
+        assertEqualsRecommendation(savedEntity, entityList.get(0));
+    }
+
+    @Test
+    void duplicateError() {
+        assertThrows(DuplicateKeyException.class, () -> {
+            RecommendationEntity entity = new RecommendationEntity(1, 2, "a", 3, "c");
+            repository.save(entity).block();
+        });
+    }
+
+    @Test
+    void optimisticLockError() {
+
+        // Store the saved entity in two separate entity objects
+        RecommendationEntity entity1 = repository.findById(savedEntity.getId()).block();
+        RecommendationEntity entity2 = repository.findById(savedEntity.getId()).block();
+
+        // Update the entity using the first entity object
+        entity1.setAuthor("a1");
+        repository.save(entity1).block();
+
+        // Update the entity using the second entity object.
+        // This should fail since the second entity now holds an old version number,
+        // i.e. an Optimistic Lock Error
+        assertThrows(OptimisticLockingFailureException.class, () -> {
+            entity2.setAuthor("a2");
+            repository.save(entity2).block();
+        });
+
+        // Get the updated entity from the database and verify its new sate
+        RecommendationEntity updatedEntity = repository.findById(savedEntity.getId()).block();
+        assertEquals(1, (int) updatedEntity.getVersion());
+        assertEquals("a1", updatedEntity.getAuthor());
+    }
+
+    private void assertEqualsRecommendation(RecommendationEntity expectedEntity, RecommendationEntity actualEntity) {
+        assertEquals(expectedEntity.getId(), actualEntity.getId());
+        assertEquals(expectedEntity.getVersion(), actualEntity.getVersion());
+        assertEquals(expectedEntity.getProductId(), actualEntity.getProductId());
+        assertEquals(expectedEntity.getRecommendationId(), actualEntity.getRecommendationId());
+        assertEquals(expectedEntity.getAuthor(), actualEntity.getAuthor());
+        assertEquals(expectedEntity.getRating(), actualEntity.getRating());
+        assertEquals(expectedEntity.getContent(), actualEntity.getContent());
+    }
+}
+
+----
+====
+
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+
+=== Non-blocking REST APIs
+to make the APIs in the core services non-blocking as well. We need to make the following changes:
+
+• Change the APIs so that they only return reactive data types
++
+To make the APIs of the core services reactive, we need to update their methods so that they return 
+either a Mono or Flux object.
+For example, getProduct() in the product service now returns Mono<Product> instead of a Product
+object:
+[source,java,attributes]
+----
+Mono<Product> getProduct(@PathVariable int productId);
+----
+
+[tabs]
+======
+
+CaveatEmptor::
++
+[tabs]
+====
+
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Multiplication microservices::
++
+[source, java]
+----
+----
+
+Microservices with Spring Boot 3 and Spring Cloud::
++
+[tabs]
+====
+ProductService.java::
++
+[source, java]
+----
+package se.magnus.api.core.product;
+
+import org.springframework.web.bind.annotation.*;
+
+import reactor.core.publisher.Mono;
+
+public interface ProductService {
+
+  /**
+   * Sample usage, see below.
+   *
+   * curl -X POST $HOST:$PORT/product \
+   * -H "Content-Type: application/json" --data \
+   * '{"productId":123,"name":"product 123","weight":123}'
+   *
+   * @param body A JSON representation of the new product
+   * @return A JSON representation of the newly created product
+   */
+  @PostMapping(value = "/product", consumes = "application/json", produces = "application/json")
+  Mono<Product> createProduct(Product body);
+
+  /**
+   * Sample usage: "curl $HOST:$PORT/product/1".
+   *
+   * @param productId Id of the product
+   * @return the product, if found, else null
+   */
+  @GetMapping(value = "/product/{productId}", produces = "application/json")
+  Mono<Product> getProduct(@PathVariable int productId);
+
+  /**
+   * Sample usage: "curl -X DELETE $HOST:$PORT/product/1".
+   *
+   * @param productId Id of the product
+   */
+  @DeleteMapping(value = "/product/{productId}")
+  Mono<Void> deleteProduct(int productId);
+}
+
+----
+
+RecommendationService.java::
++
+[source, java]
+----
+package se.magnus.api.core.recommendation;
+
+import java.util.List;
+import org.springframework.web.bind.annotation.*;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+public interface RecommendationService {
+
+  /**
+   * Sample usage, see below.
+   *
+   * curl -X POST $HOST:$PORT/recommendation \
+   * -H "Content-Type: application/json" --data \
+   * '{"productId":123,"recommendationId":456,"author":"me","rate":5,"content":"yada,
+   * yada, yada"}'
+   *
+   * @param body A JSON representation of the new recommendation
+   * @return A JSON representation of the newly created recommendation
+   */
+  @PostMapping(value = "/recommendation", consumes = "application/json", produces = "application/json")
+  Mono<Recommendation> createRecommendation(Recommendation body);
+
+  /**
+   * Sample usage: "curl $HOST:$PORT/recommendation?productId=1".
+   *
+   * @param productId Id of the product
+   * @return the recommendations of the product
+   */
+  @GetMapping(value = "/recommendation", produces = "application/json")
+  Flux<Recommendation> getRecommendations(
+      @RequestParam(value = "productId", required = true) int productId);
+
+  Mono<Void> deleteRecommendations(int productId);
+}
+----
+
+ReviewService.java::
++
+[source, java]
+----
+package se.magnus.api.core.review;
+
+import java.util.List;
+import org.springframework.web.bind.annotation.*;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+public interface ReviewService {
+
+  /**
+   * Sample usage, see below.
+   *
+   * curl -X POST $HOST:$PORT/review \
+   * -H "Content-Type: application/json" --data \
+   * '{"productId":123,"reviewId":456,"author":"me","subject":"yada, yada,
+   * yada","content":"yada, yada, yada"}'
+   *
+   * @param body A JSON representation of the new review
+   * @return A JSON representation of the newly created review
+   */
+  @PostMapping(value = "/review", consumes = "application/json", produces = "application/json")
+  Mono<Review> createReview(Review body);
+
+  /**
+   * Sample usage: "curl $HOST:$PORT/review?productId=1".
+   *
+   * @param productId Id of the product
+   * @return the reviews of the product
+   */
+  @GetMapping(value = "/review", produces = "application/json")
+  Flux<Review> getReviews(@RequestParam(value = "productId", required = true) int productId);
+
+  /**
+   * Sample usage: "curl -X DELETE $HOST:$PORT/review?productId=1".
+   *
+   * @param productId Id of the product
+   */
+  @DeleteMapping(value = "/review")
+  Mono<Void> deleteReviews(int productId);
+}
+----
+====
+
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
++
+• Change the service implementations so they don’t contain any blocking code
++
+we can use the fluent API in Project Reactor. For example, the implementation of the getProduct() method looks like the following code:
+[source,java,attributes]
+----
+  public Mono<Product> getProduct(int productId) {
+
+    if (productId < 1) {
+      throw new InvalidInputException("Invalid productId: " + productId);
+    }
+
+    LOG.info("Will get product info for id={}", productId);
+
+    return repository.findByProductId(productId)
+        .switchIfEmpty(Mono.error(new NotFoundException("No product found for productId: " + productId)))
+        .log(LOG.getName(), FINE)
+        .map(e -> mapper.entityToApi(e))
+        .map(e -> setServiceAddress(e));
+  }
+----
+
+[tabs]
+======
+
+CaveatEmptor::
++
+[tabs]
+====
+
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Multiplication microservices::
++
+[source, java]
+----
+----
+
+Microservices with Spring Boot 3 and Spring Cloud::
++
+[tabs]
+====
+ProductServiceImpl.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.product.services;
+
+import static java.util.logging.Level.FINE;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
+import se.magnus.api.core.product.Product;
+import se.magnus.api.core.product.ProductService;
+import se.magnus.api.exceptions.InvalidInputException;
+import se.magnus.api.exceptions.NotFoundException;
+import se.magnus.microservices.core.product.persistence.ProductEntity;
+import se.magnus.microservices.core.product.persistence.ProductRepository;
+import se.magnus.util.http.ServiceUtil;
+
+@RestController
+public class ProductServiceImpl implements ProductService {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ProductServiceImpl.class);
+
+  private final ServiceUtil serviceUtil;
+
+  private final ProductRepository repository;
+
+  private final ProductMapper mapper;
+
+  @Autowired
+  public ProductServiceImpl(ProductRepository repository, ProductMapper mapper, ServiceUtil serviceUtil) {
+    this.repository = repository;
+    this.mapper = mapper;
+    this.serviceUtil = serviceUtil;
+  }
+
+  @Override
+  public Mono<Product> createProduct(Product body) {
+
+    if (body.getProductId() < 1) {
+      throw new InvalidInputException("Invalid productId: " + body.getProductId());
+    }
+
+    ProductEntity entity = mapper.apiToEntity(body);
+    Mono<Product> newEntity = repository.save(entity)
+        .log(LOG.getName(), FINE)
+        .onErrorMap(
+            DuplicateKeyException.class,
+            ex -> new InvalidInputException("Duplicate key, Product Id: " + body.getProductId()))
+        .map(e -> mapper.entityToApi(e));
+
+    return newEntity;
+  }
+
+  @Override
+  public Mono<Product> getProduct(int productId) {
+
+    if (productId < 1) {
+      throw new InvalidInputException("Invalid productId: " + productId);
+    }
+
+    LOG.info("Will get product info for id={}", productId);
+
+    return repository.findByProductId(productId)
+        .switchIfEmpty(Mono.error(new NotFoundException("No product found for productId: " + productId)))
+        .log(LOG.getName(), FINE)
+        .map(e -> mapper.entityToApi(e))
+        .map(e -> setServiceAddress(e));
+  }
+
+  @Override
+  public Mono<Void> deleteProduct(int productId) {
+
+    if (productId < 1) {
+      throw new InvalidInputException("Invalid productId: " + productId);
+    }
+
+    LOG.debug("deleteProduct: tries to delete an entity with productId: {}", productId);
+    return repository.findByProductId(productId).log(LOG.getName(), FINE).map(e -> repository.delete(e))
+        .flatMap(e -> e);
+  }
+
+  private Product setServiceAddress(Product e) {
+    e.setServiceAddress(serviceUtil.getServiceAddress());
+    return e;
+  }
+}
+----
+
+RecommendationServiceImpl.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.recommendation.services;
+
+import static java.util.logging.Level.FINE;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import se.magnus.api.core.recommendation.Recommendation;
+import se.magnus.api.core.recommendation.RecommendationService;
+import se.magnus.api.exceptions.InvalidInputException;
+import se.magnus.microservices.core.recommendation.persistence.RecommendationEntity;
+import se.magnus.microservices.core.recommendation.persistence.RecommendationRepository;
+import se.magnus.util.http.ServiceUtil;
+
+@RestController
+public class RecommendationServiceImpl implements RecommendationService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(RecommendationServiceImpl.class);
+
+    private final RecommendationRepository repository;
+
+    private final RecommendationMapper mapper;
+
+    private final ServiceUtil serviceUtil;
+
+    @Autowired
+    public RecommendationServiceImpl(RecommendationRepository repository, RecommendationMapper mapper,
+            ServiceUtil serviceUtil) {
+        this.repository = repository;
+        this.mapper = mapper;
+        this.serviceUtil = serviceUtil;
+    }
+
+    @Override
+    public Mono<Recommendation> createRecommendation(Recommendation body) {
+
+        if (body.getProductId() < 1) {
+            throw new InvalidInputException("Invalid productId: " + body.getProductId());
+        }
+
+        RecommendationEntity entity = mapper.apiToEntity(body);
+        Mono<Recommendation> newEntity = repository.save(entity)
+                .log(LOG.getName(), FINE)
+                .onErrorMap(
+                        DuplicateKeyException.class,
+                        ex -> new InvalidInputException("Duplicate key, Product Id: " + body.getProductId()
+                                + ", Recommendation Id:" + body.getRecommendationId()))
+                .map(e -> mapper.entityToApi(e));
+
+        return newEntity;
+    }
+
+    @Override
+    public Flux<Recommendation> getRecommendations(int productId) {
+
+        if (productId < 1) {
+            throw new InvalidInputException("Invalid productId: " + productId);
+        }
+
+        LOG.info("Will get recommendations for product with id={}", productId);
+
+        return repository.findByProductId(productId)
+                .log(LOG.getName(), FINE)
+                .map(e -> mapper.entityToApi(e))
+                .map(e -> setServiceAddress(e));
+    }
+
+    @Override
+    public Mono<Void> deleteRecommendations(int productId) {
+
+        if (productId < 1) {
+            throw new InvalidInputException("Invalid productId: " + productId);
+        }
+
+        LOG.debug("deleteRecommendations: tries to delete recommendations for the product with productId: {}",
+                productId);
+        return repository.deleteAll(repository.findByProductId(productId));
+    }
+
+    private Recommendation setServiceAddress(Recommendation e) {
+        e.setServiceAddress(serviceUtil.getServiceAddress());
+        return e;
+    }
+}
+----
+
+ReviewServiceImpl.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.review.services;
+
+import static java.util.logging.Level.FINE;
+
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import se.magnus.api.core.review.Review;
+import se.magnus.api.core.review.ReviewService;
+import se.magnus.api.exceptions.InvalidInputException;
+import se.magnus.microservices.core.review.persistence.ReviewEntity;
+import se.magnus.microservices.core.review.persistence.ReviewRepository;
+import se.magnus.util.http.ServiceUtil;
+
+@RestController
+public class ReviewServiceImpl implements ReviewService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ReviewServiceImpl.class);
+
+    private final ReviewRepository repository;
+
+    private final ReviewMapper mapper;
+
+    private final ServiceUtil serviceUtil;
+
+    private final Scheduler jdbcScheduler;
+
+    @Autowired
+    public ReviewServiceImpl(@Qualifier("jdbcScheduler") Scheduler jdbcScheduler, ReviewRepository repository,
+            ReviewMapper mapper, ServiceUtil serviceUtil) {
+        this.jdbcScheduler = jdbcScheduler;
+        this.repository = repository;
+        this.mapper = mapper;
+        this.serviceUtil = serviceUtil;
+    }
+
+    @Override
+    public Mono<Review> createReview(Review body) {
+
+        if (body.getProductId() < 1) {
+            throw new InvalidInputException("Invalid productId: " + body.getProductId());
+        }
+        return Mono.fromCallable(() -> internalCreateReview(body))
+                .subscribeOn(jdbcScheduler);
+    }
+
+    private Review internalCreateReview(Review body) {
+        try {
+            ReviewEntity entity = mapper.apiToEntity(body);
+            ReviewEntity newEntity = repository.save(entity);
+
+            LOG.debug("createReview: created a review entity: {}/{}", body.getProductId(), body.getReviewId());
+            return mapper.entityToApi(newEntity);
+
+        } catch (DataIntegrityViolationException dive) {
+            throw new InvalidInputException(
+                    "Duplicate key, Product Id: " + body.getProductId() + ", Review Id:" + body.getReviewId());
+        }
+    }
+
+    @Override
+    public Flux<Review> getReviews(int productId) {
+
+        if (productId < 1) {
+            throw new InvalidInputException("Invalid productId: " + productId);
+        }
+
+        LOG.info("Will get reviews for product with id={}", productId);
+
+        return Mono.fromCallable(() -> internalGetReviews(productId))
+                .flatMapMany(Flux::fromIterable)
+                .log(LOG.getName(), FINE)
+                .subscribeOn(jdbcScheduler);
+    }
+
+    private List<Review> internalGetReviews(int productId) {
+
+        List<ReviewEntity> entityList = repository.findByProductId(productId);
+        List<Review> list = mapper.entityListToApiList(entityList);
+        list.forEach(e -> e.setServiceAddress(serviceUtil.getServiceAddress()));
+
+        LOG.debug("Response size: {}", list.size());
+
+        return list;
+    }
+
+    @Override
+    public Mono<Void> deleteReviews(int productId) {
+
+        if (productId < 1) {
+            throw new InvalidInputException("Invalid productId: " + productId);
+        }
+
+        return Mono.fromRunnable(() -> internalDeleteReviews(productId)).subscribeOn(jdbcScheduler).then();
+    }
+
+    private void internalDeleteReviews(int productId) {
+
+        LOG.debug("deleteReviews: tries to delete reviews for the product with productId: {}", productId);
+
+        repository.deleteAll(repository.findByProductId(productId));
+    }
+}
+----
+====
+
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+• Change our tests so that they can test the reactive services
++
+To handle the asynchronous behavior of the reactive return 
+types, Mono and Flux, the tests use a mix of calling the block() method and using the StepVerifier
+helper class.
+• Deal with blocking code – isolate the code that still needs to be blocking from the non-blocking 
+code
+[tabs]
+======
+
+CaveatEmptor::
++
+[tabs]
+====
+
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Multiplication microservices::
++
+[source, java]
+----
+----
+
+Microservices with Spring Boot 3 and Spring Cloud::
++
+[tabs]
+====
+ProductServiceApplicationTests.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.product;
+
+import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static reactor.core.publisher.Mono.just;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import se.magnus.api.core.product.Product;
+import se.magnus.microservices.core.product.persistence.MongoDbTestBase;
+import se.magnus.microservices.core.product.persistence.ProductRepository;
+
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+class ProductServiceApplicationTests extends MongoDbTestBase {
+
+	@Autowired
+	private WebTestClient client;
+
+	@Autowired
+	private ProductRepository repository;
+
+	@BeforeEach
+	void setupDb() {
+		repository.deleteAll().block();
+	}
+
+	@Test
+	void getProductById() {
+
+		int productId = 1;
+
+		assertNull(repository.findByProductId(productId).block());
+		assertEquals(0, (long) repository.count().block());
+
+		postAndVerifyProduct(productId, OK);
+
+		assertNotNull(repository.findByProductId(productId).block());
+		assertEquals(1, (long) repository.count().block());
+
+		getAndVerifyProduct(productId, OK).jsonPath("$.productId").isEqualTo(productId);
+	}
+
+	@Test
+	void duplicateError() {
+
+		int productId = 1;
+
+		assertNull(repository.findByProductId(productId).block());
+
+		postAndVerifyProduct(productId, OK);
+
+		assertNotNull(repository.findByProductId(productId).block());
+
+		postAndVerifyProduct(productId, UNPROCESSABLE_ENTITY)
+				.jsonPath("$.path").isEqualTo("/product")
+				.jsonPath("$.message").isEqualTo("Duplicate key, Product Id: " + productId);
+	}
+
+	@Test
+	void deleteProduct() {
+
+		int productId = 1;
+
+		postAndVerifyProduct(productId, OK);
+		assertNotNull(repository.findByProductId(productId).block());
+
+		deleteAndVerifyProduct(productId, OK);
+		assertNull(repository.findByProductId(productId).block());
+
+		deleteAndVerifyProduct(productId, OK);
+	}
+
+	@Test
+	void getProductInvalidParameterString() {
+
+		getAndVerifyProduct("/no-integer", BAD_REQUEST)
+				.jsonPath("$.path").isEqualTo("/product/no-integer")
+				.jsonPath("$.message").isEqualTo("Type mismatch.");
+	}
+
+	@Test
+	void getProductNotFound() {
+
+		int productIdNotFound = 13;
+		getAndVerifyProduct(productIdNotFound, NOT_FOUND)
+				.jsonPath("$.path").isEqualTo("/product/" + productIdNotFound)
+				.jsonPath("$.message").isEqualTo("No product found for productId: " + productIdNotFound);
+	}
+
+	@Test
+	void getProductInvalidParameterNegativeValue() {
+
+		int productIdInvalid = -1;
+
+		getAndVerifyProduct(productIdInvalid, UNPROCESSABLE_ENTITY)
+				.jsonPath("$.path").isEqualTo("/product/" + productIdInvalid)
+				.jsonPath("$.message").isEqualTo("Invalid productId: " + productIdInvalid);
+	}
+
+	private WebTestClient.BodyContentSpec getAndVerifyProduct(int productId, HttpStatus expectedStatus) {
+		return getAndVerifyProduct("/" + productId, expectedStatus);
+	}
+
+	private WebTestClient.BodyContentSpec getAndVerifyProduct(String productIdPath, HttpStatus expectedStatus) {
+		return client.get()
+				.uri("/product" + productIdPath)
+				.accept(APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isEqualTo(expectedStatus)
+				.expectHeader().contentType(APPLICATION_JSON)
+				.expectBody();
+	}
+
+	private WebTestClient.BodyContentSpec postAndVerifyProduct(int productId, HttpStatus expectedStatus) {
+		Product product = new Product(productId, "Name " + productId, productId, "SA");
+		return client.post()
+				.uri("/product")
+				.body(just(product), Product.class)
+				.accept(APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isEqualTo(expectedStatus)
+				.expectHeader().contentType(APPLICATION_JSON)
+				.expectBody();
+	}
+
+	private WebTestClient.BodyContentSpec deleteAndVerifyProduct(int productId, HttpStatus expectedStatus) {
+		return client.delete()
+				.uri("/product/" + productId)
+				.accept(APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isEqualTo(expectedStatus)
+				.expectBody();
+	}
+}
+----
+
+RecommendationServiceApplicationTests.java::
++
+[source, java]
+----
+package se.magnus.microservices.core.recommendation;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static reactor.core.publisher.Mono.just;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import se.magnus.api.core.recommendation.Recommendation;
+import se.magnus.microservices.core.recommendation.persistence.RecommendationRepository;
+
+import se.magnus.microservices.core.recommendation.persistence.MongoDbTestBase;
+
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+class RecommendationServiceApplicationTests extends MongoDbTestBase {
+
+	@Autowired
+	private WebTestClient client;
+
+	@Autowired
+	private RecommendationRepository repository;
+
+	@BeforeEach
+	void setupDb() {
+		repository.deleteAll().block();
+	}
+
+	@Test
+	void getRecommendationsByProductId() {
+
+		int productId = 1;
+
+		postAndVerifyRecommendation(productId, 1, OK);
+		postAndVerifyRecommendation(productId, 2, OK);
+		postAndVerifyRecommendation(productId, 3, OK);
+
+		assertEquals(3, repository.findByProductId(productId).count().block());
+
+		getAndVerifyRecommendationsByProductId(productId, OK)
+				.jsonPath("$.length()").isEqualTo(3)
+				.jsonPath("$[2].productId").isEqualTo(productId)
+				.jsonPath("$[2].recommendationId").isEqualTo(3);
+	}
+
+	@Test
+	void duplicateError() {
+
+		int productId = 1;
+		int recommendationId = 1;
+
+		postAndVerifyRecommendation(productId, recommendationId, OK)
+				.jsonPath("$.productId").isEqualTo(productId)
+				.jsonPath("$.recommendationId").isEqualTo(recommendationId);
+
+		assertEquals(1, repository.count().block());
+
+		postAndVerifyRecommendation(productId, recommendationId, UNPROCESSABLE_ENTITY)
+				.jsonPath("$.path").isEqualTo("/recommendation")
+				.jsonPath("$.message").isEqualTo("Duplicate key, Product Id: 1, Recommendation Id:1");
+
+		assertEquals(1, repository.count().block());
+	}
+
+	@Test
+	void deleteRecommendations() {
+
+		int productId = 1;
+		int recommendationId = 1;
+
+		postAndVerifyRecommendation(productId, recommendationId, OK);
+		assertEquals(1, repository.findByProductId(productId).count().block());
+
+		deleteAndVerifyRecommendationsByProductId(productId, OK);
+		assertEquals(0, repository.findByProductId(productId).count().block());
+
+		deleteAndVerifyRecommendationsByProductId(productId, OK);
+	}
+
+	@Test
+	void getRecommendationsMissingParameter() {
+
+		getAndVerifyRecommendationsByProductId("", BAD_REQUEST)
+				.jsonPath("$.path").isEqualTo("/recommendation")
+				.jsonPath("$.message").isEqualTo("Required query parameter 'productId' is not present.");
+	}
+
+	@Test
+	void getRecommendationsInvalidParameter() {
+
+		getAndVerifyRecommendationsByProductId("?productId=no-integer", BAD_REQUEST)
+				.jsonPath("$.path").isEqualTo("/recommendation")
+				.jsonPath("$.message").isEqualTo("Type mismatch.");
+	}
+
+	@Test
+	void getRecommendationsNotFound() {
+
+		getAndVerifyRecommendationsByProductId("?productId=113", OK)
+				.jsonPath("$.length()").isEqualTo(0);
+	}
+
+	@Test
+	void getRecommendationsInvalidParameterNegativeValue() {
+
+		int productIdInvalid = -1;
+
+		getAndVerifyRecommendationsByProductId("?productId=" + productIdInvalid, UNPROCESSABLE_ENTITY)
+				.jsonPath("$.path").isEqualTo("/recommendation")
+				.jsonPath("$.message").isEqualTo("Invalid productId: " + productIdInvalid);
+	}
+
+	private WebTestClient.BodyContentSpec getAndVerifyRecommendationsByProductId(int productId,
+			HttpStatus expectedStatus) {
+		return getAndVerifyRecommendationsByProductId("?productId=" + productId, expectedStatus);
+	}
+
+	private WebTestClient.BodyContentSpec getAndVerifyRecommendationsByProductId(String productIdQuery,
+			HttpStatus expectedStatus) {
+		return client.get()
+				.uri("/recommendation" + productIdQuery)
+				.accept(APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isEqualTo(expectedStatus)
+				.expectHeader().contentType(APPLICATION_JSON)
+				.expectBody();
+	}
+
+	private WebTestClient.BodyContentSpec postAndVerifyRecommendation(int productId, int recommendationId,
+			HttpStatus expectedStatus) {
+		Recommendation recommendation = new Recommendation(productId, recommendationId, "Author " + recommendationId,
+				recommendationId, "Content " + recommendationId, "SA");
+		return client.post()
+				.uri("/recommendation")
+				.body(just(recommendation), Recommendation.class)
+				.accept(APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isEqualTo(expectedStatus)
+				.expectHeader().contentType(APPLICATION_JSON)
+				.expectBody();
+	}
+
+	private WebTestClient.BodyContentSpec deleteAndVerifyRecommendationsByProductId(int productId,
+			HttpStatus expectedStatus) {
+		return client.delete()
+				.uri("/recommendation?productId=" + productId)
+				.accept(APPLICATION_JSON)
+				.exchange()
+				.expectStatus().isEqualTo(expectedStatus)
+				.expectBody();
+	}
+
+}
+----
+====
+
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+
+=== blocking code
+When using JPA to access its data in a relational database, we don’t 
+have support for a non-blocking programming model. Instead, we can run the blocking code using 
+a Scheduler, which is capable of running the blocking code on a thread from a dedicated thread 
+pool with a limited number of threads. Using a thread pool for the blocking code avoids draining the 
+available threads in the microservice and avoids affecting concurrent non-blocking processing in the 
+microservice, if there is any.
+
+1. First, we configure a scheduler bean and its thread pool in the main class of Application, as follows:
++
+[source,java,attributes]
+----
+@Autowired
+public ReviewServiceApplication(
+ @Value("${app.threadPoolSize:10}") Integer threadPoolSize,
+ @Value("${app.taskQueueSize:100}") Integer taskQueueSize
+) {
+ this.threadPoolSize = threadPoolSize;
+ this.taskQueueSize = taskQueueSize;
+}
+@Bean
+public Scheduler jdbcScheduler() {
+ return Schedulers.newBoundedElastic(threadPoolSize,
+ taskQueueSize, "jdbc-pool");
+}
+----
++
+From the preceding code, we can see that the scheduler bean is named jdbcScheduler and 
+that we can configure its thread pool using the following properties:
+  • app.threadPoolSize, specifying the max number of threads in the pool; defaults to 10
+  • app.taskQueueSize, specifying the max number of tasks that are allowed to be placed 
+in a queue waiting for available threads; defaults to 100
+2. Next, we inject the scheduler named jdbcScheduler into the review service implementation 
+class, as shown here:
++
+[source,java,attributes]
+----
+@RestController
+public class ReviewServiceImpl implements ReviewService {
+private final Scheduler jdbcScheduler;
+ @Autowired
+ public ReviewServiceImpl(
+ @Qualifier("jdbcScheduler")
+ Scheduler jdbcScheduler, ...) {
+ this.jdbcScheduler = jdbcScheduler;
+ }
+----
+3. Finally, we use the scheduler’s thread pool in the reactive implementation of the getReviews()
+method, like so:
+[source,java,attributes]
+----
+@Override
+public Flux<Review> getReviews(int productId) {
+ if (productId < 1) {
+ throw new InvalidInputException("Invalid productId: " + 
+ productId);
+ }
+ LOG.info("Will get reviews for product with id={}", 
+ productId);
+ return Mono.fromCallable(() -> internalGetReviews(productId))
+ .flatMapMany(Flux::fromIterable)
+ .log(LOG.getName(), FINE)
+ .subscribeOn(jdbcScheduler);
+}
+private List<Review> internalGetReviews(int productId) {
+ List<ReviewEntity> entityList = repository.
+ findByProductId(productId);
+ List<Review> list = mapper.entityListToApiList(entityList);
+ list.forEach(e -> e.setServiceAddress(serviceUtil.
+ getServiceAddress()));
+ LOG.debug("Response size: {}", list.size());
+ return list;
+}
+----
++
+Here, the blocking code is placed in the internalGetReviews() method and is wrapped 
+in a Mono object using the Mono.fromCallable() method. The getReviews() method uses 
+the subscribeOn() method to run the blocking code in a thread from the thread pool of 
+jdbcScheduler.
+
+we can look at the log output from the review service and 
+see proof that SQL statements are run in threads from the scheduler’s dedicated pool. We will be able 
+to see log output like this:
+
+images::{figures}/reactive-programmig-blocking-code-log.png[]
+
+From the preceding log output, we can see the following:
+
+• The first log output is from the LOG.info() call in the getReviews() method and it is executed 
+on an HTTP thread, named ctor-http-nio-4, a thread used by WebFlux.
+• In the second log output, we can see the SQL statement generated by Spring Data JPA, using 
+Hibernate under the hood. The SQL statement corresponds to the method call repository.
+findByProductId(). It is executed on a thread named jdbc-pool-1, meaning it is executed in 
+a thread from the dedicated thread pool for blocking code, as expected!
+
+=== 
 === DEFINING Timeouts FOR WEBCLIENT
 Project Reactor provides a timeout() operator you can use to define a time limit for
 completing an operation. You can chain it with the result of the WebClient call to continue the reactive stream. 
@@ -200,6 +1529,7 @@ public Mono<Book> getBookByIsbn(String isbn) {
             .onErrorResume(WebClientResponseException.NotFound.class, exception -> Mono.empty())
 }
 ----
+
 === DEFINING RETRIES FOR WEBCLIENT
 Project Reactor provides a retryWhen() operator to retry an operation when it fails.
 The position where you apply it to the reactive stream matters.

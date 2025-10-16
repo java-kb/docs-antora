@@ -1,7 +1,16 @@
 = Message Queuing
 :figures: 10-message-queuing
 
-:figures: 10-message-queuing
+Messaging systems handle messages that typically consist of headers and a body. An event is a message 
+that describes something that has happened. For events, the message body can be used to describe 
+the type of event, the event data, and a timestamp for when the event occurred.
+
+An event is, defined by the following:
+
+• The type of event, for example, a create or delete event
+• A key that identifies the data, for example, a product ID
+• A data element, that is, the actual data in the event
+• A timestamp, which describes when the event occurred
 
 Message queuing is a communication pattern that allows different components of a system to communicate asynchronously by sending messages through a message broker. This pattern is particularly useful in distributed systems, where components may be running on different servers or even in different geographical locations.
 
@@ -15,6 +24,7 @@ Message queuing is often implemented using message brokers or message queues, wh
 Message queuing is a powerful pattern that enables asynchronous communication between components in a distributed system. It allows for greater flexibility, scalability, and reliability, making it a popular choice for building modern applications.
 
 Event processing platforms like RabbitMQ and Kafka are responsible for collecting events from the producers, routing, and distributing them to the interested consumers.
+
 == AMQP
 When using an AMQP-based solution like RabbitMQ, the actors involved in the inter-
 action can be categorized as follows:
@@ -55,6 +65,184 @@ Popular message brokers used in cloud native applications include Apache Kafka, 
 
 In summary, message queuing is a fundamental pattern in cloud native applications that enables asynchronous communication between services. It provides the necessary decoupling, scalability, and reliability needed to build modern applications that can handle varying workloads and adapt to changing requirements. By leveraging message brokers, cloud native applications can achieve greater flexibility and resilience, making them well-suited for the dynamic nature of cloud environments. 
 
+== Handling challenges with messaging
+
+Even though sending asynchronous messages is preferred over synchronous API calls, it comes with 
+challenges of its own. 
+=== Consumer groups
+The problem here is, if we scale up the number of instances of a message consumer, for example, if 
+we start two instances of the product microservice, both instances of the product microservice will 
+consume the same messages, as illustrated by the following diagram:
+
+images::{figures}/Microservices-with-Spring-Boot-and-Spring-Cloud-event-driven-consumer-groups-challenge.png[ Products #1 and #2 consuming the same messages]
+
+This could result in one message being processed two times, potentially leading to duplicates or other 
+undesired inconsistencies in the database. Therefore, we only want one instance per consumer to 
+process each message. This can be solved by introducing a consumer group, as illustrated by the 
+following diagram:
+
+images::{figures}/Microservices-with-Spring-Boot-and-Spring-Cloud-event-driven-consumer-groups-solution.png[ Consumer group]
+
+In Spring Cloud Stream, a consumer group can be configured on the consumer side. For example, for 
+the product microservice, it will look like this:
+[source,yml,attributes]
+----
+spring.cloud.stream:
+ bindings.messageProcessor-in-0:
+ destination: products
+ group: productsGroup
+----
+From this configuration, we can learn the following:
+
+• Spring Cloud Stream applies, by default, a naming convention for binding a configuration to a 
+function. For messages sent to a function, the binding name is <functionName>-in-<index>:
+• functionName is the name of the function, messageProcessor in the preceding example.
+• index is set to 0, unless the function requires multiple input or output arguments. We 
+will not use multi-argument functions, so index will always be set to 0 in our examples.
+• For outgoing messages, the binding name convention is <functionName>-out-<index>.
+• The destination property specifies the name of the topic that messages will be consumed 
+from, products in this case.
+• The group property specifies what consumer group to add instances of the product microservice to, productsGroup in this example. This means that messages sent to the products topic will 
+only be delivered by Spring Cloud Stream to one of the instances of the product microservice.
+
+=== Retries and dead-letter queues
+If a consumer fails to process a message, it may be re-queued for the failing consumer until it is suc-
+cessfully processed. If the content of the message is invalid, also known as a poisoned message, the 
+message will block the consumer from processing other messages until it is manually removed. If the 
+failure is due to a temporary problem, for example, the database can’t be reached due to a temporary 
+network error, the processing will probably succeed after a number of retries.
+It must be possible to specify the number of retries until a message is moved to another storage 
+for fault analysis and correction. A failing message is typically moved to a dedicated queue called a 
+dead-letter queue. To avoid overloading the infrastructure during temporary failure, for example, a 
+network error, it must be possible to configure how often retries are performed, preferably with an 
+increasing length of time between each retry.
+In Spring Cloud Stream, this can be configured on the consumer side, for example, for the product
+microservice, as shown here:
+[source,yml,attributes]
+----
+spring.cloud.stream.bindings.messageProcessor-in-0.consumer:
+ maxAttempts: 3
+ backOffInitialInterval: 500
+ backOffMaxInterval: 1000
+ backOffMultiplier: 2.0
+spring.cloud.stream.rabbit.bindings.messageProcessor-in-0.consumer:
+ autoBindDlq: true
+ republishToDlq: true
+spring.cloud.stream.kafka.bindings.messageProcessor-in-0.consumer:
+ enableDlq: true
+----
+In the preceding example, we specify that Spring Cloud Stream should perform 3 retries before placing 
+a message on the dead-letter queue. The first retry will be attempted after 500 ms and the two other 
+attempts after 1000 ms.
+Enabling the use of dead-letter queues is binding-specific; therefore, we have one configuration for 
+RabbitMQ and one for Kafka.
+
+=== Guaranteed order and partitions
+If the business logic requires that messages are consumed and processed in the same order as they 
+were sent, we cannot use multiple instances per consumer to increase processing performance; for 
+example, we cannot use consumer groups. This might, in some cases, lead to an unacceptable latency 
+in the processing of incoming messages.
+
+We can use partitions to ensure that messages are delivered in the same order as they were sent but 
+without losing performance and scalability.
+
+In most cases, strict order in the processing of messages is only required for messages that affect the 
+same business entities. For example, messages affecting the product with product ID 1 can, in many 
+cases, be processed independently of messages that affect the product with product ID 2. This means 
+that the order only needs to be guaranteed for messages that have the same product ID.
+
+The solution to this is to make it possible to specify a key for each message, which the messaging 
+system can use to guarantee that the order is kept between messages with the same key. This can be 
+solved by introducing sub-topics, also known as partitions, in a topic. The messaging system places 
+messages in a specific partition based on its key.
+
+Messages with the same key are always placed in the same partition. The messaging system only 
+needs to guarantee the delivery order for messages in the same partition. To ensure the order of the 
+messages, we configure one consumer instance per partition within a consumer group. By increasing 
+the number of partitions, we can allow a consumer to increase its number of instances. This increas-
+es its message-processing performance without losing the delivery order. This is illustrated in the 
+following diagram:
+
+images::{figures}/Microservices-with-Spring-Boot-and-Spring-Cloud-event-driven-guaranteed-order-and-partitions.png[Specifying keys for messages]
+
+As seen in the preceding diagram, all messages with the Key set to 123 always go to the Products-1, 
+partition while messages with the Key set to 456 go to the Products-2 partition.
+
+In Spring Cloud Stream, this needs to be configured on both the publisher and consumer sides. On 
+the publisher side, the key and number of partitions must be specified. For example, for the product-
+composite service, we have the following:
+[source,yml,attributes]
+----
+spring.cloud.stream.bindings.products-out-0.producer:
+ partition-key-expression: headers['partitionKey']
+ partition-count: 2
+----
+
+This configuration means that the key will be taken from the message header with the name 
+partitionKey and that two partitions will be used.
+Each consumer can specify which partition it wants to consume messages from. For example, for the 
+product microservice, we have the following:
+[source,yml,attributes]
+----
+spring.cloud.stream.bindings.messageProcessor-in-0:
+ destination: products
+ group:productsGroup
+ consumer:
+ partitioned: true
+ instance-index: 0
+This configuration tells Spring Cloud Stream that this consumer will only consume messages from 
+partition number 0, that is, the first partition.
+----
+
+
+== Samples
+[tabs]
+======
+
+CaveatEmptor::
++
+[tabs]
+====
+
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Multiplication microservices::
++
+[source, java]
+----
+----
+
+Microservices with Spring Boot 3 and Spring Cloud::
++
+The composite service will publish create and delete events on each core service 
+topic and then return an OK response back to the caller without waiting for processing to take place 
+in the core services.
++
+images::{figures}/Microservices-with-Spring-Boot-and-Spring-Cloud-event-driven.png[The createCompositeProduct and deleteCompositeProduct parts of the landscape]
++
+To implement the event-driven create and delete services, we will use Spring Cloud Stream.
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
 == Examples
 
 * https://github.com/spring-kb/logging-spring-rabbitmq-logging[A Simple Solution for Log Centralization Using Spring and RabbitMQ]

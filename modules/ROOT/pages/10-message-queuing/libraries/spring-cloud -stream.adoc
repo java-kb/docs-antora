@@ -1,0 +1,184 @@
+= Spring Cloud Stream
+
+Spring Cloud Stream is based on the publish and subscribe pattern, where a publisher publishes 
+messages to topics and subscribers subscribe to topics they are interested in receiving messages from.
+
+==  RabbitMQ and Kafka dependencies
+To bring in Spring Cloud Stream and its binders for RabbitMQ and Kafka, we need to add the two 
+starter dependencies known as spring-cloud-starter-stream-rabbit and spring-cloud-starter-
+stream-kafka. We also need a test dependency, spring-cloud-stream::test-binder, to bring in test support. 
+
+To specify what version of Spring Cloud we want to use, we first declare a variable for the version:
+
+Next, we use the variable to set up dependency management for the specified Spring Cloud version, 
+as seen here:
+
+[tabs]
+====
+Maven::
++
+[source, xml]
+----
+----
+
+Gradle::
++
+[source, gradle]
+----
+ext {
+ springCloudVersion = "2022.0.1"
+}
+dependencyManagement {
+ imports {
+ mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+ }
+}
+
+dependencies {
+ implementation 'org.springframework.cloud:spring-cloud-starter-stream-rabbit'
+ implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
+ testImplementation 'org.springframework.cloud:spring-cloud-stream::test-binder'
+}
+----
+====
+
+== StreamBridge
+The programming model is based on a functional paradigm, where functions implementing one of 
+the functional interfaces Supplier, Function, or Consumer in the java.util.function package can 
+be chained together to perform decoupled event-based processing. To trigger such functional-based 
+processing externally, from non-functional code, the helper class StreamBridge can be used.
+For example, to publish the body of an HTTP request to a topic, we only have to write the following:
+[source,java,attributes]
+----
+@Autowired
+private StreamBridge streamBridge;
+@PostMapping
+void sampleCreateAPI(@RequestBody String body) {
+ streamBridge.send("topic", body);
+}
+----
+
+The helper class StreamBridge is used to trigger the processing. It will publish a message on a topic. A 
+function that consumes events from a topic (not creating new events) can be defined by implementing 
+the functional interface java.util.function.Consumer as:
+[source,java,attributes]
+----
+@Bean
+public Consumer<String> mySubscriber() {
+ return s -> System.out.println("ML RECEIVED: " + s);
+}
+----
+
+To tie the various functions together, we use configuration
+
+== Defining topics and events
+
+[tabs]
+======
+
+CaveatEmptor::
++
+[tabs]
+====
+
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Multiplication microservices::
++
+[source, java]
+----
+----
+
+Microservices with Spring Boot 3 and Spring Cloud::
++
+We will use one topic per type of entity: products, recommendations, and reviews.
++
+The event class we will use looks as follows:
++
+• The Event class is a generic class parameterized over the types of its key and data fields, K and T
+• The event type is declared as an enumerator with the allowed values, that is, CREATE and DELETE
+• The class defines two constructors, one empty and one that can be used to initialize the type, 
+key, and value members
+• Finally, the class defines getter methods for its member variables
+[tabs]
+====
+Event.java::
++
+[source, java]
+----
+package se.magnus.api.event;
+
+import static java.time.ZonedDateTime.now;
+
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.ser.ZonedDateTimeSerializer;
+import java.time.ZonedDateTime;
+
+public class Event<K, T> {
+
+  public enum Type {
+    CREATE,
+    DELETE
+  }
+
+  private final Type eventType;
+  private final K key;
+  private final T data;
+  private final ZonedDateTime eventCreatedAt;
+
+  public Event() {
+    this.eventType = null;
+    this.key = null;
+    this.data = null;
+    this.eventCreatedAt = null;
+  }
+
+  public Event(Type eventType, K key, T data) {
+    this.eventType = eventType;
+    this.key = key;
+    this.data = data;
+    this.eventCreatedAt = now();
+  }
+
+  public Type getEventType() {
+    return eventType;
+  }
+
+  public K getKey() {
+    return key;
+  }
+
+  public T getData() {
+    return data;
+  }
+
+  @JsonSerialize(using = ZonedDateTimeSerializer.class)
+  public ZonedDateTime getEventCreatedAt() {
+    return eventCreatedAt;
+  }
+}
+----
+====
+
+Polar Book Shop::
++
+[source, java]
+----
+----
+======

@@ -88,7 +88,7 @@ relationships (and perhaps their attributes). This kind of object-oriented model
 entities from the problem domain, encompassing only those entities that are of inter-
 est to the user, is called a domain model. It’s an abstract view of the real world.
 
-image::{figures}/image.png[class diagram of a typical online auction model]
+//image::{figures}/image.png[class diagram of a typical online auction model]
 
 Instead of using an object-oriented model, engineers and architects may start the
 application design with a data model. This can be expressed with an entity-relationship diagram, and it will contain the CATEGORY, ITEM, and USER entities, together with the
@@ -99,8 +99,9 @@ structure of and relationships between the business entities. We care about the 
 have to be applied to guarantee the integrity of the data (for example, the multiplicity
 of relationships included in the model) and the code procedures used to manipulate
 the data (usually not included in the model).
+
 [tabs]
-======
+===
 CaveatEmptor::
 +
 For the rest of the book, we’ll use a much more sophisticated example application—CaveatEmptor, an online auction system—to demonstrate JPA, Hibernate, and later Spring Data. (Caveat emptor means “Let the buyer beware.”)
@@ -167,8 +168,7 @@ Multiplication microservices::
 
 Polar Book Shop::
 +
-
-======
+===
 Object persistence with full ORM is most suitable for applications based on a rich
 domain model. If your application doesn’t implement complex business rules or com-
 plex interactions between entities, or if you have few entities, you may not need a

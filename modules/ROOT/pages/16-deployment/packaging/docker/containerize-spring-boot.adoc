@@ -39,8 +39,6 @@ ENTRYPOINT ["java", "-jar", "catalog-service.jar"]
 
 Gradle::
 +
-[source, gradle]
-----
 [,docker]
 ----
 FROM openjdk:17
@@ -52,7 +50,6 @@ ADD JAR_FILE=./build/libs/*.jar
 COPY ${JAR_FILE} catalog-service.jar
 
 ENTRYPOINT ["java", "-jar", "catalog-service.jar"]
-----
 ----
 ====
 
@@ -196,12 +193,13 @@ EXPOSE 8080
 ENTRYPOINT ["java", "org.springframework.boot.loader.JarLauncher"]
 ----
 ====
++
 To handle the extraction of the fat JAR file in the Dockerfile we use a multi-stage build, meaning that
 there is a first step, named builder, that handles the extraction. The second stage builds the actual
 Docker image that will be used at runtime, picking the files as required from the first stage. Using this
 technique, we can handle all packaging logic in the Dockerfile but, at the same time, keep the size of
 the final Docker image to a minimum:
-
++
 1. The first stage starts with the line:
 FROM eclipse-temurin:17.0.5_8-jre-focal as builder
 From this line, we can see that a Docker image from the Temurin project is used and that it

@@ -559,3 +559,459 @@ describe('ColorChangeDirective', () => {
 });
 ----
 ====
+
+== Monitoring and controlling dependency calls using method stubs and spies
+One crucial aspect of testing in Angular applications is the ability to monitor and control dependency 
+calls. Dependencies are external resources or services that a piece of code relies on to function correctly. 
+Monitoring and controlling these dependency calls allows developers to ensure that their code interacts 
+correctly with external systems and handles different scenarios gracefully.
+
+Spies and method stubs are two powerful techniques within Angular’s testing framework that enable 
+developers to achieve this level of control. Spies allow developers to monitor function calls, record 
+information about those calls, and assert expectations about their usage. On the other hand, method 
+stubs provide a way to replace real dependencies with simplified versions, allowing developers to 
+control the behavior of those dependencies during testing.
+
+By using spies, developers can verify that the correct functions are called with the right parameters 
+and that they are called the expected number of times. This is particularly useful when testing code 
+that interacts with external APIs or databases. 
+
+Method stubs, on the other hand, enable developers 
+to simulate different scenarios and provide predefined responses to method calls. This allows for 
+thorough testing of edge cases and ensures the code’s robustness.
+
+=== Method stubs and spies
+Method stubs, also known as fake or dummy objects, are used to replace real dependencies with 
+simplified versions during testing. By providing predefined responses to method calls, method 
+substitutes enable developers to isolate and control the behavior of the code under test
+
+==== Method stubs
+
+[tabs]
+====
+In the calculator application, let’s consider a scenario in which the user performs a division operation 
+with a divisor equal to zero. We want to make sure that the application handles this scenario correctly. 
+By creating a method plug for the divide function, we can simulate the divide-by-zero scenario and 
+check that the application displays an appropriate error message.
++
+[source,javascript,attributes]
+----
+  it('should raise an exception when dividing by zero', () => {
+    spyOn(calculatorService, 'divide').and.callThrough();
+
+    expect(() => calculator.divide(10, 0))
+      .toThrowError('Cannot divide by zero');
+
+    expect(calculatorService.divide).toHaveBeenCalledWith(10, 0);
+  });
+----
++
+At present, our calculator’s division operation does not handle the exception related to division by zero.
+In our calculator.component.spec.ts test file, we’re going to add the test that allows us to 
+raise this exception. Since we’re following TDD principles, the test should fail naturally
++
+To correct this, we need to update our CalculatorService. In our present scenario, there’s a 
+clever approach to refrain from direct interaction with our core service and ensure that everything is 
+operational prior to any such action. This approach involves the utilization of a method stub concept.
++
+Basically, we’ll point our CalculatorService service at a fake service that will enable us to 
+check the correctness of the logic we want to implement before modifying the service itself. In 
+fact, this fake service will simply be a stub method that replaces the classic division of our basic 
+CalculatorService service. 
++
+we’ll declare this stub method:
++
+[source,javascript,attributes]
+----
+const calculatorServiceStub = {
+  divide: (a: number, b: number) => {
+    if (b === 0) {
+      throw new Error('Cannot divide by zero');
+    }
+    return a / b;
+  },
+};
+----
++
+Then, in the describe method, within the configureTestingModule method, we will replace 
+our CalculatorService provider with the following:
+[source,javascript,attributes]
+----
+  providers: [provideZonelessChangeDetection(),
+  {
+    provide: CalculatorService, useValue: calculatorServiceStub
+  }
+----
+
+CalculatorServiceStub::
++
+[source, javascript]
+----
+export class CalculatorServiceStub {
+    add(a: number, b: number): number {
+        return a + b;
+    }
+
+    substract(a: number, b: number): number {
+        return a - b;
+    }
+
+    multiply(a: number, b: number): number {
+        return a * b;
+    }
+
+    divide(a: number, b: number): number | Error {
+        if (b === 0) {
+            throw new Error('Cannot divide by zero');
+        }
+        return a / b;
+    }
+}
+----
+
+calculator.component.spec.ts::
++
+[source, javascript]
+----
+describe('CalculatorComponentUsingCalculatorServiceStubService', () => {
+  let calculator: CalculatorComponent;
+  let fixture: ComponentFixture<CalculatorComponent>;
+  let calculatorService: CalculatorService;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [CalculatorComponent, ColorChangeDirective],
+      providers: [provideZonelessChangeDetection(),
+      {
+        provide: CalculatorService, useClass: CalculatorServiceStub
+      }
+      ]
+    })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(CalculatorComponent);
+    calculator = fixture.componentInstance;
+    calculatorService = TestBed.inject(CalculatorService);
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(calculator).toBeTruthy();
+  });
+
+  it('should initialize result to 0', () => {
+    calculator.ngOnInit();
+    expect(calculator.result).toEqual(0);
+  });
+
+  it('should add two numbers correctly', () => {
+    spyOn(calculatorService, 'add').and.callThrough();
+    calculator.add(2, 3);
+    expect(calculatorService.add).toHaveBeenCalledWith(2, 3);
+    expect(calculator.result).toBe(5);
+  });
+
+  it('should substract two numbers correctly', () => {
+    spyOn(calculatorService, 'substract').and.callThrough();
+    calculator.substract(2, 3);
+    expect(calculatorService.substract).toHaveBeenCalledWith(2, 3);
+    expect(calculator.result).toBe(-1);
+  });
+
+  it('should multiply two numbers correctly', () => {
+    spyOn(calculatorService, 'multiply').and.callThrough();
+    calculator.multiply(2, 3);
+    expect(calculatorService.multiply).toHaveBeenCalledWith(2, 3);
+    expect(calculator.result).toBe(6);
+  });
+
+  it('should divide two numbers correctly', () => {
+    spyOn(calculatorService, 'divide').and.callThrough();
+    calculator.divide(4, 2);
+    expect(calculatorService.divide).toHaveBeenCalledWith(4, 2);
+    expect(calculator.result).toBe(2);
+  });
+
+  it('should raise an exception when dividing by zero', () => {
+    spyOn(calculatorService, 'divide').and.callThrough();
+
+    expect(() => calculator.divide(10, 0))
+      .toThrowError('Cannot divide by zero');
+
+    expect(calculatorService.divide).toHaveBeenCalledWith(10, 0);
+  });
+});
+----
+====
+
+== Injecting mocked dependencies using TestBed providers
+Mocked dependencies are simplified versions of external services or resources that mimic the behavior 
+of the actual dependencies. By injecting these mocked dependencies using TestBed providers, 
+developers can control their behavior during testing, ensuring reliable and thorough testing without 
+relying on external systems.
+
+TestBed providers enable developers to inject mocked dependencies 
+into their code. By doing so, we can create isolated and controlled testing environments, adhering to 
+the principles of TDD.
+
+By injecting mocked dependencies using TestBed providers, developers can focus on testing specific 
+units of code without worrying about the complexities of the actual dependencies. This approach 
+allows for easier debugging, improved test coverage, and better overall code quality.
+
+When configuring the testing module using TestBed.configureTestingModule, you can 
+provide a list of providers that specify the tokens for the dependencies you want to mock. You can 
+then use either the useClass or useValue property to provide a mock or stub implementation 
+for each dependency.
+
+
+[tabs]
+======
+
+Calaculator Example::
++
+Let’s consider adding the ability to calculate the square root of a number to our calculator application, 
+while still relying on our CalculatorService service. In this case, we’ll focus on the square root 
+functionality of the calculator application.
++
+Here’s an example of a mock square root service:
+[source,javascript,attributes]
+----
+export class MockSquareRootService {
+    calculateSquareRoot(value: number): number {
+        // Perform a predefined square root calculation based on the input 
+        value
+        return Math.sqrt(value);
+    }
+}
+----
++
+Next, we will configure the test module using TestBed providers to replace the real square root service 
+with the simulated version in calculator.component.spec.ts. Here’s an example of how 
+to configure the test module:
+[source,javascript,attributes]
+----
+import { MockSquareRootService } from './mock-square-root.service';
+...
+beforeEach(async () => {
+ await TestBed.configureTestingModule({
+ ...
+ providers: [{ provide: CalculatorService, useClass: 
+MockSquareRootService }]
+ }).compileComponents();
+----
++
+This configuration tells TestBed to use the mock service whenever the code under test requests an instance of the actual square root service.
++
+Now, when we run our tests for the calculator app, any code that depends on the square root service will 
+receive an instance of the mocked service. We can control the behavior of the service during testing, 
+ensuring that the calculator app correctly performs square root calculations under different scenarios. 
+Here’s some example code for the MockSquareRootService service that mimics the behavior of 
+the CalculatorService service by returning predefined square root values for different inputs:
+
+[tabs]
+====
+src/app/core/mocks/mock-square-root.service.mock.ts::
++
+[source, javascript]
+----
+export class MockSquareRootService {
+    squareRoot(value: number): number {
+        // Perform a predefined square root calculation based on the input value
+        if (value === 4) {
+            return 2;
+        } else if (value === 9) {
+            return 3;
+        } else if (value === 16) {
+            return 4;
+        } else {
+            throw new Error('Invalid input');
+        }
+    }
+}
+----
+
+src/app/calculator/calculator.component.spec.ts::
++
+[source, javascript]
+----
+describe('CalculatorComponentUsingMockSquareRootService', () => {
+  let calculator: CalculatorComponent;
+  let fixture: ComponentFixture<CalculatorComponent>;
+  let calculatorService: CalculatorService;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [CalculatorComponent, ColorChangeDirective],
+      providers: [provideZonelessChangeDetection(),
+      {
+        provide: CalculatorService, useClass: MockSquareRootService
+      }
+      ]
+    })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(CalculatorComponent);
+    calculator = fixture.componentInstance;
+    calculatorService = TestBed.inject(CalculatorService);
+    fixture.detectChanges();
+  });
+
+  it('should calculate the square root correctly', () => {
+    spyOn(calculatorService, 'squareRoot').and.callThrough();
+    calculator.squareRoot(16);
+    expect(calculatorService.squareRoot).toHaveBeenCalledWith(16);
+    expect(calculator.result).toBe(4);
+  });
+});
+----
+====
+
+Another Example::
++
+[source, java]
+----
+----
+
+======
+
+== Handling async operations
+`fakeAsync` This is an Angular utility function that lets you write tests that rely on asynchronous 
+operations synchronously. It is useful for testing code that uses observables, promises, or other 
+asynchronous operations.
+
+[tabs]
+======
+
+Calaculator Example::
++
+Let’s consider that our calculator application that performs addition, subtraction, multiplication, and 
+division now has a service that performs these operations and returns the result as an observable.
++
+First, let’s assume we have another calculator service called CalculatorAsyncService
++
+[tabs]
+====
+src/app/core/services/calculater-async.ts::
++
+[source, javascript]
+----
+import { Injectable } from '@angular/core';
+import { Observable, catchError, of, throwError } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class CalculatorAsyncService {
+  constructor() { }
+
+  add(a: number, b: number): Observable<number> {
+    return of(a + b);
+  }
+
+  subtract(a: number, b: number): Observable<number> {
+    return of(a - b);
+  }
+
+  multiply(a: number, b: number): Observable<number> {
+    return of(a * b);
+  }
+
+  divide(a: number, b: number): Observable<number> {
+    if (b === 0) {
+      return throwError(() => new Error('Cannot divide by zero'));
+    }
+    /*
+    the catchError operator is used to 
+    catch any errors that may occur during the divide operation and throw them back using 
+    the throwError function. This ensures that if an error occurs (other than division by zero, 
+    which is explicitly handled), the observable will issue an error notification.
+    */
+    return of(a / b).pipe(
+      catchError((error) => {
+        return throwError(() => error);
+      })
+    );
+  }
+}
+----
+
+src/app/core/services/calculater-async.spec.ts::
++
+[source, javascript]
+----
+import { TestBed } from '@angular/core/testing';
+
+import { provideZonelessChangeDetection } from '@angular/core';
+import { CalculatorAsyncService } from './calculater-async';
+
+describe('CalculatorAsyncService', () => {
+  let service: CalculatorAsyncService;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [],
+      providers: [provideZonelessChangeDetection()
+      ]
+    })
+      .compileComponents();
+    service = TestBed.inject(CalculatorAsyncService);
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+
+  it('should add two numbers', async () => {
+    let result = 0;
+    service.add(1, 2).subscribe((val: number) => {
+      result = val;
+    });
+    expect(result).toBe(3);
+  });
+
+  it('should subtract two numbers', async () => {
+    let result = 0;
+    service.subtract(5, 3).subscribe((val: number) => {
+      result = val;
+    });
+
+    expect(result).toBe(2);
+  });
+
+  it('should multiply two numbers', async () => {
+    let result = 0;
+    service.multiply(3, 4).subscribe((val: number) => {
+      result = val;
+    });
+
+    expect(result).toBe(12);
+  });
+
+  it('should divide two numbers', async () => {
+    let result = 0;
+    service.divide(10, 2).subscribe((val: number) => {
+      result = val;
+    });
+
+    expect(result).toBe(5);
+  });
+
+  it('should throw an error when dividing by zero', async () => {
+    let error = { message: '' };
+    service.divide(10, 0).subscribe({
+      error: (err) => (error = err),
+    });
+    expect(error).toBeTruthy();
+    expect(error.message).toBe('Cannot divide by zero');
+  });
+});
+----
+====
+
+Another Example::
++
+[source, java]
+----
+----
+
+======
