@@ -378,7 +378,7 @@ it('should initialize result to 0', () => {
 ====
 
 == Testing Services
-=== Testing testing methods
+=== Testing methods
 
 [tabs]
 ====
@@ -1013,5 +1013,289 @@ Another Example::
 [source, java]
 ----
 ----
+======
 
+== Testing Angular pipe
+
+[tabs]
+======
+
+Calaculator Example::
++
+Our calculator application is a simple tool that performs basic arithmetic operations, including 
+addition, subtraction, multiplication, and division. Let’s suppose we have a feature that allows us to 
+represent a number as a percentage. To do this, we will be using a pipe. We’ll call our pipe percent.
++
+Following the principles of test-driven development (TDD), we will create a test suite that includes 
+the following tests:
++
+• A test that formats a positive number to a percentage string
+• A test that formats a negative number to a percentage string
+• A test that formats a decimal number to a percentage string
+• A test that formats a non-number to a percentage string
++
+[tabs]
+====
+src/app/core/pipes/percent-pipe.ts::
++
+[source, javascript]
+----
+import { Pipe, PipeTransform } from '@angular/core';
+
+@Pipe({
+  name: 'percent'
+})
+export class PercentPipe implements PipeTransform {
+
+  transform(value: number, ...args: unknown[]): string {
+    if (isNaN(value)) {
+      return 'Error';
+    }
+    const formattedValue = value * 100;
+    return formattedValue + '%';
+  }
+
+}
+
+----
+
+src/app/core/pipes/percent-pipe.spec.ts::
++
+[source, javascript]
+----
+import { PercentPipe } from "./percent-pipe";
+
+describe('PercentPipe', () => {
+  it('create an instance', () => {
+    const pipe = new PercentPipe();
+    expect(pipe).toBeTruthy();
+  });
+
+  it('should format a positive number to a percentage string', () => {
+    const input = 123;
+    const output = new PercentPipe().transform(input);
+    expect(output).toBe('12300%');
+  });
+
+  it('should format a negative number to a percentage string', () => {
+    const input = -123;
+    const output = new PercentPipe().transform(input);
+    expect(output).toBe('-12300%');
+  });
+
+  it('should format a decimal number to a percentage string', () => {
+    const input = 123.45;
+    const output = new PercentPipe().transform(input);
+    expect(output).toBe('12345%');
+  });
+
+  it('should return an Error when the value is not a number NaN', () => {
+    const input = NaN;
+    const output = new PercentPipe().transform(input);
+    expect(output).toBe('Error');
+  });
+
+});
+
+----
+====
+
+Another Example::
++
+[source, java]
+----
+----
+======
+
+
+== Testing reactive form
+Testing Angular forms involves verifying that the form fields are correctly bound to the model, validating the input, and handling form submissions. By testing forms, developers can ensure that the form behaves as 
+expected and provides a seamless user experience.
+
+[tabs]
+======
+
+Calaculator Example::
++
+we will discuss how to implement a reactive form user interface for our calculator app. 
+We will use TDD to ensure that our form is valid and that our calculator componen
++
+[tabs]
+====
+src/app/calculator/calculator.component.ts::
++
+[source, javascript]
+----
+import { Component } from '@angular/core';
+import { CalculatorService } from '../core/services/calculator.service';
+import { ColorChangeDirective } from '../core/directives/color-change-directive';
+import { PercentPipe } from '../core/pipes/percent-pipe';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+
+@Component({
+  selector: 'app-calculator',
+  imports: [ColorChangeDirective, PercentPipe, ReactiveFormsModule],
+  templateUrl: './calculator.component.html',
+  styleUrl: './calculator.component.css',
+  standalone: true
+})
+export class CalculatorComponent {
+
+  calculatorForm!: FormGroup;
+
+
+  result!: number;
+  color = 'red';
+
+  constructor(private calculatorService: CalculatorService) {
+    this.calculatorForm = new FormGroup({
+      operand1: new FormControl(null, [Validators.required]),
+      operand2: new FormControl(null, [Validators.required]),
+      operator: new FormControl(null, [Validators.required]),
+    });
+  }
+
+  ngOnInit(): void {
+    this.result = 0;
+  }
+  
+  calculate(): void {
+    if (this.calculatorForm.get('operator')?.value === '+') {
+      this.add(
+        this.calculatorForm.get('operand1')?.value,
+        this.calculatorForm.get('operand2')?.value
+      );
+    }
+
+    if (this.calculatorForm.get('operator')?.value === '-') {
+      this.substract(
+        this.calculatorForm.get('operand1')?.value,
+        this.calculatorForm.get('operand2')?.value
+      );
+    }
+
+    if (this.calculatorForm.get('operator')?.value === '*') {
+      this.multiply(
+        this.calculatorForm.get('operand1')?.value,
+        this.calculatorForm.get('operand2')?.value
+      );
+    }
+
+    if (this.calculatorForm.get('operator')?.value === '/') {
+      this.divide(
+        this.calculatorForm.get('operand1')?.value,
+        this.calculatorForm.get('operand2')?.value
+      );
+    }
+  }
+
+  add(a: number, b: number): void {
+    this.result = this.calculatorService.add(a, b);
+  }
+
+  substract(a: number, b: number): void {
+    this.result = this.calculatorService.substract(a, b);
+  }
+
+  multiply(a: number, b: number): void {
+    this.result = this.calculatorService.multiply(a, b);
+  }
+
+  divide(a: number, b: number): void {
+    this.result = this.calculatorService.divide(a, b);
+  }
+
+  squareRoot(a: number) {
+    this.result = this.calculatorService.squareRoot(a);
+  }
+}
+----
+
+src/app/calculator/calculator.component.spec.ts::
++
+[source, javascript]
+----
+describe('Testing CalculatorComponent Form', () => {
+  let calculator: CalculatorComponent;
+  let fixture: ComponentFixture<CalculatorComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [CalculatorComponent],
+      providers: [provideZonelessChangeDetection(),
+        CalculatorService
+      ]
+    })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(CalculatorComponent);
+    calculator = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should be valid when all of the fields are filled in correctly',
+    () => {
+      calculator.calculatorForm.get('operand1')?.setValue(123);
+      calculator.calculatorForm.get('operand2')?.setValue(456);
+      calculator.calculatorForm.get('operator')?.setValue('+');
+
+      expect(calculator.calculatorForm.valid).toBe(true);
+    });
+
+  it('should be invalid when one of the field is not filled in correctly', () => {
+    calculator.calculatorForm.get('operand1')?.setValue(123);
+    calculator.calculatorForm.get('operator')?.setValue('+');
+
+    expect(calculator.calculatorForm.valid).toBe(false);
+  });
+
+  it('should be added when the + operator is selected and the calculate button is clicked', () => {
+    calculator.calculatorForm.get('operand1')?.setValue(2);
+    calculator.calculatorForm.get('operand2')?.setValue(3);
+    calculator.calculatorForm.get('operator')?.setValue('+');
+
+    calculator.calculate();
+    
+    expect(calculator.result).toBe(5);
+  });
+
+  it('should subtract when the - operator is selected and the calculate button is clicked', () => {
+    calculator.calculatorForm.get('operand1')?.setValue(2);
+    calculator.calculatorForm.get('operand2')?.setValue(3);
+    calculator.calculatorForm.get('operator')?.setValue('-');
+
+    calculator.calculate();
+
+    expect(calculator.result).toBe(-1);
+  });
+
+
+  it('should multiply when the * operator is selected and the calculate button is clicked', () => {
+    calculator.calculatorForm.get('operand1')?.setValue(2);
+    calculator.calculatorForm.get('operand2')?.setValue(3);
+    calculator.calculatorForm.get('operator')?.setValue('*');
+
+    calculator.calculate();
+
+    expect(calculator.result).toBe(6);
+  });
+
+  it('should divide when the / operator is selected and the calculation button is clicked.', () => {
+    calculator.calculatorForm.get('operand1')?.setValue(3);
+    calculator.calculatorForm.get('operand2')?.setValue(2);
+    calculator.calculatorForm.get('operator')?.setValue('/');
+
+    calculator.calculate();
+
+    expect(calculator.result).toBe(1.5);
+  });
+});
+----
+====
+
+Another Example::
++
+[source, java]
+----
+----
 ======

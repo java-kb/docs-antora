@@ -1,0 +1,552 @@
+= Cypress
+
+Designed for web development and test automation, Cypress is a JavaScript-based E2E testing framework 
+that streamlines both web and API testing.
+
+Cypress is an open source, JavaScript-based E2E testing framework specifically designed for modern 
+web applications. It offers a developer-friendly approach to automating web UI tests, streamlining 
+the process for both frontend developers and QA engineers.
+
+key advantages of using Cypress for your web application testing:
+
+• Simplified setup: Compared to other tools such as Selenium, Cypress requires minimal 
+configuration. It often involves just installing the package and writing tests in JavaScript.
+• Fast and efficient: Cypress runs tests directly in the browser, eliminating the need for separate 
+WebDriver setup and browser launching. This makes tests execute significantly faster, improving 
+development and testing workflows.
+• Automatic waiting: Cypress handles waiting for elements to load and become interactive 
+automatically. You don’t need to write explicit waits or sleeps into your tests, reducing code
+complexity and making tests more robust.
+• Easy debugging: Cypress provides a visual debugger that allows you to step through your tests, 
+inspect element properties, and identify issues quickly. This streamlines the debugging process.
+• Time-travel debugging: With Cypress’s time-travel debugging feature, you can rewind or 
+fast-forward a test execution to pinpoint the exact moment when a failure occurs, making 
+troubleshooting more efficient.
+• Cross-browser compatibility: Cypress supports testing across different browsers (Chrome, 
+Firefox, Edge, etc.) out of the box. You can configure tests to run on various browsers or use a 
+CI platform to automate browser testing.
+• Integration with development tools: Cypress integrates seamlessly with popular developer tools 
+such as DevTools, allowing you to leverage existing debugging skills within the testing environment.
+• Active community and support: Cypress has a large and active community offering extensive 
+documentation, tutorials, and support resources. This makes it easier to learn it, use it, and 
+get help when needed.
+
+== Installing Cypress
+open your terminal and navigate to your Angular project’s 
+root directory. Run the following command to install Cypress as a dev dependency:
+
+npm install cypress --save-dev
+
+== Configuring Cypress
+- After installing Cypress, run the following command in your terminal from your project root:
+
+npx cypress open
+
+- You will now see your browser launch and it will present the interface
+
+- Click on Continue, and you’ll be redirected to the following interface:
+
+- Choose E2E Testing and you’ll now be redirected to the interface
+
+- After clicking on Continue, you will see this interface to choose your preferred browser for 
+E2E testing,
+
+These files are part of a Cypress testing setup for a web application. Let’s break down what 
+each file does:
+
+- cypress.config.ts: The cypress.config.ts file allows you to customize Cypress 
+to fit the needs of your project, including setting up proxy configurations, configuring network 
+requests, and specifying custom command line flags.
+- cypress/support/e2e.ts: This file typically contains global commands and utilities 
+that are available across all your E2E tests. It’s a place where you can define functions that 
+perform common actions, like logging in, navigating between pages, or interacting with 
+elements in a consistent way. By defining these commands here, you ensure they’re available 
+in every test file without needing to redefine them.
+- cypress/support/commands.ts: Similar to e2e.ts, the commands.ts file is 
+used to extend Cypress’s built-in commands with custom ones. This file is specifically focused 
+on adding new commands that can be used within your test suites. These commands can 
+encapsulate complex interactions or sequences of actions that you find yourself repeating 
+across multiple tests. Defining custom commands helps keep your tests DRY (Don’t Repeat 
+Yourself), making them easier to maintain and understand.
+- cypress/fixtures/example.json: The fixtures folder is used to store JSON files 
+that contain data used in your tests. These could be mock API responses, sample data for 
+seeding databases, or any other static data required for your tests to run. The example.
+json file would be one such fixture file, containing example data that your tests might need 
+to interact with.These files are part of a Cypress testing setup for a web application. Let’s break down what 
+each file does:
+- cypress.config.ts: The cypress.config.ts file allows you to customize Cypress 
+to fit the needs of your project, including setting up proxy configurations, configuring network 
+requests, and specifying custom command line flags.
+- cypress/support/e2e.ts: This file typically contains global commands and utilities 
+that are available across all your E2E tests. It’s a place where you can define functions that 
+perform common actions, like logging in, navigating between pages, or interacting with 
+elements in a consistent way. By defining these commands here, you ensure they’re available 
+in every test file without needing to redefine them.
+- cypress/support/commands.ts: Similar to e2e.ts, the commands.ts file is 
+used to extend Cypress’s built-in commands with custom ones. This file is specifically focused 
+on adding new commands that can be used within your test suites. These commands can 
+encapsulate complex interactions or sequences of actions that you find yourself repeating 
+across multiple tests. Defining custom commands helps keep your tests DRY (Don’t Repeat 
+Yourself), making them easier to maintain and understand.
+- cypress/fixtures/example.json: The fixtures folder is used to store JSON files 
+that contain data used in your tests. These could be mock API responses, sample data for 
+seeding databases, or any other static data required for your tests to run. The example.
+json file would be one such fixture file, containing example data that your tests might need 
+to interact with.
+
+we’re going to add this script to package.json to avoid making npx cypress open the next few times:
+
+"cypress:open": "cypress open"
+
+== Writing E2E test
+1.  You can click on Create new spec in this interface
+2. After doing that, a new file named spec.cy.ts, created in the e2e folder of your project’s cypress folder
+
+== Structuring E2E tests
+Cypress tests are structured using the describe(), context(), it(), and specify() functions:describe() function is used to group related tests, context()
+is similar to describe(), and it() and specify() are used to write individual test cases.
+
+[tabs]
+======
+
+Calaculator Example::
++
+We’re going to structure our tests around the functionality of our calculator application. Our calculator 
+performs four operations: addition, subtraction, multiplication, and division. In our e2e folder in the 
+cypress folder, we’ll create a file called calculator.cy.ts :
++
+The preceding lines of code begin with the definition of a test suite called Calculator 
+Functionality. A test suite is a set of related tests. In this case, all the tests contained in the 
+description block are linked to the functionality of a calculator.
++
+The context function is used to group together related tests. Here, it groups all tests related to the 
+calculator’s Addition and Subtraction functions.
++
+The it function defines an individual test scenario. Here, it defines a test case for the addition of two 
+positive numbers or two negative numbers and their subtraction.
++
+This code sets up a structure for testing the addition, subtraction, multiplication, and division 
+functionalities of a calculator application. Each operation has its own group of tests, and each test 
+case describes a specific scenario.
++
+[tabs]
+====
+cypress/e2e/calculator.cy.ts::
++
+[source, javascript]
+----
+describe('Calculator Functionality', () => {
+  context('Addition', () => {
+    it('adds two positive numbers correctly', () => {
+    });
+
+    it('adds two negative numbers correctly', () => {
+    });
+
+    it('adds one positive number and one negative number correctly', () => {
+
+    });
+
+    it('adds two positive numbers correctly', () => {
+
+    });
+  });
+
+  context('Subtraction', () => {
+    it('subtracts two positive numbers correctly', () => {
+    });
+
+    it('subtracts two negative numbers correctly', () => {
+    });
+
+    it('subtracts one positive number and one negative number correctly', () => {
+    });
+  });
+
+  context('Multiplication', () => {
+    it('multiplies non-zero number and zero correctly', () => {
+    });
+
+    it('multiplies two positive numbers correctly', () => {
+    });
+
+    it('multiplies two negative numbers correctly', () => {
+    });
+
+    it('multiplies one positive number and one negative number correctly', () => {
+    });
+  });
+
+  context('Division', () => {
+    it('divides a positive non-zero number by another positive non-zero number', () => {
+    });
+
+    it('divides a negative non-zero number by another positive non-zero number', () => {
+    });
+
+    it('divides a negative non-zero number by another negative non-zero number', () => {
+    });
+
+    it('divides a positive non-zero number by another negative non-zero number', () => {
+    });
+
+    it('divides a positive non-zero number by zero', () => {
+    });
+
+    it('divides a negative non-zero number by zero', () => {
+    });
+
+    it('divide zero by zero', () => {
+    });
+  });
+});
+
+it('adds two positive numbers correctly', () => {
+});
+----
+====
+
+Another Example::
++
+[source, java]
+----
+----
+======
+
+== Writing test cases
+When writing test cases, you should try to cover different scenarios, boundary cases, and potential 
+errors. 
+
+[tabs]
+======
+
+Calaculator Example::
++
+For a calculator application, you may want to test addition, subtraction, multiplication, and 
+division operations under normal conditions and in borderline cases (such as division by zero).
++
+we will see how to write the E2E test to sum two positive numbers:
+[source,javascript,attributes]
+----
+it('adds two positive numbers correctly', () => {
+    cy.visit('http://localhost:4200/');
+    cy.get('input').first().type('5');
+    cy.get('select').select('+').should('have.value', '+');
+    cy.get('input').last().type('3');
+    cy.get('button').click();
+    cy.get('p').should('have.text', '8');
+});
+----
+In the preceding code, the it() function is used to define an individual test case. The first argument 
+is a string describing what the test case is supposed to do. In this case, it is 'adds two positive 
+numbers correctly'.
++
+The cy.visit() command is used to visit a URL. Here, it’s the URL that leads to our calculator’s 
+user interface.
++
+The following line is used to enter '5' in the calculator’s first input field. The cy.get() function 
+is used to obtain elements from the DOM. The first() function is used to obtain the first element 
+of the set of corresponding elements. The type() command is used to type into a text input field.
+Then, select the + operator from the drop-down menu on our user interface and check that the selected 
+value is indeed '+'. The select() command is used to select an option from a drop-down menu. 
+The should() function is used to make statements about the state of the application.
++
+The following line is used to enter '3' in the calculator’s first input field. The cy.get() function 
+is used to obtain DOM elements. The last() function is used to obtain the last element of the set 
+of corresponding elements. The type() command is used to type into a text input field.
++
+Then, click on the button to perform the calculation. The click() command is used to simulate a 
+mouse click.
++
+Finally, the last line of code checks that the result of the calculation ('8') is displayed correctly. The 
+should() function is again used to make this assertion.
+
+[tabs]
+====
+
+src/app/calculator/calculator.component.html::
++
+[source, html]
+----
+<form [formGroup]="calculatorForm">
+  <input type="number" formControlName="operand1" />
+  <input type="number" formControlName="operand2" />
+  <select formControlName="operator">
+    <option value="+">+</option>
+    <option value="-">-</option>
+    <option value="*">*</option>
+    <option value="/">/</option>
+  </select>
+  <button (click)="calculate()" [disabled]="calculatorForm.invalid">
+    Calculate
+  </button>
+  <p [colorChange]="color">{{ result }}</p>
+</form>
+----
+
+cypress/e2e/calculator.cy.ts::
++
+[source, javascript]
+----
+describe('Calculator Functionality', () => {
+    context('Addition', () => {
+        it('adds two positive numbers correctly', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('5');
+            cy.get('select').select('+').should('have.value', '+');
+            cy.get('input').last().type('3');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '8');
+        });
+
+        it('adds two negative numbers correctly', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('-5');
+            cy.get('select').select('+').should('have.value', '+');
+            cy.get('input').last().type('-3');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '-8');
+        });
+
+        it('adds one positive number and one negative number correctly', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('5');
+            cy.get('select').select('+').should('have.value', '+');
+            cy.get('input').last().type('-3');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '2');
+        });
+
+        it('adds two positive numbers correctly', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('5');
+            cy.get('select').select('+').should('have.value', '+');
+            cy.get('input').last().type('-3');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '2');
+        });
+    });
+
+    context('Subtraction', () => {
+        it('subtracts two positive numbers correctly', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('5');
+            cy.get('select').select('-').should('have.value', '-');
+            cy.get('input').last().type('3');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '2');
+        });
+
+        it('subtracts two negative numbers correctly', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('-5');
+            cy.get('select').select('-').should('have.value', '-');
+            cy.get('input').last().type('-3');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '-2');
+        });
+
+        it('subtracts one positive number and one negative number correctly', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('5');
+            cy.get('select').select('-').should('have.value', '-');
+            cy.get('input').last().type('-3');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '8');
+        });
+    });
+
+    context('Multiplication', () => {
+        it('multiplies non-zero number and zero correctly', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('5');
+            cy.get('select').select('*').should('have.value', '*');
+            cy.get('input').last().type('0');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '0');
+        });
+
+        it('multiplies two positive numbers correctly', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('5');
+            cy.get('select').select('*').should('have.value', '*');
+            cy.get('input').last().type('3');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '15');
+        });
+
+        it('multiplies two negative numbers correctly', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('-5');
+            cy.get('select').select('*').should('have.value', '*');
+            cy.get('input').last().type('-3');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '15');
+        });
+
+        it('multiplies one positive number and one negative number correctly', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('-5');
+            cy.get('select').select('*').should('have.value', '*');
+            cy.get('input').last().type('3');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '-15');
+        });
+    });
+
+    context('Division', () => {
+        it('divides a positive non-zero number by another positive non-zero number', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('5');
+            cy.get('select').select('/').should('have.value', '/');
+            cy.get('input').last().type('2');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '2.5');
+        });
+
+        it('divides a negative non-zero number by another positive non-zero number', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('-5');
+            cy.get('select').select('/').should('have.value', '/');
+            cy.get('input').last().type('2');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '-2.5');
+        });
+
+        it('divides a negative non-zero number by another negative non-zero number', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('-5');
+            cy.get('select').select('/').should('have.value', '/');
+            cy.get('input').last().type('-2');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '2.5');
+        });
+
+        it('divides a positive non-zero number by another negative non-zero number', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('5');
+            cy.get('select').select('/').should('have.value', '/');
+            cy.get('input').last().type('-2');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '-2.5');
+        });
+
+        it('divides a positive non-zero number by zero', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('5');
+            cy.get('select').select('/').should('have.value', '/');
+            cy.get('input').last().type('0');
+            cy.get('button').click();
+            cy.get('p').should('have.text', 'Infinity');
+        });
+
+        it('divides a negative non-zero number by zero', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('-5');
+            cy.get('select').select('/').should('have.value', '/');
+            cy.get('input').last().type('0');
+            cy.get('button').click();
+            cy.get('p').should('have.text', '-Infinity');
+        });
+
+        it('divide zero by zero', () => {
+            cy.visit('http://localhost:4200/');
+            cy.get('input').first().type('0');
+            cy.get('select').select('/').should('have.value', '/');
+            cy.get('input').last().type('0');
+            cy.get('button').click();
+            cy.get('p').should('have.text', 'NaN');
+        });
+    });
+});
+----
+====
+
+Another Example::
++
+[source, java]
+----
+----
+
+======
+
+== Using Cypress custom commands
+Cypress custom commands are user-defined actions and assertions that extend the capabilities of the 
+Cypress test framework. They enable testers to encapsulate repetitive actions, streamline automation 
+workflows, and optimize test scripts for specific needs. Custom commands can be added or replaced, 
+offering a flexible way of interacting with web applications and improving the efficiency and readability 
+of test scripts.
+
+To create a custom command in Cypress, you use the Cypress.Commands.add() method. This 
+method lets you define a new command that can be used throughout your test suite.
+
+[tabs]
+======
+
+Calaculator Example::
++
+For example, we could create a custom command to test the add() operation. To achieve this, we’ll 
+add some code to the commands.ts file in the support folder contained in the cypress folder
+[tabs]
+====
+
+cypress/support/commands.ts::
++
+[source, javascript]
+----
+Cypress.Commands.add(
+    'performCalculation',
+
+    (firstNumber, operator, secondNumber) => {
+        cy.visit('http://localhost:4200/');
+        cy.get('input').first().type(firstNumber);
+        cy.get('select').select(operator).should('have.value', operator);
+        cy.get('input').last().type(secondNumber);
+        cy.get('button').click();
+    }
+);
+
+declare namespace Cypress {
+    interface Chainable<Subject = any> {
+        performCalculation(
+            firstNumber: string,
+            operator: string,
+            secondNumber: string
+        ): Chainable<any>;
+    }
+}
+----
++
+Here’s a breakdown of the code:
++
+• Cypress.Commands.add('performCalculation', (firstNumber, 
+operator, secondNumber) => {…}): This defines a new custom command named 
+performCalculation. This command takes three parameters: firstNumber, operator, 
+and secondNumber.
+• cy.get('input').first().type(firstNumber): This selects the first input 
+element on the page and enters the firstNumber value.
+• cy.get('select').select(operator).should('have.value', operator): 
+This selects a drop-down list (or selection element) and chooses the option corresponding 
+to the operator argument. It then asserts that the selected value corresponds to the operator.
+• cy.get('input').last().type(secondNumber): This selects the last input element 
+on the page and types in the secondNumber value.
+• cy.get('button').click(): This clicks on a button, presumably to perform the calculation.
+
+cypress/e2e/calculator.cy.ts::
++
+[source, javascript]
+----
+it('adds two positive numbers correctly', () => {
+ cy.performCalculation('5', '+', '3');
+ cy.get('p').should('have.text', '8');
+});
+----
+====
+
+Another Example::
++
+[source, java]
+----
+----
+
+======

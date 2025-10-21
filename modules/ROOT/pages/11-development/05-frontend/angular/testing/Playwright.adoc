@@ -1,0 +1,56 @@
+= Playwright
+
+Playwright is a modern, versatile, and powerful browser automation framework created by Microsoft. 
+It enables developers to write automated tests, scrape web data, and interact with web applications 
+using a single API that works seamlessly across multiple browsers, including Chrome, Firefox, and 
+Microsoft Edge.
+
+Playwright is a powerful, open source Node.js library for automating and testing web applications 
+on various browsers such as Chrome, Firefox, Safari, and Edge. It can also automate browser actions 
+such as clicks, form fill-ups, and page navigation. Playwright is an intuitive platform supporting 
+several programming languages such as JavaScript, TypeScript, Python, and Java. The defining feature 
+of parallelism is that you can test for multiple browsers simultaneously without the requirement of 
+writing individual tests.
+
+Playwright supports testing across multiple browsers, including Chromium, Firefox, and WebKit. 
+This ensures cross-browser compatibility and a consistent user experience.
+Playwright is known for its speed and efficiency. Its modern architecture and efficient browser 
+automation result in faster test execution compared to other frameworks, reducing the overall time 
+spent on testing.
+Playwright’s auto-wait API and advanced selector engine significantly improve test stability, reducing 
+the likelihood of flaky tests and minimizing the need for manual intervention.
+Playwright is built to handle modern web technologies, such as single-page applications (SPAs), 
+better than other frameworks. It provides native support for interacting with dynamic content, making 
+writing tests for complex applications easier.
+Unlike some other frameworks that only support specific browsers, Playwright offers a consistent 
+API for testing across multiple browsers, ensuring broader compatibility and a more comprehensive 
+testing suite.
+
+Playwright has built-in mocking that allows you to write minified E2E tests at the component level. 
+This can be particularly useful for testing complex components without having to interact with the 
+entire application.
+
+Playwright supports powerful pseudo-CSS selectors that replace the only use cases for XPath. This 
+can make your tests more readable and maintainable.
+Playwright is about 30% faster than Selenium running the same tests due to its ability to create test 
+contexts in 100 ms.
+
+Playwright requires fewer dependencies and has a more straightforward installation process compared 
+to Selenium. This means you can start writing tests more quickly and with less hassle.
+
+== Features of Playwright testing
+Let’s look at the key features of Playwright testing:
+
+• Playwright provides consistent and reliable automation across different browsers, ensuring 
+your web applications work well on all major platforms.
+• Playwright is known for its speed and efficiency, making it a great choice for testing and 
+automating web interactions.
+• You can run Playwright scripts in headless mode (without a visible browser UI) for faster 
+execution, or in headful mode for debugging and interaction.
+• Playwright offers support for popular programming languages such as TypeScript, Python, and 
+Java. This means you can write automation scripts in the language you’re most comfortable with.
+• Playwright uses native browser automation APIs to simulate user interactions accurately, 
+resulting in more reliable tests.
+
+You can leverage the full power of browser DevTools with Playwright, making it easier to inspect, 
+debug, and diagnose issues in your web applications.
