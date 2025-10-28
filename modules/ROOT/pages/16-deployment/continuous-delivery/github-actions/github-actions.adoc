@@ -21,16 +21,333 @@ actions for packaging an application into an executable, running tests, creating
 tion provides a basic set of actions, but there's also a marketplace with many more
 actions developed by the community.
 
-When using actions from the GitHub marketplace, handle them
-like any other third-party application and manage the security risks accord-
-ingly. Prefer using trusted actions provided by GitHub or verified organiza-
-tions over other third-party options.
+When using actions from the GitHub marketplace, handle them like any other third-party application and manage the security risks accordingly. Prefer using trusted actions provided by GitHub or verified organizations over other third-party options.
 
+== Setting up CI/CD pipelines for automating build with GitHub Actions
+1. create or choose a repository and project
++
+Start by selecting a repository in which you wish to set up your CI/CD pipeline. This can be an existing 
+project or a new one you’re working on.
+2. open GitHub Actions in your project repository
++
+Now, go to the GitHub Actions tab in the top navigation bar of your repository. Here, you’ll find a 
+variety of CI/CD automation templates and workflows tailored to your project’s technology stack. 
+GitHub Actions offers a wide range of predefined workflows and lets you create your own from scratch.
+3. define your CI/CD workflow
++
+choose the GitHub Actions template dedicated to yout project
 
+[tabs]
+======
+
+Calaculator Example(Angular)::
++
+1. Step 1 – create or choose a repository and project
++
+In our case, it will be this repository on GitHub: https://github.com/books-web/Mastering-Angular-Test-Driven-Development
+2. open GitHub Actions in your project repository
++
+Now, go to the GitHub Actions tab in the top navigation bar of your repository
+3. define your CI/CD workflow
++
+Our project is an Angular project, so it runs on Node.js. We’ll therefore choose the GitHub Actions 
+template dedicated to Node.js, which we’ll modify as we go along so that it meets our needs. You 
+need to search using the node keyword in the GitHub Actions template search bar, filtering by the 
+Continuous integration category.
++
+choose (Node.js By GitHub Actions). We can now click on the Configure button
++
+We can now begin the modifications. First, we’ll change the name of the file at the top to angular-tdd.yml,
++
+Next, we can modify the value of name at the beginning of our file. Instead of Node.js CI, we’ll 
+call it Angular TDD CI/CD:
++
+Next, we can change the –version: [14.x, 16.x, 18.x] array node to node-version: [18.x]:
++
+Finally, we’ll delete the last line of our file (i.e., - run: npm test) because we don’t have any tests at the moment
++
+Now, we can save the file by clicking on the Commit changes button.
++
+This workflow is designed to automate the process of installing Node.js dependencies, caching them 
+for faster future builds and building the Angular project. The following is a decomposition of the key 
+components of our workflow and their functions:
++
+• Job definition: The workflow defines a single job named build. This job runs on the latest 
+Ubuntu virtual machine provided by GitHub Actions.
+• Working directory: The defaults section sets the working directory for all stages of the 
+build job to ./Chapter 9/getting-started-angular-tdd/. This ensures that 
+commands are executed in the correct location where your Angular project is located.
+• Node.js matrix: The strategy section defines a matrix that runs the job multiple times, each 
+time with a different Node.js version. In this example, the matrix includes only one version: 
+18.x. You can expand this to include more versions for broader compatibility testing.
+• Checkout: The first step (uses: actions/checkout@v3) uses the official GitHub Actions 
+checkout action to clone the repository’s code onto the runner.
+• Set up Node.js: The second step (uses: actions/setup-node@v3) uses the official 
+GitHub Actions setup-node action to install and configure the specified Node.js version 
+(18.x) on the runner.
+• The cache parameter is set to npm to enable caching of Node.js modules between workflow 
+runs, potentially speeding up subsequent executions. cache-dependency-path is set 
+to **/package-lock.json to ensure the cache is invalidated if the package-lock.
+json file changes (indicating a change in dependencies).
+• Install dependencies: The third step (run: npm ci) runs the npm ci command to install 
+the project’s dependencies from the package-lock.json file. This ensures a consistent 
+dependency state across different environments.
+• Build the application: The fourth step (run: npm run build --if-present) 
+conditionally runs the npm run build command if it exists in the project’s package.
+json file. This allows for flexibility in different project setups, where not all projects might 
+have a build script defined.
++
+we’ll update our previous workflow for running tests. Logic dictates that tests 
+should be run before the build. Here’s the test workflow:
+test:
+ runs-on: ubuntu-latest
+ defaults:
+ run:
+ working-directory: './Chapter 9/getting-started-angular-tdd/'
+ strategy:
+ matrix:
+ node-version: [18.x]
+ # See supported Node.js release schedule at https://nodejs.
+org/en/about/releases/
+[tabs]
+====
+
+angular.json::
++
+[source, yml]
+----
+----
+
+angular.json::
++
+[source, yml]
+----
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
+            "styles": [
+              "src/styles.css"
+            ],
+            "karmaConfig": "karma.conf.js"
+          },
+          "configurations": {
+            "ci": {
+              "watch": false,
+              "progress": false,
+              "browsers": "ChromeHeadlessCI"
+            }
+          }
+        }
+----
+
+package.json::
++
+[source, yml]
+----
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "puppeteer"
+    ]
+  },
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "cypress:open": "cypress open",
+    "postinstall": "npx puppeteer browsers install"
+  },
+----
+
+karma.conf.js::
++
+[source, yml]
+----
+// Karma configuration file, see link for more information
+// https://karma-runner.github.io/1.0/config/configuration-file.html
+
+process.env.CHROME_BIN = require("puppeteer").executablePath();
+
+module.exports = function (config) {
+  config.set({
+    basePath: '',
+    frameworks: ['jasmine'],
+    plugins: [
+      require('karma-jasmine'),
+      require('karma-chrome-launcher'),
+      require('karma-firefox-launcher'),
+      require('karma-jasmine-html-reporter'),
+      require('karma-coverage'),
+      require("karma-coverage-istanbul-reporter"),
+      //require("@angular-devkit/build-angular/plugins/karma"),
+    ],
+    client: {
+      jasmine: {
+        // you can add configuration options for Jasmine here
+        // the possible options are listed at https://jasmine.github.io/api/edge/Configuration.html
+        // for example, you can disable the random execution with `random: false`
+        // or set a specific seed with `seed: 4321`
+      },
+    },
+    jasmineHtmlReporter: {
+      suppressAll: true // removes the duplicated traces
+    },
+    coverageReporter: {
+      dir: require('path').join(__dirname, './coverage/getting-started-angular-tdd'),
+      subdir: '.',
+      reporters: [
+        { type: 'html' },
+        { type: 'text-summary' }
+      ]
+    },
+    coverageIstanbulReporter: {
+      dir: require("path").join(__dirname, "../coverage"),
+      reports: ["html", "lcovonly"],
+      fixWebpackSourcePaths: true,
+    },
+    reporters: ['progress', 'kjhtml', 'coverage'],
+    browsers: ['Firefox'],
+    customLaunchers: {
+      ChromeHeadlessCI: {
+        base: "ChromeHeadless",
+        flags: ["--no-sandbox", "--disable-gpu"],
+      },
+    },
+    singleRun: false,
+    restartOnFileChange: true,
+    check: {
+      global: {
+        statements: 80,
+        branches: 80,
+        functions: 80,
+        lines: 80
+      }
+    }
+  });
+};
+
+----
+
+puppeteer.config.cjs::
++
+[source, yml]
+----
+const {join} = require('path');
+
+/**
+ * @type {import("puppeteer").Configuration}
+ */
+module.exports = {
+  cacheDirectory: join(__dirname, '.cache', 'puppeteer'),
+};
+
+----
+
+.github/workflows/angular-tdd.yml::
++
+[source, yml]
+----
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: Angular TDD CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-and-build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [24.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 10
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+    - run: pnpm install
+    - run: pnpm run --if-present test --configuration=ci
+    - run: pnpm run --if-present build
+----
+====
+
+Another Example::
++
+[source, java]
+----
+----
+
+======
+
+== Setting up CI/CD pipelines for automating the deployment process with GitHub Actions
+CD is the practice of automatically deploying changes to production as soon as they have passed through 
+the production pipeline. This includes the automated processes of testing, building, and deploying. 
+GitHub Actions supports CD, enabling you to automate these processes efficiently.
+
+To begin with, this will be a test and build stage like the other two. Deployment takes place naturally at the end of development, so the 
+same will apply to the workflow. At the end of our current workflow, just after the build, we’ll add the 
+following to deploy on a remote server:
+[source,yml,attributes]
+----
+ - name: Upload build files to remote server
+ uses: appleboy/scp-action@master
+ with:
+ host: ${{ secrets.SI_HOST }}
+ username: ${{ secrets.SI_USERNAME }}
+ password: ${{ secrets.SI_PASSWORD }}
+ port: ${{ secrets.SI_PORT }}
+ source: "[SORUCE_FOLDER]"
+ target: "[DESTINATION_TARGET_ON_YOUR_SERVER]"
+----
+
+The provided GitHub Actions workflow snippet is designed to automate the process of uploading 
+build files to a remote server. This is a common step in a CI/CD pipeline for deploying applications. 
+Here’s a breakdown of the workflow step:
+
+• appleboy/scp-action@master: This specifies that this step uses the scp-action
+action from the appleboy GitHub repository. This action is designed to securely copy files 
+from your GitHub Actions runner to a remote server using the secure copy protocol (SCP). 
+The @master tag indicates that the action should use the code from the master branch of 
+the repository.
+• host: The address of the remote server where the files will be uploaded. This value is retrieved 
+from a GitHub secret named SI_HOST.
+• username: The username for authenticating with the remote server. This value is retrieved 
+from a GitHub secret named SI_USERNAME.
+• password: The password for authenticating with the remote server. This value is retrieved 
+from a GitHub secret named SI_PASSWORD.
+• port: The port number for connecting to the remote server. This value is retrieved from a 
+GitHub secret named SI_PORT.
+• source: The path to the files that will be uploaded. In this case, it’s set to upload all files in 
+the source build directory.
+• target: The destination path on the remote server where the files will be uploaded.
+
+For other cloud-oriented platforms, GitHub Actions makes the task easier by offering deployment 
+templates for most of these platforms.
 == Create Workflows
 
-Workflows should be defined in a .github/workflows folder in a GitHub repository
-root, and they should be described following the YAML format provided by GitHub Actions.
+Workflows should be defined in a .github/workflows folder in a GitHub repository root, and they should be described following the YAML format provided by GitHub Actions.
 
 == Deployment pipeline(commit-stage)
 

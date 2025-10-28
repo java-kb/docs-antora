@@ -1,6 +1,110 @@
 = Continuous delivery
 :figures: 16-deployment/continuous-delivery
 
+==  continuous integration and deployment (CI/CD) 
+CI/CD covers a series of automated steps that streamline the software delivery pipeline, from code 
+changes made by developers to the deployment of these changes in production. By implementing CI/
+CD practices, development teams can reduce manual errors, improve collaboration between team 
+members, increase delivery speed, and improve overall software quality
+
+===  continuous integration(CI) 
+CI is a process that aims 
+to automate the integration of code changes into a shared repository, facilitating automated builds 
+and tests to quickly detect and correct problems. This practice is crucial for the early detection of bugs 
+and errors, promoting a faster feedback loop, encouraging collaboration, and improving code quality.
+
+CI is a DevOps software development practice in which developers regularly merge their code changes 
+into a central repository. After each merge, automated builds and tests are run to ensure that the new 
+code is error free and meets the project’s quality standards. This process is essential for identifying and 
+correcting bugs more quickly, improving software quality, and reducing the time needed to validate 
+and release new software updates. CI encourages frequent code integration, often several times a day, 
+so that integration problems can be identified early in the development cycle and corrected more 
+easily. It also encourages a cultural shift towards more frequent code deliveries, which is essential if 
+we are to reap the benefits of CI’s automation and efficiency.
+
+CI is the first phase of the CI/CD pipeline, part of the broader DevOps approach to software 
+development. It follows the agile software development methodology, where work is broken down 
+into small, manageable tasks that can be completed and integrated frequently. The use of CI tools, 
+such as GitHub Actions, Jenkins, Buildbot, Go, Travis CI, and GitLab CI, facilitates the automation 
+of build and test processes, making it easier for developers to integrate their changes with the rest of 
+the project and identify issues early in the development process.
+
+==== Benefits of CI for development teams
+CI offers development teams significant benefits in terms of efficiency, quality, and 
+customer satisfaction. It streamlines the development process, reduces costs, and enhances collaboration, 
+ultimately leading to the delivery of high-quality software products more quickly and reliably. 
+
+Here’s a detailed overview of these benefits:
+
+• Faster iteration and problem resolution: CI enables teams to integrate code changes more 
+frequently, speeding up iterations and facilitating problem resolution. Small code changes are 
+simpler to manage, reducing the complexity of problems that can arise.
+• Improved code quality and fewer bugs: By frequently integrating and testing code, CI enables 
+bugs to be identified and corrected early in the development cycle. The result is higher-quality 
+code with fewer defects, improving the user experience and reducing downtime.
+• Increased efficiency and reduced costs: CI-driven automation reduces manual tasks, saving 
+time for developers. This not only increases efficiency but also reduces the costs associated 
+with manual testing and error management. As a result, engineers can devote more time to 
+value-added activities.
+• Improved transparency and collaboration: CI promotes transparency by providing continuous
+feedback on code quality and integration issues. It also promotes better team collaboration by 
+ensuring that code changes are integrated and tested regularly, enabling better coordination 
+between team members.
+• Faster time to market: By automating the build, test, and deployment processes, CI enables teams 
+to deliver new features and updates to end users more quickly. This responsiveness keeps the 
+development team competitive and ensures that customers benefit from the latest enhancements.
+• Improved customer satisfaction: Fewer bugs and errors end up in production, improving the 
+user experience. CI also enables rapid response to customer feedback, enabling teams to make 
+adjustments and improvements more efficiently.
+• Reduced mean time to resolution (MTTR): CI enables problems to be detected and resolved 
+more quickly, thus reducing the MTTR. This ensures that the software remains stable and 
+reliable, minimizing downtime.
+• Increased test reliability: Continuous testing within the CI framework improves test reliability 
+by enabling more precise tests to be carried out. This ensures that the software is thoroughly 
+tested and ready for production, boosting confidence in software quality.
+• Competitive advantage: Organizations that adopt business intelligence (BI) have a competitive 
+advantage because they can deploy functionality more quickly, which in turn saves them money. 
+This early feedback and automation helps to reduce lead times, deployment frequency, and 
+change failure rates, which in turn improves business results.
+• Increased transparency and accountability within the team: CI/CD practices increase 
+transparency and accountability within the team, enabling problems to be identified and 
+resolved quickly, including construction failures and architectural setbacks. This continuous 
+feedback loop improves overall product quality.
+
+==== Key principles of CI implementation
+The key principles of CI implementation aim to improve the efficiency, quality, and speed of software 
+development. These principles guide the implementation of CI, ensuring that it becomes an integral part of the 
+software development process, Here are the key principles:
+
+• *Automate everything*: CI focuses on automating the build, test, and integration processes. 
+Automation reduces manual effort, minimizes errors, and accelerates the development cycle.
+• *Frequent integration*: Frequently integrate code changes into a shared repository, ideally 
+several times a day. This practice enables integration problems to be identified and resolved 
+early in the development cycle.
+• Make the build process fast: The build process should be as fast as possible to ensure rapid 
+feedback. Rapid construction means that problems can be detected and resolved more quickly, 
+facilitating continuous improvement.
+• Immediate feedback: CI relies on immediate feedback from automated builds and tests. This 
+feedback is essential for identifying and resolving problems early in the development process.
+• Start small and grow: Start with a simple CI configuration and gradually add other tools and 
+practices as required. This approach encourages flexibility and experimentation, allowing teams 
+to find what works best in their specific context.
+• Define success indicators: Clearly define success indicators for your CI process, such as 
+accelerated code construction or reduced error and work rates. Use these indicators to measure 
+the effectiveness of your CI practices and to guide improvements.
+• Documentation: Document the CI process and the tools used by all developers and stakeholders. 
+Good documentation ensures that everyone understands how to contribute to the CI process 
+and solve problems efficiently.
+• Collaboration between operations and development: Encourage a culture in which operations 
+and development work closely together. This collaboration is essential for understanding 
+software reliability and performance from both points of view.
+• Scalability: CI breaks down barriers to growth by automating code integration and communication, 
+allowing organizations to scale their development teams, code base, and infrastructure.
+• Investment in the learning curve: Implementing CI successfully involves learning new skills 
+in areas such as version control and automation. However, these skills are readily available, 
+and the benefits of CI outweigh the initial investment.
+
+== Continuous delivery
 Continuous delivery is a holistic approach for quickly, reliably, and safely delivering high-quality software.
 
 Continuous delivery is one of the fundamental practices we have identified that
@@ -9,6 +113,126 @@ scale, and cost optimization. It’s a holistic approach for delivering high-qua
 an application is always in a releasable state. The primary pattern for adopting continuous delivery is the deployment pipeline, which goes from code commit to
 releasable software. It should be automated as much as possible and represent the
 only path to production.
+
+=== continuous deployment (CD) 
+CD is then introduced as an extension of CI, focusing on automating the deployment process while 
+ensuring that the software is always in a releasable state. This practice enables rapid and reliable 
+releases of software in different environments, reducing the risk of deployment errors and enabling 
+faster time-to-market.
+
+CD is an automated software release practice in which code changes are automatically deployed at 
+different stages as they pass predefined tests. The aim of CD is to accelerate production releases by 
+using automation to minimize human intervention during the deployment process. This approach is 
+part of the wider DevOps practice, which aims to accelerate innovation and value creation by applying 
+automation to every stage of the SDLC.
+
+Software design requires a mix of rigorous testing, close collaboration between teams, advanced 
+tools, and workflow processes throughout the application design and development process. When 
+successfully implemented, CD enables organizations to respond quickly to customer requests and 
+deliver software updates rapidly, often within minutes of validating code changes. This process includes 
+automating build, test, and deployment in a single workflow, with the aim of automating software 
+deployment in production.
+
+The benefits of CD include fully automated deployment cycles, enabling organizations to spend more 
+time on software creation than on release preparation. It also leads to more regular, incremental 
+deployments, facilitating faster product development and a continuous improvement model. In 
+addition, CD provides rapid feedback loops on new features, updates, and code changes, enabling 
+organizations to quickly receive and integrate user feedback.
+
+CD goes further than CI, which automates everything right up to the deployment itself, requiring 
+human intervention to set up the deployment. CD automates the whole process, including the release 
+of the software itself, making it a natural evolution of CD if the pipeline is properly set up and designed 
+to test all elements of a software product before release.
+
+A CD pipeline streamlines software delivery by automatically building, testing, and deploying code 
+changes directly to production. It involves automated testing and monitoring throughout the pipeline 
+to detect potential errors, functional problems, and bugs, providing real-time alerts and preventing 
+problems from reaching the main software branch or production. This approach underlines the main 
+objective of DevOps: the CD of value to end users.
+
+In practice, this means that a change made by a developer to a cloud application can be put into 
+production within minutes of being written, provided it passes automated testing. This makes it much 
+easier to receive and integrate user feedback on an ongoing basis. However, delivering value depends 
+heavily on well-designed test automation, which can require a significant initial investment.
+
+Overall, CD is an essential aspect of the DevOps approach, enabling organizations to release software 
+updates quickly and efficiently, accelerating innovation and value creation for end-users.
+
+==== Benefits of CD for development teams
+CD offers development teams the ability to deliver software faster, ensure high quality through 
+automated testing, and maintain a responsive and agile development process. These benefits collectively 
+contribute to a more efficient, innovative, and customer-centric software development cycle. Here are the main benefits:
+
+• Fully automated deployment cycles: CD enables organizations to automate the entire
+deployment process, reducing manual intervention and allowing development teams to focus 
+more on coding and less on release preparation. This automation speeds up the deployment 
+of new features and updates, enabling teams to deliver software faster and more efficiently.
+• More regular, incremental deployments: By automating deployments, CD enables small, 
+incremental changes to be released more frequently. This approach enables faster product 
+development and facilitates a continuous improvement model, in which teams can rapidly 
+iterate on their software based on user feedback and market demands.
+• Rapid feedback loops on new features: CD provides real-time feedback on new features, 
+updates, and code changes. This immediate feedback loop is essential to enable teams to rapidly 
+adapt and improve their software, ensuring that the final product meets users’ expectations 
+and requirements.
+• Event response: The CD enables teams to react quickly to system errors in production, security 
+incidents or potential new features to be developed during web application development. 
+Immediate release of code to production enables organizations to address and resolve issues 
+more quickly, with metrics such as MTTR enabling response times to be assessed and improved 
+over time.
+• Streamlined release cycles for faster time to market: By automating the deployment process, 
+CD enables software development teams to quickly deliver new features and bug fixes to end 
+users. This automation reduces the risk of human error and enables small, frequent updates 
+to be deployed quickly, speeding up time to market and giving companies a competitive edge.
+• Early detection of problems thanks to automated testing: CD emphasizes the importance of 
+automated testing throughout the software development process. By carrying out continuous 
+testing, developers can quickly identify and resolve any potential problems, thus guaranteeing 
+the stability and reliability of the software. This early detection helps reduc
+• Continuous feedback loop for continuous improvement: CD fosters a culture of continuous 
+improvement by establishing a feedback loop between developers and end users. This iterative 
+process enables organizations to adapt and respond to changing user needs, ensuring that their 
+software remains relevant and competitive.
+• Improved collaboration and communication: CD promotes collaboration and communication 
+between team members, improving the overall efficiency of the development process. By automating 
+the deployment pipeline, developers can concentrate on their core tasks, facilitating seamless 
+integration between different teams and resulting in faster, more efficient software releases.
+
+==== Key principles of CD implementation
+Overall, CD is an essential aspect of the DevOps approach, enabling organizations to release software 
+updates quickly and efficiently, accelerating innovation and value creation for end users. The key 
+principles of CD implementation are essential to creating a streamlined and automated software 
+release process. These principles derive from a combination of agile and organizational best practices 
+aimed at delivering software to end users as quickly as possible, learning from their experience and 
+incorporating their feedback into the next release. 
+
+Implementing these principles requires a cultural change within the organization, fostering a collaborative 
+environment where everyone is encouraged to ensure that the product delivered to the end user is of 
+the highest possible quality. This means tackling tedious or error-prone tasks early on in the process 
+to avoid aggravating problems and optimize the use of resources.
+
+Here are the fundamental principles:
+
+• *Build quality*: This principle emphasizes building quality into the product from the outset, 
+rather than relying on inspection to achieve it. It involves creating and evolving feedback loops 
+to detect problems at an early stage, ideally before they are recorded in the version control 
+system. Automated testing should be used to detect defects before they worsen over time.
+• *Work in small batches*: CD encourages working with small, manageable changes rather than 
+large, infrequent releases. This approach reduces the time needed to obtain feedback, facilitates 
+problem identification and resolution, and increases efficiency and motivation. The aim is to 
+change the economics of the software delivery process to make it viable to work in small batches.
+• *Computers do repetitive tasks, people solve problems*: This principle emphasizes the importance 
+of automating repetitive tasks, such as regression testing, so that humans can concentrate on 
+solving problems. The aim is to create a balance in which computers handle the simple, repetitive 
+tasks, and humans the more complex, creative ones.
+• *Continuous improvement*: CD promotes the idea of continuous improvement, or kaizen, 
+derived from the Lean movement. It’s about seeing improvement work as an essential part of 
+everyday work, and constantly striving to make things better. It’s about not being satisfied with 
+the status quo and always looking for opportunities to improve.
+• *Everyone is responsible*: In successful organizations, everyone is responsible for the quality 
+and stability of the software they build. This principle encourages a collaborative approach 
+in which developers, operational teams, and other stakeholders work together to achieve the 
+organization’s goals, rather than optimizing the success of their own team. It emphasizes the 
+importance of rapid feedback loops based on customer feedback and organizational impact.
 
 == Deployment pipeline
 
