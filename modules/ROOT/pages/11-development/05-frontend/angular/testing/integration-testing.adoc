@@ -61,15 +61,15 @@ Proactive fault detection with E2E testing can significantly reduce long-term ma
 == benefits of E2E testing
 E2E testing offers a myriad of benefits, making it an invaluable tool for software development teams:
 
-• Early detection of defects: E2E testing enables defects to be detected early in the development 
+* Early detection of defects: E2E testing enables defects to be detected early in the development 
 cycle, reducing the cost and effort required to correct them later.
-• Enhanced user experience: E2E testing is a method of ensuring that a software application works 
+* Enhanced user experience: E2E testing is a method of ensuring that a software application works 
 as intended from the user’s point of view. This approach improves the overall user experience 
 and minimizes the risk of dissatisfaction.
-• Increased confidence in software quality: E2E testing inspires confidence in software quality, 
+* Increased confidence in software quality: E2E testing inspires confidence in software quality, 
 reducing the risk of unforeseen problems in production and preserving the reputation of the 
 software development team.
-• Streamlined development process: E2E testing can be automated, streamlining the development 
+* Streamlined development process: E2E testing can be automated, streamlining the development 
 process, facilitating continuous integration and continuous delivery (CI/CD) practices, and 
 enabling software to be released faster and more efficiently.
 
@@ -124,14 +124,14 @@ the application.
 === Comparison between script-based testing and exploratory testing
 The comparison between script-based and exploratory testing provides us with several important insights:
 
-• Consistency and efficiency: Script-based testing guarantees the consistency and repeatability
+* Consistency and efficiency: Script-based testing guarantees the consistency and repeatability
 of test procedures, which is crucial in large-scale projects where many tests are required. It can 
 also be more efficient, as it eliminates the need for manual test execution.
-• Flexibility and discovery: On the other hand, exploratory testing offers greater flexibility as 
+* Flexibility and discovery: On the other hand, exploratory testing offers greater flexibility as 
 it allows testers to freely explore the application. This can lead to the discovery of potential 
 problems that scripted tests might miss, particularly in the case of complex applications or 
 when the application undergoes frequent changes.
-• Documentation: A significant difference between the two approaches is the level of documentation 
+* Documentation: A significant difference between the two approaches is the level of documentation 
 involved. Script-based testing typically involves detailed documentation of test cases and steps, 
 while exploratory testing can involve less documentation, which can potentially lead to critical 
 bugs being missed.
@@ -190,12 +190,12 @@ development team.
 
 Here are the strengths of the E2E testing tools:
 
-• Selenium’s flexibility and broad browser compatibility make it a solid choice for comprehensive 
+* Selenium’s flexibility and broad browser compatibility make it a solid choice for comprehensive 
 web application testing
-• Cypress’s simplicity and speed appeal to teams looking for a streamlined approach to web testing
-• Appium meets mobile testing needs, enabling automation on iOS and Android platforms
-• Protractor facilitates seamless automation of Angular applications
-• Playwright offers high-performance, cross-browser testing
+* Cypress’s simplicity and speed appeal to teams looking for a streamlined approach to web testing
+* Appium meets mobile testing needs, enabling automation on iOS and Android platforms
+* Protractor facilitates seamless automation of Angular applications
+* Playwright offers high-performance, cross-browser testing
 Ultimately, the most effective tool is the one that matches the team’s expertise, project requirements, 
 and testing objectives.
 
@@ -203,27 +203,27 @@ and testing objectives.
 While E2E tests offer a multitude of advantages, their implementation is not without its problems. 
 Understanding these obstacles is essential to developing effective strategies for overcoming them:
 
-• Complexity: E2E tests often have a labyrinthine structure, which makes them difficult to create 
+* Complexity: E2E tests often have a labyrinthine structure, which makes them difficult to create 
 and maintain. This complexity stems from the need to test multiple application components 
 and accurately simulate the actions of a real user.
-• Scaling: E2E tests are prone to instability, a characteristic that manifests itself in intermittent 
+* Scaling: E2E tests are prone to instability, a characteristic that manifests itself in intermittent 
 failures for reasons that can be difficult to decipher. This intermittence can compromise the 
 reliability of E2E test results.
-• Slowness: E2E tests often run at a slow pace due to their global nature, which involves interactions 
+* Slowness: E2E tests often run at a slow pace due to their global nature, which involves interactions 
 with the whole application and potential delays in waiting for responses from external systems.
 
 Despite the inherent challenges, E2E testing remains an invaluable tool for improving software quality. 
 By adopting proven strategies, developers and testers can effectively meet these challenges and reap 
 the many benefits of E2E testing:
 
-• Get involved early: It’s vital to launch E2E testing early in the development cycle. This proactive 
+* Get involved early: It’s vital to launch E2E testing early in the development cycle. This proactive 
 approach facilitates the early detection of defects, making their treatment considerably easier 
 and more cost-effective.
-• Leverage automation: Automation strengthens E2E testing by streamlining the execution 
+* Leverage automation: Automation strengthens E2E testing by streamlining the execution 
 process and minimizing the expenditure of time and effort. Automation also facilitates the 
 seamless integration of E2E tests into the CI/CD pipeline.
-• Meticulous test design: Meticulous care in the design of E2E tests is essential to ensure their 
+* Meticulous test design: Meticulous care in the design of E2E tests is essential to ensure their 
 effectiveness and efficiency. This means focusing on testing the most critical user flows and 
 identifying the most likely points of failure.
-• Leverage specialized tools: There is a plethora of tools available to support E2E testing. It is essential 
+* Leverage specialized tools: There is a plethora of tools available to support E2E testing. It is essential 
 to select a tool that matches the project’s requirements and offers user-friendly functionality.

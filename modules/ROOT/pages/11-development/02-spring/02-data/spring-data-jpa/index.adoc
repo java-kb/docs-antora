@@ -257,15 +257,15 @@ of tables.
 ----
 Each entity needs to follow the rules to be considered valid:
 
-• Each entity needs to have an attribute/class with the @Id annotation 
+* Each entity needs to have an attribute/class with the @Id annotation 
 to indicate the primary key or the main attribute for search.
-• The entities need to have a constructor without arguments that 
+* The entities need to have a constructor without arguments that 
 cannot be defined. JPA uses the default constructor that has all the 
 Java classes, but if you create a constructor with an argument, you 
 need to define it.
-• The classes must not be declared final.
-• All the attributes need to have a setter and getter. 
-• Also, it is good 
+* The classes must not be declared final.
+* All the attributes need to have a setter and getter. 
+* Also, it is good 
 practice to include overriding the hashCode and equals methods.
 + 
 Define the hashCode and equals methods in all your entities because it helps 
@@ -812,11 +812,11 @@ use the same class.
 BLOB and CLOB are known as LOBs (large object types). Each has the 
 responsibility to save something, but the main idea of both is to save large volumes of information. The following describes each of them.
 
-• A BLOB (binary large object) stores binary files like videos, gifs, and 
+* A BLOB (binary large object) stores binary files like videos, gifs, and 
 audio files.
-• A CLOB (character large object) stores large files that contain text 
+* A CLOB (character large object) stores large files that contain text 
 like PDF documents, text files, and JSON files.
-• Depending on the database, there are several formats; for example, 
+* Depending on the database, there are several formats; for example, 
 in MySQL, type TEXT represents a CLOB.
 
 === Date and time types
@@ -1190,7 +1190,7 @@ JPA offers a mechanism to reduce the number of data in memory until you need
 it. The way to do it is to add a property fetch in the annotation that indicates the 
 relationship between both entities. The property has two potential values.
 
-• *FetchType.LAZY* indicates the implementation of JPA that is not 
+* *FetchType.LAZY* indicates the implementation of JPA that is not 
 necessary to obtain the information of the relationship until someone 
 invokes the attribute’s get method. Behind the scenes, Hibernate, in 
 this case, inserts a proxy in the attribute representing the relationship 
@@ -1199,7 +1199,7 @@ information. This approach spends less memory in the application
 and gives you a faster load of information; in the other hand, if you 
 need to obtain always information about the relationship, the cost of 
 executing the operation increases and takes more time.
-• *FetchType.EAGER* indicates the JPA implementation that must 
+* *FetchType.EAGER* indicates the JPA implementation that must 
 obtain all the other entity’s information when executing the query. 
 With this approach, you reduce the time to initialization because 
 when you have one entity in memory, you have all the information; 

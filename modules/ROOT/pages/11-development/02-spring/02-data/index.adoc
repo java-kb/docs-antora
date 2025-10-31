@@ -186,11 +186,11 @@ the configuration of the product service. The following part of the configuratio
 ====
 product-service application.yml::
 +
-• When running without Docker using the default Spring profile, the database is expected to be 
+* When running without Docker using the default Spring profile, the database is expected to be 
 reachable on localhost:27017.
-• Setting the log level for MongoTemplate to DEBUG will allow us to see which MongoDB statements 
+* Setting the log level for MongoTemplate to DEBUG will allow us to see which MongoDB statements 
 are executed in the log.
-• When running inside Docker using the Spring profile, docker, the database is expected to be 
+* When running inside Docker using the Spring profile, docker, the database is expected to be 
 reachable on mongodb:27017.
 +
 [source, yml]
@@ -219,19 +219,19 @@ spring.data.mongodb.host: mongodb
 ----
 review service  application.yml::
 +
-• By default, Hibernate will be used by Spring Data JPA as JPA’s EntityManager.
-• The spring.jpa.hibernate.ddl-auto property is used to tell Spring Data JPA to create new 
+* By default, Hibernate will be used by Spring Data JPA as JPA’s EntityManager.
+* The spring.jpa.hibernate.ddl-auto property is used to tell Spring Data JPA to create new 
 or update existing SQL tables during startup.
-• When running without Docker, using the default Spring profile, the database is expected to 
+* When running without Docker, using the default Spring profile, the database is expected to 
 be reachable on localhost using the default port 3306.
-• By default, HikariCP is used by Spring Data JPA as the JDBC connection pool. To minimize start-
+* By default, HikariCP is used by Spring Data JPA as the JDBC connection pool. To minimize start-
 up problems on computers with limited hardware resources, the initializationFailTimeout
 parameter is set to 60 seconds. This means that the Spring Boot application will wait for up to 
 60 seconds during startup to establish a database connection.
-• The log-level settings for Hibernate will cause Hibernate to print the SQL statements used and 
+* The log-level settings for Hibernate will cause Hibernate to print the SQL statements used and 
 the actual values used. Please note that when used in a production environment, writing the 
 actual values to the log should be avoided for privacy reasons.
-• When running inside Docker using the Spring profile, docker, the database is expected to be 
+* When running inside Docker using the Spring profile, docker, the database is expected to be 
 reachable on the mysql hostname using the default port 3306.
 [source, yml]
 ----
@@ -347,7 +347,7 @@ Spring Data comes with a set of interfaces for defining repositories:
 
 The CrudRepository interface provides standard methods for performing basic create, read, 
 update, and delete operations on the data stored in the databases.
-• The PagingAndSortingRepository interface adds support for paging and sorting to the 
+* The PagingAndSortingRepository interface adds support for paging and sorting to the 
 CrudRepository interface.
 
 [tabs]
@@ -473,13 +473,13 @@ Using the @Query annotation to provide an SQL-like statement that will be execut
 
 There are many ways to declare a query:
 
-• Declare it as constant at the top of the interface so that you have all 
+* Declare it as constant at the top of the interface so that you have all 
 the declarations of methods to understand each of them.
-• Externalize all the queries into a properties file and import them 
+* Externalize all the queries into a properties file and import them 
 dynamically into each repository. One of the cons of this approach 
 is that you need to have a good organization to know which file 
 contains the queries of each repository.
-• Lastly, have a class that contains all the queries of a specific 
+* Lastly, have a class that contains all the queries of a specific 
 repository. This approach is useful when you have a lot of queries 
 that are too long. You clear your repository to have only the methods 
 in one place and all the queries in another place. Also, define naming 

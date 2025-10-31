@@ -97,14 +97,14 @@ implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.0.2'
 === Adding OpenAPI configuration
 First, we need to define a Spring bean that returns an OpenAPI bean. The configuration contains general descriptive information about the API, such as:
 
-• The name, description, version, and contact information for the API
-• Terms of usage and license information
-• Links to external information regarding the API, if any
+* The name, description, version, and contact information for the API
+* Terms of usage and license information
+* Links to external information regarding the API, if any
 
 The property file also contains some configuration for springdoc-openapi:
 
-• springdoc.swagger-ui.path and springdoc.api-docs.path are used to specify that the URLs used by the embedded Swagger UI viewer are available under the path /openapi. 
-• springdoc.packagesToScan and springdoc.pathsToMatch control where in the code base springdoc-openapi will search for annotations. The narrower the scope we can give springdoc-openapi, the faster the scan will be performed
+* springdoc.swagger-ui.path and springdoc.api-docs.path are used to specify that the URLs used by the embedded Swagger UI viewer are available under the path /openapi. 
+* springdoc.packagesToScan and springdoc.pathsToMatch control where in the code base springdoc-openapi will search for annotations. The narrower the scope we can give springdoc-openapi, the faster the scan will be performed
 
 To document the actual API and its RESTful operations, we will add an ``@Tag`` annotation to the Java
 interface declaration in the api project. For each RESTful operation in the API, we will add an ``@Operation`` annotation, along with ``@ApiResponse`` annotations on the corresponding Java method, to describe the operation and its expected responses.
@@ -245,11 +245,11 @@ ProductCompositeService.java::
 From this code, springdoc-openapi will be able to extract the following information
 about the operation:
 +
-• The operation accepts HTTP GET requests to the URL \/product-composite\/\{productid\},
+* The operation accepts HTTP GET requests to the URL \/product-composite\/\{productid\},
 where the last part of the URL, \{productid\}, is used as an input parameter to the request.
-• A successful response will produce a JSON structure corresponding to the Java class,
+* A successful response will produce a JSON structure corresponding to the Java class,
 ProductAggregate.
-• In the event of an error, an HTTP error code of either 400, 404, or 422 will be returned together
+* In the event of an error, an HTTP error code of either 400, 404, or 422 will be returned together
 with error information in the body, as described by @ExceptionHandler in the Java class Glob
 alControllerExceptionHandler.java
 +

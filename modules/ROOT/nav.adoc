@@ -198,6 +198,12 @@
 ** xref:11-development/03-tools/index.adoc[Tools]
 
 ** xref:11-development/05-frontend/index.adoc[Frontend Development]
+*** xref:11-development/05-frontend/angular/index.adoc[Angular Development]
+**** xref:11-development/05-frontend/angular/testing/testing.adoc[Testing]
+**** xref:11-development/05-frontend/angular/testing/integration-testing.adoc[Integration Testing]
+**** xref:11-development/05-frontend/angular/testing/Cypress.adoc[Cypress]
+**** xref:11-development/05-frontend/angular/testing/Playwright.adoc[Playwright]
+**** xref:11-development/05-frontend/angular/refactoring.adoc[Refactoring]
 
 ** xref:11-development/04-AI/index.adoc[AI Development]
 *** xref:11-development/04-AI/chatgpt.adoc[ChatGPT development]

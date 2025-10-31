@@ -136,9 +136,9 @@ the database:
 +
 To simplify sending the create, read, and delete requests to the API and verify the response status, three helper methods have been created:
 +
-• postAndVerifyProduct()
-• getAndVerifyProduct()
-• deleteAndVerifyProduct()
+* postAndVerifyProduct()
+* getAndVerifyProduct()
+* deleteAndVerifyProduct()
 +
 The helper method performs the actual HTTP request and verifies the response code and content 
 type of the response body. Added to that, the helper method also returns the body of the response 

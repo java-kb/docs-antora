@@ -80,20 +80,20 @@ http://localhost:8001/catalog/actuator/health. You should see the catalog servic
 
 This simple approach has a few disadvantages:
 
-• We are using the full JDK of Java SE 17, including compilers and other development tools. That makes the Docker images unnecessarily large and, from a security perspective, we don’t want to bring more tools into the image than necessary.
+* We are using the full JDK of Java SE 17, including compilers and other development tools. That makes the Docker images unnecessarily large and, from a security perspective, we don’t want to bring more tools into the image than necessary.
 +
 Regarding the lack of a Docker image for Java SE 17 JRE from the OpenJDK project, there are other
 open source projects that package the OpenJDK binaries into Docker images. One of the most widely
 used projects is Eclipse Temurin (https://adoptium.net/temurin/). The Temurin project provides
 both full JDK editions and minimized JRE editions of their Docker images.
-• The fat JAR file takes time to unpackage when the Docker container starts up. A better approach
+* The fat JAR file takes time to unpackage when the Docker container starts up. A better approach
 is to instead unpackage the fat JAR when the Docker image is built.
-• The fat JAR file is very big, as we will see below, some 20 MB. If we want to make repeatable
+* The fat JAR file is very big, as we will see below, some 20 MB. If we want to make repeatable
 changes to the application code in the Docker images during development, this will result in
 suboptimal usage of the Docker build command. Since Docker images are built in layers, we
 will get one very big layer that needs to be replaced each time, even in the case where only a
 single Java class is changed in the application code.
-• A better approach is to divide the content into different layers, where files that do not change
+* A better approach is to divide the content into different layers, where files that do not change
 so frequently are added in the first layer, and files that change the most are placed in the last
 layer. This will result in good use of Docker’s caching mechanism for layers. For the first stable
 layers that are not changed when some application code is changed, Docker will simply use

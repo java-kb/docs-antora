@@ -7,10 +7,10 @@ the type of event, the event data, and a timestamp for when the event occurred.
 
 An event is, defined by the following:
 
-• The type of event, for example, a create or delete event
-• A key that identifies the data, for example, a product ID
-• A data element, that is, the actual data in the event
-• A timestamp, which describes when the event occurred
+* The type of event, for example, a create or delete event
+* A key that identifies the data, for example, a product ID
+* A data element, that is, the actual data in the event
+* A timestamp, which describes when the event occurred
 
 Message queuing is a communication pattern that allows different components of a system to communicate asynchronously by sending messages through a message broker. This pattern is particularly useful in distributed systems, where components may be running on different servers or even in different geographical locations.
 
@@ -94,15 +94,15 @@ spring.cloud.stream:
 ----
 From this configuration, we can learn the following:
 
-• Spring Cloud Stream applies, by default, a naming convention for binding a configuration to a 
+* Spring Cloud Stream applies, by default, a naming convention for binding a configuration to a 
 function. For messages sent to a function, the binding name is <functionName>-in-<index>:
-• functionName is the name of the function, messageProcessor in the preceding example.
-• index is set to 0, unless the function requires multiple input or output arguments. We 
+* functionName is the name of the function, messageProcessor in the preceding example.
+* index is set to 0, unless the function requires multiple input or output arguments. We 
 will not use multi-argument functions, so index will always be set to 0 in our examples.
-• For outgoing messages, the binding name convention is <functionName>-out-<index>.
-• The destination property specifies the name of the topic that messages will be consumed 
+* For outgoing messages, the binding name convention is <functionName>-out-<index>.
+* The destination property specifies the name of the topic that messages will be consumed 
 from, products in this case.
-• The group property specifies what consumer group to add instances of the product microservice to, productsGroup in this example. This means that messages sent to the products topic will 
+* The group property specifies what consumer group to add instances of the product microservice to, productsGroup in this example. This means that messages sent to the products topic will 
 only be delivered by Spring Cloud Stream to one of the instances of the product microservice.
 
 === Retries and dead-letter queues

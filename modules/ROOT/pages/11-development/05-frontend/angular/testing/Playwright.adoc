@@ -41,15 +41,15 @@ to Selenium. This means you can start writing tests more quickly and with less h
 == Features of Playwright testing
 Let’s look at the key features of Playwright testing:
 
-• Playwright provides consistent and reliable automation across different browsers, ensuring 
+* Playwright provides consistent and reliable automation across different browsers, ensuring 
 your web applications work well on all major platforms.
-• Playwright is known for its speed and efficiency, making it a great choice for testing and 
+* Playwright is known for its speed and efficiency, making it a great choice for testing and 
 automating web interactions.
-• You can run Playwright scripts in headless mode (without a visible browser UI) for faster 
+* You can run Playwright scripts in headless mode (without a visible browser UI) for faster 
 execution, or in headful mode for debugging and interaction.
-• Playwright offers support for popular programming languages such as TypeScript, Python, and 
+* Playwright offers support for popular programming languages such as TypeScript, Python, and 
 Java. This means you can write automation scripts in the language you’re most comfortable with.
-• Playwright uses native browser automation APIs to simulate user interactions accurately, 
+* Playwright uses native browser automation APIs to simulate user interactions accurately, 
 resulting in more reliable tests.
 
 You can leverage the full power of browser DevTools with Playwright, making it easier to inspect, 

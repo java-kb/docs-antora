@@ -9,13 +9,13 @@ and can be easily modified and maintained over time.
 
 The TDD process comprises three steps:
 
-• ``Red``: In this initial phase, developers write a test for the functionality they aim to implement. 
+* ``Red``: In this initial phase, developers write a test for the functionality they aim to implement. 
 Since there is no corresponding code yet, this test will initially fail, hence the term “Red” to 
 indicate the failing state of the test.
-• ``Green``: Following the Red phase, developers write the minimum amount of code necessary to 
+* ``Green``: Following the Red phase, developers write the minimum amount of code necessary to 
 make the test pass. This phase aims to quickly move from a failing test (Red) to a passing test 
 (Green), focusing on satisfying the test’s conditions without necessarily optimizing the code.
-• ``Refactor``: After successfully passing the test, the code is then improved and optimized. This 
+* ``Refactor``: After successfully passing the test, the code is then improved and optimized. This 
 phase involves refining the code’s design, structure, and efficiency while ensuring that the 
 test remains green, i.e., continues to pass. Refactoring is crucial for enhancing code quality, 
 maintainability, and performance without altering the external behavior of the code, as confirmed 
@@ -25,12 +25,12 @@ TDD is a dynamic methodology in software development that prioritizes incrementa
 before the code is implemented. The TDD process revolves around a structured sequence known as 
 the red-green-refactor cycle, which consists of the following stages:
 
-• ``Writing a failing test``: Initiate the cycle by crafting a test that intentionally fails. This test serves 
+* ``Writing a failing test``: Initiate the cycle by crafting a test that intentionally fails. This test serves 
 as a specification for the desired functionality.
-• ``Prohibiting overly complex tests``: Emphasize the creation of tests that are only as intricate 
+* ``Prohibiting overly complex tests``: Emphasize the creation of tests that are only as intricate 
 as necessary. Avoiding unnecessary complexity ensures that tests remain focused on specific 
 functionalities, enhancing clarity and maintainability.
-• ``Minimizing code implementation``: Write the minimum code required to pass the failing test. 
+* ``Minimizing code implementation``: Write the minimum code required to pass the failing test. 
 This minimalist approach ensures that code is dedicated to fulfilling the specified requirements.
 
 These steps are cyclically repeated for each new functionality, ensuring that every part of the software 
@@ -53,29 +53,29 @@ methodology in software development that offers developers a structured framewor
 progress. This approach is designed to break down the development process into discrete, manageable
 steps, guaranteeing code correctness and alignment with predefined test requirements. 
 
-• ``Red – writing a failing test``:
+* ``Red – writing a failing test``:
 The first step in the red-green-refactor cycle is to write a failing test. The test should define the 
 desired behavior of the code and should be written in a way that it fails initially. This is called 
 the “red” step because the test is expected to fail.
-• ``Green – writing code to pass the test``:
+* ``Green – writing code to pass the test``:
 The second step is to write the code that will make the test pass. The code should be minimal, 
 and it should only be written to make the test pass. This is called the “green” step because the 
 test is expected to pass.
-• ``Refactor – improving code without changing functionality``:
+* ``Refactor – improving code without changing functionality``:
 Once the test has passed, the developer can refactor the code to enhance its design, readability, 
 and maintainability by eliminating duplication, simplifying the code, and improving its readability. 
 The key is to make improvements without altering the functionality covered by the test.
 
 The red-green-refactor cycle has several benefits, including the following:
 
-• Enhanced code quality: The red-green-refactor cycle ensures that the code is correct, reliable, 
+* Enhanced code quality: The red-green-refactor cycle ensures that the code is correct, reliable, 
 and meets the requirements predefined in the tests
-• Accelerated development: The red-green-refactor cycle allows developers to catch errors early 
+* Accelerated development: The red-green-refactor cycle allows developers to catch errors early 
 in the development process, which saves time and reduces the cost of fixing bugs
-• Better collaboration: The red-green-refactor cycle encourages collaboration between developers, 
+* Better collaboration: The red-green-refactor cycle encourages collaboration between developers, 
 testers, and other stakeholders, which improves communication and helps to ensure that 
 everyone is on the same page
-• Simplified maintenance: The red-green-refactor cycle produces code that is easier to maintain 
+* Simplified maintenance: The red-green-refactor cycle produces code that is easier to maintain 
 and extend, which reduces the cost and effort of future development
 By using the red-green-refactor cycle, developers can build reliable, maintainable, and scalable 
 software applications.
@@ -182,9 +182,9 @@ items", () => {
 the test suite, we have two test cases, and the descriptions of the test cases clearly state what behavior 
 is being tested:
 
-• The first test case, “should return 0 for an empty cart,” verifies that the function correctly handles 
+* The first test case, “should return 0 for an empty cart,” verifies that the function correctly handles 
 an empty shopping cart and returns a total of 0
-• The second test case, “should correctly calculate the total for a cart with multiple items,” tests the 
+* The second test case, “should correctly calculate the total for a cart with multiple items,” tests the 
 function with a cart containing multiple items and checks if the calculated total is as expected
 
 By providing descriptive test case descriptions, other developers can easily understand the intent 

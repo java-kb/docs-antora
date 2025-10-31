@@ -72,27 +72,27 @@ This workflow is designed to automate the process of installing Node.js dependen
 for faster future builds and building the Angular project. The following is a decomposition of the key 
 components of our workflow and their functions:
 +
-• Job definition: The workflow defines a single job named build. This job runs on the latest 
+* Job definition: The workflow defines a single job named build. This job runs on the latest 
 Ubuntu virtual machine provided by GitHub Actions.
-• Working directory: The defaults section sets the working directory for all stages of the 
+* Working directory: The defaults section sets the working directory for all stages of the 
 build job to ./Chapter 9/getting-started-angular-tdd/. This ensures that 
 commands are executed in the correct location where your Angular project is located.
-• Node.js matrix: The strategy section defines a matrix that runs the job multiple times, each 
+* Node.js matrix: The strategy section defines a matrix that runs the job multiple times, each 
 time with a different Node.js version. In this example, the matrix includes only one version: 
 18.x. You can expand this to include more versions for broader compatibility testing.
-• Checkout: The first step (uses: actions/checkout@v3) uses the official GitHub Actions 
+* Checkout: The first step (uses: actions/checkout@v3) uses the official GitHub Actions 
 checkout action to clone the repository’s code onto the runner.
-• Set up Node.js: The second step (uses: actions/setup-node@v3) uses the official 
+* Set up Node.js: The second step (uses: actions/setup-node@v3) uses the official 
 GitHub Actions setup-node action to install and configure the specified Node.js version 
 (18.x) on the runner.
-• The cache parameter is set to npm to enable caching of Node.js modules between workflow 
+* The cache parameter is set to npm to enable caching of Node.js modules between workflow 
 runs, potentially speeding up subsequent executions. cache-dependency-path is set 
 to **/package-lock.json to ensure the cache is invalidated if the package-lock.
 json file changes (indicating a change in dependencies).
-• Install dependencies: The third step (run: npm ci) runs the npm ci command to install 
+* Install dependencies: The third step (run: npm ci) runs the npm ci command to install 
 the project’s dependencies from the package-lock.json file. This ensures a consistent 
 dependency state across different environments.
-• Build the application: The fourth step (run: npm run build --if-present) 
+* Build the application: The fourth step (run: npm run build --if-present) 
 conditionally runs the npm run build command if it exists in the project’s package.
 json file. This allows for flexibility in different project setups, where not all projects might 
 have a build script defined.
@@ -326,22 +326,22 @@ The provided GitHub Actions workflow snippet is designed to automate the process
 build files to a remote server. This is a common step in a CI/CD pipeline for deploying applications. 
 Here’s a breakdown of the workflow step:
 
-• appleboy/scp-action@master: This specifies that this step uses the scp-action
+* appleboy/scp-action@master: This specifies that this step uses the scp-action
 action from the appleboy GitHub repository. This action is designed to securely copy files 
 from your GitHub Actions runner to a remote server using the secure copy protocol (SCP). 
 The @master tag indicates that the action should use the code from the master branch of 
 the repository.
-• host: The address of the remote server where the files will be uploaded. This value is retrieved 
+* host: The address of the remote server where the files will be uploaded. This value is retrieved 
 from a GitHub secret named SI_HOST.
-• username: The username for authenticating with the remote server. This value is retrieved 
+* username: The username for authenticating with the remote server. This value is retrieved 
 from a GitHub secret named SI_USERNAME.
-• password: The password for authenticating with the remote server. This value is retrieved 
+* password: The password for authenticating with the remote server. This value is retrieved 
 from a GitHub secret named SI_PASSWORD.
-• port: The port number for connecting to the remote server. This value is retrieved from a 
+* port: The port number for connecting to the remote server. This value is retrieved from a 
 GitHub secret named SI_PORT.
-• source: The path to the files that will be uploaded. In this case, it’s set to upload all files in 
+* source: The path to the files that will be uploaded. In this case, it’s set to upload all files in 
 the source build directory.
-• target: The destination path on the remote server where the files will be uploaded.
+* target: The destination path on the remote server where the files will be uploaded.
 
 For other cloud-oriented platforms, GitHub Actions makes the task easier by offering deployment 
 templates for most of these platforms.

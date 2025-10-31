@@ -114,10 +114,10 @@ the product microservice.
 +
 The following can be noted from the code:
 +
-• The entityToApi() method maps entity objects to the API model object. Since the entity class 
+* The entityToApi() method maps entity objects to the API model object. Since the entity class 
 does not have a field for serviceAddress, the entityToApi() method is annotated to ignore 
 the serviceAddress field in the API model object.
-• The apiToEntity() method maps API model objects to entity objects. In the same way, the 
+* The apiToEntity() method maps API model objects to entity objects. In the same way, the 
 apiToEntity() method is annotated to ignore the id and version fields that are missing in 
 the API model class.
 +

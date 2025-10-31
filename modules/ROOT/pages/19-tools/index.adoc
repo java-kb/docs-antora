@@ -1,2 +1,123 @@
 = Tools
 :figures: 19-tools
+
+== development environment
+
+=== Code Font
+The ideal option is to use monospaced fonts, that is, fonts where the characters occupy the same 
+horizontal space.
+A very popular font is Fira Code (https://github.com/tonsky/FiraCode), which, in 
+addition to being monospaced, has ligatures for programming – that is, joining or changing characters 
+that represent symbols such as ==, >=, and =>
+
+After installing the font on your operating system, to enable ligatures in the font in VS Code, access 
+the configuration file as in the previous section and add the following elements:
+{
+ "editor.fontFamily": "Fira Code",
+ "editor.fontLigatures": true,
+}
+=== VS Code
+
+==== VS Code settings
+* By accessing the File menu, we can activate the automatic saving flag so you don’t have to worry 
+about pressing Ctrl + S all the time
+* Zen mode, where all windows and menus are hidden so you can just 
+focus on your code. To activate it, go to View | Appearance | Zen Mode, or use the keyboard shortcut 
+Ctrl + K + Z for Windows/Linux systems and Cmd + K + Z for macOS.
+* To improve the readability of your code during editing, an interesting setting is Bracket coloring, 
+which will give each parenthesis and bracket in your code a different color
++
+To enable this setting, open the configuration file using the shortcut Ctrl + Shift + P for Windows/
+Linux or Cmd + Shift + P for macOS and type Open User Settings (JSON).
+In the file, add the following elements:
+{
+ "editor.bracketPairColorization.enabled": true,
+ "editor.guides.bracketPairs": true
+}
+*  Inlay Hints feature, which shows details of parameter types and return methods, 
+as well as other useful information on the line you are reading in the code.
+To configure it in the Settings menu, look for Inlay Hints and activate it if it is not already configured. 
+For the development of your Angular application, you can also perform specific configurations by 
+selecting TypeScript.
++
+To configure it in the Settings menu, look for Inlay Hints and activate it if it is not already configured. 
+For the development of your Angular application, you can also perform specific configurations by 
+selecting TypeScript.
+It is also possible to turn on this functionality by directly configuring the settings.json file with 
+the following elements:
+{
+ "typescript.inlayHints.parameterNames.enabled": "all",
+ "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+ "typescript.inlayHints.parameterTypes.enabled": true,
+ "typescript.inlayHints.propertyDeclarationTypes.enabled": true,
+ "typescript.inlayHints.variableTypes.enabled": true,
+ "editor.inlayHints.enabled": "on"
+}
+==== Standardizing the extensions and settings in the project
+You can also standardize your VS Code settings and record them in your Git repository so that not 
+only you but also our team can have that leap in productivity.
+To do this, in your repository, create a folder called .vscode, and inside that folder, create two 
+files. The extensions.json file will have all the extensions recommended by the project. 
+
+{
+    "recommendations": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "Angular.ng-template",
+        "donjayamanne.git-extension-pack",
+        "editorconfig.editorconfig"
+    ]
+}
+
+We can also create the settings.json file, which allows you to add VS Code settings to your workspace. 
+These settings take precedence over user settings and VS Code’s default settings.
+This file will have the previously suggested settings:
+
+{
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": true,
+    "editor.fontFamily": "Fira Code",
+    "editor.fontLigatures": true,
+    "typescript.inlayHints.parameterNames.enabled": "all",
+    "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+    "typescript.inlayHints.parameterTypes.enabled": true,
+    "typescript.inlayHints.propertyDeclarationTypes.enabled": true,
+    "typescript.inlayHints.variableTypes.enabled": true,
+    "editor.inlayHints.enabled": "on"
+}
+
+By synchronizing these files in your repository, when your team members download the project and 
+open VS Code for the first time
+
+Once confirmed, all the extensions configured in the file will be installed in the VS Code development 
+environment of your team members, thus automating the task of standardizing the team’s 
+work environment.
+
+=== Prettier
+Prettier (https://marketplace.visualstudio.com/items?itemName=esbenp.
+prettier-vscode) is a JavaScript tool that solves the code formatting problem. It is opinionated 
+on formatting settings although some customization is possible.
+In addition to TypeScript, Prettier formats HTML, CSS, JSON, and JavaScript files, making this 
+extension useful also for backend development using Node.js.
+To standardize formatting across your entire team, you can install Prettier as a package for your project 
+and run it on the project’s CI/CD track.
+
+==== ESLint
+When creating an application, the use of a linter is highly recommended to ensure good language 
+practices and avoid errors from the beginning of development.
+In the past, the default tool for linting TypeScript projects was TSLint, but the project has been absorbed 
+by ESLint (https://marketplace.visualstudio.com/items?itemName=dbaeumer.
+vscode-eslint), which allows you to verify JavaScript and TypeScript projects.
+With this extension, verification occurs quickly while you type the code of your project. ESLint can be 
+installed as a package in your Angular project and thus performs this validation on the CI/CD conveyor 
+of your project, which we will see in Chapter 12, Packaging Everything – Best Practices for Deployment.
+
+== EditorConfig
+The EditorConfig (https://marketplace.visualstudio.com/
+items?itemName=EditorConfig.EditorConfig) plugin has the function of creating a 
+default configuration file for not only VS Code but also any IDE that supports this format.
+This plugin is useful for standardizing things for your project and your team – for example, the number 
+of spaces that each Tab key represents, or whether your project will use single quotes or double quotes 
+to represent strings.
+To use it, just create or have a file named .editorconfig at the root of your project and VS Code 
+will respect the settings described in the file.

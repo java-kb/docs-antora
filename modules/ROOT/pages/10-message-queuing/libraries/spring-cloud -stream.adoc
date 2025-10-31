@@ -111,11 +111,11 @@ We will use one topic per type of entity: products, recommendations, and reviews
 +
 The event class we will use looks as follows:
 +
-• The Event class is a generic class parameterized over the types of its key and data fields, K and T
-• The event type is declared as an enumerator with the allowed values, that is, CREATE and DELETE
-• The class defines two constructors, one empty and one that can be used to initialize the type, 
+* The Event class is a generic class parameterized over the types of its key and data fields, K and T
+* The event type is declared as an enumerator with the allowed values, that is, CREATE and DELETE
+* The class defines two constructors, one empty and one that can be used to initialize the type, 
 key, and value members
-• Finally, the class defines getter methods for its member variables
+* Finally, the class defines getter methods for its member variables
 [tabs]
 ====
 Event.java::

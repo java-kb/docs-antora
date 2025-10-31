@@ -215,14 +215,14 @@ try out the new APIs together with the new persistence layer, we must start up s
 We will bring MongoDB and MySQL into the system landscape controlled by Docker Compose and add 
 configuration to our microservices so that they can find their databases when running.
 +
-• We will use the official Docker image for MongoDB v6.0.4 and MySQL 8.0.32 and forward their 
+* We will use the official Docker image for MongoDB v6.0.4 and MySQL 8.0.32 and forward their 
 default ports 27017 and 3306 to the Docker host, also made available on localhost when using 
 Docker Desktop for Mac.
-• For Postgres, we also declare some environment variables, defining the following:
-• The root password
-• The name of the database that will be created on container startup
-• A username and password for a user that is set up for the database on container startup
-• We also declare a health check that Docker will run to determine the status of the MongoDB 
+* For Postgres, we also declare some environment variables, defining the following:
+* The root password
+* The name of the database that will be created on container startup
+* A username and password for a user that is set up for the database on container startup
+* We also declare a health check that Docker will run to determine the status of the MongoDB 
 and MySQL databases.
 To avoid microservices trying to connect to databases before they are up and running, the product
 and recommendation services are declared as dependent on the MongoDB database, as follows:

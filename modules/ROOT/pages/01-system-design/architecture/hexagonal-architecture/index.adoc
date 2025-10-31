@@ -105,18 +105,18 @@ controller.
 == Benefits
 This structure has the following benefits.
 
-• You can change or swap adapters without problems.
-• The domain and the use cases are pure, so you can understand the 
+* You can change or swap adapters without problems.
+* The domain and the use cases are pure, so you can understand the 
 business logic.
-• You can change the implementation of the ports for testing purposes.
+* You can change the implementation of the ports for testing purposes.
 
 == Drawbacks
 This type of architecture has the following drawbacks.
 
-• Implementing some frameworks is difficult because you can make 
+* Implementing some frameworks is difficult because you can make 
 mistakes with what you consider adapters/ports.
-• Introduce indirection to find the implementation of each port.
-• No guideline explains all the things about the organization of the 
+* Introduce indirection to find the implementation of each port.
+* No guideline explains all the things about the organization of the 
 projects, so anyone can introduce something wrong.
 == References
 https://alistair.cockburn.us/hexagonal-architecture/

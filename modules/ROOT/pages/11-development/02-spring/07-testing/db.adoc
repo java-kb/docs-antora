@@ -9,8 +9,8 @@ Spring Boot allows you to run integration tests by loading only the Spring compo
 
 Spring Boot comes with two class-level annotations tailored to this specific requirement:
 
-• @DataMongoTest: This annotation starts up a MongoDB database when the test starts.
-• @DataJpaTest: This annotation starts up a SQL database when the test starts:
+* @DataMongoTest: This annotation starts up a MongoDB database when the test starts.
+* @DataJpaTest: This annotation starts up a SQL database when the test starts:
 
 
 The @DataJdbcTest annotation makes each test method run in a transaction and rolls it back at its end, keeping the database clean and to minimize the risk of negative side effects on other tests.  automatic rollback can be disabled with the 
@@ -169,10 +169,10 @@ public abstract class MongoDbTestBase {
 ====
 Explanations for the preceding source code:
 
-• The database container is declared in the same way as in the preceding example, with the 
+* The database container is declared in the same way as in the preceding example, with the 
 addition of an extended wait period of five minutes for the container to start up.
-• A static block is used to start the database container before any JUnit code is invoked.
-• The database container will get some properties defined when started up, such as which port to 
+* A static block is used to start the database container before any JUnit code is invoked.
+* The database container will get some properties defined when started up, such as which port to 
 use. To register these dynamically created properties in the application context, a static method ``databaseProperties()`` is defined. The method is annotated with ``@DynamicPropertySource`` to override the database configuration in the application context, such as the configuration from an application.yml file. The test classes use the base class as follows:
 [source,java,attributes]
 ----
@@ -547,21 +547,21 @@ class ProductRepositoryTest extends MongoDbTestBase {
      * that the optimistic locking
      * mechanism works.
      * The following is observed from the code:
-     * • First, the test reads the same entity twice and stores it in two different
+     * * First, the test reads the same entity twice and stores it in two different
      * variables, entity1 and
      * entity2.
-     * • Next, it uses one of the variables, entity1, to update the entity. The
+     * * Next, it uses one of the variables, entity1, to update the entity. The
      * update of the entity in the
      * database will cause the version field of the entity to be increased
      * automatically by Spring Data.
      * The other variable, entity2, now contains stale data, manifested by its
      * version field, which
      * holds a lower value than the corresponding value in the database.
-     * • When the test tries to update the entity using the variable entity2, which
+     * * When the test tries to update the entity using the variable entity2, which
      * contains stale data,
      * it is expected to fail by throwing an OptimisticLockingFailureException
      * exception.
-     * • The test wraps up by asserting that the entity in the database reflects the
+     * * The test wraps up by asserting that the entity in the database reflects the
      * first update, that is,
      * contains the name "n1", and that the version field has the value 1; only one
      * update has been
@@ -598,13 +598,13 @@ class ProductRepositoryTest extends MongoDbTestBase {
      * built-in support for sorting
      * and paging in Spring Data:
      * 
-     * • The test starts by removing any existing data, then inserts 10 entities
+     * * The test starts by removing any existing data, then inserts 10 entities
      * with the productId field
      * ranging from 1001 to 1010.
-     * • Next, it creates PageRequest, requesting a page count of 4 entities per
+     * * Next, it creates PageRequest, requesting a page count of 4 entities per
      * page and a sort order
      * based on ProductId in ascending order.
-     * • Finally, it uses a helper method, testNextPage, to read the expected three
+     * * Finally, it uses a helper method, testNextPage, to read the expected three
      * pages, verifying
      * the expected product IDs on each page and verifying that Spring Data
      * correctly reports back

@@ -155,10 +155,10 @@ depend on access to the messaging system at runtime, instead of being dependent 
 access to a number of other microservices.
 There are, however, a number of cases where synchronous APIs could be favorable. For example:
 
-• For read operations where an end user is waiting for a response
-• Where the client platforms are more suitable for consuming synchronous APIs, for example, 
+* For read operations where an end user is waiting for a response
+* Where the client platforms are more suitable for consuming synchronous APIs, for example, 
 mobile apps or SPA web applications
-• Where the clients will connect to the service from other organizations – where it might be 
+* Where the clients will connect to the service from other organizations – where it might be 
 hard to agree on a common messaging system to use across organizations
 
 [tabs]
@@ -182,17 +182,17 @@ reactive microservices, that is, microservices that are scalable and robust.
 +
 For the system landscape in this book, we will use the following:
 +
-• The create, read, and delete services exposed by the product composite microservice will be 
+* The create, read, and delete services exposed by the product composite microservice will be 
 based on non-blocking synchronous APIs. The composite microservice is assumed to have 
 clients on both web and mobile platforms, as well as clients coming from other organizations 
 rather than the ones that operate the system landscape. Therefore, synchronous APIs seem 
 like a natural match.
-• The read services provided by the core microservices will also be developed as non-blocking 
+* The read services provided by the core microservices will also be developed as non-blocking 
 synchronous APIs since there is an end user waiting for their responses.
-• The create and delete services provided by the core microservices will be developed as 
+* The create and delete services provided by the core microservices will be developed as 
 event-driven asynchronous services, meaning that they will listen for create and delete events 
 on topics dedicated to each microservice.
-• The synchronous APIs provided by the composite microservices to create and delete aggregated 
+* The synchronous APIs provided by the composite microservices to create and delete aggregated 
 product information will publish create and delete events on these topics. If the publish opera-
 tion succeeds, it will return with a 202 (Accepted) response; otherwise, an error response will 
 be returned. The 202 response differs from a normal 200 (OK) response – it indicates that the 

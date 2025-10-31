@@ -119,13 +119,13 @@ public class CurrencyObjectInstantiator implements ObjectInstantiator {
 ----
 This approach works fine if you follow some rules for all your entities.
 
-• The class needs to have at least one public constructor. You don’t 
+* The class needs to have at least one public constructor. You don’t 
 need to create a public constructor that could be the default 
 constructor.
-• When you have more than one public constructor, you need to 
+* When you have more than one public constructor, you need to 
 indicate which is the primary using the @PersistenceCreator 
 annotation.
-• The class isn’t private or a static inner class.
+* The class isn’t private or a static inner class.
 
 There are a few rules or constraints to obtain more or less a 10% increase in 
 performance but remember that all these classes are only visible at runtime, and Spring 

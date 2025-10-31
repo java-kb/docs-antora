@@ -9,25 +9,25 @@ the process for both frontend developers and QA engineers.
 
 key advantages of using Cypress for your web application testing:
 
-• Simplified setup: Compared to other tools such as Selenium, Cypress requires minimal 
+* Simplified setup: Compared to other tools such as Selenium, Cypress requires minimal 
 configuration. It often involves just installing the package and writing tests in JavaScript.
-• Fast and efficient: Cypress runs tests directly in the browser, eliminating the need for separate 
+* Fast and efficient: Cypress runs tests directly in the browser, eliminating the need for separate 
 WebDriver setup and browser launching. This makes tests execute significantly faster, improving 
 development and testing workflows.
-• Automatic waiting: Cypress handles waiting for elements to load and become interactive 
+* Automatic waiting: Cypress handles waiting for elements to load and become interactive 
 automatically. You don’t need to write explicit waits or sleeps into your tests, reducing code
 complexity and making tests more robust.
-• Easy debugging: Cypress provides a visual debugger that allows you to step through your tests, 
+* Easy debugging: Cypress provides a visual debugger that allows you to step through your tests, 
 inspect element properties, and identify issues quickly. This streamlines the debugging process.
-• Time-travel debugging: With Cypress’s time-travel debugging feature, you can rewind or 
+* Time-travel debugging: With Cypress’s time-travel debugging feature, you can rewind or 
 fast-forward a test execution to pinpoint the exact moment when a failure occurs, making 
 troubleshooting more efficient.
-• Cross-browser compatibility: Cypress supports testing across different browsers (Chrome, 
+* Cross-browser compatibility: Cypress supports testing across different browsers (Chrome, 
 Firefox, Edge, etc.) out of the box. You can configure tests to run on various browsers or use a 
 CI platform to automate browser testing.
-• Integration with development tools: Cypress integrates seamlessly with popular developer tools 
+* Integration with development tools: Cypress integrates seamlessly with popular developer tools 
 such as DevTools, allowing you to leverage existing debugging skills within the testing environment.
-• Active community and support: Cypress has a large and active community offering extensive 
+* Active community and support: Cypress has a large and active community offering extensive 
 documentation, tutorials, and support resources. This makes it easier to learn it, use it, and 
 get help when needed.
 
@@ -519,18 +519,18 @@ declare namespace Cypress {
 +
 Here’s a breakdown of the code:
 +
-• Cypress.Commands.add('performCalculation', (firstNumber, 
+* Cypress.Commands.add('performCalculation', (firstNumber, 
 operator, secondNumber) => {…}): This defines a new custom command named 
 performCalculation. This command takes three parameters: firstNumber, operator, 
 and secondNumber.
-• cy.get('input').first().type(firstNumber): This selects the first input 
+* cy.get('input').first().type(firstNumber): This selects the first input 
 element on the page and enters the firstNumber value.
-• cy.get('select').select(operator).should('have.value', operator): 
+* cy.get('select').select(operator).should('have.value', operator): 
 This selects a drop-down list (or selection element) and chooses the option corresponding 
 to the operator argument. It then asserts that the selected value corresponds to the operator.
-• cy.get('input').last().type(secondNumber): This selects the last input element 
+* cy.get('input').last().type(secondNumber): This selects the last input element 
 on the page and types in the secondNumber value.
-• cy.get('button').click(): This clicks on a button, presumably to perform the calculation.
+* cy.get('button').click(): This clicks on a button, presumably to perform the calculation.
 
 cypress/e2e/calculator.cy.ts::
 +
