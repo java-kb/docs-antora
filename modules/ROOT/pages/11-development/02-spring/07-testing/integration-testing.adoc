@@ -9,8 +9,7 @@ Spring Boot offers a powerful @SpringBootTest annotation that you can use on a
 test class to bootstrap an application context automatically when running tests. The
 configuration used to create the context can be customized if needed. Otherwise, the
 class annotated with @SpringBootApplication will become the configuration source
-for component scanning and properties, including the usual auto-configuration pro-
-vided by Spring Boot.
+for component scanning and properties, including the usual auto-configuration provided by Spring Boot.
 
 Integration tests need a Spring application context to run. A full application
 context, including an optional embedded server, can be initialized for testing
@@ -126,8 +125,7 @@ entities:
 	repository.deleteAll();
 	}
 +
-The test method for the create API verifies that a product entity can be retrieved after it has been cre-
-ated and that creating another product entity with the same productId results in an expected error, 
+The test method for the create API verifies that a product entity can be retrieved after it has been created and that creating another product entity with the same productId results in an expected error, 
 UNPROCESSABLE_ENTITY, in the response to the API request:
 +
 The test method for the delete API verifies that a product entity can be deleted and that a second delete 
@@ -326,8 +324,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /*
- * we’ll use the @SpringBootTest annotation configured to provide a full Spring applica-
-tion context, including a running server that exposes its services through a random
+ * we’ll use the @SpringBootTest annotation configured to provide a full Spring application context, including a running server that exposes its services through a random
 port (because it doesn’t matter which one).
  */
 // Loads a full Spring web application context and a Servlet container listening on a random port

@@ -16,8 +16,7 @@ Also, if you add user authentication to your system, you would be required to va
 
 An API gateway provides an entry point to your system. In distributed systems like
 microservices, that’s a convenient way to decouple the clients from any changes to the
-internal services’ APIs. You’re free to change how your system is decomposed into ser-
-vices and their APIs, relying on the fact that the gateway can translate from a more
+internal services’ APIs. You’re free to change how your system is decomposed into services and their APIs, relying on the fact that the gateway can translate from a more
 stable, client-friendly, public API to the internal one.
 
 with the gateway, you made your API clients unaware of your internal services, and you could easily
@@ -29,24 +28,18 @@ case, an API gateway can be used as a monolith strangler and can wrap your legac
 In case of different client types (single-page applications, mobile
 applications, desktop applications, IoT devices), an API gateway gives you the option
 to provide a better-crafted API to each of them depending on their needs (also called
-the backend-for-frontend pattern). Sometimes a gateway can also implement the API com-
-position pattern, letting you query and join data from different services before return-
-ing the result to a client (for example, using the new Spring for GraphQL project).
+the backend-for-frontend pattern). Sometimes a gateway can also implement the API composition pattern, letting you query and join data from different services before returning the result to a client (for example, using the new Spring for GraphQL project).
 
-Calls are forwarded to downstream services from the gateway according to speci-
-fied routing rules, similar to a reverse proxy. This way the client doesn’t need to keep
+Calls are forwarded to downstream services from the gateway according to specified routing rules, similar to a reverse proxy. This way the client doesn’t need to keep
 track of the different services involved in a transaction, simplifying the client’s logic
 and reducing the number of calls it has to make.
 
 Since the API gateway is the entry point to your system, it can also be an excellent
 place to handle cross-cutting concerns like security, monitoring, and resilience. Edge
-servers are applications at the edge of a system that implement aspects like API gate-
-ways and cross-cutting concerns. You can configure circuit breakers to prevent cascading
+servers are applications at the edge of a system that implement aspects like API gateways and cross-cutting concerns. You can configure circuit breakers to prevent cascading
 failures when invoking the services downstream. You can define retries and timeouts for
 all the calls to internal services. You can control the ingress traffic and enforce quota
-policies to limit the use of your system depending on some criteria (such as the mem-
-bership level of your users: basic, premium, pro). You can also implement authentica-
-tion and authorization at the edge and pass tokens to downstream services 
+policies to limit the use of your system depending on some criteria (such as the membership level of your users: basic, premium, pro). You can also implement authentication and authorization at the edge and pass tokens to downstream services 
 
 In a production environment, you would
 typically expose the gateway HTTP interface on port 80 (or 443 if you use HTTPS) and use a DNS
@@ -65,8 +58,7 @@ after a timeout or error). This is not a typical approach.
 
 However, it’s important to remember that an edge server adds complexity to the
 system. It’s another component to build, deploy, and manage in production. It also
-adds a new network hop to the system, so the response time will increase. That’s usu-
-ally an insignificant cost, but you should keep it in mind. Since the edge server is the
+adds a new network hop to the system, so the response time will increase. That’s usually an insignificant cost, but you should keep it in mind. Since the edge server is the
 entry point to the system, it’s at risk of becoming a single point of failure. As a basic
 mitigation strategy, you should deploy at least two replicas of an edge server and
 configure a load balancer in front of them to distribute the traffic. This way, if one
@@ -90,9 +82,7 @@ received within a reasonable time period.
 There are two main reasons for setting up timeouts:
 
 * If you don’t limit the time your client waits, you risk your computational resources
-being blocked for too long (for imperative applications). In the worst-case sce-
-nario, your application will be completely unresponsive because all the avail-
-able threads are blocked, waiting for responses from a remote service, and
+being blocked for too long (for imperative applications). In the worst-case scenario, your application will be completely unresponsive because all the available threads are blocked, waiting for responses from a remote service, and
 there are no threads available to handle new requests.
 * If you can’t meet your Service Level Agreements (SLAs), there’s no reason to
 keep waiting for an answer. It’s better to fail the request.
@@ -112,8 +102,7 @@ for read or query operations because they are idempotent. For write or command
 operations, you want to ensure proper handling when a timeout expires, including
 providing the user with the correct status about the operation’s outcome.
 
-When Catalog Service is overloaded, it can take several seconds to get a JDBC con-
-nection from the pool, fetch data from the database, and send a response back to
+When Catalog Service is overloaded, it can take several seconds to get a JDBC connection from the pool, fetch data from the database, and send a response back to
 Order Service. In that case, you could think of retrying the request rather than falling
 back on a default behavior or throwing an exception. 
 
@@ -142,9 +131,7 @@ retry non-idempotent requests, or you’ll risk generating inconsistent states. 
 order a book, you don’t want to be charged multiple times just because the first
 attempt failed due to the response being lost in the network and never received.
 
-When retries are configured in a flow where the user is involved, remember to bal-
-ance resilience and user experience. You don’t want users to wait too long while retry-
-ing the request behind the scenes. If you can’t avoid that, make sure you inform the
+When retries are configured in a flow where the user is involved, remember to balance resilience and user experience. You don’t want users to wait too long while retrying the request behind the scenes. If you can’t avoid that, make sure you inform the
 users and give them feedback about the status of the request.
 
 Retries are a helpful pattern whenever the service downstream is momentarily
@@ -156,14 +143,12 @@ returns an acceptable error like 404.
 
 === Fallbacks and error handling
 A system is resilient if it keeps providing its services in the face of faults without the
-user noticing. Sometimes that’s not possible, so the least you can do is ensure a grace-
-ful degradation of the service level. Specifying a fallback behavior can help you limit
+user noticing. Sometimes that’s not possible, so the least you can do is ensure a graceful degradation of the service level. Specifying a fallback behavior can help you limit
 the fault to a small area while preventing the rest of the system from misbehaving or
 entering a faulty state.
 
 You’ll want to include fallbacks in your
-general strategy to make your system resilient, and not just in a specific case like time-
-outs. A fallback function can be triggered when some errors or exceptions occur, but
+general strategy to make your system resilient, and not just in a specific case like timeouts. A fallback function can be triggered when some errors or exceptions occur, but
 they’re not all the same.
 
 Some errors are acceptable and semantically meaningful in the context of your
@@ -174,14 +159,11 @@ the book is not available in the catalog.
 == Rate limiting
 Rate limiting is a pattern used to control the rate of traffic sent to or received from an
 application, helping to make your system more resilient and robust. In the context of
-HTTP interactions, you can apply this pattern to control outgoing or incoming net-
-work traffic using client-side and server-side rate limiters, respectively.
+HTTP interactions, you can apply this pattern to control outgoing or incoming network traffic using client-side and server-side rate limiters, respectively.
 
-When a user has exceeded the number of allowed requests in a specific time win-
-dow, all the extra requests are rejected with an HTTP 429 - Too Many Requests status.
+When a user has exceeded the number of allowed requests in a specific time window, all the extra requests are rejected with an HTTP 429 - Too Many Requests status.
 The limit is applied according to a given strategy. For example, you can limit requests
-per session, per IP address, per user, or per tenant. The overall goal is to keep the sys-
-tem available for all users in case of adversity. That is the definition of resilience. This
+per session, per IP address, per user, or per tenant. The overall goal is to keep the system available for all users in case of adversity. That is the definition of resilience. This
 pattern is also handy for offering services to users depending on their subscription
 tiers. For example, you might define different rate limits for basic, premium, and
 enterprise users.
@@ -198,20 +180,16 @@ letting users perform 10 requests per second per instance rather than overall, b
 each instance would only keep track of its own incoming requests. The solution is to use a dedicated data service like  Redis to store the rate-limiting state and make it available to all
 the application replicas. 
 === Client-side rate limiters
-Client-side rate limiters are for constraining the number of requests sent to a down-
-stream service in a given period. It’s a useful pattern to adopt when third-party  organizations like cloud providers manage and offer the downstream service. You’ll want to avoid incurring extra costs for having sent more requests than are allowed by your sub-
-scription. In the case of pay-per-use services, this helps prevent unexpected expenses.
+Client-side rate limiters are for constraining the number of requests sent to a downstream service in a given period. It’s a useful pattern to adopt when third-party  organizations like cloud providers manage and offer the downstream service. You’ll want to avoid incurring extra costs for having sent more requests than are allowed by your subscription. In the case of pay-per-use services, this helps prevent unexpected expenses.
 
 If the downstream service belongs to your system, you might use a rate limiter to
 avoid causing DoS problems for yourself. In this case, though, a bulkhead pattern (or
-concurrent request limiter) would be a better fit, setting constraints on how many concur-
-rent requests are allowed and queuing up the blocked ones. Even better is an adaptive
+concurrent request limiter) would be a better fit, setting constraints on how many concurrent requests are allowed and queuing up the blocked ones. Even better is an adaptive
 bulkhead, for which the concurrency limits are dynamically updated by an algorithm
 to better adapt to the elasticity of cloud infrastructure.
 === Server-side rate limiters 
 Server-side rate limiters are for constraining the number of requests received by an
-upstream service (or client) in a given period. This pattern is handy when imple-
-mented in an API gateway to protect the whole system from overloading or from DoS
+upstream service (or client) in a given period. This pattern is handy when implemented in an API gateway to protect the whole system from overloading or from DoS
 attacks. When the number of users increases, the system should scale in a resilient way,
 ensuring an acceptable quality of service for all users. Sudden increases in user traffic
 are expected, and they are usually initially addressed by adding more resources to the
@@ -220,15 +198,12 @@ problem and even lead to service outages. Server-side rate limiters help with th
 == Cross-cutting Functionalities 
 === Security
 Edge Service is the access point to the system, so it’s an excellent candidate for
-addressing cross-cutting concerns like security. For that reason, we made it responsi-
-ble for authenticating users. Edge Service initiates the authentication flow but dele-
-gates the actual authentication step to identity provider using the OpenID Connect protocol.
+addressing cross-cutting concerns like security. For that reason, we made it responsible for authenticating users. Edge Service initiates the authentication flow but delegates the actual authentication step to identity provider using the OpenID Connect protocol.
 
 Once a user authenticates successfully with identity provider , Edge Service receives an ID
 Token from identity provider  with information about the authentication event and initiates
 an authenticated session with the user’s browser. At the same time, identity provider  also
-issues an Access Token, which is used to grant Edge Service access to downstream appli-
-cations on behalf of the user as per OAuth2.
+issues an Access Token, which is used to grant Edge Service access to downstream applications on behalf of the user as per OAuth2.
 ==== token relay pattern
 === loaded balancing
 === governance

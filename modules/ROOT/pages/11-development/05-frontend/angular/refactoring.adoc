@@ -305,8 +305,7 @@ haven’t strayed from the desired outcome.
 With a passing green test as your safety net, you’ve reached the heart of the cycle – the refactor stage. 
 Here’s where you can unleash your refactoring skills to improve the code’s readability, maintainability, 
 and efficiency. Here are some potential areas you might want to focus on during refactoring:
-* Modularize long methods: Break down those long, monolithic methods into smaller, well-
-defined functions. This enhances code readability and makes it easier to understand the logic flow.
+* Modularize long methods: Break down those long, monolithic methods into smaller, welldefined functions. This enhances code readability and makes it easier to understand the logic flow.
 * Extract reusable components and services: If your component has become a god component 
 handling numerous tasks, consider extracting functionalities into dedicated services or reusable 
 components. This promotes better organization and separation of concerns.

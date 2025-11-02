@@ -5,13 +5,9 @@ all the necessary plumbing to integrate your functions with external messaging
 systems like RabbitMQ or Kafka.
 
 Spring Cloud Stream is a framework for building scalable, event-driven, and
-streaming applications. It’s built on top of Spring Integration, which offers the com-
-munication layer with message brokers; Spring Boot, which provides auto-configura-
-tion for the middleware integration; and Spring Cloud Function, which produces,
+streaming applications. It’s built on top of Spring Integration, which offers the communication layer with message brokers; Spring Boot, which provides auto-configuration for the middleware integration; and Spring Cloud Function, which produces,
 processes, and consumes events. Spring Cloud Stream relies on the native features of
-each message broker, but it also provides an abstraction to ensure a seamless experi-
-ence independently of the underlying middleware. For example, features like con-
-sumer groups and partitions (native in Apache Kafka) are not present in RabbitMQ,
+each message broker, but it also provides an abstraction to ensure a seamless experience independently of the underlying middleware. For example, features like consumer groups and partitions (native in Apache Kafka) are not present in RabbitMQ,
 but you can still use them thanks to the framework providing them for you.
 
 The framework supports integrations with RabbitMQ, Apache Kafka, Kafka Streams,
@@ -74,12 +70,10 @@ Suppliers are message sources. They produce messages when an event happens. Unli
 Spring Cloud Stream provides a few ways to define suppliers and cover different
 scenarios.
 == Making messaging resilient to failures
-Spring Cloud Stream uses the retry pattern with an exponential backoff strat-
-egy by default, relying on the Spring Retry library for imperative consumers and the
+Spring Cloud Stream uses the retry pattern with an exponential backoff strategy by default, relying on the Spring Retry library for imperative consumers and the
 retryWhen() Reactor operator for reactive consumers, you can customize it via configuration properties.
 
-Spring Cloud Stream defines several defaults to make the interaction more resil-
-ient, including error channels and graceful shutdown. You can configure different
+Spring Cloud Stream defines several defaults to make the interaction more resilient, including error channels and graceful shutdown. You can configure different
 aspects of message processing, including dead-letter queues, acknowledgment flows,
 and republishing messages on error.
 

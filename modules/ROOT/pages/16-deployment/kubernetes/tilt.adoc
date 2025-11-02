@@ -4,8 +4,7 @@
 After defining the Deployment and Service manifests, you probably don’t want to keep rebuilding container images manually and using the kubectl client to update the Pods whenever you make a change. 
 
 Tilt is a tool that automates your local development workflow with Kubernetes:
-you work on the application while Tilt takes care of building the image, deploy-
-ing it to your local Kubernetes cluster, and keeping it up-to-date whenever you
+you work on the application while Tilt takes care of building the image, deploying it to your local Kubernetes cluster, and keeping it up-to-date whenever you
 change something in the code.
 
 Tilt takes care of many infrastructural concerns and lets you focus more on the

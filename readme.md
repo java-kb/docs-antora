@@ -155,3 +155,8 @@ npx antora antora-playbook.yml
 for live relaod
 apt install  caddy 
 ./antora-preview.sh 
+
+# Replace pattern
+
+* to replace multi line word contains -
+    ([a-z])-\n ==> $1

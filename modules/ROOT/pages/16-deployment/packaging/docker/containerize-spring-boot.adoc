@@ -17,8 +17,7 @@ cd app-service
 mvn clean package spring-boot:repackage
 ```
 *  Open your Catalog Service project (catalog-service), and create an empty file
-called Dockerfile (with no extension) in the root folder. That file will contain the rec-
-ipe for containerizing your application.
+called Dockerfile (with no extension) in the root folder. That file will contain the recipe for containerizing your application.
 +
 [tabs]
 ====

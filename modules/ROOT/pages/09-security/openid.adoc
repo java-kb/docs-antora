@@ -4,14 +4,11 @@
 == identity provider
 what happens if we introduce different clients to our system, such
 as mobile applications and IoT devices? How should the users authenticate then?
-What if the bookshop employees are already registered in the company’s Active Direc-
-tory (AD) and want to log in via SAML? Can we provide a single sign-on (SSO) experi-
-ence across different applications? Will the users be able to log in via their GitHub or
+What if the bookshop employees are already registered in the company’s Active Directory (AD) and want to log in via SAML? Can we provide a single sign-on (SSO) experience across different applications? Will the users be able to log in via their GitHub or
 Twitter accounts (social login)? A better solution is
 delegating a dedicated identity provider to authenticate users following any supported
 strategy. The dedicated
-service could let users authenticate in various ways, such as using the credentials regis-
-tered in the system, through social login, or via SAML to rely on the identity defined
+service could let users authenticate in various ways, such as using the credentials registered in the system, through social login, or via SAML to rely on the identity defined
 in the company’s AD.
 
 Since users will interact directly with
@@ -91,8 +88,7 @@ together with an Authorization Code.
 3. Edge Service calls Keycloak to exchange the Authorization Code with an ID
 Token, containing information about the authenticated user.
 4. Edge Service initializes an authenticated user session with the browser based on
-a session cookie. Internally, Edge Service maintains a mapping between the ses-
-sion identifier and ID Token (the user identity).
+a session cookie. Internally, Edge Service maintains a mapping between the session identifier and ID Token (the user identity).
 
 The authentication flow supported by OIDC is based on the OAuth2
 Authorization Code flow. The second step might seem redundant, but the
@@ -106,8 +102,7 @@ In distributed systems, including microservices and cloud native applications, t
 most-used strategy for exchanging information about an authenticated user and their
 authorization is through tokens.
 
-JSON Web Token (JWT) is an industry-standard for representing claims to be trans-
-ferred between two parties. It’s a widely used format for propagating information
+JSON Web Token (JWT) is an industry-standard for representing claims to be transferred between two parties. It’s a widely used format for propagating information
 about an authenticated user and their permissions securely among different parties in
 a distributed system. A JWT is not used by itself, but it’s included in a larger structure,
 the JSON Web Signature (JWS), which ensures the integrity of the claims by digitally
@@ -122,8 +117,7 @@ a digitally signed JWT has three parts:
 
 1. *Header*—A JSON object (called JOSE Header) containing information about the
 cryptographic operations performed on the payload. The operations follow the
-standards from the Javascript Object Signing and Encryption (JOSE) frame-
-work. A decoded header looks like this:
+standards from the Javascript Object Signing and Encryption (JOSE) framework. A decoded header looks like this:
 +
 [source,json,attributes]
 ----

@@ -90,10 +90,8 @@ CREATE TABLE book (
  version integer NOT NULL 
 );
 ----
-By default, Spring Data loads the schema.sql file only when using an embedded, in-
-memory database. When using Other DB, we need to enable the functionality
-explicitly. In the application.yml file for your service project, add the follow-
-ing configuration to initialize the database schema from the schema.sql file.
+By default, Spring Data loads the schema.sql file only when using an embedded, inmemory database. When using Other DB, we need to enable the functionality
+explicitly. In the application.yml file for your service project, add the following configuration to initialize the database schema from the schema.sql file.
 [source,yml,attributes]
 ----
 spring:
@@ -145,10 +143,7 @@ public interface OrderRepository extends ReactiveCrudRepository<Order,Long> {
 
 == MANAGING DATABASE SCHEMAS WITH FLYWAY
 Flyway doesn’t support R2DBC yet, so we
-need to provide a JDBC driver to communicate with the database. The Flyway migra-
-tion tasks are only run at application startup and in a single thread, so using a non-
-reactive communication approach for this one case doesn’t impact the overall applica-
-tion’s scalability and efficiency.
+need to provide a JDBC driver to communicate with the database. The Flyway migration tasks are only run at application startup and in a single thread, so using a nonreactive communication approach for this one case doesn’t impact the overall application’s scalability and efficiency.
 [source,gradle,attributes]
 ----
 dependencies {
@@ -163,10 +158,7 @@ managed with Spring Data R2DBC but using the JDBC driver
 ----
 Spring
   # Flyway doesn’t support R2DBC yet, so we
-  # need to provide a JDBC driver to communicate with the database. The Flyway migra-
-  # tion tasks are only run at application startup and in a single thread, so using a non-
-  # reactive communication approach for this one case doesn’t impact the overall applica-
-  # tion’s scalability and efficiency.
+  # need to provide a JDBC driver to communicate with the database. The Flyway migra  # tion tasks are only run at application startup and in a single thread, so using a non  # reactive communication approach for this one case doesn’t impact the overall applica  # tion’s scalability and efficiency.
   flyway:
     user: ${spring.r2dbc.username}
     password: ${spring.r2dbc.password}

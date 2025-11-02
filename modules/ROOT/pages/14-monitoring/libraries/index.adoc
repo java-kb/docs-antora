@@ -5,22 +5,17 @@
 
 Spring Boot Actuator collects application metrics out of the box by leveraging the
 Micrometer library (https://micrometer.io). Micrometer contains instrumentation
-code for collecting valuable metrics from common components in a JVM-based appli-
-cation. It provides a vendor-neutral façade so that you can export the metrics col-
-lected from Micrometer using different formats, such as Prometheus/Open Metrics,
-Humio, Datadog, and VMware Tanzu Observability. Just as SLF4J provides a vendor-
-neutral façade for logging libraries, Micrometer does the same for metrics exporters.
+code for collecting valuable metrics from common components in a JVM-based application. It provides a vendor-neutral façade so that you can export the metrics collected from Micrometer using different formats, such as Prometheus/Open Metrics,
+Humio, Datadog, and VMware Tanzu Observability. Just as SLF4J provides a vendorneutral façade for logging libraries, Micrometer does the same for metrics exporters.
 
 On top of the default Micrometer instrumentation libraries that are configured by
-Spring Boot, you can import additional instrumentation to collect metrics from spe-
-cific libraries like Resilience4J or even define your own without vendor lock-in.
+Spring Boot, you can import additional instrumentation to collect metrics from specific libraries like Resilience4J or even define your own without vendor lock-in.
 
 The most common format for exporting metrics is the one used by Prometheus, which
 is “an open-source systems monitoring and alerting toolkit” (https://prometheus.io).
 Just as Loki aggregates and stores event logs, Prometheus does the same with metrics.
 
-Spring Boot Actuator relies on the Micrometer instrumentation and provides auto-
-configuration to generate metrics for various technologies you might use in your
+Spring Boot Actuator relies on the Micrometer instrumentation and provides autoconfiguration to generate metrics for various technologies you might use in your
 applications: JVM, loggers, Spring MVC, Spring WebFlux, RestTemplate, WebClient,
 data sources, Hibernate, Spring Data, RabbitMQ, and more.
 
@@ -176,8 +171,7 @@ management:
         include: health,prometheus <1>
 ----
 The default strategy used by Prometheus is pull-based, meaning that a Prometheus
-instance scrapes (pulls) metrics in regular time intervals from the application via a dedi-
-cated endpoint, which is /actuator/prometheus in the Spring Boot scenario. Rerun the
+instance scrapes (pulls) metrics in regular time intervals from the application via a dedicated endpoint, which is /actuator/prometheus in the Spring Boot scenario. Rerun the
 application (./gradlew bootRun), and call the Prometheus endpoint to check the result:
 
  http :9001/actuator/prometheus
@@ -187,8 +181,7 @@ this time they are exported using a format understood by Prometheus.
 
 This format is based on plain text and is called Prometheus exposition format. Given the
 wide adoption of Prometheus for generating and exporting metrics, this format has
-been polished and standardized in OpenMetrics (https://openmetrics.io), a CNCF-
-incubating project. Spring Boot supports both the original Prometheus format (the
+been polished and standardized in OpenMetrics (https://openmetrics.io), a CNCFincubating project. Spring Boot supports both the original Prometheus format (the
 default behavior) and OpenMetrics, depending on the Accept header of the HTTP
 request. If you’d like to get metrics according to the OpenMetrics format, you need to
 ask for it explicitly:
@@ -199,8 +192,7 @@ ask for it explicitly:
 Kubernetes relies on the health probes (liveness and readiness) to accomplish its tasks
 as a container orchestrator. For example, when the desired state of an application is to
 have three replicas, Kubernetes ensures there are always three application instances
-running. If any of them doesn’t return a 200 response from the liveness probe, Kuber-
-netes will restart it. When starting or upgrading an application instance, we’d like the
+running. If any of them doesn’t return a 200 response from the liveness probe, Kubernetes will restart it. When starting or upgrading an application instance, we’d like the
 process to happen without downtime for the user. Therefore, Kubernetes will not enable an instance in the load balancer until it’s ready to accept new requests (when
 Kubernetes gets a 200 response from the readiness probe).
 

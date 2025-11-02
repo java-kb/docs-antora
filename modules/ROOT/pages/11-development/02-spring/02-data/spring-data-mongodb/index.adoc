@@ -1191,8 +1191,7 @@ the date when it was updated last. After securing an application with authentica
 and authorization, you can even register who created each entity and recently updated
 it. All of that is called database auditing.
 
-In Spring Data JPA, you would use the @EnableJpaAuditing annota-
-tion to enable JPA auditing, and you would annotate the entity class with
+In Spring Data JPA, you would use the @EnableJpaAuditing annotation to enable JPA auditing, and you would annotate the entity class with
 @EntityListeners(AuditingEntityListener.class) to make it listen to audit
 events, which doesn’t happen automatically as in Spring Data JDBC.
 

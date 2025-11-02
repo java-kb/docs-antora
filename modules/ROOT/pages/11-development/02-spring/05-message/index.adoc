@@ -16,14 +16,12 @@ Supported  Spring AMQP message converters:
 
 . It's not a proper standard that you can use between programming
 languages. If you introduced a consumer that's not written in Java,
-you would have to look for a specific library to perform cross-
-language deserialization.
+you would have to look for a specific library to perform crosslanguage deserialization.
 . It uses a hard-coded, fully qualified type name in the header of the
 message. The deserializer expects the Java bean to be located in the
 same package and to have the same name and fields. This is not
 flexible at all, since you may want to deserialize only some properties
-and keep your own version of the event data, following good domain-
-driven design practices.
+and keep your own version of the event data, following good domaindriven design practices.
 
 === JSON
 

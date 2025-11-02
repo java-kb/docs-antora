@@ -26,13 +26,11 @@ Message queuing is a powerful pattern that enables asynchronous communication be
 Event processing platforms like RabbitMQ and Kafka are responsible for collecting events from the producers, routing, and distributing them to the interested consumers.
 
 == AMQP
-When using an AMQP-based solution like RabbitMQ, the actors involved in the inter-
-action can be categorized as follows:
+When using an AMQP-based solution like RabbitMQ, the actors involved in the interaction can be categorized as follows:
 
 * Producer—The entity sending messages (publisher)
 * Consumer—The entity receiving messages (subscriber)
-* Message broker—The middleware accepting messages from producers and rout-
-ing them to consumers
+* Message broker—The middleware accepting messages from producers and routing them to consumers
 
 In the AMQP protocol, producers send messages to an exchange in a broker
 that forwards them to queues according to specific routing algorithms.
@@ -106,8 +104,7 @@ from, products in this case.
 only be delivered by Spring Cloud Stream to one of the instances of the product microservice.
 
 === Retries and dead-letter queues
-If a consumer fails to process a message, it may be re-queued for the failing consumer until it is suc-
-cessfully processed. If the content of the message is invalid, also known as a poisoned message, the 
+If a consumer fails to process a message, it may be re-queued for the failing consumer until it is successfully processed. If the content of the message is invalid, also known as a poisoned message, the 
 message will block the consumer from processing other messages until it is manually removed. If the 
 failure is due to a temporary problem, for example, the database can’t be reached due to a temporary 
 network error, the processing will probably succeed after a number of retries.
@@ -159,8 +156,7 @@ messages in a specific partition based on its key.
 Messages with the same key are always placed in the same partition. The messaging system only 
 needs to guarantee the delivery order for messages in the same partition. To ensure the order of the 
 messages, we configure one consumer instance per partition within a consumer group. By increasing 
-the number of partitions, we can allow a consumer to increase its number of instances. This increas-
-es its message-processing performance without losing the delivery order. This is illustrated in the 
+the number of partitions, we can allow a consumer to increase its number of instances. This increases its message-processing performance without losing the delivery order. This is illustrated in the 
 following diagram:
 
 images::{figures}/Microservices-with-Spring-Boot-and-Spring-Cloud-event-driven-guaranteed-order-and-partitions.png[Specifying keys for messages]
@@ -169,8 +165,7 @@ As seen in the preceding diagram, all messages with the Key set to 123 always go
 partition while messages with the Key set to 456 go to the Products-2 partition.
 
 In Spring Cloud Stream, this needs to be configured on both the publisher and consumer sides. On 
-the publisher side, the key and number of partitions must be specified. For example, for the product-
-composite service, we have the following:
+the publisher side, the key and number of partitions must be specified. For example, for the productcomposite service, we have the following:
 [source,yml,attributes]
 ----
 spring.cloud.stream.bindings.products-out-0.producer:

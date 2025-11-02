@@ -4,9 +4,7 @@
 
 == Distributed session management with Redis
 Spring provides session management features with the Spring Session project. By
-default, session data is stored in memory, but that’s not feasible in a cloud native appli-
-cation. You want to keep it in an external service so that the data survives the applica-
-tion shutdown. Another fundamental reason for using a distributed session store is
+default, session data is stored in memory, but that’s not feasible in a cloud native application. You want to keep it in an external service so that the data survives the application shutdown. Another fundamental reason for using a distributed session store is
 that you usually have multiple instances of a given application. You’ll want them to
 access the same session data to provide a seamless experience to the user.
 

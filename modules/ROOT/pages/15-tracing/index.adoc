@@ -60,8 +60,7 @@ backend of choice is Tempo.
 A few standards have emerged for implementing distributed tracing and defining
 guidelines for generating and propagating traces and spans. OpenZipkin is the more
 mature project (https://zipkin.io). OpenTracing and OpenCensus are more recent
-projects that have tried to standardize ways of instrumenting application code to sup-
-port distributed tracing. They are both deprecated now, since they joined forces to work
+projects that have tried to standardize ways of instrumenting application code to support distributed tracing. They are both deprecated now, since they joined forces to work
 on OpenTelemetry: the ultimate framework to “instrument, generate, collect, and
 export telemetry data (metrics, logs, and traces).” Tempo supports all those options.
 Spring Cloud Sleuth (https://spring.io/projects/spring-cloud-sleuth) is a project that
@@ -71,9 +70,7 @@ abstraction layer on top of specific distributed tracing libraries. OpenZipkin i
 default choice.
 
 Spring Cloud Sleuth will not be developed further once Spring Framework 6
-and Spring Boot 3 are released. The Spring project donated the Sleuth core frame-
-work to Micrometer and created a new Micrometer Tracing subproject aiming to pro-
-vide a vendor-neutral façade for traces, similar to what Micrometer already does for
+and Spring Boot 3 are released. The Spring project donated the Sleuth core framework to Micrometer and created a new Micrometer Tracing subproject aiming to provide a vendor-neutral façade for traces, similar to what Micrometer already does for
 metrics. Micrometer Tracing will provide support for OpenZipkin and OpenTelemetry.
 Based on Micrometer Tracing, code instrumentation will become a core aspect of all
 Spring libraries as part of the Spring Observability initiative.

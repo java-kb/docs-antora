@@ -68,8 +68,7 @@ public void helloAuthenticated1() throws Exception {
 }
 ----
 
-An alternative approach to creating a mock user is using a Request-
-PostProcessor. We can provide a RequestPostProcessor the with() method, as . The class SecurityMockMvcRequestPostProcessors provided by
+An alternative approach to creating a mock user is using a RequestPostProcessor. We can provide a RequestPostProcessor the with() method, as . The class SecurityMockMvcRequestPostProcessors provided by
 Spring Security offers us lots of implementations for RequestPostProcessor, which
 helps us cover various test scenarios.
 

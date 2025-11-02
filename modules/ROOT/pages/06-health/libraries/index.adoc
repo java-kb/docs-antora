@@ -192,8 +192,7 @@ management:
       # Always shows information about the components used by the application
       show-components: always
 ----
-The generic health endpoint provided by Spring Boot Actuator is useful for monitor-
-ing and configuring alerts or notifications, since it contains details regarding both the
+The generic health endpoint provided by Spring Boot Actuator is useful for monitoring and configuring alerts or notifications, since it contains details regarding both the
 application and the integration with its backing services. 
 
 == Monitoring Flyway migrations in Spring Boot
@@ -295,8 +294,7 @@ Then invoke the info endpoint:
 http :9001/actuator/info
 == Generating and analyzing heap dumps
 Among the most annoying errors to debug in Java applications, memory leaks are
-probably the first that come to mind. Monitoring tools should alert you when a mem-
-ory leak pattern is detected, usually inferred if the JVM heap usage metric keeps
+probably the first that come to mind. Monitoring tools should alert you when a memory leak pattern is detected, usually inferred if the JVM heap usage metric keeps
 increasing over time. If you don’t catch the memory leak in advance, the application
 will throw the dreaded OutOfMemoryError error and crash.
 
@@ -370,9 +368,7 @@ application is not ready and will refuse any requests. It might also become temp
 not ready if, at some point, it’s overloaded. When it’s not ready, Kubernetes will not
 send any traffic to the application instance.
 
-By default, the readiness probe in Spring Boot doesn’t depend on any external com-
-ponents. You can decide whether any external systems should be included in the read-
-iness probe.
+By default, the readiness probe in Spring Boot doesn’t depend on any external components. You can decide whether any external systems should be included in the readiness probe.
 
 For example, If a Catalog Service is an external system for Order Service. Should you
 include it in the readiness probe? Since Order Service adopts resilience patterns to
@@ -422,8 +418,7 @@ http :9001/actuator/health/readiness
 Kubernetes relies on the health probes (liveness and readiness) to accomplish its tasks
 as a container orchestrator. For example, when the desired state of an application is to
 have three replicas, Kubernetes ensures there are always three application instances
-running. If any of them doesn’t return a 200 response from the liveness probe, Kuber-
-netes will restart it. When starting or upgrading an application instance, we’d like the
+running. If any of them doesn’t return a 200 response from the liveness probe, Kubernetes will restart it. When starting or upgrading an application instance, we’d like the
 process to happen without downtime for the user. Therefore, Kubernetes will not enable an instance in the load balancer until it’s ready to accept new requests (when
 Kubernetes gets a 200 response from the readiness probe).
 

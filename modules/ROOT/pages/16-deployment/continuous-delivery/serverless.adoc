@@ -13,8 +13,7 @@ applications on serverless platforms.
 
 Spring Cloud Function also supports deploying applications on vendor-specific
 FaaS platforms like AWS Lambda, Azure Functions, and Google Cloud Functions.
-Once you choose a platform, you can add the related adapter provided by the frame-
-work to accomplish the integration. Each adapter works in a slightly different way,
+Once you choose a platform, you can add the related adapter provided by the framework to accomplish the integration. Each adapter works in a slightly different way,
 depending on the specific platform and the configuration required to integrate the
 functions with the underlying infrastructure. The adapters provided by Spring Cloud
 Function don’t require any changes to your business logic, but they might need some

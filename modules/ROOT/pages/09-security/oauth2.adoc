@@ -13,9 +13,7 @@ wants to access.
 
 == Scopes
 Both ID Tokens and Access Tokens can include different information about the user,
-which is formatted as claims in the JWT. Claims are simple key/value pairs in JSON for-
-mat. For example, OpenID Connect defines several standard claims to carry informa-
-tion about the user, like given_name, family_name, preferred_username, and email.
+which is formatted as claims in the JWT. Claims are simple key/value pairs in JSON format. For example, OpenID Connect defines several standard claims to carry information about the user, like given_name, family_name, preferred_username, and email.
 
 Access to such claims is controlled through scopes, a mechanism provided by
 OAuth2 to limit what data an OAuth2 Client can access. You can think of scopes as

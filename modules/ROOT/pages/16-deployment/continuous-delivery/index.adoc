@@ -279,16 +279,14 @@ including the next stages in the deployment pipeline. How can we ensure that all
 interested parties use a legitimate container image from the Polar Bookshop project,
 and not one that has been compromised? We can achieve that by signing the image.
 After the publishing step, we could add a new step for signing the release candidate.
-For example, we could use Sigstore (www.sigstore.dev), a non-profit service that pro-
-vides open source tools for signing, verifying, and protecting software integrity.
+For example, we could use Sigstore (www.sigstore.dev), a non-profit service that provides open source tools for signing, verifying, and protecting software integrity.
 * After a developer commits new code
 to the mainline, this stage goes through build, unit tests, integration tests, static code
 analysis, s, it’s
 time to package the application as an executable artifact and publish it. At the end of this stage, an executable application artifact is
 published to an artifact repository. That is a release candidate. 
 
-* An essential idea in continuous delivery, also present in the 15-Factor methodol-
-ogy, is that you should build artifacts only once. At the end of the commit stage, we’ll
+* An essential idea in continuous delivery, also present in the 15-Factor methodology, is that you should build artifacts only once. At the end of the commit stage, we’ll
 produce a container image that we can reuse in any following stage in the deployment
 pipeline up to production. If the pipeline proves something is wrong (a test fails) at
 any point, the release candidate is rejected. If the release candidate goes through all
@@ -298,8 +296,7 @@ subsequent stages successfully, it’s proven to be ready for deployment in prod
 publishing it. For example, we could scan it for vulnerabilities. That’s what we’re
 going to do with grype, much as we did for the codebase. A container image includes
 application libraries but also system libraries that were not included in the previous
-security analysis. That’s why we need to scan both the codebase and the artifact for vul-
-nerabilities. 
+security analysis. That’s why we need to scan both the codebase and the artifact for vulnerabilities. 
 
 At the end of this stage, an executable application artifact is published to an artifact repository. It is a release candidate. That’s the deployable artifact for an application.. For example, 
 
@@ -331,8 +328,7 @@ commit identifiers and version numbers.
 Things get even more challenging for snapshot artifacts. Let’s consider a Spring
 Boot project as an example. By default, we start with version 0.0.1-SNAPSHOT. Until
 we’re ready to cut the 0.0.1 release, every time we push new changes to the main
-branch, the commit stage will be triggered, and a new release candidate will be pub-
-lished with the number 0.0.1-SNAPSHOT. All release candidates will have the same
+branch, the commit stage will be triggered, and a new release candidate will be published with the number 0.0.1-SNAPSHOT. All release candidates will have the same
 number until version 0.0.1 is released. This approach doesn’t ensure traceability of
 changes. Which commits are included in release candidate 0.0.1-SNAPSHOT? We can’t
 tell. Furthermore, it’s affected by the same unreliability as using latest. Any time we retrieve the artifact, it might be different from the last time.
@@ -344,8 +340,7 @@ release candidate can potentially be promoted to production. Will we have to upd
 the semantic version for each new code commit, with a different approach based on
 its content (major, minor, patch)? The path from code commit to production should
 be automated as much as possible, trying to eliminate manual intervention. If we go
-with continuous deployment, even the promotion to production will happen automat-
-ically. What should we do?
+with continuous deployment, even the promotion to production will happen automatically. What should we do?
 +
 One solution would be using the Git commit hash to version release candidates—that
 would be automated, traceable, and reliable, and you wouldn’t need Git tags. You could
@@ -372,9 +367,7 @@ At this point, the container image (our release candidate) is uniquely identifie
 === Acceptance stage
 
 The acceptance stage of the deployment pipeline is triggered whenever a new release
-candidate is published to the artifact repository at the end of the commit stage. It con-
-sists of deploying the application to a production-like environment and running addi-
-tional tests to increase the confidence in its releasability. The tests that run in the
+candidate is published to the artifact repository at the end of the commit stage. It consists of deploying the application to a production-like environment and running additional tests to increase the confidence in its releasability. The tests that run in the
 acceptance stage are usually slow, but we should strive to keep the whole deployment
 pipeline’s execution under one hour.
 
@@ -400,16 +393,14 @@ Examples of tests included in this stage are:
 
 The functional acceptance tests are business-facing tests that support development
 teams, ensuring they are building the right software. They take on the user perspective and
-are usually implemented via executable specifications using a high-level domain-specific lan-
-guage (DSL), which is then translated into a lower-level programming language. For
+are usually implemented via executable specifications using a high-level domain-specific language (DSL), which is then translated into a lower-level programming language. For
 example, you could use Cucumber (https://cucumber.io) to write scenarios like “browse
 the book catalog” or “place a book order” in human-friendly plain text. Those scenarios
 can then be executed and verified using a programming language like Java.
 
 In the acceptance stage, we can also verify the quality attributes of a release candidate via
 non-functional acceptance tests. For example, we could run performance and load tests
-using a tool like Gatling (https://gatling.io), security and compliance tests, and resil-
-ience tests. In this last case, we could embrace chaos engineering, a discipline made
+using a tool like Gatling (https://gatling.io), security and compliance tests, and resilience tests. In this last case, we could embrace chaos engineering, a discipline made
 popular by Netflix and consisting of making certain parts of the system fail to verify
 how the rest will react and how resilient the system is to failures. For Java applications,
 you can look at Chaos Monkey for Spring Boot (https://codecentric.github.io/chaos-monkey-spring-boot).
@@ -419,8 +410,7 @@ them on the side in the form of exploratory testing and usability testing, so th
 we ensure more freedom for testers and fewer constraints on the pace and
 timing required by continuous integration and the deployment pipeline.
 
-An essential feature of the acceptance stage is that all tests are run against a production-
-like environment to ensure the best reliability. The deployment would follow the same
+An essential feature of the acceptance stage is that all tests are run against a productionlike environment to ensure the best reliability. The deployment would follow the same
 procedure and scripts as production and could be tested via dedicated system tests
 (first quadrant).
 
@@ -457,11 +447,9 @@ CEO and founder of Weaveworks (www.weave.works).
 
 GitOps is a set of practices for operating and managing software systems, enabling
 continuous delivery and deployment while ensuring agility and reliability. Compared
-to the traditional approach, GitOps favors decoupling between delivery and deploy-
-ment. Instead of having the pipeline pushing deployments to the platform, it’s the
+to the traditional approach, GitOps favors decoupling between delivery and deployment. Instead of having the pipeline pushing deployments to the platform, it’s the
 platform itself pulling the desired state from a source repository and performing
-deployments. In the first case, the deployment step is implemented within the produc-
-tion stage workflow. In the second case, which will be our focus, the deployment is still
+deployments. In the first case, the deployment step is implemented within the production stage workflow. In the second case, which will be our focus, the deployment is still
 theoretically considered part of the production stage, but the implementation differs.
 
 GitOps doesn’t enforce specific technologies, but it’s best implemented with Git and Kubernetes. 

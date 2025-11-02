@@ -860,12 +860,9 @@ ____
 
 === DispatcherServlet
 
-The DispatcherServlet component provides a central entry point for request process-
-ing. When a client sends a new HTTP request for a specific URL pattern, Dispatcher-
-Servlet asks the HandlerMapping component for the controller responsible for that
+The DispatcherServlet component provides a central entry point for request processing. When a client sends a new HTTP request for a specific URL pattern, DispatcherServlet asks the HandlerMapping component for the controller responsible for that
 endpoint, and it finally delegates the actual processing of the request to the specified
-controller. The controller processes the request, possibly by calling some other ser-
-vices, and then returns a response to DispatcherServlet, which finally replies to the
+controller. The controller processes the request, possibly by calling some other services, and then returns a response to DispatcherServlet, which finally replies to the
 client with an HTTP response.
 image::{figures}/image-1.png[The DispatcherServlet component is the entry point to the Servlet container (Tomcat). It
 delegates the actual HTTP request processing to a controller identified by HandlerMapping as the one

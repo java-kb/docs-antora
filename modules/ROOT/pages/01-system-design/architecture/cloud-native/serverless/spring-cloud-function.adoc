@@ -2,8 +2,7 @@
 
 Using Spring Cloud Function to implement the business logic as functions, is an excellent choice, since serverless applications are event-driven.
 
-Spring Cloud Function is very flexible. You can integrate it trans-
-parently with external messaging systems like RabbitMQ and Kafka, which is ca handy feature for
+Spring Cloud Function is very flexible. You can integrate it transparently with external messaging systems like RabbitMQ and Kafka, which is ca handy feature for
 building serverless applications that are triggered by messages. 
 
 Spring Cloud Function integrates with several communication channels. You can expose functions through exchanges and queues leveraging Spring
@@ -234,8 +233,7 @@ you check the application logs, you’ll see that the random quote by genre has 
 printed out instead.
 
 == CloudEvents
-CloudEvents can be consumed over HTTP, messaging channels like AMPQ (Rab-
-bitMQ), and RSocket. They ensure a standard way of describing events, thus making
+CloudEvents can be consumed over HTTP, messaging channels like AMPQ (RabbitMQ), and RSocket. They ensure a standard way of describing events, thus making
 them portable across a wide variety of technologies, including applications, messaging
 systems, build tools, and platforms.
 

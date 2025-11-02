@@ -25,8 +25,7 @@ those are just interactions with Edge Service) and also interactions with end us
 via the web browser. In production, Keycloak will be accessible via a public URL that
 both applications and users will use, so there will be no problem. How about in local
 environments? Since we don’t deal with public URLs when working locally, we need to configure
-things differently. On Docker, we can solve the problem by using the http://host.docker.internal special URL configured automatically when installing the soft-
-ware. It resolves to your localhost IP address and can be used both within a Docker
+things differently. On Docker, we can solve the problem by using the http://host.docker.internal special URL configured automatically when installing the software. It resolves to your localhost IP address and can be used both within a Docker
 network and outside.
 
 On Kubernetes, we don’t have a generic URL to let Pods within a cluster access your
@@ -38,11 +37,9 @@ configuration to resolve the polar-keycloak hostname to the cluster IP address.
 Then a dedicated Ingress will make it possible to access Keycloak when requests are
 directed to the polar-keycloak hostname.
 
-If you’re on Linux or macOS, you can map the polar-keycloak hostname to the mini-
-kube local IP address in the /etc/hosts file. On Linux, the IP address is the one
+If you’re on Linux or macOS, you can map the polar-keycloak hostname to the minikube local IP address in the /etc/hosts file. On Linux, the IP address is the one
 returned by the minikube ip --profile polar command (as explained in chapter 9).
-On macOS, it’s going to be 127.0.0.1. Open a Terminal window, and run the follow-
-ing command (make sure you replace the <ip-address> placeholder with the cluster
+On macOS, it’s going to be 127.0.0.1. Open a Terminal window, and run the following command (make sure you replace the <ip-address> placeholder with the cluster
 IP address, depending on your operating system):
 [source,console,attributes]
 ----
@@ -62,8 +59,7 @@ features, like namespaces and cgroups, to partition and limit resources among pr
 For JVM-based applications like Spring Boot, defining CPU and memory limits is
 even more critical because they will be used to properly size items like JVM thread
 pools, heap memory, and non-heap memory. Configuring those values has always
-been a challenge for Java developers, and it’s critical since they directly affect applica-
-tion performance. 
+been a challenge for Java developers, and it’s critical since they directly affect application performance. 
 
 if you use the Paketo implementation of Cloud Native Buildpacks included in Spring Boot, you don’t need to worry about that. When you package your service application with Paketo, a Java Memory Calculator component was included automatically. When you run the containerized application, that component will configure the JVM memory based on the resource limits
 assigned to the container. If you don’t specify any limits, the results will be unpredictable, which is not what you want.
@@ -80,8 +76,7 @@ However, production workloads should always contain resource configurations.
 For Kubernetes refer to xref:16-deployment/kubernetes/Kustomize.adoc#Configuring-CPU-and-memory[Configuring CPU and memory].
 
 === Optimizing CPU And Memory
-The amount of CPU available to a container directly affects the startup time of a JVM-
-based application like Spring Boot. In fact, the JVM leverages as much CPU as available to run the initialization tasks concurrently and reduce the startup time. After the
+The amount of CPU available to a container directly affects the startup time of a JVMbased application like Spring Boot. In fact, the JVM leverages as much CPU as available to run the initialization tasks concurrently and reduce the startup time. After the
 startup phase, the application will use much lower CPU resources.
 
 A common strategy is to define the CPU request (resources.requests.cpu) with
@@ -107,8 +102,7 @@ recommended to use it both as a request (resources.requests.memory) and as a lim
 (resources.limits.memory). The reason for that is deeply connected to how the JVM
 works, and particularly how the JVM heap memory behaves. Growing and shrinking
 the container memory dynamically will affect the application’s performance, since the
-heap memory is dynamically allocated based on the memory available to the con-
-tainer. Using the same value for the request and the limit ensures that a fixed amount
+heap memory is dynamically allocated based on the memory available to the container. Using the same value for the request and the limit ensures that a fixed amount
 of memory is always guaranteed, resulting in better JVM performance. Furthermore,
 it allows the Java Memory Calculator provided by the Paketo Buildpacks to configure
 the JVM memory in the most efficient way.

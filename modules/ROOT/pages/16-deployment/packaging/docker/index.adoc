@@ -24,8 +24,7 @@ package characterized by a client/server architecture.
 
 The *Docker server* contains the Docker daemon, a background process responsible for creating and managing Docker
 objects like images, containers, volumes, and networks. The machine where the
-Docker server runs is called the Docker host. Each machine where you want to run con-
-tainers should be a Docker host, so it should have a Docker daemon running. The
+Docker server runs is called the Docker host. Each machine where you want to run containers should be a Docker host, so it should have a Docker daemon running. The
 portability of containers is made possible by the daemon process itself.
 
 The *Docker daemon* exposes an API you can use to send instructions, such as to
@@ -46,8 +45,7 @@ scratch by defining instructions in a Dockerfile, a text-based file containing a
 steps to generate the image.
 
 Container images are the product of executing an ordered sequence of instructions,
-each resulting in a layer. Each image is made up of several layers, and each layer rep-
-resents a modification produced by the corresponding instruction. The final artifact,
+each resulting in a layer. Each image is made up of several layers, and each layer represents a modification produced by the corresponding instruction. The final artifact,
 an image, can be run as a container.
 
 Images can be created from scratch or starting from a base image. The latter is the
@@ -62,8 +60,7 @@ Each of these instructions will generate a layer, producing the final container 
 
 All layers in a container image are read-only. Once they are applied, you can’t modify
 them anymore. If you need to change something, you can do so by applying a new
-layer on top of it (by executing a new instruction). Changes applied to the upper lay-
-ers will not affect the lower ones. This approach is called copy-on-write: a copy of the
+layer on top of it (by executing a new instruction). Changes applied to the upper layers will not affect the lower ones. This approach is called copy-on-write: a copy of the
 original item is created in the upper layer, and changes are applied to the copy rather
 than to the original item.
 
@@ -78,19 +75,15 @@ You should never store secrets or sensitive information
 in the lower layers because they will always be accessible, even if the upper layers delete them. For example, you shouldn’t package passwords or encryption keys within a container image.
 
 
-Container images follow common naming conventions, which are adopted by OCI-
-compliant container registries: +++<container_registry>+++/+++<namespace>+++/+++<name>+++[:+++<tag>+++]:+++</tag>++++++</name>++++++</namespace>++++++</container_registry>+++
+Container images follow common naming conventions, which are adopted by OCIcompliant container registries: +++<container_registry>+++/+++<namespace>+++/+++<name>+++[:+++<tag>+++]:+++</tag>++++++</name>++++++</namespace>++++++</container_registry>+++
 
 * Container registry--The hostname for the container registry where the image is
 stored. When using Docker Hub, the hostname is docker.io and it's usually
 omitted. The Docker Engine will implicitly prepend the image name with
-docker.io if you don't specify a registry. When using GitHub Container Regis-
-try, the hostname is ghcr.io and must be explicit.
-* Namespace--When using Docker Hub or GitHub Container Registry, the name-
-space will be your Docker/GitHub username written all in lowercase. In other
+docker.io if you don't specify a registry. When using GitHub Container Registry, the hostname is ghcr.io and must be explicit.
+* Namespace--When using Docker Hub or GitHub Container Registry, the namespace will be your Docker/GitHub username written all in lowercase. In other
 registries, it might be the path to the repository.
-* Name and tag--The image name represents the repository (or package) that con-
-tains all the versions of your image. It's optionally followed by a tag for selecting
+* Name and tag--The image name represents the repository (or package) that contains all the versions of your image. It's optionally followed by a tag for selecting
 a specific version. If no tag is defined, the latest tag will be used by default.
 
 Official images like ubuntu or postgresql can be downloaded by specifying the name
@@ -118,8 +111,7 @@ find each other using the container name rather than a hostname or an IP address
 For example, Catalog Service will be able to call the PostgreSQL server through the
 URL jdbc:postgresql:/ /polar-postgres:5432, where polar-postgres is the container name. 
 
-To create a network inside which Catalog Service and Post-
-greSQL can talk to each other using the container name instead of an IP address or a
+To create a network inside which Catalog Service and PostgreSQL can talk to each other using the container name instead of an IP address or a
 hostname.
 
 * run this command from any Terminal window:
@@ -151,8 +143,7 @@ Containers are isolated from the host machine and other containers, but they sti
 
 containers run using the
 root user by default, potentially letting them get root access to the Docker host. You
-can mitigate the risk by creating a non-privileged user and using it to run the entry-
-point process defined in the Dockerfile, following the principle of least privilege.
+can mitigate the risk by creating a non-privileged user and using it to run the entrypoint process defined in the Dockerfile, following the principle of least privilege.
 
 [,docker]
 ----
@@ -161,12 +152,10 @@ RUN useradd spring
 USER spring
 ----
 
-You should never store secrets like passwords or keys in a con-
-tainer image. Even if they are removed in an upper layer, they will remain intact in the
+You should never store secrets like passwords or keys in a container image. Even if they are removed in an upper layer, they will remain intact in the
 original layer and be easily accessible.
 
-it’s also critical to use up-to-date base images and libraries in your Docker-
-file. Scanning your container images for vulnerabilities is a best practice that should
+it’s also critical to use up-to-date base images and libraries in your Dockerfile. Scanning your container images for vulnerabilities is a best practice that should
 be embraced and automated in your deployment pipeline. 
 
 use grype to check if the newly created image contains any vulnerabilities:
@@ -314,8 +303,7 @@ Polar Book Shop::
 ======
 == Containerizing applications with Docker
 Before deploying an application to the cloud, however, you should containerize it as Containers provide isolation from the surrounding
-environment, and they’re equipped with all the dependencies required by the appli-
-cation to run.
+environment, and they’re equipped with all the dependencies required by the application to run.
 
 Most of the dependencies are managed by Gradle and are packaged
 together with the application (JAR artifact). But the Java runtime is not included.
@@ -329,9 +317,7 @@ to implement them.
 == Container Registry
 
 A container registry is to images what a Maven repository is to Java libraries. Many
-cloud providers offer their own registry solutions with extra services, like image scan-
-ning for vulnerabilities and certified images. By default, a Docker installation is con-
-figured to use the container registry provided by the Docker company (Docker Hub).
+cloud providers offer their own registry solutions with extra services, like image scanning for vulnerabilities and certified images. By default, a Docker installation is configured to use the container registry provided by the Docker company (Docker Hub).
 
 === Using Docker Hub
 === Using Azure Container Registry
@@ -360,8 +346,7 @@ docker tag my-app:1.0.0 \
 ```bash
 docker push ghcr.io/<your_github_username>/my-app:latest
 ```
-* Go to your GitHub account, navigate to your profile page, and enter the Packages sec-
-tion. You should see a new my-app entry
+* Go to your GitHub account, navigate to your profile page, and enter the Packages section. You should see a new my-app entry
 * To pull an image from the GitHub Container Registry, you can use the docker pull command with the fully qualified name:
 ```bash
 docker pull ghcr.io/<your_github_username>/my-app:latest

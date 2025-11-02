@@ -60,8 +60,7 @@ an all-args constructor that the framework can use to populate objects.
 
 A persistent entity must have a field that acts as the identifier for the object, which
 will translate to the primary key in the database. You can mark a field as an identifier
-with the @Id annotation (from the org.springframework.data.annotation pack-
-age). The database is responsible for generating a unique identifier for each created
+with the @Id annotation (from the org.springframework.data.annotation package). The database is responsible for generating a unique identifier for each created
 object automatically.
 
 Some domaind like books are uniquely identified by an ISBN, which we can call a natural
@@ -161,10 +160,8 @@ CREATE TABLE book (
  version integer NOT NULL 
 );
 ----
-By default, Spring Data loads the schema.sql file only when using an embedded, in-
-memory database. When using Other DB, we need to enable the functionality
-explicitly. In the application.yml file for your service project, add the follow-
-ing configuration to initialize the database schema from the schema.sql file.
+By default, Spring Data loads the schema.sql file only when using an embedded, inmemory database. When using Other DB, we need to enable the functionality
+explicitly. In the application.yml file for your service project, add the following configuration to initialize the database schema from the schema.sql file.
 [source,yml,attributes]
 ----
 spring:
@@ -320,9 +317,7 @@ interface. At startup time, Spring Data will generate an implementation for your
 
 == Defining transactional contexts
 
-The repositories provided by Spring Data come configured with transactional con-
-texts for all the operations. For example, all methods in CrudRepository are transac-
-tional. That means you can safely call the saveAll() method, knowing that it will be
+The repositories provided by Spring Data come configured with transactional contexts for all the operations. For example, all methods in CrudRepository are transactional. That means you can safely call the saveAll() method, knowing that it will be
 executed in a transaction.
 
 When you add your own query methods, it's up

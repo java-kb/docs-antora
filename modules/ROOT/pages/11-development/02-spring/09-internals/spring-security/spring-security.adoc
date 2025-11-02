@@ -64,8 +64,7 @@ authentication.
 . The authentication provider implements the authentication logic.
 . The user details service implements user management responsibility, which the
 authentication provider uses in the authentication logic.
-. The password encoder implements password management, which the authenti-
-cation provider uses in the authentication logic.
+. The password encoder implements password management, which the authentication provider uses in the authentication logic.
 . The security context keeps the authentication data after the authentication process. The security context will hold the data until the action ends. Usually, in a thread-per-request app, that means until the app sends a response back to the
 client.
 
@@ -99,8 +98,7 @@ https://github.com/spring-projects/spring-boot/blob/main/spring-boot-project/spr
 
 === SpringBootWebSecurityConfiguration
 
-A default implementation of an Authentication-
-Provider uses the default implementations provided for the UserDetailsService
+A default implementation of an AuthenticationProvider uses the default implementations provided for the UserDetailsService
 and the PasswordEncoder. Implicitly, your application secures all the endpoints.
 https://github.com/spring-projects/spring-boot/blob/main/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/security/servlet/SpringBootWebSecurityConfiguration.java
 
@@ -366,11 +364,9 @@ public interface UserDetailsService {
 === UserDetailsManager
 
 This interface extends and adds more methods to the UserDetailsService
-contract. Spring Security needs the UserDetailsService contract to do the authenti-
-cation. But generally, in applications, there is also a need for managing users. Most of
+contract. Spring Security needs the UserDetailsService contract to do the authentication. But generally, in applications, there is also a need for managing users. Most of
 the time, an app should be able to add new users or delete existing ones. In this case,
-we implement a more particular interface defined by Spring Security, UserDetails-
-Manager. It extends UserDetailsService and adds more operations that we need to
+we implement a more particular interface defined by Spring Security, UserDetailsManager. It extends UserDetailsService and adds more operations that we need to
 implement:
 
 https://github.com/spring-projects/spring-security/blob/main/core/src/main/java/org/springframework/security/provisioning/UserDetailsManager.java

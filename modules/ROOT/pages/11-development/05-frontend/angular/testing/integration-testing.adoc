@@ -76,8 +76,7 @@ enabling software to be released faster and more efficiently.
 ==  Approaches to E2E testing
 Several powerful tools are available to facilitate E2E testing, each with its own strengths and features, three major options are: Protractor, Cypress, and Playwright.
 
-E2E testing encompasses two main strategies: script-based testing and exploratory testing. Script-
-based testing relies on automated scripts to execute test cases, ensuring the consistency, repeatability, 
+E2E testing encompasses two main strategies: script-based testing and exploratory testing. Scriptbased testing relies on automated scripts to execute test cases, ensuring the consistency, repeatability, 
 and efficiency of test procedures. On the other hand, exploratory testing is a practical approach that 
 involves manually testing the application while exploring different scenarios. 
 

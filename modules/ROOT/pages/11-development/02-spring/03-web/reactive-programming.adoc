@@ -2,15 +2,12 @@
 :figures: 11-development/02-spring/03-web
 
 When you build applications with Spring, you can choose between a servlet stack and a
-reactive stack. The servlet stack relies on synchronous, blocking I/O and uses the thread-
-per-request model to handle requests. On the other hand, the reactive stack relies on
+reactive stack. The servlet stack relies on synchronous, blocking I/O and uses the threadper-request model to handle requests. On the other hand, the reactive stack relies on
 asynchronous, non-blocking I/O and uses the event loop model to handle requests.
 
-The servlet stack is based on the Servlet API and a Servlet container (such as Tom-
-cat). In contrast, the reactive model is based on the Reactive Streams API (implemented
+The servlet stack is based on the Servlet API and a Servlet container (such as Tomcat). In contrast, the reactive model is based on the Reactive Streams API (implemented
 by Project Reactor) and either Netty or a Servlet container (version 3.1 as a minimum).
-Both stacks let you build RESTful applications using either classes annotated as @Rest-
-Controller or functional endpoints called router functions. The servlet stack uses Spring MVC, while the reactive stack uses Spring WebFlux. 
+Both stacks let you build RESTful applications using either classes annotated as @RestController or functional endpoints called router functions. The servlet stack uses Spring MVC, while the reactive stack uses Spring WebFlux. 
 
 Tomcat is the default choice for servlet-based applications. Netty is the preferred choice for reactive applications, providing the best performance.
 
@@ -18,8 +15,7 @@ image::{figures}/servlet-stack-vs-reactive-stack.png[The servlet stack is based 
 
 Reactive Spring is based on Project Reactor, a framework for building asynchronous,
 non-blocking applications on the JVM. Reactor is an implementation of the Reactive
-Streams specification, and it aims to provide “a standard for asynchronous stream pro-
-cessing with non-blocking back pressure” (www.reactive-streams.org).
+Streams specification, and it aims to provide “a standard for asynchronous stream processing with non-blocking back pressure” (www.reactive-streams.org).
 
 Conceptually, reactive streams resemble the Java Stream API in the way we use them
 to build data pipelines. One of the key differences is that a Java stream is pull-based: consumers process data in an imperative and synchronous fashion. Instead, reactive
@@ -41,8 +37,7 @@ The possible outcomes of a reactive stream are an empty result, a value, or an e
 All of them are handled as data. When the publisher returns all the data, we say that
 the reactive stream has been completed successfully.
 
-Consumers are called subscribers because they subscribe to a publisher and are noti-
-fied whenever new data is available. As part of the subscription, consumers can also
+Consumers are called subscribers because they subscribe to a publisher and are notified whenever new data is available. As part of the subscription, consumers can also
 define backpressure by informing the publisher that they can process only a certain
 amount of data at a time. That is a powerful feature that puts consumers in control of
 how much data is received, preventing them from being overwhelmed and becoming
@@ -55,14 +50,12 @@ which builds a new Stream object that keeps the previous step immutable. Similar
 you can build reactive streams using a fluent API and operators to process the data
 received asynchronously.
 
-Besides the standard operators available to Java streams, you can use more power-
-ful ones to apply backpressure, handle errors, and increase application resilience. For
+Besides the standard operators available to Java streams, you can use more powerful ones to apply backpressure, handle errors, and increase application resilience. For
 example, the retryWhen() and timeout() operators. Operators can
 perform actions on a publisher and return a new publisher without modifying the
 original one, so you can build functional and immutable data streams with ease.
 
-Project Reactor is the foundation of the Spring reactive stack, which lets you imple-
-ment your business logic in terms of Mono<T> and Flux<T>.
+Project Reactor is the foundation of the Spring reactive stack, which lets you implement your business logic in terms of Mono<T> and Flux<T>.
 
 The programming model is based on processing streams of data, and the core data types in Project 
 Reactor are Flux and Mono. A Flux object is used to process a stream of 0...n elements and a Mono
@@ -119,8 +112,7 @@ spring:
   application:
     name: order-service
   lifecycle:
-    #    You can also configure the grace period, which is how long the applica-
-    # tion can spend processing all the pending requests. After the grace period expires,
+    #    You can also configure the grace period, which is how long the applica    # tion can spend processing all the pending requests. After the grace period expires,
     # the application is terminated even if there are still pending requests. By default, the
     # grace period is 30 seconds. 
     timeout-per-shutdown-phase: 15s 
@@ -163,14 +155,12 @@ applications. It can be operated through a functional-style, fluent API that let
 configure any aspect of the HTTP interaction.
 
 == Resilient applications with Reactive Spring
-A popular library for implementing such patterns was Hystrix, developed by Net-
-flix, but as of 2018 it entered maintenance mode and will not be developed further.
+A popular library for implementing such patterns was Hystrix, developed by Netflix, but as of 2018 it entered maintenance mode and will not be developed further.
 Resilience4J gained a lot of popularity, filling the void left by Hystrix. Project Reactor,
 the Reactive Spring stack foundation, also provides some useful features for resilience.
 
 You can use the Reactor operators to configure timeouts, retries, fallbacks, and
-error handling to make the interaction more resilient to any failure in the ser-
-vice downstream or due to the network
+error handling to make the interaction more resilient to any failure in the service downstream or due to the network
 == Using Reactive Spring
 === Non-blocking persistence using Spring Data for MongoDB
 Making the MongoDB-based repositories reactive is very simple:
@@ -185,8 +175,7 @@ public interface ProductRepository extends ReactiveCrudRepository<ProductEntity,
 ----
 
 When it comes to testing the persistence layer, we have to make some changes. Since our persistence 
-methods now return a Mono or Flux object, the test methods have to wait for the response to be avail-
-able in the returned reactive objects. The test methods can either use an explicit call to the block()
+methods now return a Mono or Flux object, the test methods have to wait for the response to be available in the returned reactive objects. The test methods can either use an explicit call to the block()
 method on the Mono/Flux object to wait until a response is available, or they can use the StepVerifier
 helper class from Project Reactor to declare a verifiable sequence of asynchronous events
 
@@ -1542,9 +1531,7 @@ request and retries has to happen within the given time limit).
 
 You can define the number of attempts and the minimum duration for the
 first backoff. The delay is computed for each retry as the current attempt number
-multiplied by the minimum backoff period. A jitter factor can be used to add random-
-ness to the exponential of each backoff. By default, a jitter of at most 50% of the com-
-puted delay is used. When you have multiple instances of Order Service running, the
+multiplied by the minimum backoff period. A jitter factor can be used to add randomness to the exponential of each backoff. By default, a jitter of at most 50% of the computed delay is used. When you have multiple instances of Order Service running, the
 jitter factor ensures that the replicas will not retry requests simultaneously.
 
 [source,java,attributes]
@@ -1557,8 +1544,7 @@ public Mono<Book> getBookByIsbn(String isbn) {
             .bodyToMono(Book.class)
             /*
                 * Instead of throwing an exception when the timeout expires, you have the
-                * chance to pro-
-                * vide a fallback behavior. Considering that Order Service can’t accept an
+                * chance to pro                * vide a fallback behavior. Considering that Order Service can’t accept an
                 * order if the
                 * book’s availability is not verified, you might consider returning an empty
                 * result so that
@@ -1602,8 +1588,7 @@ The retry strategy you defined in the previous section is not limited: it will r
 request as long as an error response is received, including acceptable ones like 404.
 However, in that case, you don’t want to retry the request. Project Reactor provides an
 onErrorResume() operator to define a fallback when a specific error occurs. You can
-add it to the reactive stream after the timeout() operator and before the retry-
-When() so that if a 404 response is received (WebClientResponseException.NotFound
+add it to the reactive stream after the timeout() operator and before the retryWhen() so that if a 404 response is received (WebClientResponseException.NotFound
 exception), the retry operator is not triggered. Then you can use the same operator
 again at the end of the stream to catch any other exception and fall back to an empty
 Mono. Update the getBookByIsbn() method in the BookClient class as follows.
@@ -1624,11 +1609,8 @@ public Mono<Book> getBookByIsbn(String isbn) {
             .onErrorResume(Exception.class, exception -> Mono.empty());
 }
 ----
-In a real-world scenario, you would probably want to return some con-
-textual information depending on the type of error, instead of always return-
-ing an empty object. For example, you could add a reason field to the Order
-object to describe why it’s been rejected. Was it because the book is unavail-
-able in the catalog or because of network problems? In the second case, you
+In a real-world scenario, you would probably want to return some contextual information depending on the type of error, instead of always returning an empty object. For example, you could add a reason field to the Order
+object to describe why it’s been rejected. Was it because the book is unavailable in the catalog or because of network problems? In the second case, you
 could inform the user that the order cannot be processed because it’s
 momentarily unable to check the book’s availability. A better option would be
 to save the order in a pending state, queue the order submission request, and

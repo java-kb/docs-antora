@@ -18,8 +18,7 @@ on-premises use and as a service from most of the major cloud providers.
 the deployment, scaling, and management of containerized applications (https://
 kubernetes.io).
 
-With Buildpacks and Spring Boot, you can build a production-
-ready image in one command, without even having to write your own Dockerfile or
+With Buildpacks and Spring Boot, you can build a productionready image in one command, without even having to write your own Dockerfile or
 install additional tools. 
 
 With Docker Compose, you can simultaneously control
@@ -40,8 +39,7 @@ containers to a cluster of machines, enabling scalability and resilience.
 
 When you are working with containers in Docker, your deployment
 target is a machine like your computer.
-In other scenarios it might be a virtual machine (VM). In any case, it’s about deploy-
-ing containers to a specific machine. However, when it comes to deploying containers
+In other scenarios it might be a virtual machine (VM). In any case, it’s about deploying containers to a specific machine. However, when it comes to deploying containers
 without downtime, scaling them by leveraging the cloud’s elasticity, or connecting
 them across different hosts, you’ll need something more than a container engine.
 Instead of deploying to a specific machine, you are deploying to a cluster of machines,
@@ -51,8 +49,7 @@ When using a container topology, you need a machine with a container runtime.
 With Kubernetes, however, you switch to an orchestration topology, meaning that you
 need a cluster. A Kubernetes cluster is a set of worker machines (nodes) that run containerized applications. Every cluster has at least one worker node.
 
-A Kubernetes cluster comprises machines called worker nodes on which your con-
-tainerized applications are deployed. They provide capacity such as CPU, memory,
+A Kubernetes cluster comprises machines called worker nodes on which your containerized applications are deployed. They provide capacity such as CPU, memory,
 network, and storage so that the containers can run and connect to a network.
 
 The control plane is the container orchestration layer that manages the worker
@@ -60,8 +57,7 @@ nodes. It exposes the API and interfaces to define, deploy, and manage the life 
 of containers. It offers all the essential elements that implement the typical features of an orchestrator, like cluster management, scheduling, and health monitoring.
 
 Kubernetes clients use an API to interact with the Kubernetes Control Plane, which is
-responsible for creating and managing objects in a Kubernetes cluster. In this new sce-
-nario, we still send commands to a single entity, but it acts on several machines rather
+responsible for creating and managing objects in a Kubernetes cluster. In this new scenario, we still send commands to a single entity, but it acts on several machines rather
 than only one. 
 
 Pods are the smallest deployable units in
@@ -98,9 +94,7 @@ healthy. Among other things, a Deployment allows you to manage Pods as a set.
 cluster or outside by defining a Service that also takes care of balancing the load
 between Pod instances.
 
-A Pod is the smallest Kubernetes object, and it “represents a set of running contain-
-ers” in a cluster. It’s usually set up to run a single primary container (your applica-
-tion), but it can also run optional helper containers with additional features like
+A Pod is the smallest Kubernetes object, and it “represents a set of running containers” in a cluster. It’s usually set up to run a single primary container (your application), but it can also run optional helper containers with additional features like
 logging, monitoring, or security.
  
 A Pod is usually comprised of one container: the application instance. When that
@@ -115,29 +109,24 @@ between all Pods via mTLS (mutual Transport Layer Security).
 Compared to containers, Pods allow you to manage related containers as
 a single entity. But that’s not enough. Directly creating and managing Pods would not
 be much different than working with plain Docker containers. We need something at
-a higher level of abstraction to define how we want to deploy and scale our applica-
-tions. That’s where the Deployment objects come into play. 
+a higher level of abstraction to define how we want to deploy and scale our applications. That’s where the Deployment objects come into play. 
 
 When you want to run a new application, you can define a resource manifest, a file that
 describes the desired state for the application. For example, you might specify that it
 should be replicated five times and exposed to the outside world through port 8080.
-Resource manifests are usually written using YAML. You can then use the kubectl cli-
-ent to ask the control plane to create the resources described by the manifest. In the
-end, the control plane processes the request using its internal components and cre-
-ates the resources in the worker nodes. The control plane still relies on a container
+Resource manifests are usually written using YAML. You can then use the kubectl client to ask the control plane to create the resources described by the manifest. In the
+end, the control plane processes the request using its internal components and creates the resources in the worker nodes. The control plane still relies on a container
 registry to fetch the image defined in the resource manifest. The workflow, again, is
 shown in above figure.
 
 
 A namespace is “an abstraction used by Kubernetes to support isolation of groups of
 resources within a single cluster. Namespaces are used to organize objects in a cluster
-and provide a way to divide cluster resources” (https://kubernetes.io/docs/refer-
-ence/glossary).
+and provide a way to divide cluster resources” (https://kubernetes.io/docs/reference/glossary).
 
 We use namespaces to keep our clusters organized and define network policies to
 keep certain resources isolated for security reasons. So far, we’ve been working with
-the default namespace, and we’ll keep doing that for all our Polar Bookshop applica-
-tions. However, when it comes to platform services such as Ingress NGINX, we’ll rely
+the default namespace, and we’ll keep doing that for all our Polar Bookshop applications. However, when it comes to platform services such as Ingress NGINX, we’ll rely
 on dedicated namespaces to keep those resources isolated.
 
 == Useful Kubernetes CLI commands for managing Pods, Deployments, and Services
@@ -286,20 +275,17 @@ How can you scale an application to have five replicas running? How can you ensu
 there are always five replicas up and running even when failures occur? How can you
 deploy a new version of the application without downtime? With Deployments.
 
-A Deployment is an object that manages the life cycle of a stateless, replicated appli-
-cation. Each replica is represented by a Pod. The replicas are distributed among the
+A Deployment is an object that manages the life cycle of a stateless, replicated application. Each replica is represented by a Pod. The replicas are distributed among the
 nodes of a cluster for better resilience.
 
-In Docker you manage your application instances directly by creating and remov-
-ing containers. In Kubernetes you don’t manage Pods. You let a Deployment do that
+In Docker you manage your application instances directly by creating and removing containers. In Kubernetes you don’t manage Pods. You let a Deployment do that
 for you. Deployment objects have several important and valuable characteristics. You
 can use them to deploy your applications, roll out upgrades without downtime, roll
 back to a previous version in case of errors, and pause and resume upgrades.
 
 Deployments also let you manage replication. They make use of an object named
 ReplicaSet to ensure there’s always the desired number of Pods up and running in your
-cluster. If one of them crashes, a new one is created automatically to replace it. Fur-
-thermore, replicas are deployed across different nodes in your cluster to ensure even
+cluster. If one of them crashes, a new one is created automatically to replace it. Furthermore, replicas are deployed across different nodes in your cluster to ensure even
 higher availability if one node crashes
 
 Deployments provide a convenient abstraction for us to declare what we want to
@@ -315,8 +301,7 @@ In Kubernetes, the recommended approach is to describe an object’s desired sta
 in a manifest file, typically specified in YAML format. We use declarative configuration: we
 declare what we want instead of how to achieve it.
 
-A manifest is “a specification of a Kuber-
-netes API object in JSON or YAML format.” It specifies “the desired state of an object
+A manifest is “a specification of a Kubernetes API object in JSON or YAML format.” It specifies “the desired state of an object
 that Kubernetes will maintain when you apply the manifest”
 
 A Kubernetes manifest usually comprises four main sections:
@@ -324,28 +309,23 @@ image::{figures}/Kubernetes manifest.png[Kubernetes manifest]
 * apiVersion defines the versioned schema of the specific object representation.
 Core resources such as Pods or Services follow a versioned schema composed of
 only a version number (such as v1). Other resources like Deployments or
-ReplicaSet follow a versioned schema consisting of a group and a version num-
-ber (for example, apps/v1). If in doubt about which version to use, you can
+ReplicaSet follow a versioned schema consisting of a group and a version number (for example, apps/v1). If in doubt about which version to use, you can
 refer to the Kubernetes documentation (https://kubernetes.io/docs) or use the
 kubectl explain <object_name> command to get more information about the
 object, including the API version to use.
-* kind is the type of Kubernetes object you want to create, such as Pod, Replica-
-Set, Deployment, or Service. You can use the kubectl api-resources com-
-mand to list all the objects supported by the cluster.
+* kind is the type of Kubernetes object you want to create, such as Pod, ReplicaSet, Deployment, or Service. You can use the kubectl api-resources command to list all the objects supported by the cluster.
 * metadata provides details about the object you want to create, including the
 name and a set of labels (key/value pairs) used for categorization. For example, you can instruct Kubernetes to replicate all the objects with a specific label
 attached.
 * spec is a section specific to each object type and is used to declare the desired
 configuration.
 == Managing external access with Kubernetes Ingress
-When it comes to exposing applications inside a Kubernetes cluster, we can use a Ser-
-vice object of type ClusterIP. For example, that’s how Catalog Service Pods can communicate with the PostgreSQL Pod.
+When it comes to exposing applications inside a Kubernetes cluster, we can use a Service object of type ClusterIP. For example, that’s how Catalog Service Pods can communicate with the PostgreSQL Pod.
 
 A Service object can also be of type LoadBalancer, which relies on an external
 load balancer provisioned by a cloud provider to expose an application to the
 internet. We could define a LoadBalancer Service for Edge Service instead of the
-ClusterIP one. When running the system in a public cloud, the vendor would pro-
-vision a load balancer, assign a public IP address, and all the traffic coming from
+ClusterIP one. When running the system in a public cloud, the vendor would provision a load balancer, assign a public IP address, and all the traffic coming from
 that load balancer would be directed to the Edge Service Pods. It’s a flexible approach
 that lets you expose a service directly to the internet, and it works with different
 types of traffic.
@@ -355,29 +335,23 @@ each service we decide to expose to the internet. Since services are directly ex
 we don’t have the chance to apply any further network configuration, such as TLS
 termination. We could configure HTTPS in Edge(Gateway) Service, route all traffic directed
 to the cluster through the gateway (even platform services that don’t belong to
-our system), and apply further network configuration there. The Spring eco-
-system provides everything we need to address those concerns, and it’s probably
+our system), and apply further network configuration there. The Spring ecosystem provides everything we need to address those concerns, and it’s probably
 what we would do in many scenarios. However, since we want to run our system on
 Kubernetes, we can manage those infrastructural concerns at the platform level and
 keep our applications simpler and more maintainable. That’s where the Ingress API
 comes in handy.
 
-An Ingress is an object that “manages external access to the services in a cluster, typ-
-ically HTTP. Ingress may provide load balancing, SSL termination and name-based
+An Ingress is an object that “manages external access to the services in a cluster, typically HTTP. Ingress may provide load balancing, SSL termination and name-based
 virtual hosting” (https://kubernetes.io/docs). An Ingress object acts as an entry point
 into a Kubernetes cluster and is capable of routing traffic from a single external IP
 address to multiple services running inside the cluster. We can use an Ingress object to
-perform load balancing, accept external traffic directed to a specific URL, and man-
-age the TLS termination to expose the application services via HTTPS.
+perform load balancing, accept external traffic directed to a specific URL, and manage the TLS termination to expose the application services via HTTPS.
 
 Ingress objects don’t accomplish anything by themselves. We use an Ingress object
-to declare the desired state in terms of routing and TLS termination. The actual compo-
-nent that enforces those rules and routes traffic from outside the cluster to the appli-
-cations inside is the ingress controller. Since multiple implementations are available,
+to declare the desired state in terms of routing and TLS termination. The actual component that enforces those rules and routes traffic from outside the cluster to the applications inside is the ingress controller. Since multiple implementations are available,
 there’s no default ingress controller included in the core Kubernetes distribution—
 it’s up to you to install one. Ingress controllers are applications that are usually built
-using reverse proxies like NGINX, HAProxy, or Envoy. Some examples are Ambassa-
-dor Emissary, Contour, and Ingress NGINX.
+using reverse proxies like NGINX, HAProxy, or Envoy. Some examples are Ambassador Emissary, Contour, and Ingress NGINX.
 
 In production, the cloud platform or dedicated tools would be used to configure
 an ingress controller. 
@@ -450,11 +424,9 @@ after that period, Kubernetes sends a SIGKILL signal to force the Pod’s termin
 Since the Spring Boot grace period is lower than the Kubernetes one, the application is
 in control of when it will terminate. When it sends the SIGTERM signal to a Pod, Kubernetes will also inform its own
 components to stop forwarding requests to the terminating Pod. Since Kubernetes is a
-distributed system, and the two actions happen in parallel, there is a short time win-
-dow when the terminating Pod might still receive requests, even if it has already
+distributed system, and the two actions happen in parallel, there is a short time window when the terminating Pod might still receive requests, even if it has already
 started the graceful shutdown procedure. When that happens, those new requests will
-be rejected, resulting in errors in the clients. Our goal was to make the shutdown pro-
-cedure transparent to the clients, so that scenario is unacceptable.
+be rejected, resulting in errors in the clients. Our goal was to make the shutdown procedure transparent to the clients, so that scenario is unacceptable.
 
 The recommended solution is to delay sending the SIGTERM signal to the Pod so
 that Kubernetes has enough time to spread the news across the cluster. By doing so, all
@@ -463,8 +435,7 @@ it starts the graceful shutdown procedure. Technically, the delay can be configu
 through a preStop hook.
 
 When a Pod contains multiple containers, the SIGTERM signal is sent to
-all of them in parallel. Kubernetes will wait up to 30 seconds. If any of the con-
-tainers in the Pod are not terminated yet, it will shut them down forcefully.
+all of them in parallel. Kubernetes will wait up to 30 seconds. If any of the containers in the Pod are not terminated yet, it will shut them down forcefully.
 
 To update the Deployment manifest for Catalog Service to support a transparent and graceful shutdown.
 
@@ -486,8 +457,7 @@ In Kubernetes, replication is handled at the Pod level by a ReplicaSet object.
 
 That’s the basic functionality on top
 of which you can configure an autoscaler to dynamically increase or decrease the
-number of Pods, depending on the workload and without having to update the mani-
-fest every time.
+number of Pods, depending on the workload and without having to update the manifest every time.
 
 Open the deployment.yml file located in catalog-service/k8s, and define how
 many replicas of the Pod running Catalog Service you want
@@ -517,8 +487,7 @@ kubectl delete pod <pod-name>
 The Deployment manifest declares two replicas as the desired state. Since there is now
 only one, Kubernetes will immediately step up to ensure the actual state and the
 desired state are aligned. If you inspect the Pods again with kubectl get pods -l
-app=catalog-service, you will still see two Pods, but one of them has just been cre-
-ated to replace the deleted Pod. You can identify it by checking its age:
+app=catalog-service, you will still see two Pods, but one of them has just been created to replace the deleted Pod. You can identify it by checking its age:
 
 kubectl get pods -l app=catalog-service
 
@@ -535,8 +504,7 @@ minikube dashboard
 Helm is a package manager for Kubernetes that simplifies the deployment and management of applications in a Kubernetes cluster. It allows you to define, install, and upgrade complex applications using pre-configured packages called charts.
 
 A popular way of running third-party services in a Kubernetes cluster is through Helm
-(https://helm.sh). Think of it as a package manager. To install software on your com-
-puter, you can use one of the operating system package managers, like Apt (Ubuntu),
+(https://helm.sh). Think of it as a package manager. To install software on your computer, you can use one of the operating system package managers, like Apt (Ubuntu),
 Homebrew (macOS), or Chocolatey (Windows); in Kubernetes, you can similarly use
 Helm, but we call them charts instead of packages.
 
@@ -555,8 +523,7 @@ There are several ways of validating Kubernetes manifests against the Kubernetes
 === Using Kubeval
 //  no longer maintained
 Open a Terminal window and navigate to the root folder of
-your Catalog Service project (catalog-service). Then use the kubeval command to val-
-idate the Kubernetes manifests within the k8s directory (-d k8s). The --strict flag
+your Catalog Service project (catalog-service). Then use the kubeval command to validate the Kubernetes manifests within the k8s directory (-d k8s). The --strict flag
 disallows adding additional properties not defined in the object schema:
 
 kubeval --strict -d k8s
@@ -614,10 +581,8 @@ Kustomize is natively available in the Kubernetes CLI, it works with valid YAML 
 and can also handle complex application rollouts and upgrades that Kubernetes doesn’t support natively. On the other hand, it has a steep learning curve, its templating solution has a few drawbacks, and it’s not declarative.
 
 Another option is ytt from the Carvel suite (https://carvel.dev/ytt). It provides a superior experience, with support for both patches and templates, it works with valid YAML
-files, and its templating strategy is more robust. It takes a bit more effort to get famil-
-iar with ytt than Kustomize, but it’s worth the effort. Because it treats YAML as a first class citizen, ytt can be used to configure and customize any YAML file, even outside
-Kubernetes. Do you use GitHub Actions workflows? Ansible playbooks? Jenkins pipe-
-lines? You can use ytt in all those scenarios.
+files, and its templating strategy is more robust. It takes a bit more effort to get familiar with ytt than Kustomize, but it’s worth the effort. Because it treats YAML as a first class citizen, ytt can be used to configure and customize any YAML file, even outside
+Kubernetes. Do you use GitHub Actions workflows? Ansible playbooks? Jenkins pipelines? You can use ytt in all those scenarios.
 
 == Deployment Strategies
 

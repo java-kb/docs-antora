@@ -5,8 +5,7 @@ The Gang of Four describes the purpose of the "`Factory Method`" pattern as foll
 
 ____
 Defne a class interface with operations to create an object, but let subclasses decide which
-class the object to be created is from. Factory methods allow a class to delegate object cre-
-ation to subclasses.
+class the object to be created is from. Factory methods allow a class to delegate object creation to subclasses.
 ____
 
 *Factory method* is a creational design pattern which solves the problem of creating product objects without specifying their concrete classes.

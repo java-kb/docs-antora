@@ -1,7 +1,6 @@
 = Spring Cloud Function
 
-Spring Cloud Function promotes the implementation of business logic via func-
-tions based on the standard interfaces introduced by Java 8: Supplier, Function, and
+Spring Cloud Function promotes the implementation of business logic via functions based on the standard interfaces introduced by Java 8: Supplier, Function, and
 Consumer.
 
 -  Supplier—A supplier is a function with only output, no input. It’s also known as
@@ -9,15 +8,13 @@ a producer, publisher, or source.
 -  Function—A function has both input and output. It’s also known as a processor.
 -  Consumer—A consumer is a function with input but no output. It’s also known as a subscriber or sink.
 
-Spring Cloud Function wraps your function and provides several exciting fea-
-tures like transparent type conversion and function composition.
+Spring Cloud Function wraps your function and provides several exciting features like transparent type conversion and function composition.
 
 Functions implemented in the context of Spring Cloud Function can be exposed
 and integrated with external systems in different ways.
 
 Functions can be exposed as REST endpoints, packaged, and deployed in a
-FaaS platform as serverless applications (Knative, AWS Lambda, Azure Func-
-tion, Google Cloud Functions), or they can be bound to message channels.
+FaaS platform as serverless applications (Knative, AWS Lambda, Azure Function, Google Cloud Functions), or they can be bound to message channels.
 == Implementing event producers
 Suppliers are message sources. They produce messages when an event happens. Unlike functions and consumers, suppliers need to be activated. They act only upon invocation.
 [tabs]

@@ -4,8 +4,7 @@
 The OpenTelemetry project includes instrumentation that generates traces and spans
 for the most common Java libraries, including Spring, Tomcat, Netty, Reactor, JDBC,
 Hibernate, and Logback. The OpenTelemetry Java Agent is a JAR artifact provided by
-the project that can be attached to any Java application. It injects the necessary byte-
-code dynamically to capture traces and spans from all those libraries, and it exports
+the project that can be attached to any Java application. It injects the necessary bytecode dynamically to capture traces and spans from all those libraries, and it exports
 them in different formats without you having to change your Java source code.
 
 Java agents are often provided to the application at runtime from the outside. For
@@ -60,8 +59,7 @@ dependencies {
 ====
 == intergate with Logging
 Besides instrumenting the Java code to capture traces, the OpenTelemetry Java Agent
-also integrates with SLF4J (and its implementation). It provides trace and span identi-
-fiers as contextual information that can be injected into log messages through the
+also integrates with SLF4J (and its implementation). It provides trace and span identifiers as contextual information that can be injected into log messages through the
 MDC abstraction provided by SLF4J. That makes it extremely simple to navigate from
 log messages to traces and vice versa, achieving better visibility into the application
 than querying the telemetry in isolation.
@@ -69,10 +67,8 @@ than querying the telemetry in isolation.
 Let’s expand on the default log format used by Spring Boot and add the following
 contextual information:
 +
-* Application name (value from the spring.application.name property we con-
-figured for all applications)
-* Trace identifier (value from the trace_id field populated by the OpenTeleme-
-try agent, when enabled)
+* Application name (value from the spring.application.name property we configured for all applications)
+* Trace identifier (value from the trace_id field populated by the OpenTelemetry agent, when enabled)
 * Span identifier (value from the span_id field populated by the OpecnTelemetry
 agent, when enabled)
 

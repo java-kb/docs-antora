@@ -30,8 +30,7 @@ service-discovery and load-balancing functionality.
 
 This solution is transparent to your Spring Boot applications. Unlike options like
 Spring Cloud Netflix Eureka, you get service discovery and load balancing out of the
-box in Kubernetes, without requiring any change to your code. That’s why it’s the pre-
-ferred option when you use a Kubernetes-based platform to deploy your applications.
+box in Kubernetes, without requiring any change to your code. That’s why it’s the preferred option when you use a Kubernetes-based platform to deploy your applications.
 
 there are different types of Services, depending on which access policy
 you want to enforce for the application. The default and most common type is called

@@ -37,8 +37,7 @@ long to keep a connection open while waiting for new HTTP requests.
 
 Tomcat has a pool of threads that process requests, following the thread-per-request
 model. The number of available threads will determine how many requests can be
-handled simultaneously. You can configure the maximum number of request process-
-ing threads through the server.tomcat.threads.max property. You can also define
+handled simultaneously. You can configure the maximum number of request processing threads through the server.tomcat.threads.max property. You can also define
 the minimum number of threads that should always be kept running (server.tomcat.threads.min-spare), which is also how many threads are created at startup.
 
 Determining the best configuration for a thread pool is complicated, and there's

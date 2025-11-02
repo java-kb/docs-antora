@@ -1,20 +1,15 @@
 = N-Tier architecture (layered architecture)
 :figures: 01-system-design/architecture/layered
 
-With any nontrivial application, it usually makes sense to organize classes by concern. Per-
-sistence is one concern; others include presentation, workflow, and business logic. A typ-
-ical object-oriented architecture includes layers of code that represent these concerns.
+With any nontrivial application, it usually makes sense to organize classes by concern. Persistence is one concern; others include presentation, workflow, and business logic. A typical object-oriented architecture includes layers of code that represent these concerns.
 
-A layered architecture defines interfaces between the code that implements the vari-
-ous concerns, allowing changes to be made to the way one concern is implemented
+A layered architecture defines interfaces between the code that implements the various concerns, allowing changes to be made to the way one concern is implemented
 without significant disruption to code in the other layers. Layering determines the
 - Layers communicate from top to bottom. A layer is dependent only on the
 interface of the layer directly below it.
 - Each layer is unaware of any other layers except for the layer just below it and
 eventually of the layer above if it receives explicit requests from it.
-Different systems group concerns differently, so they define different layers. The typi-
-cal, proven, high-level application architecture uses three layers: one each for presen-
-tation, business logic, and persistence
+Different systems group concerns differently, so they define different layers. The typical, proven, high-level application architecture uses three layers: one each for presentation, business logic, and persistence
 
 This type of architecture is the simplest because it splits the application into different 
 layers like a cake where each layer can only access the elements to the same or the 
@@ -42,9 +37,7 @@ presentation and control of page and screen navigation is in the presentation
 layer. The user interface code may directly access business entities of the shared
 domain model and render them on the screen, along with controls to execute
 actions. In some architectures, business entity instances might not be directly
-accessible by user interface code, such as when the presentation layer isn’t run-
-ning on the same machine as the rest of the system. In such cases, the presenta-
-tion layer may require its own special data-transfer model, representing only a
+accessible by user interface code, such as when the presentation layer isn’t running on the same machine as the rest of the system. In such cases, the presentation layer may require its own special data-transfer model, representing only a
 transmittable subset of the domain model. A good example of the presentation
 layer is working with a browser to interact with an application.
 - Business layer—The business layer is generally responsible for implementing any
@@ -58,10 +51,8 @@ for executing the business logic.
 - Persistence layer—The persistence layer is a group of classes and components
 responsible for storing data to, and retrieving it from, one or more data stores.
 This layer needs a model of the business domain entities for which you’d like to
-keep a persistent state. The persistence layer is where the bulk of JPA, Hiber-
-nate, and Spring Data use takes place.
-- Database—The database is usually external. It’s the actual persistent representa-
-tion of the system state. If an SQL database is used, the database includes a
+keep a persistent state. The persistence layer is where the bulk of JPA, Hibernate, and Spring Data use takes place.
+- Database—The database is usually external. It’s the actual persistent representation of the system state. If an SQL database is used, the database includes a
 schema and possibly stored procedures for the execution of business logic close
 to the data. The database is the place where data is persisted for the long term.
 - Helper and utility classes—Every application has a set of infrastructural helper or

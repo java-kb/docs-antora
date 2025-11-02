@@ -12,8 +12,7 @@ With environment variables, you can externalize your application’s configurati
 and follow the 15-Factor methodology. However, there are some issues they cannot
 handle:
 
-* Configuration data is as important as the application code, so it should be han-
-dled with the same care and attention, starting from its persistence. Where
+* Configuration data is as important as the application code, so it should be handled with the same care and attention, starting from its persistence. Where
 should you store configuration data?
 Environment variables don’t provide granular access control features. How can
 you control access to configuration data?
@@ -36,8 +35,7 @@ build can be deployed to different environments with different configuration dat
 image::{figures}/image-1.png[Each release you deploy is a combination of build and configuration, which is different for each environment]
 
 Anything that might need to change across deployments should be configurable. For
-example, you'll probably want to change feature flags, credentials for accessing back-
-ing services, resource handles for databases, or URLs to external APIs, all depending
+example, you'll probably want to change feature flags, credentials for accessing backing services, resource handles for databases, or URLs to external APIs, all depending
 on the environment to which you're deploying the application. Cloud native applications favor externalized configuration so that you can replace it without having to
 rebuild your code.
 
@@ -51,13 +49,11 @@ image::{figures}/image.png[Centralized configuration: overview]
 
 The idea of centralized configuration is built around two main components:
 
-* A data store for configuration data, providing persistence, versioning, and pos-
-sibly access control
+* A data store for configuration data, providing persistence, versioning, and possibly access control
 * A server sitting on top of the data store to manage configuration data and serve
 it to multiple applications
 
-Imagine having many applications deployed in different environments. A configura-
-tion server could manage configuration data for all of them from a centralized place,
+Imagine having many applications deployed in different environments. A configuration server could manage configuration data for all of them from a centralized place,
 and that configuration data might be stored in different ways. For example, you could
 use a dedicated Git repository for storing non-sensitive data and use HashiCorp Vault
 to store your secrets. No matter how the data is stored, a configuration server will

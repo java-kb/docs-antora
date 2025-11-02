@@ -65,9 +65,7 @@ LLMs are deep learning models that are good at providing natural language respon
 to natural language prompts. You can imagine simply describing what you need in 
 plain English and receiving ready-to-integrate code
 
-These tools also enhance your debugging efficiency by identifying patterns and sug-
-gesting fixes. Suppose you want your AI tool to analyze a block of code and flag poten-
-tial memory leaks
+These tools also enhance your debugging efficiency by identifying patterns and suggesting fixes. Suppose you want your AI tool to analyze a block of code and flag potential memory leaks
 or performance issues. You can describe the code's purpose and ask the AI to
 review it for potential issues. The AI can then provide insights and suggestions based on its understanding of best practices and common pitfalls in coding.
 
@@ -297,8 +295,7 @@ prompts are the only way to engage with the tool. With Copilot and CodeWhisperer
 output correspond more closely to what you initially had in mind.
 
 Combining these factors, you may conclude that ChatGPT is an excellent choice for 
-exploration and prototyping. However, ChatGPT can introduce unnecessary distrac-
-tions, partly because you have left your IDE and are now in a web browser with all of the 
+exploration and prototyping. However, ChatGPT can introduce unnecessary distractions, partly because you have left your IDE and are now in a web browser with all of the 
 accompanying temptations that come with it. ChatGPT itself is part of the inclusion of 
 unnecessary distractions. You will eventually fall into the proverbial rabbit hole. The 
 tool makes it too easy not to. Don’t let that scare you off. It is a beautiful resource. 

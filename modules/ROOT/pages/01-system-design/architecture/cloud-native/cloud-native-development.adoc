@@ -45,15 +45,13 @@ import into the project as a dependency. You should carefully evaluate
 the latter option to prevent the system from becoming a distributed
 monolith.
 
-Thinking about how your code is organized into codebases and repos-
-itories can help you focus more on the system architecture and identify those
+Thinking about how your code is organized into codebases and repositories can help you focus more on the system architecture and identify those
 parts that might actually stand on their own as independent services. If this is
 done correctly, the codebase’s organization can favor modularity and loose
 coupling.
 
 According to the 15-Factor methodology, each codebase should be mapped to an
-application, but nothing is said about repositories. You can decide to track each code-
-base in a separate repository or in the same one. Both options are used in the cloud
+application, but nothing is said about repositories. You can decide to track each codebase in a separate repository or in the same one. Both options are used in the cloud
 native business. 
 
 == 2 API first
@@ -134,8 +132,7 @@ assumes you have Gradle installed on your machine), you can run ./gradlew build.
 The script invokes the specific version of the build tool defined in the project. If the
 build tool is not present yet, the wrapper script will download it first and then run the
 command. Using the wrapper, you can ensure that all team members and automated
-tools building the project use the same Gradle or Maven version. When you’re gener-
-ating a new project from Spring Initializr, you’ll also get a wrapper script that’s ready
+tools building the project use the same Gradle or Maven version. When you’re generating a new project from Spring Initializr, you’ll also get a wrapper script that’s ready
 to use, so you don’t need to download or configure anything.
 
 == 4 Design, build, release, run
@@ -231,8 +228,7 @@ straightforward. In other cases, such as with worker processes, the jobs
 they were responsible for must be returned to the work queue, and only
 afterward can they exit.
 
-Having applications start quickly is not enough to address our scalability needs. When-
-ever an application instance is shut down, it must happen gracefully without clients
+Having applications start quickly is not enough to address our scalability needs. Whenever an application instance is shut down, it must happen gracefully without clients
 experiencing downtime or errors. Gracefully shutting down means the application
 stops accepting new requests, completes all those still in progress, and closes any open
 resources, like database connections.
@@ -253,9 +249,7 @@ environment. The attachment is done through resource binding. For
 example, resource binding for a database could consist of a URL, a
 username, and a password.
 
-As per the 15-Factor methodology, any backing service should be attached to an appli-
-cation through resource binding. For databases, you relied on the configuration prop-
-erties provided by Spring Boot to specify credentials and the URL. When a backing
+As per the 15-Factor methodology, any backing service should be attached to an application through resource binding. For databases, you relied on the configuration properties provided by Spring Boot to specify credentials and the URL. When a backing
 service is another application, you need to provide its URL in a similar way. 
 
 Cloud native applications should be stateless. Data services should be used for
@@ -357,14 +351,12 @@ service.
 
 cloud native applications should be
 stateless. We scale them in and out, and if they weren’t stateless, we would lose the
-state every time an instance is shut down. Some state needs to be saved, or the applica-
-tions would probably be useless. For example, Catalog Service and Order Service are
+state every time an instance is shut down. Some state needs to be saved, or the applications would probably be useless. For example, Catalog Service and Order Service are
 stateless, but they rely on a stateful service (the PostgreSQL database) to permanently
 store the data about books and orders. Even if the applications are shut down, the
 data will survive and be available to all the application instances.
 
-The general idea is to keep the applications stateless and use data services for stor-
-ing the state. 
+The general idea is to keep the applications stateless and use data services for storing the state. 
 == 13 Concurrency
 
 Creating stateless applications is not enough to ensure scalability. If

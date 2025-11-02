@@ -87,8 +87,7 @@ manu-ally import catalog-service image it into your local cluster
 minikube image load catalog-service --profile polar
 ----
 
-You can apply Kubernetes manifests to a cluster using the kubectl client. Open a Ter-
-minal window, navigate to your Catalog Service root folder (catalog-service), and run
+You can apply Kubernetes manifests to a cluster using the kubectl client. Open a Terminal window, navigate to your Catalog Service root folder (catalog-service), and run
 the following command:
 [source,console,attributes]
 ----

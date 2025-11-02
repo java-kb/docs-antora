@@ -12,8 +12,7 @@ Following continuous delivery practices, we should aim at achieving fully automa
 == functional acceptance tests 
 The functional acceptance tests are business-facing tests that support development
 teams, ensuring they are building the right software. They take on the user perspective and
-are usually implemented via executable specifications using a high-level domain-specific lan-
-guage (DSL), which is then translated into a lower-level programming language. For
+are usually implemented via executable specifications using a high-level domain-specific language (DSL), which is then translated into a lower-level programming language. For
 example, you could use Cucumber (https://cucumber.io) to write scenarios like “browse
 the book catalog” or “place a book order” in human-friendly plain text. Those scenarios
 can then be executed and verified using a programming language like Java.

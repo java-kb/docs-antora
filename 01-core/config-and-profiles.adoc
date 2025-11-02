@@ -2,8 +2,7 @@
 :figures: 11-development/02-spring/01-core
 
 The term configuration can have different meanings depending on the context. When
-discussing the Spring Framework’s core features and its ApplicationContext, config-
-uration refers to which beans (Java objects registered in Spring) have been defined
+discussing the Spring Framework’s core features and its ApplicationContext, configuration refers to which beans (Java objects registered in Spring) have been defined
 to be managed by the Spring container and are injected where needed. For example,
 you can define beans in an XML file (XML configuration), in a @Configuration class
 (Java configuration), or
@@ -275,8 +274,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=testdata
 ----
 
 === Using Conditional Annotations 
-Another solution instead of using profiles as feature flags, a more scalable and struc-
-tured approach is defining custom properties to configure functionality, and
+Another solution instead of using profiles as feature flags, a more scalable and structured approach is defining custom properties to configure functionality, and
 relying on annotations such as @ConditionalOnProperty and @ConditionalOnCloudPlatform to control when certain beans should be loaded into the
 Spring application context. That's one of the foundations of Spring Boot autoconfiguration. For example, you could define a polar.testdata.enabled custom property and use the @ConditionalOnProperty(name = "polar.testdata.enabled", havingValue ="true") annotation on the BookDataLoader class.
 
@@ -296,8 +294,7 @@ because it wouldn't scale. As a project grows, new environments might be created
 different stages; developers might create their own custom environments to try out
 new functionality. You can quickly end up with way too many configuration groups,
 implemented like Spring profiles and requiring new builds. Instead, you'll want to
-keep them outside the application, such as in a dedicated repository served by a con-
-figuration server. The only exception is for defaults
+keep them outside the application, such as in a dedicated repository served by a configuration server. The only exception is for defaults
 and development-oriented configuration.
 
 
@@ -343,8 +340,7 @@ environment variables have some naming constraints dictated by the operating sys
 
 You can turn a Spring property key into an environment variable by making all
 the letters uppercase and replacing any dot or dash with an underscore. Spring Boot
-will map it correctly to the internal syntax. For example, a SAMPLE_GREETING environ-
-ment variable is recognized as the sample.greeting property. This feature is called
+will map it correctly to the internal syntax. For example, a SAMPLE_GREETING environment variable is recognized as the sample.greeting property. This feature is called
 relaxed binding.
 
 To use environment variables

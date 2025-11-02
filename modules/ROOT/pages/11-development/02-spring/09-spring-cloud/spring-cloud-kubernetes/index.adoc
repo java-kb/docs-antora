@@ -13,8 +13,7 @@ Kubernetes provides service discovery and load balancing natively. Furthermore, 
 
 When migrating a brownfield project!footnote:[Brownfield development is a term commonly used in the information technology industry to describe problem spaces needing the development and deployment of new software systems in the immediate presence of existing (legacy) software applications/systems. This implies that any new software architecture must take into account and coexist with live software already in situ.] to Kubernetes, and it uses libraries like
 Spring Cloud Netflix Eureka for service discovery and Spring Cloud Netflix Ribbon or
-Spring Cloud Load Balancer for load balancing, you might use Spring Cloud Kuber-
-netes for a smoother transition. However, It's recommended refactoring your code
+Spring Cloud Load Balancer for load balancing, you might use Spring Cloud Kubernetes for a smoother transition. However, It's recommended refactoring your code
 to leverage the native service discovery and load-balancing features from Kubernetes
 rather than adding Spring Cloud Kubernetes to your project.
 
@@ -33,15 +32,12 @@ routes based on Services metadata and the choice of load-balancing strategy. In 
 case, you could rely on the Spring Cloud Kubernetes Discovery Server component,
 limiting the need for Kubernetes API access to the discovery server.
 - Spring Cloud Kubernetes really shines when it comes to implementing Kubernetes
-controller applications to accomplish administrative tasks within the cluster. For exam-
-ple, you could implement a controller that monitors when ConfigMaps or Secrets change and then triggers a configuration refresh on the application using them. As a
+controller applications to accomplish administrative tasks within the cluster. For example, you could implement a controller that monitors when ConfigMaps or Secrets change and then triggers a configuration refresh on the application using them. As a
 matter of fact, the Spring team used Spring Cloud Kubernetes to build a controller
 that does precisely that: the Configuration Watcher.
 
 == Spring Cloud Kubernetes Config Server
-Besides the Configuration Watcher, Spring Cloud Kubernetes provides other conve-
-nient off-the-shelf applications for addressing common concerns of distributed sys-
-tems in Kubernetes. One of them is a configuration server built on top of Spring
+Besides the Configuration Watcher, Spring Cloud Kubernetes provides other convenient off-the-shelf applications for addressing common concerns of distributed systems in Kubernetes. One of them is a configuration server built on top of Spring
 Cloud Config and extending its functionality to support reading configuration data
 from ConfigMaps and Secrets. It’s called Spring Cloud Kubernetes Config Server.
 

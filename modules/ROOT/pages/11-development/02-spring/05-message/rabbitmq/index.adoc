@@ -198,18 +198,15 @@ exchange in RabbitMQ. The input binding (packlabel-in-0) will be mapped to an
 order-accepted exchange and an order-accepted.dispatcher-service queue in
 RabbitMQ. If they don’t exist already in RabbitMQ, the binder will create them.
 
-The queue-naming strategy (<destination>.<group>) includes a parameter called con-
-sumer group. The idea of consumer groups has been borrowed from Kafka and is very useful. In
+The queue-naming strategy (<destination>.<group>) includes a parameter called consumer group. The idea of consumer groups has been borrowed from Kafka and is very useful. In
 a standard pub/sub model, all consumers receive a copy of the messages sent to the
 queues they’re subscribed to. That is convenient when different applications need
 to process the messages. But in a cloud native context, where multiple instances of
 an application are running simultaneously for scaling and resilience, that would be
 a problem. If you have numerous Dispatcher Service instances, you don’t want an
 order to be dispatched from all of them. That would lead to errors and an inconsistent state.
-Consumer groups solve the problem. All consumers in the same group share a sin-
-gle subscription. As a consequence, each message arriving at the queue to which
-they’re subscribed will be processed by one consumer only. Assume we have two appli-
-cations (Dispatcher Service and Mail Service) interested in receiving events about
+Consumer groups solve the problem. All consumers in the same group share a single subscription. As a consequence, each message arriving at the queue to which
+they’re subscribed will be processed by one consumer only. Assume we have two applications (Dispatcher Service and Mail Service) interested in receiving events about
 accepted orders and deployed in a replicated fashion. Using the application name to
 configure consumer groups, we can ensure that each event is received and processed
 by a single instance of Dispatcher Service and a single instance of Mail Service

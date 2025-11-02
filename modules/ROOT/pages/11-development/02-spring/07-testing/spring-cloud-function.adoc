@@ -19,8 +19,7 @@ dependencies {
 Spring Cloud Function provides a @FunctionalSpringBootTest annotation you
 can use to set up the context for your integration tests. Unlike unit tests, you don’t
 want to invoke the function directly but rather ask the framework to provide that for
-you. All the functions managed by the framework are available through the Function-
-Catalog, an object that acts as a function registry. When the framework serves the
+you. All the functions managed by the framework are available through the FunctionCatalog, an object that acts as a function registry. When the framework serves the
 function, it doesn’t only contain the implementation you wrote; it’s enhanced with
 extra features offered by Spring Cloud Function, like transparent type conversion and
 function composition. 

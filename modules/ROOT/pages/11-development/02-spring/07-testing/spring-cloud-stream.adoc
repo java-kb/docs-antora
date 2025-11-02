@@ -25,11 +25,9 @@ The test setup consists of three steps:
 1 Import the TestChannelBinderConfiguration class providing configuration
 for the test binder.
 
-2 Inject an InputDestination bean representing the input binding packlabel-
-in-0 (by default, since it’s the only one).
+2 Inject an InputDestination bean representing the input binding packlabelin-0 (by default, since it’s the only one).
 
-3 Inject an OutputDestination bean representing the output binding packlabel-
-out-0 (by default, since it’s the only one).
+3 Inject an OutputDestination bean representing the output binding packlabelout-0 (by default, since it’s the only one).
 
 
 [source,java,attributes]
@@ -65,16 +63,14 @@ public class DispatchingFunctions {
 
 }
 ----
-The data flow is based on Message objects (from the org.springframework.messag-
-ing package). The framework handles type conversion for you transparently when
+The data flow is based on Message objects (from the org.springframework.messaging package). The framework handles type conversion for you transparently when
 running the application. However, in this type of test, you need to provide Message
 objects explicitly. You can use MessageBuilder to create the input message, and use
 the ObjectMapper utility to perform the type conversion from the binary format used
 for storing message payloads in a broker.
 
 Message brokers like RabbitMQ deal with binary data, so any data flowing through
-them is mapped to byte[] in Java. The conversion between bytes and DTOs is han-
-dled by Spring Cloud Stream transparently. But just like for messages, we need to
+them is mapped to byte[] in Java. The conversion between bytes and DTOs is handled by Spring Cloud Stream transparently. But just like for messages, we need to
 handle that explicitly in this test scenario when asserting the content of the message
 received from the output channel.
 [source,java,attributes]

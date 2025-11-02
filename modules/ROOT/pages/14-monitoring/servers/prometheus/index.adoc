@@ -2,8 +2,7 @@
 
 Like Loki, Prometheus collects and stores metrics. It even provides a GUI to visualize them and to define alarms, Grafana provides a GUI to visualize them so its better to use for that since it’s a more comprehensive tool.
 
-Metrics are stored as time-series data, containing the timestamp when they were regis-
-tered and, optionally, labels. In Prometheus, labels are key/value pairs that add more
+Metrics are stored as time-series data, containing the timestamp when they were registered and, optionally, labels. In Prometheus, labels are key/value pairs that add more
 information to the metric being recorded. For example, a metric registering the number
 of threads used by the application could be enhanced with labels qualifying the state of
 the threads (such as blocked, waiting, or idle). Labels help aggregate and query metrics.

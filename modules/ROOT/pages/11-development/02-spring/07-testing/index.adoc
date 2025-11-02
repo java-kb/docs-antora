@@ -3,13 +3,11 @@
 
 Automated tests are paramount to producing high-quality software. One of the goals
 for adopting a cloud native approach is speed. It’s impossible to move quickly if the
-code is not adequately tested in an automated fashion, let alone to implement a con-
-tinuous delivery process.
+code is not adequately tested in an automated fashion, let alone to implement a continuous delivery process.
 
 As a developer, you’ll usually implement a feature, deliver it, and then move on to
 a new one, possibly refactoring the existing code. Refactoring code is risky, since you
-might break some existing functionality. Automated tests reduce the risk and encour-
-age refactoring, because you know that a test will fail, should you break something.
+might break some existing functionality. Automated tests reduce the risk and encourage refactoring, because you know that a test will fail, should you break something.
 
 You shouldn’t aim to reach maximum test coverage
 but rather to write meaningful tests. For example, writing tests for standard getters
@@ -17,9 +15,7 @@ and setters doesn’t make sense.
 
 Automated tests assert that new features work as intended and that you haven’t
 broken any existing functionality. This means that automated tests work as regression
-tests. You should write tests to protect your colleagues and yourself from making mis-
-takes. What to test and how in-depth to test is driven by the risk associated with a spe-
-cific piece of code. 
+tests. You should write tests to protect your colleagues and yourself from making mistakes. What to test and how in-depth to test is driven by the risk associated with a specific piece of code. 
 
 One way of classifying software tests is defined by the Agile Testing Quadrants
 model. The quadrants classify software tests based on whether they are technology or
@@ -142,8 +138,7 @@ following command:
 ----
 docker-compose exec mongodb mongosh product-db --quiet --eval "db.products.find()"
 ----
-Look up the content in the recommendation service, that is, the recommendations collection in Mon-
-goDB, with the following command:
+Look up the content in the recommendation service, that is, the recommendations collection in MongoDB, with the following command:
 [source,console,attributes]
 ----
 docker-compose exec mongodb mongosh recommendation-db --quiet --eval "db.recommendations.find()"

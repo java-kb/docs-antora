@@ -1,8 +1,7 @@
 = Spring Data R2DBC
 :figures: 11-development/02-spring/02-data/spring-data-r2dbc
 
-JDBC is the most common driver used by Java applications to commu-
-nicate with a relational database, but it doesn’t support reactive programming. There
+JDBC is the most common driver used by Java applications to communicate with a relational database, but it doesn’t support reactive programming. There
 have been a few attempts to provide reactive access to a relational database. One
 project that stood out and that is widely supported is Reactive Relational Database
 Connectivity (R2DBC) initiated by Pivotal (now VMware Tanzu). R2DBC drivers are
@@ -61,8 +60,7 @@ Boot with Spring Data R2DBC and Testcontainers.
 ----
 . Configuring the connection to a database using R2DBC
 +
-Since it’s a reactive applica-
-tion, the connection pool will probably be smaller than when using JDBC. You can tune
+Since it’s a reactive application, the connection pool will probably be smaller than when using JDBC. You can tune
 the values after monitoring your applications running under normal conditions.
 [source,yml,attributes]
 ----
@@ -139,10 +137,8 @@ CREATE TABLE book (
  version integer NOT NULL 
 );
 ----
-By default, Spring Data loads the schema.sql file only when using an embedded, in-
-memory database. When using Other DB, we need to enable the functionality
-explicitly. In the application.yml file for your service project, add the follow-
-ing configuration to initialize the database schema from the schema.sql file.
+By default, Spring Data loads the schema.sql file only when using an embedded, inmemory database. When using Other DB, we need to enable the functionality
+explicitly. In the application.yml file for your service project, add the following configuration to initialize the database schema from the schema.sql file.
 [source,yml,attributes]
 ----
 spring:
@@ -287,10 +283,7 @@ public interface OrderRepository extends ReactiveCrudRepository<Order,Long> {
 
 == MANAGING DATABASE SCHEMAS WITH FLYWAY
 Flyway doesn’t support R2DBC yet, so we
-need to provide a JDBC driver to communicate with the database. The Flyway migra-
-tion tasks are only run at application startup and in a single thread, so using a non-
-reactive communication approach for this one case doesn’t impact the overall applica-
-tion’s scalability and efficiency.
+need to provide a JDBC driver to communicate with the database. The Flyway migration tasks are only run at application startup and in a single thread, so using a nonreactive communication approach for this one case doesn’t impact the overall application’s scalability and efficiency.
 [source,gradle,attributes]
 ----
 dependencies {
@@ -305,10 +298,7 @@ managed with Spring Data R2DBC but using the JDBC driver
 ----
 Spring
   # Flyway doesn’t support R2DBC yet, so we
-  # need to provide a JDBC driver to communicate with the database. The Flyway migra-
-  # tion tasks are only run at application startup and in a single thread, so using a non-
-  # reactive communication approach for this one case doesn’t impact the overall applica-
-  # tion’s scalability and efficiency.
+  # need to provide a JDBC driver to communicate with the database. The Flyway migra  # tion tasks are only run at application startup and in a single thread, so using a non  # reactive communication approach for this one case doesn’t impact the overall applica  # tion’s scalability and efficiency.
   flyway:
     user: ${spring.r2dbc.username}
     password: ${spring.r2dbc.password}

@@ -28,19 +28,14 @@ Cloud native applications are highly distributed systems that are specifically
 designed for and live in the cloud.
 
 Modern businesses go cloud native to produce software that can be delivered
-quickly, can be scaled dynamically depending on demand, and is always avail-
-able and resilient to failures while optimizing costs.
+quickly, can be scaled dynamically depending on demand, and is always available and resilient to failures while optimizing costs.
 
-The cloud is an IT infrastructure provided as a commodity in terms of comput-
-ing, storage, and networking resources.
+The cloud is an IT infrastructure provided as a commodity in terms of computing, storage, and networking resources.
 
 In the cloud, users pay only for the actual resources they use.
-Cloud platforms deliver their services at different levels of abstraction: infra-
-structure (IaaS), container (CaaS), platform (PaaS), functions (FaaS), or soft-
-ware (SaaS).
+Cloud platforms deliver their services at different levels of abstraction: infrastructure (IaaS), container (CaaS), platform (PaaS), functions (FaaS), or software (SaaS).
 
-Cloud native applications are horizontally scalable, loosely coupled, highly cohe-
-sive, resilient to faults, manageable, and observable.
+Cloud native applications are horizontally scalable, loosely coupled, highly cohesive, resilient to faults, manageable, and observable.
 
 Cloud native development is supported by automation, continuous delivery,
 and DevOps.
@@ -134,9 +129,7 @@ principles for achieving resilience is blocking a failure from cascading and aff
 other components. Consider a distributed system where application X depends on
 application Y. If application Y fails, will application X fail, too? A circuit breaker can
 block a failure in one component from propagating to the others depending on it,
-protecting the rest of the system. That is accomplished by temporarily stopping com-
-munication with the faulty component until it recovers. This pattern comes from elec-
-trical systems, for which the circuit is physically opened to break the electrical
+protecting the rest of the system. That is accomplished by temporarily stopping communication with the faulty component until it recovers. This pattern comes from electrical systems, for which the circuit is physically opened to break the electrical
 connection and avoid destroying the entire house when a part of the system fails due
 to current overload.
 
@@ -300,18 +293,15 @@ With serverless you do not need to manage servers or orchestrate the application
 +
 Serverless architectures comprise two main models:
 
- ** Backend as a Service (BaaS)--In this model, applications rely heavily on third-
-  party services offered by cloud providers, such as databases, authentication services, and message queues.
+ ** Backend as a Service (BaaS)--In this model, applications rely heavily on third  party services offered by cloud providers, such as databases, authentication services, and message queues.
   The focus is on reducing development and operational costs related to backend services. Developers can implement frontend
-  applications (such as single-page applications or mobile applications) while off-
-  loading most or all of the backend functionality to BaaS vendors. For example,
+  applications (such as single-page applications or mobile applications) while off  loading most or all of the backend functionality to BaaS vendors. For example,
   they could use Okta to authenticate users, Google Firebase for persisting data,
   and Amazon API Gateway to publish and manage REST APIs.
  ** Function as a Service (FaaS)--In this model, applications are stateless, triggered
   by events, and fully managed by the platform. The focus is on reducing deployment and operations costs related to orchestrating and scaling applications.
   Developers can implement the business logic for their applications, and the
-  platform takes care of the rest. Serverless applications don't have to be imple-
-  mented with functions to be categorized as such. There are two main FaaS
+  platform takes care of the rest. Serverless applications don't have to be imple  mented with functions to be categorized as such. There are two main FaaS
   offerings.
   *** One option is to go with vendor-specific FaaS platforms, such as AWS
 Lambda, Azure Functions, or Google Cloud Functions.
@@ -336,8 +326,7 @@ image::{figures}/image-5.png[alt text]
 
 monolithic applications were deployed on huge mainframes as single components.
 
-A multi-tiered architecture, relying on client/server paradigm, was  used for desktop and web applica-
-tions, decomposing the code into presentation, business, and data layers.
+A multi-tiered architecture, relying on client/server paradigm, was  used for desktop and web applications, decomposing the code into presentation, business, and data layers.
 
 A microservice-based application, is associated with many components, each implementing only
 one piece of functionality. Many patterns have been proposed to decompose a monolith into microservices and to handle the complexity created by having many components instead of one.

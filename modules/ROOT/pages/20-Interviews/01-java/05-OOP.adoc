@@ -429,8 +429,7 @@ judiciously to avoid creating overly complex and tightly-coupled class
 hierarchies.+++</details>+++
 . *When do you use encapsulation and abstraction in your project?*+++<details>++++++<summary>+++Answer+++</summary>+++
 
-Encapsulation and abstraction are two important concepts in object-
-oriented programming, and they are used in diff erent ways in
+Encapsulation and abstraction are two important concepts in objectoriented programming, and they are used in diff erent ways in
 diff erent parts of a project.
 
 *Encapsulation* is used to protect the internal state of an object and
@@ -691,8 +690,7 @@ Select the one correct answer.
 `(g)`
 
 In the class Car, the static method getModelName() hides the static method of the
- same name in the superclass Vehicle. In the class Car, the instance method get-
- RegNo() overrides the instance method of the same name in the superclass Vehicle.
+ same name in the superclass Vehicle. In the class Car, the instance method get RegNo() overrides the instance method of the same name in the superclass Vehicle.
  The declared type of the reference determines the method to execute when a static
  method is called, but the actual type of the object at runtime determines the
  method to execute when an overridden method is called.+++</details>+++
@@ -731,14 +729,12 @@ Select the one correct answer.
 
 `(e)`
 
-The class MySuper does not have a no-argument constructor. This means that con-
- structors in subclasses must explicitly call the superclass constructor and provide
+The class MySuper does not have a no-argument constructor. This means that con structors in subclasses must explicitly call the superclass constructor and provide
  the required parameters. The supplied constructor accomplishes this by calling
  super(num) in its first statement. Additional constructors can accomplish this either
  by calling the superclass constructor directly using the super() call, or by calling
  another constructor in the same class using the this() call which in turn calls the
- superclass constructor. (a) and (b) are not valid, since they do not call the super-
- class constructor explicitly. (d) fails, since the super() call must always be the first
+ superclass constructor. (a) and (b) are not valid, since they do not call the super class constructor explicitly. (d) fails, since the super() call must always be the first
  statement in the constructor body. (f) fails, since the super() and this() calls cannot
  be combined.+++</details>+++
 
@@ -746,8 +742,7 @@ The class MySuper does not have a no-argument constructor. This means that con-
 +
 Select the one correct answer.
 +
-(a) A super() or this() call must always be provided explicitly as the first state-
- ment in the body of a constructor.
+(a) A super() or this() call must always be provided explicitly as the first state ment in the body of a constructor.
 +
 (b) If both a subclass and its superclass do not have any declared constructors,
  the implicit default constructor of the subclass will call super() when run.
@@ -815,7 +810,6 @@ The program will print 12 followed by Test. When the main() method is executed,
  called implicitly. The no-argument constructor of A calls the constructor in A that
  has two String parameters, passing it the argument list ("1", "2"). This constructor
  calls the constructor with one String parameter, passing the argument "12". This
- constructor prints the argument, after implicitly invoking the no-argument con-
- structor of the superclass Object. Now the execution of all the constructors in A is
+ constructor prints the argument, after implicitly invoking the no-argument con structor of the superclass Object. Now the execution of all the constructors in A is
  completed, and execution continues in the constructor of B. This constructor now
  prints the original argument "Test" and returns to the main() method.+++</details>+++

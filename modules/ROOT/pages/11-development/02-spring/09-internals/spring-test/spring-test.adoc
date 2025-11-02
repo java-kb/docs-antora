@@ -7,8 +7,7 @@ Spring Boot offers a *@SpringBootTest* annotation that you can use on a
 test class to bootstrap an application context automatically when running tests. The
 configuration used to create the context can be customized if needed. Otherwise, the
 class annotated with @SpringBootApplication will become the configuration source
-for component scanning and properties, including the usual auto-configuration pro-
-vided by Spring Boot.
+for component scanning and properties, including the usual auto-configuration provided by Spring Boot.
 
 When working with web applications, you can run tests on
 

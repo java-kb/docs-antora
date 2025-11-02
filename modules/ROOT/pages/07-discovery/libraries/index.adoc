@@ -1,8 +1,7 @@
 = Service Discovery Libraries
 :figures: 07-discovery/libraries
 
-The Spring Cloud project offers a few options for adding client-side service discov-
-ery to your Spring applications. One of the popular choices is Spring Cloud Netflix
+The Spring Cloud project offers a few options for adding client-side service discovery to your Spring applications. One of the popular choices is Spring Cloud Netflix
 Eureka, which wraps the Eureka service registry developed by Netflix. Alternatives
 are Spring Cloud Consul, Spring Cloud Zookeeper Discovery, and Spring Cloud
 Alibaba Nacos. For each of the previously mentioned options,

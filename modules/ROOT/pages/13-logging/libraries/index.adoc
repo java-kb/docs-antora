@@ -2,8 +2,7 @@
 :figures: 13-logging/libraries
 
 == log collectors
-We need a log collector to fetch log messages from the standard output of all the run-
-ning applications. Using the Grafana stack, you’re free to choose a log collector from
+We need a log collector to fetch log messages from the standard output of all the running applications. Using the Grafana stack, you’re free to choose a log collector from
 among several options. 
 == Logback
 

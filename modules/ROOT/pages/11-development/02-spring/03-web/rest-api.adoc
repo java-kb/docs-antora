@@ -198,8 +198,7 @@ request and response bodies, such as application/json or application/xml.
 As a general rule, before saving any data, you should always validate the content, both
 for data consistency and security reasons. 
 
-Java Bean Validation is a popular specification for expressing constraints and valida-
-tion rules on Java objects via annotations. Spring Boot provides a convenient starter
+Java Bean Validation is a popular specification for expressing constraints and validation rules on Java objects via annotations. Spring Boot provides a convenient starter
 dependency containing the Java Bean Validation API and its implementation(spring-boot-starter-validation).
 [source,java,attributes]
 ----
@@ -239,9 +238,7 @@ public record Book(
 ----
 
 The annotations from the Java Bean Validation API define the constraints, but they
-are not enforced yet. We can instruct Spring to validate the Book object in the Book-
-Controller class by using the @Valid annotation whenever a @RequestBody is speci-
-fied as a method argument.
+are not enforced yet. We can instruct Spring to validate the Book object in the BookController class by using the @Valid annotation whenever a @RequestBody is specified as a method argument.
 [source,java,attributes]
 ----
 @PostMapping
@@ -306,12 +303,9 @@ Frameworks like Spring Boot and Quarkus offer libraries to document the
 endpoints and dynamically generate the documentation
 ==  Evolving APIs for future requirements
 In a distributed system, we need a plan to evolve APIs so we don’t break the functionality
-of other applications. This is a challenging task because we want independent applica-
-tions, but they probably exist to provide services to other applications, so we are some-
-what limited in the number of changes we can make independently of the clients.
+of other applications. This is a challenging task because we want independent applications, but they probably exist to provide services to other applications, so we are somewhat limited in the number of changes we can make independently of the clients.
 
-The best approach is to make backward-compatible changes to the API. For exam-
-ple, we can add an optional field to the Book object without affecting the clients of the
+The best approach is to make backward-compatible changes to the API. For example, we can add an optional field to the Book object without affecting the clients of the
 Catalog Service application.
 
 === Using API versioning
@@ -322,12 +316,10 @@ sooner or later, meaning that coordination is needed.
 
 === Using HATEOAS
 A different approach focuses on making the REST API client as resilient to API
-changes as possible. The solution is to use the hypermedia aspect of the REST architec-
-ture, This hypermedia aspect is also called HATEOAS (Hypermedia as the Engine of
+changes as possible. The solution is to use the hypermedia aspect of the REST architecture, This hypermedia aspect is also called HATEOAS (Hypermedia as the Engine of
 Application State). REST APIs can return the object requested
 along with information about where to go next and links to perform related operations.
-The beauty of this feature is that the links are only shown when it makes sense to fol-
-low them, providing information about when to go.
+The beauty of this feature is that the links are only shown when it makes sense to follow them, providing information about when to go.
 
 Spring provides the Spring HATEOAS project to add
 hypermedia support to a REST API.

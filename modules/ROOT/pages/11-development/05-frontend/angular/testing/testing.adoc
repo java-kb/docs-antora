@@ -412,8 +412,7 @@ example, mocha-reporter displays detailed information about test failures, inclu
 traces and error messages, whereas junit-reporter generates JUnit-style XML reports 
 that can be consumed by CI tools for further analysis.
 To integrate Karma with CI tools, configure the respective plugin or reporter in your Karma 
-configuration file. For example, to generate JUnit reports for Jenkins, add the karma-junit-
-reporter plugin and configure it accordingly.
+configuration file. For example, to generate JUnit reports for Jenkins, add the karma-junitreporter plugin and configure it accordingly.
 5. Step 5 – utilizing thresholds and quality gates:
 Karma allows developers to define thresholds and quality gates for code coverage and test 
 results. By setting these thresholds, developers can establish the minimum requirements for 

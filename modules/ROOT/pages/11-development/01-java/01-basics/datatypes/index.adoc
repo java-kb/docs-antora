@@ -63,8 +63,7 @@ type to a value of its corresponding primitive type.
 Both boxing and unboxing conversion are applied implicitly in the right context, but the wrapper classes also provide the static method valueOf() to explicitly box a primitive value in a wrapper object, and the method primitiveTypeValue() to explicitly unbox the value in a
 wrapper object as a value of primitiveType.
 
-Unboxing a wrapper reference that has the null value results in a NullPointer-
-Exception
+Unboxing a wrapper reference that has the null value results in a NullPointerException
 
 [,java]
 ----

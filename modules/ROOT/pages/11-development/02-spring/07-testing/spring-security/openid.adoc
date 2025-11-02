@@ -24,8 +24,7 @@ Reactive Applications::
 @RestController
 public class UserController {
     /*
-     * For Spring Web MVC and WebFlux controllers, besides using ReactiveSecurity-
-     * ContextHolder directly, we can use the annotations @CurrentSecurityContext
+     * For Spring Web MVC and WebFlux controllers, besides using ReactiveSecurity     * ContextHolder directly, we can use the annotations @CurrentSecurityContext
      * and @AuthenticationPrincipal to inject the SecurityContext and the principal (in
      * this case, OidcUser) respectively.
      */
@@ -561,8 +560,7 @@ class BookControllerMvcTests {
 
 Reactive Applications::
 As part of the OAuth2 Access Token validation, Spring Security relies on the public
-keys provided by Keycloak to verify the JWT signature. Internally, the framework con-
-figures a ReactiveJwtDecoder bean to decode and verify a JWT using those keys. In
+keys provided by Keycloak to verify the JWT signature. Internally, the framework configures a ReactiveJwtDecoder bean to decode and verify a JWT using those keys. In
 the context of a web slice test, we can provide a mock ReactiveJwtDecoder bean so
 that Spring Security skips the interaction with Keycloak
 +
@@ -762,8 +760,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URI;
 
 /*
- * we’ll use the @SpringBootTest annotation configured to provide a full Spring applica-
-tion context, including a running server that exposes its services through a random
+ * we’ll use the @SpringBootTest annotation configured to provide a full Spring application context, including a running server that exposes its services through a random
 port (because it doesn’t matter which one).
  */
 // Loads a full Spring web application context and a Servlet container listening on a random port
@@ -783,8 +780,7 @@ class CatalogServiceApplicationTests {
 	 * The Keycloak configuration I provided in the JSON file includes the
 	 * definition of a
 	 * test Client (polar-test) that we can use to authenticate users via a username
-	 * and pass-
-	 * word directly, instead of going through the browser-based flow we implemented
+	 * and pass	 * word directly, instead of going through the browser-based flow we implemented
 	 * in Edge
 	 * Service. In OAuth2, such a flow is called a Password Grant, and it’s not
 	 * recommended for

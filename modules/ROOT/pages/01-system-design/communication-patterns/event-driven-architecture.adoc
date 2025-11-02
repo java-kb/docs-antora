@@ -6,8 +6,7 @@ The Publish-Subscribe pattern is a messaging pattern that allows decoupling of t
 This pattern is particularly useful in event-driven architectures, where components can react to events without being tightly coupled to the source of those events. It allows for greater flexibility and scalability, as new subscribers can be added or removed without affecting the publishers or other subscribers.
 The Publish-Subscribe pattern is often implemented using message brokers or message queues, which handle the routing and delivery of messages between publishers and subscribers.
 
-In the pub/sub model, producers publish events, which are sent to all subscrib-
-ers to be consumed.
+In the pub/sub model, producers publish events, which are sent to all subscribers to be consumed.
 == event-driven architecture
 An event is an occurrence. It’s something relevant that happened in a system, like a
 state change, and there can be many sources of events. events can very well be happening in IoT devices, sensors, or networks. When an event occurs, interested parties can be notified. Event notification is
@@ -19,8 +18,7 @@ by producing and consuming events.
 event-driven architecture is an approach to software architecture that focuses on responding to events that either occur within a system or in the external environment.
 
 The event-driven architecture uses the Publish-Subscribe pattern and involves publishers sending events to subscribers without knowledge of their specific destinations. As a result, subscribers do not need to understand the publishers`' logic.
-In event-driven architectures, an event indicates that something happened in the system. Events get published to a messaging channel (e.g., a message broker) by the business logic that owns the domain where those events happened. Other components in the architecture that are interested in a given event type subscribe to the channel to consume all the subsequent event instances. events relate to the publish-
-subscribe pattern, so they are linked to message brokers or buses too
+In event-driven architectures, an event indicates that something happened in the system. Events get published to a messaging channel (e.g., a message broker) by the business logic that owns the domain where those events happened. Other components in the architecture that are interested in a given event type subscribe to the channel to consume all the subsequent event instances. events relate to the publishsubscribe pattern, so they are linked to message brokers or buses too
 
 Event-driven architectures describe distributed systems that interact by producing
 and consuming events. The interaction is asynchronous, solving the problem of temporal coupling. 
@@ -29,13 +27,11 @@ In an event-driven architecture, we identify event producers and event consumers
 producer is a component that detects the event and sends a notification. A consumer
 is a component that is notified when a specific event occurs. Producers and consumers
 don’t know each other and work independently. A producer sends an event notification by publishing a message to a channel operated by an event broker that’s responsible
-for collecting and routing messages to consumers. A consumer is notified by the bro-
-ker when an event occurs and can act upon it.
+for collecting and routing messages to consumers. A consumer is notified by the broker when an event occurs and can act upon it.
 
 Producers and consumers have minimal coupling when using a broker that takes
 the processing and distribution of events on itself. In particular, they are temporally
-decoupled, because the interaction is asynchronous. Consumers can fetch and pro-
-cess messages at any time without affecting the producers whatsoever.
+decoupled, because the interaction is asynchronous. Consumers can fetch and process messages at any time without affecting the producers whatsoever.
 
 A message broker is a software component that facilitates communication between different applications or services by sending messages between them. It acts as an intermediary that decouples the sender and receiver, allowing them to operate independently. Message brokers are commonly used in distributed systems to enable asynchronous communication, improve scalability, and enhance fault tolerance.    
 

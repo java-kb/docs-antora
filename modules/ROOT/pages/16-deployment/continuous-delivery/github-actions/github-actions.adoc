@@ -15,10 +15,8 @@ runner instance, which is a server provided by GitHub. You can choose between
 Ubuntu, Windows, and macOS.
 
 Each job is composed of steps, which are executed sequentially. A step could be either
-a shell command or an action. Actions are custom applications used to perform com-
-plex tasks in a more structured and reproducible way. For example, you could have
-actions for packaging an application into an executable, running tests, creating a container image, or pushing an image to a container registry. The GitHub organiza-
-tion provides a basic set of actions, but there's also a marketplace with many more
+a shell command or an action. Actions are custom applications used to perform complex tasks in a more structured and reproducible way. For example, you could have
+actions for packaging an application into an executable, running tests, creating a container image, or pushing an image to a container registry. The GitHub organization provides a basic set of actions, but there's also a marketplace with many more
 actions developed by the community.
 
 When using actions from the GitHub marketplace, handle them like any other third-party application and manage the security risks accordingly. Prefer using trusted actions provided by GitHub or verified organizations over other third-party options.
@@ -448,8 +446,7 @@ jobs:
       #     kustomize build k8s | kubeconform --strict -
 ----
 
-After completing the declaration of the initial commit stage for the deployment pipe-
-line, commit your changes and push them to the remote GitHub repository. The
+After completing the declaration of the initial commit stage for the deployment pipeline, commit your changes and push them to the remote GitHub repository. The
 newly created workflow will be immediately triggered. You can see the execution
 results on your GitHub repository page on the Actions tab.
 image::{figures}/image.png[The commit stage workflow is executed after you push new changes to the remote repository.]
@@ -505,8 +502,7 @@ add a new “Package and Publish” job to the workflow
           chmod +x mvnw
           ./mvnw spring-boot:build-image --imageName ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
 ----
-After packaging the application as a container image, update the commit-
-stage.yml file to use grype to scan the image for vulnerabilities and publish a report to
+After packaging the application as a container image, update the commitstage.yml file to use grype to scan the image for vulnerabilities and publish a report to
 GitHub
 
 add a new “Package and Publish” job to the workflow
@@ -526,8 +522,7 @@ add a new “Package and Publish” job to the workflow
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
 ----
-Finally, we can authenticate with the con-
-tainer registry and push the image representing our release candidate.
+Finally, we can authenticate with the container registry and push the image representing our release candidate.
 [source,yml,attributes]
 ----
       - name: Log into container registry
@@ -564,8 +559,7 @@ file within the .github/workflows folder.
 ----
 === Deployment pipeline(commit-stage): Build native images
 When working locally, it’s convenient to run and test serverless applications on the
-JVM rather than using GraalVM due to the shorter build time and the less resource-
-demanding process. However, to achieve better quality and catch errors earlier, we
+JVM rather than using GraalVM due to the shorter build time and the less resourcedemanding process. However, to achieve better quality and catch errors earlier, we
 should run and verify the applications in native mode as early in the delivery process
 as possible. The commit stage is where we compile and test our applications, so it
 might be a good place to add those additional steps.
@@ -702,8 +696,7 @@ commit stage is much faster than the acceptance stage, we risk creating a bottle
 When an acceptance stage run has completed, we are not interested in verifying all he release candidates that have queued up in the meantime. We are only interested
 in the newest one, so the others can be discarded. GitHub Actions provides a mechanism for handling this scenario via concurrency controls.
 
-Next, you would define several jobs to run in parallel against a production-like envi-
-ronment, accomplishing functional and non-functional acceptance tests. For our
+Next, you would define several jobs to run in parallel against a production-like environment, accomplishing functional and non-functional acceptance tests. For our
 example, we’ll simply print a message, since we haven’t implemented the autotests for
 this stage.
 
@@ -723,10 +716,8 @@ which means that whenever the acceptance stage workflow completes its execution
 in the application repository, we need to notify the production stage workflow in the deployment repository. GitHub Actions provides the option of implementing this
 notification process via a custom event.
 
-Open your Catalog Service project (catalog-service), and go to the acceptance-
-stage.yml file within the .github/workflows folder. After all the acceptance tests have
-run successfully, we have to define a final step that will send a notification to the polar-
-deployment repository and ask it to update the Catalog Service production manifests
+Open your Catalog Service project (catalog-service), and go to the acceptancestage.yml file within the .github/workflows folder. After all the acceptance tests have
+run successfully, we have to define a final step that will send a notification to the polardeployment repository and ask it to update the Catalog Service production manifests
 with the new release version. That will be the trigger for the production stage.
 
 ``.github/workflows/acceptance-stage.yml``

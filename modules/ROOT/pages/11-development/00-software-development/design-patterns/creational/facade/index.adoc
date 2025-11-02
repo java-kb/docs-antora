@@ -8,8 +8,7 @@ Provide a unifed interface to a set of interfaces of a subsystem. The facade cla
 abstract interface that simplifes the use of the subsystem.
 ____
 
-The facade belongs to the structure patterns; it describes how you can access a compli-
-cated or complex subsystem in an uncomplicated way.
+The facade belongs to the structure patterns; it describes how you can access a complicated or complex subsystem in an uncomplicated way.
 
 The advantage of the facade is obvious: access is simplifed, the dependency of
 client and subsystem is loosened. This avoids client code breaking when the subsystem
@@ -21,11 +20,9 @@ is changed or replaced. It is even possible to replace a complete subsystem.
 
 === Law of Demeter
 
-Law of Demeter(http://prinzipien-der-softwaretechnik.blogspot.com/2013/06/das-gesetz-von-
-demeter.html):  says -- in short -- that objects should limit
+Law of Demeter(http://prinzipien-der-softwaretechnik.blogspot.com/2013/06/das-gesetz-vondemeter.html):  says -- in short -- that objects should limit
 their communication to close friends. The facade shows you one way to make this happen
-as easily as possible. So what exactly does Demeter's Law say? Objects should only com-
-municate with close friends. Close friends are:
+as easily as possible. So what exactly does Demeter's Law say? Objects should only communicate with close friends. Close friends are:
 
 * Attributes and methods of its own object, that is, everything called this,
 * Methods of objects passed as parameters,
@@ -34,8 +31,7 @@ municate with close friends. Close friends are:
 
 If you look at the travel example(https://github.com/java-kb/design_patterns/blob/main/src/main/java/me/study/designpatterns/creational/facade/examples/example01_manage_trip), you can see that the client only needs to
 access one friend -- the facade. The facade gives the client the option of not having to deal
-with strangers, i.e. additional classes. The facade is an illustrative example of the realiza-
-tion of the principle.
+with strangers, i.e. additional classes. The facade is an illustrative example of the realization of the principle.
 
 == Analogy
 
@@ -46,8 +42,7 @@ on the flm or the processor. To prevent the image from becoming too bright, you 
 reduce the exposure time.
 +
 Maybe you don't want to take a portrait later, but a landscape. There, the depth of feld
-  should be as large as possible; you select a large f-stop number and thereby close the aper-
-  ture. Now there is less light reaching the processor, so you have to increase the exposure
+  should be as large as possible; you select a large f-stop number and thereby close the aper  ture. Now there is less light reaching the processor, so you have to increase the exposure
   time. However, the exposure time cannot be increased indefnitely; experience shows that
   a picture can only be taken handheld if the exposure time is shorter than 1/focal length. If
   the exposure time is longer, you run the risk of blurring the image. So you need to increase

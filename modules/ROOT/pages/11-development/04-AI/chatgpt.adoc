@@ -2,12 +2,10 @@
 :figures: 11-development/04-AI
 
 ChatGPT is a prompt-based Generative AI that engages the user in a dialogue 
-that helps them explore ideas to aid in the design and development of entire proj-
-ects. In addition, ChatGPT artfully generates documentation for each method it 
+that helps them explore ideas to aid in the design and development of entire projects. In addition, ChatGPT artfully generates documentation for each method it 
 writes.
 
-ChatGPT (as of this writing) does not support development within an IDE. How-
-ever, unlike GitHub Copilot and AWS CodeWhisperer, it can produce entire 
+ChatGPT (as of this writing) does not support development within an IDE. However, unlike GitHub Copilot and AWS CodeWhisperer, it can produce entire 
 projects and easily translate code from one programming language to another. 
 Copilot and CodeWhisperer take hints from your comments to infer what code 
 you want to write. With ChatGPT, you explicitly write prompts that ChatGPT uses 

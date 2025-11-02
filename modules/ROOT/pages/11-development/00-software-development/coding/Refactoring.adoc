@@ -32,8 +32,7 @@ and then make the change I need.
 it’s these changes that drive the need to perform refactoring.
 If the code works and doesn’t ever need to change, it’s perfectly fine to leave it
 alone. It would be nice to improve it, but unless someone needs to understand
-it, it isn’t causing any real harm. Yet as soon as someone does need to under-
-stand how that code works, and struggles to follow it, then you have to do
+it, it isn’t causing any real harm. Yet as soon as someone does need to understand how that code works, and struggles to follow it, then you have to do
 something about it.
 
 
@@ -56,8 +55,7 @@ are the key to avoiding that mess.
 ``
 
 next step is to commit the change to my
-local version control system. I use a version control system, such as git or mercu-
-rial, that allows me to make private commits. I commit after each successful
+local version control system. I use a version control system, such as git or mercurial, that allows me to make private commits. I commit after each successful
 refactoring, so I can easily get back to a working state should I mess up later. I
 then squash changes into more significant commits before I push the changes to
 a shared repository.
@@ -70,12 +68,10 @@ of software usually depends on just a few parts of the code, and changes anywher
 else don’t make an appreciable difference.
 
 But “mostly” isn’t the same as “alwaysly.” Sometimes a refactoring will have a
-significant performance implication. Even then, I usually go ahead and do it, be-
-cause it’s much easier to tune the performance of well-factored code. If I introduce
+significant performance implication. Even then, I usually go ahead and do it, because it’s much easier to tune the performance of well-factored code. If I introduce
 a significant performance issue during refactoring, I spend time on performance
 tuning afterwards. It may be that this leads to reversing some of the refactoring
-I did earlier—but most of the time, due to the refactoring, I can apply a more ef-
-fective performance-tuning enhancement instead. I end up with code that’s both
+I did earlier—but most of the time, due to the refactoring, I can apply a more effective performance-tuning enhancement instead. I end up with code that’s both
 clearer and faster.
 
 So, my overall advice on performance with refactoring is: Most of the time you
@@ -919,8 +915,7 @@ plays. Typically, a customer will request a few plays and the company charges
 them based on the size of the audience and the kind of play they perform. There
 are currently two kinds of plays that the company performs: tragedies and
 comedies. As well as providing a bill for the performance, the company gives its
-customers “volume credits” which they can use for discounts on future perfor-
-mances—think of it as a customer loyalty mechanism.
+customers “volume credits” which they can use for discounts on future performances—think of it as a customer loyalty mechanism.
 +
 The performers store data about their plays in a simple JSON file that looks
 something like this:
@@ -1015,8 +1010,7 @@ When refactoring a long function like this, I mentally try to identify points th
 separate different parts of the overall behavior. The first chunk that leaps to my
 eye is the switch statement in the middle.
 +
-As I look at this chunk, I conclude that it’s calculating the charge for one per-
-formance. That conclusion is a piece of insight about the code. 
+As I look at this chunk, I conclude that it’s calculating the charge for one performance. That conclusion is a piece of insight about the code. 
 +
 The way to put that understanding into code is to turn that chunk of code into
 its own function, naming it after what it does—something like amountFor(aPerformance).
@@ -1149,9 +1143,7 @@ a parameter includes the type name. I use an indefinite article with it unless t
 is some specific role information to capture in the name. I learned this convention
 from Kent Beck [Beck SBPP] and continue to find it helpful.
 +
-Is this renaming worth the effort? Ab-
-solutely. Good code should clearly com-
-municate what it is doing, and variable
+Is this renaming worth the effort? Absolutely. Good code should clearly communicate what it is doing, and variable
 names are a key to clear code. Never be
 afraid to change names to improve
 clarity. 
@@ -1386,8 +1378,7 @@ function statement (invoice, plays) {
 ----
 I’m not keen on the name—“format” doesn’t really convey enough of what it’s
 doing. “formatAsUSD” would be a bit too long-winded since it’s being used in a
-string template, particularly within this small scope. I think the fact that it’s for-
-matting a currency amount is the thing to highlight here, so I pick a name that
+string template, particularly within this small scope. I think the fact that it’s formatting a currency amount is the thing to highlight here, so I pick a name that
 suggests that and apply Change Function Declaration (124).
 [source,javascript,attributes]
 ----

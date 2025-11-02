@@ -13,8 +13,7 @@ When we test security at the data layer, we’re not interested in which authent
 strategy has been adopted. The only thing we need is to know whether the operation
 is performed in the context of an authenticated request.
 
-The Spring Security Test project provides us with a handy @WithMockUser annota-
-tion we can use on test cases to make them run in an authenticated context. You can
+The Spring Security Test project provides us with a handy @WithMockUser annotation we can use on test cases to make them run in an authenticated context. You can
 also add information about the mock user. Since we’re testing auditing, we want to
 define at least a username that can be used as the principal.
 [tabs]

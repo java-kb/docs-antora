@@ -2,12 +2,9 @@
 :figures: 10-message-queuing/servers
 
 A messaging system requires two main things: a message broker and a protocol. The
-Advanced Message Queuing Protocol (AMQP) ensures interoperability across plat-
-forms and reliable message delivery. It has become widely used in modern architec-
-tures, and it’s a good fit in the cloud, where we need resilience, loose coupling, and
+Advanced Message Queuing Protocol (AMQP) ensures interoperability across platforms and reliable message delivery. It has become widely used in modern architectures, and it’s a good fit in the cloud, where we need resilience, loose coupling, and
 scalability. RabbitMQ is a popular open source message broker that relies on AMQP
-and provides flexible asynchronous messaging, distributed deployment, and monitor-
-ing. Recent RabbitMQ versions have also introduced event streaming features.
+and provides flexible asynchronous messaging, distributed deployment, and monitoring. Recent RabbitMQ versions have also introduced event streaming features.
 
 RabbitMQ is a message broker based on the AMQP protocol that you can use to
 implement event-driven architectures based on the pub/sub model.
@@ -16,8 +13,7 @@ RabbitMQ is a widely used open-source message broker that implements the Advance
 
 RabbitMQ allows applications to send and receive messages in a decoupled manner, enabling them to operate independently. It supports various messaging patterns, including point-to-point, publish-subscribe, and request-reply, making it suitable for a wide range of use cases.
 
-RabbitMQ was initially developed to support AMQP, but it also sup-
-ports other protocols, including STOMP, MQTT, and even WebSockets for
+RabbitMQ was initially developed to support AMQP, but it also supports other protocols, including STOMP, MQTT, and even WebSockets for
 delivering messages over HTTP. Since version 3.9, it also supports event
 streaming.
 

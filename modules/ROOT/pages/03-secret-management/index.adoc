@@ -4,8 +4,7 @@
 Secret management is an approach that enables programmers to safely store delicate information, such as tokens, passwords, and keys, in a secure setting with rigorous access controls.
 
 Managing secrets is a critical task for any software system, and it’s dangerous when
-mistakes are made. So far, we have included passwords either in property files or envi-
-ronment variables, but they were unencrypted in both cases. One of the consequences
+mistakes are made. So far, we have included passwords either in property files or environment variables, but they were unencrypted in both cases. One of the consequences
 of not encrypting them is that we can’t version-control them safely. We would like to
 keep everything under version control and use Git repositories as the single sources
 of truth, which is one of the principles behind the GitOps strategy

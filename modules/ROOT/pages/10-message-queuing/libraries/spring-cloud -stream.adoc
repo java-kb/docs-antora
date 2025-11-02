@@ -5,8 +5,7 @@ messages to topics and subscribers subscribe to topics they are interested in re
 
 ==  RabbitMQ and Kafka dependencies
 To bring in Spring Cloud Stream and its binders for RabbitMQ and Kafka, we need to add the two 
-starter dependencies known as spring-cloud-starter-stream-rabbit and spring-cloud-starter-
-stream-kafka. We also need a test dependency, spring-cloud-stream::test-binder, to bring in test support. 
+starter dependencies known as spring-cloud-starter-stream-rabbit and spring-cloud-starterstream-kafka. We also need a test dependency, spring-cloud-stream::test-binder, to bring in test support. 
 
 To specify what version of Spring Cloud we want to use, we first declare a variable for the version:
 

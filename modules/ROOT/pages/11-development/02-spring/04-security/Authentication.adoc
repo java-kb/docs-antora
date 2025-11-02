@@ -82,8 +82,7 @@ String encodedPassword = encoder.encodePassword(password, null);
 
 === Using salt in Spring Security
 
-Spring Security provides a cryptography module that are included in the spring-security-
-core module and are available separately in spring-security-crypto. The crypto module
+Spring Security provides a cryptography module that are included in the spring-securitycore module and are available separately in spring-security-crypto. The crypto module
 contains its own o.s.s.crypto.password.PasswordEncoder interface. In fact, using this
 interface is the preferred method for encoding passwords, because it will salt passwords using a random
 salt. At the time of this writing, there are the following three implementations of o.s.s.crypto.

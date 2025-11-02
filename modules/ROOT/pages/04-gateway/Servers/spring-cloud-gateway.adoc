@@ -20,16 +20,13 @@ For Spring Cloud Gateway Reactive the artifact ID is *spring-cloud-starter-gatew
 For Spring Cloud Gateway Server MVC the artifact ID is *spring-cloud-starter-gateway-mvc*
 
 Spring Cloud Gateway is a very flexible project that lets you configure routes the way
-that best suits your needs. Here you have configured routes in a property file (applica-
-tion.yml or application.properties), but there’s also a DSL available for configuring
-routes programmatically in Java or Kotlin. Future versions of the project will also imple-
-ment a feature to fetch the route configuration from a data source using Spring Data.
+that best suits your needs. Here you have configured routes in a property file (application.yml or application.properties), but there’s also a DSL available for configuring
+routes programmatically in Java or Kotlin. Future versions of the project will also implement a feature to fetch the route configuration from a data source using Spring Data.
 How you use it is up to you. Putting routes in configuration properties gives you the
 chance to customize them easily depending on the environment and to update them
 at runtime without the need to rebuild and redeploy the application. For example, you
 would get those benefits when using Spring Cloud Config Server. On the other hand,
-the DSL for Java and Kotlin lets you define more complex routes. Configuration prop-
-erties allow you to combine different predicates with an AND logical operator only.
+the DSL for Java and Kotlin lets you define more complex routes. Configuration properties allow you to combine different predicates with an AND logical operator only.
 The DSL also enables you to use other logical operators like OR and NOT.
 
 == Defining routes and predicates
@@ -37,8 +34,7 @@ Spring Cloud Gateway provides three main building blocks:
 
 * Route—This is identified by a unique ID, a collection of predicates for deciding
 whether to follow the route, a URI for forwarding the request if the predicates
-allow, and a collection of filters that are applied either before or after forward-
-ing the request downstream.
+allow, and a collection of filters that are applied either before or after forwarding the request downstream.
 * Predicate—This matches anything from the HTTP request, including path, host,
 headers, query parameters, cookies, and body.
 * Filter—This modifies an HTTP request or response before or after forwarding
@@ -94,8 +90,7 @@ Filters can run before forwarding incoming requests to a downstream application
 * Defining retries and timeouts for the proxied request
 * Triggering an authentication flow with OAuth2 and OpenID Connect
 
-Other filters can apply to outgoing responses after they are received from the down-
-stream application and before sending them back to the client (post-filters). They can
+Other filters can apply to outgoing responses after they are received from the downstream application and before sending them back to the client (post-filters). They can
 be used for:
 
 * Setting security headers
@@ -291,8 +286,7 @@ downstream applications.
 
 image::{figures}/token-relay.png[ After a user is authenticated, Edge Service relays the Access Token to Order Service to call its protected endpoints on behalf of the user.]
 
-Spring Cloud Gateway implements the token relay pattern as a filter. In the Edge Ser-
-vice project (edge-service), open the application.yml file and add TokenRelay as a
+Spring Cloud Gateway implements the token relay pattern as a filter. In the Edge Service project (edge-service), open the application.yml file and add TokenRelay as a
 default filter, since we want it applied to all routes.
 [source,yml,attributes]
 ----
@@ -319,8 +313,7 @@ spring:
   application:
     name: edge-service
   lifecycle:
-    #    You can also configure the grace period, which is how long the applica-
-    # tion can spend processing all the pending requests. After the grace period expires,
+    #    You can also configure the grace period, which is how long the applica    # tion can spend processing all the pending requests. After the grace period expires,
     # the application is terminated even if there are still pending requests. By default, the
     # grace period is 30 seconds. 
     timeout-per-shutdown-phase: 15s 
@@ -408,8 +401,7 @@ attempted, such as IOException and TimeoutException.
 
 By now, you know that you shouldn’t keep retrying requests one after the other.
 You should use a backoff strategy instead. By default, the delay is computed using the
-formula firstBackoff * (factor ^ n). If you set the basedOnPreviousValue parame-
-ter to true, the formula will be prevBackoff * factor. 
+formula firstBackoff * (factor ^ n). If you set the basedOnPreviousValue parameter to true, the formula will be prevBackoff * factor. 
 [source,yml,attributes]
 ----
 spring:
@@ -441,8 +433,7 @@ specific number of failures, and to close the circuit after a specific time peri
 useful for handling failures in downstream services and preventing cascading failures
 in the system.  
 
-Spring Cloud Gateway integrates natively with Spring Cloud Circuit Breaker, providing you with a CircuitBreaker gateway filter that you can use to protect the inter-
-actions with all downstream services. 
+Spring Cloud Gateway integrates natively with Spring Cloud Circuit Breaker, providing you with a CircuitBreaker gateway filter that you can use to protect the interactions with all downstream services. 
 
 The CircuitBreaker filter in Spring Cloud Gateway relies on Spring Cloud Circuit
 Breaker to wrap a route. As with the Retry filter, you can choose to apply it to specific
@@ -540,9 +531,7 @@ routes:
 After defining which routes you want to apply the CircuitBreaker filter to, you need
 to configure the circuit breakers themselves. As often in Spring Boot, you have two
 main choices. You can configure circuit breakers through the properties provided by
-Resilience4J or via a Customizer bean. Since we’re using the reactive version of Resil-
-ience4J, the specific configuration bean would be of type Customizer<Reactive-
-Resilience4JCircuitBreakerFactory>.
+Resilience4J or via a Customizer bean. Since we’re using the reactive version of Resilience4J, the specific configuration bean would be of type Customizer<ReactiveResilience4JCircuitBreakerFactory>.
 
 The timeout configured via Resilience4J will take precedence over the response timeout 
 defined in the Netty HTTP client (spring.cloud.gateway.httpclient.response-timeout).
@@ -552,8 +541,7 @@ calls (slidingWindowSize). Each new call will make the window move, dropping the
 oldest registered call. When at least 50% of the calls in the window have produced an
 error (failureRateThreshold), the circuit breaker will trip, and the circuit will enter
 the open state. After 15 seconds (waitDurationInOpenState), the circuit will be
-allowed to transition to a half-open state in which 5 calls are permitted (permitted-
-NumberOfCallsInHalfOpenState). If at least 50% of them result in an error, the circuit
+allowed to transition to a half-open state in which 5 calls are permitted (permittedNumberOfCallsInHalfOpenState). If at least 50% of them result in an error, the circuit
 will go back to the open state. Otherwise, the circuit breaker will trip to the closed state.
 
 [source,yml,attributes]
@@ -583,8 +571,7 @@ You can verify the result of applying these patterns to Edge Service by using a 
 Apache Benchmark (https://httpd.apache.org/docs/2.4/programs/ab.html).
 
 Make sure both Catalog Service and Order Service are not running so that you can
-test circuit breakers in a failure scenario. Then enable debug logging for Resilience4J so you can follow the state transitions of the circuit breaker. At the end of the applica-
-tion.yml file in your Edge Service project, add the following configuration.
+test circuit breakers in a failure scenario. Then enable debug logging for Resilience4J so you can follow the state transitions of the circuit breaker. At the end of the application.yml file in your Edge Service project, add the following configuration.
 [source,yml,attributes]
 === 
 ----
@@ -643,8 +630,7 @@ import org.springframework.context.annotation.Configuration;
 /*
  * The RequestRateLimiter filter relies on a KeyResolver bean to determine which
 bucket to use for each request. By default, it uses the currently authenticated user in
-Spring Security. Without security in hand, we can define a custom Key-
-Resolver bean and make it return a constant value (for example, anonymous) so that
+Spring Security. Without security in hand, we can define a custom KeyResolver bean and make it return a constant value (for example, anonymous) so that
 all requests will be mapped to the same bucket.
  */
 @Configuration
@@ -733,8 +719,7 @@ response.
 
       default-filters:
         # let’s configure the algorithm so that each request costs 1 token
-        # (redis-rate-limiter.requestedTokens). Tokens are dripped in the bucket follow-
-        # ing the configured replenish rate (redis-rate-limiter.replenishRate), which we’ll
+        # (redis-rate-limiter.requestedTokens). Tokens are dripped in the bucket follow        # ing the configured replenish rate (redis-rate-limiter.replenishRate), which we’ll
         # set as 10 tokens per second. Sometimes there might be spikes, resulting in a larger
         # number of requests than usual. You can allow temporary bursts by defining a larger
         # capacity for the bucket (redis-rate-limiter.burstCapacity), such as 20. This

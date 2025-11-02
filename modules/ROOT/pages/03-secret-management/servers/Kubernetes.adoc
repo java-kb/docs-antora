@@ -4,8 +4,7 @@ The three strategies stated are generic enough that we can use them to configure
 comes to Kubernetes, there’s an additional configuration strategy that is provided
 natively by the platform: ConfigMaps and Secrets.
 
-The 15-Factor methodology recommends keeping code, configuration, and creden-
-tials always separate. Kubernetes fully embraces that principle and defines two APIs
+The 15-Factor methodology recommends keeping code, configuration, and credentials always separate. Kubernetes fully embraces that principle and defines two APIs
 to handle configuration and credentials independently: ConfigMaps and Secrets.
 
 The most critical part of configuring applications is managing secret information like
@@ -73,11 +72,9 @@ Bitnami introduced a project called Sealed Secrets (https://github.com/bitnami-l
 What if your secrets are stored in a dedicated backend like HashiCorp Vault or
 Azure Key Vault? In that case, you can use a project like External Secrets (https://
 github.com/external-secrets/kubernetes-external-secrets). As you can guess from its
-name, this project lets you generate a Secret from an external source. The External-
-Secret object would be safe to store in your repository and put under version control.
+name, this project lets you generate a Secret from an external source. The ExternalSecret object would be safe to store in your repository and put under version control.
 When the ExternalSecret manifest is applied to a Kubernetes cluster, the External
-Secrets controller fetches the value from the configured external source and gener-
-ates a standard Secret object that can be used within a Pod.
+Secrets controller fetches the value from the configured external source and generates a standard Secret object that can be used within a Pod.
 == Integration with Spring boot
 Spring Boot provides native and flexible support for both ConfigMaps and Secrets.
 

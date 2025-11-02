@@ -11,8 +11,7 @@ at the edge of the unit is mocked to keep the test shielded from external compon
 
 Writing unit tests for Spring applications is no different from writing them for any
 other Java application. By default, any Spring
-project created from Spring Initializr contains the spring-boot-starter-test depen-
-dency, which imports testing libraries like JUnit 5, Mockito, and AssertJ into the project. So we're all set for writing unit tests.
+project created from Spring Initializr contains the spring-boot-starter-test dependency, which imports testing libraries like JUnit 5, Mockito, and AssertJ into the project. So we're all set for writing unit tests.
 
 Unit tests are not aware of Spring and don’t rely on any Spring library. They are
 intended to test the behavior of single components as isolated units. Any dependency
@@ -26,9 +25,7 @@ unit tests includes:
 By default, Spring Boot automatically configures the Jackson library to parse
 Java objects into JSON (serialization) and vice versa (deserialization).
 
-Using the @JsonTest annotation, you can test JSON serialization and deserializa-
-tion for your domain objects. @JsonTest loads a Spring application context and auto-
-configures the JSON mappers for the specific library in use (by default, it’s Jackson).
+Using the @JsonTest annotation, you can test JSON serialization and deserialization for your domain objects. @JsonTest loads a Spring application context and autoconfigures the JSON mappers for the specific library in use (by default, it’s Jackson).
 Furthermore, it configures the JacksonTester utility, which you can use to check that
 the JSON mapping works as expected, relying on the JsonPath and JSONAssert libraries.
 
@@ -470,12 +467,8 @@ class BookServiceTest {
 }
 ----
 == Testing REST controllers with @WebMvcTest
-We can test that Spring MVC controllers work as intended by using the @WebMvc-
-Test annotation, which loads a Spring application context in a mock web environ-
-ment (no running server), configures the Spring MVC infrastructure, and includes
-only the beans used by the MVC layer, like @RestController and @RestController-
-Advice. It’s also a good idea to limit the context to the beans used by the specific con-
-troller under test. We can do so by providing the controller class as an argument to
+We can test that Spring MVC controllers work as intended by using the @WebMvcTest annotation, which loads a Spring application context in a mock web environment (no running server), configures the Spring MVC infrastructure, and includes
+only the beans used by the MVC layer, like @RestController and @RestControllerAdvice. It’s also a good idea to limit the context to the beans used by the specific controller under test. We can do so by providing the controller class as an argument to
 the @WebMvcTest annotation in a new BookControllerMvcTests class.
 [source,java,attributes]
 ----
@@ -562,8 +555,7 @@ public class BookClient {
 
     public Mono<Book> getBookByIsbn(String isbn) {
         /*
-         * Currently, Catalog Ser-
-         * vice exposes a /books/{bookIsbn} endpoint that returns all the available
+         * Currently, Catalog Ser         * vice exposes a /books/{bookIsbn} endpoint that returns all the available
          * information
          * about a book. In a real scenario, you might expose a different endpoint that
          * returns an
@@ -576,8 +568,7 @@ public class BookClient {
                 .bodyToMono(Book.class)
                 /*
                  * Instead of throwing an exception when the timeout expires, you have the
-                 * chance to pro-
-                 * vide a fallback behavior. Considering that Order Service can’t accept an
+                 * chance to pro                 * vide a fallback behavior. Considering that Order Service can’t accept an
                  * order if the
                  * book’s availability is not verified, you might consider returning an empty
                  * result so that

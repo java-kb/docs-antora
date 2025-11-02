@@ -80,8 +80,7 @@ hosted on http://attacker.com would not be able to authenticate.
 rather than login requests, as it is fairly common for an application to have different
 redirect URIs for login and logout. Keycloak supports adding a special post redirect URI
 with the value +, which results in permitting all valid redirect URIs as post redirect URIs.
-* *Web origins*: This option registers the valid web origins of the application for Cross-Or-
-igin Resource Sharing (CORS) requests. To obtain tokens from Keycloak, the frontend
+* *Web origins*: This option registers the valid web origins of the application for Cross-Origin Resource Sharing (CORS) requests. To obtain tokens from Keycloak, the frontend
 application has to send an AJAX request to Keycloak, and browsers do not permit an AJAX
 request from one web origin to another, unless CORS is used. Keycloak supports adding
 a special web origin with the value +, which results in permitting all valid redirect URIs
@@ -177,13 +176,11 @@ To register Edge Service as an OAuth2 Client in the PolarBookshop realm:
 
 The valid redirect URLs are the endpoints exposed by the OAuth2 Client application
 (Edge Service) where Keycloak will redirect authentication requests. Since Keycloak
-can include sensitive information in a redirect request, we want to limit which applica-
-tions and endpoints are authorized to receive such information.
+can include sensitive information in a redirect request, we want to limit which applications and endpoints are authorized to receive such information.
 
 == Configuring Access To User Roles In Keycloak
 Keycloak comes preconfigured with a roles scope you can use to give an application
-access to the user roles contained in a roles claim. However, the default representa-
-tion of the roles list is not very convenient to use because it’s defined as a nested
+access to the user roles contained in a roles claim. However, the default representation of the roles list is not very convenient to use because it’s defined as a nested
 object. 
 
 Once Keycloak is up and running, log in to the administration console, and choose the realm.
@@ -196,8 +193,7 @@ set of claims to which the given scope provides access (i.e., mappings). By defa
 interested in the realm roles mapper, which maps the user realm roles (including
 employee and customer) to a JWT claim. Select that mapper.
 
-The settings page for the realm roles mapper provides a few options for customiza-
-tion. We want to change two things:
+The settings page for the realm roles mapper provides a few options for customization. We want to change two things:
 
 * The token claim name should be roles instead of realm_access.roles (so we
 will remove the nested object).

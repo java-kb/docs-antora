@@ -87,13 +87,11 @@ public class BookController {
 
 == Logging To files
 == The Mapped Diagnostic Context (MDC)
-You’ll likely need to add common information to your log messages, such as the iden-
-tifier of the currently authenticated user, the tenant for the current context, or the
+You’ll likely need to add common information to your log messages, such as the identifier of the currently authenticated user, the tenant for the current context, or the
 request URI. You could directly add that information to your log message, as you did
 in the previous listing, and it would work, but the data would not be structured.
 Instead, I prefer working with structured data.
-SLF4J and common logging libraries, like Logback and Log4J2, support adding struc-
-tured information depending on the request context (authentication, tenant, thread)
+SLF4J and common logging libraries, like Logback and Log4J2, support adding structured information depending on the request context (authentication, tenant, thread)
 through a tool named Mapped Diagnostic Context (MDC). If you’d like to know more
 about MDC, I recommend checking the official documentation for the specific logging
 library you’re using.

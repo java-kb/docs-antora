@@ -2,14 +2,10 @@
 :figures: 12-db/migration-tools/Flyway
 
 Flyway is a tool that provides version control for your database. It offers a single source
-of truth for the version of your database's state and keeps track of any changes incre-
-mentally. It automates changes and lets you reproduce or roll back the state of a data-
-base. Flyway is highly reliable, safe to use in cluster environments, and supports
-several relational databases, including the cloud ones like Amazon RDS, Azure Data-
-base, and Google Cloud SQL.
+of truth for the version of your database's state and keeps track of any changes incrementally. It automates changes and lets you reproduce or roll back the state of a database. Flyway is highly reliable, safe to use in cluster environments, and supports
+several relational databases, including the cloud ones like Amazon RDS, Azure Database, and Google Cloud SQL.
 
-At its core, Flyway manages database changes. Any database change is called a migra-
-tion, and migrations can be either versioned or repeatable.
+At its core, Flyway manages database changes. Any database change is called a migration, and migrations can be either versioned or repeatable.
 
 * Versioned migrations are
 identified by a unique version number and are applied in order exactly once. For
@@ -25,8 +21,7 @@ Both types of migration can be defined in standard SQL scripts (useful for DDL
 changes) or Java classes (useful for DML changes, like data migrations). Flyway keeps
 track of which migrations have already been applied through a flyway_schema_history
 table automatically created in the database the first time it runs. You can picture
-migrations as commits in a Git repository and the schema history table as the reposi-
-tory log containing the list of all the commits applied over time
+migrations as commits in a Git repository and the schema history table as the repository log containing the list of all the commits applied over time
 
 A prerequisite for using Flyway is that both the database you want to
 manage and a user with the correct access privileges exist. Once you have a
@@ -104,8 +99,7 @@ Any change to a database schema should also be backward compatible to support
 common deployment strategies for cloud native applications, like rolling upgrades,
 blue/green deployments, or canary releases).
 
-During the application’s startup, Flyway will automatically go through all the migra-
-tion scripts and apply those not yet applied.
+During the application’s startup, Flyway will automatically go through all the migration scripts and apply those not yet applied.
 
 For example, if you want to add a new column to the book table, you can create a new migration script named V2__Add_publisher_column.sql with the following content:
 [source,sql,attributes]

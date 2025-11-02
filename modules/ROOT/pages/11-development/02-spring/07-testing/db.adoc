@@ -20,8 +20,7 @@ when using the @DataMongoTest and @DataJpaTest annotations instead of the @Sprin
 annotation to only start up the MongoDB and SQL database during the integration test, there is one 
 more thing to consider. The @DataJpaTest annotation is designed to start an embedded database by 
 default. Since we want to use a containerized database, we have to disable this feature. 
-For the @DataJpaTest annotation, this can be done by using an @AutoConfigureTestDatabase anno-
-tation like this:
+For the @DataJpaTest annotation, this can be done by using an @AutoConfigureTestDatabase annotation like this:
 [source,java,attributes]
 ----
 @DataJpaTest
@@ -45,8 +44,7 @@ class SampleTests {
 ----
 A disadvantage of this approach is that each test class will use its own Docker container. Bringing up 
 MySQL in a Docker container takes a few seconds, typically 10 seconds on my Mac. Running multiple test classes that use the same type of test container will add this latency for each test class. To avoid this extra latency, we can use the Single Container Pattern (see https://www.testcontainers.
-org/test_framework_integration/manual_lifecycle_control/#singleton-containers). Follow-
-ing this pattern, a base class is used to launch a single Docker container.
+org/test_framework_integration/manual_lifecycle_control/#singleton-containers). Following this pattern, a base class is used to launch a single Docker container.
 [tabs]
 ====
 MongoDb::
@@ -194,8 +192,7 @@ following configuration.
 When the integration profile is enabled, Spring Boot will use the PostgreSQL container instantiated by Testcontainers.
 . Create a Testing class, and mark it with the @DataJdbcTest
 annotation. That will trigger Spring Boot to include all Spring Data JDBC entities and
-repositories in the application context. It will also auto-configure JdbcAggregate-
-Template, a lower-level object we can use to set up the context for each test case instead
+repositories in the application context. It will also auto-configure JdbcAggregateTemplate, a lower-level object we can use to set up the context for each test case instead
 of using the repository (the object under testing).
 +
 == Testing Optimistic locking
@@ -542,8 +539,7 @@ class ProductRepositoryTest extends MongoDbTestBase {
 
     /*
      * The other negative test is, in my opinion, the most interesting test in the
-     * test class. It is a test that ver-
-     * ifies correct error handling in the case of updates of stale data—it verifies
+     * test class. It is a test that ver     * ifies correct error handling in the case of updates of stale data—it verifies
      * that the optimistic locking
      * mechanism works.
      * The following is observed from the code:

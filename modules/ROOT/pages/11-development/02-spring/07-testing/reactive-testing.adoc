@@ -44,8 +44,7 @@ dependencies {
 
 == Testing data persistence with @DataR2dbcTest and Testcontainers
 When it comes to testing the persistence layer, we have to make some changes. Since our persistence 
-methods now return a Mono or Flux object, the test methods have to wait for the response to be avail-
-able in the returned reactive objects. The test methods can either use an explicit call to the block()
+methods now return a Mono or Flux object, the test methods have to wait for the response to be available in the returned reactive objects. The test methods can either use an explicit call to the block()
 method on the Mono/Flux object to wait until a response is available, or they can use the StepVerifier
 helper class from Project Reactor to declare a verifiable sequence of asynchronous events.
 Let’s see how we can change the following test code to work for the reactive version of the repository:

@@ -15,8 +15,7 @@ one structure in a database using the criteria of pagination and sorting.
 
 image::{figures}/The-structure-of-repositories-depends-on-the-database.png[Spring Data supports MongoDB, Redis, Neo4j, Cassandra, and all the relational databases.]
 Spring Data provides common abstractions and patterns for accessing data,
-making it straightforward to navigate the different modules dedicated to rela-
-tional and non-relational databases.
+making it straightforward to navigate the different modules dedicated to relational and non-relational databases.
 
 image::{figures}/interaction between an application using Spring Data and a database.png[A driver configures the connection between the application and the database. Entities 
 represent domain objects and can be stored and retrieved through a repository]
@@ -24,8 +23,7 @@ represent domain objects and can be stored and retrieved through a repository]
 * The main elements in Spring Data are database drivers, entities, and repositories.
 ** Entities represent domain objects and can be stored and retrieved through a repository
 (Java Database Connectivity API) in imperative/blocking applications or an
-R2DBC driver in reactive/non-blocking applications. For non-relational data-
-bases, each vendor has its own dedicated solution.
+R2DBC driver in reactive/non-blocking applications. For non-relational databases, each vendor has its own dedicated solution.
 ** Entities—Domain objects that are persisted in a database. They must contain a
 field to uniquely identify each instance (a primary key) and can use dedicated
 annotations to configure the mapping between Java objects and database entries.
@@ -46,24 +44,20 @@ Repository interfaces provided by Spring Data, such as CrudRepository.
 * In Spring Data JDBC, all mutating custom operations (create, update, delete)
 should run in transactions.
 * Use the @Transactional annotation to run operations in a single unit of work.
-* You can run integration tests for the Spring Data JDBC slice using the @Data-
-JdbcTest annotation.
+* You can run integration tests for the Spring Data JDBC slice using the @DataJdbcTest annotation.
 * Environment parity is essential for the quality and reliability of your tests and
 deployment pipeline.
 * You can test the integration between your application and backing services
-defined as containers by using the Testcontainers library. It lets you use light-
-weight, throwaway containers in your integration tests.
+defined as containers by using the Testcontainers library. It lets you use lightweight, throwaway containers in your integration tests.
 * Database schemas are critical for applications. In production, you should use a
 tool like Flyway, which provides version control for your database.
-* Flyway should manage any database changes to ensure reproducibility, trace-
-ability, and reliability.
+* Flyway should manage any database changes to ensure reproducibility, traceability, and reliability.
 *  Data sources are one of the primary causes of differences across environments. It’s
 common practice to use an in-memory database while developing locally—something
 like H2 or HSQL. But that affects the predictability and robustness of your applications.
 Even if all relational databases speak the SQL language and Spring Data JDBC provides
 generic abstractions, each vendor has its own dialect and unique features that make it
-essential to use the same database in production that you use in development and test-
-ing. Otherwise, you may not catch errors that might happen only in production.
+essential to use the same database in production that you use in development and testing. Otherwise, you may not catch errors that might happen only in production.
 
 == Repository Support
 When you write an application that needs to persist/retrieve information from a 
@@ -91,8 +85,7 @@ specific context.
 
 *Spring Data JPA* (https://spring.io/projects/spring-data-jpa) is the most-used module in the Spring Data project. It's based on the Java Persistence API (JPA), a standard specification included in Jakarta EE (previously known as Java EE). Hibernate is the most popular implementation. It's a robust and battle-tested object-relational mapping (ORM) framework for managing data persistence in Java applications. Hibernate provides many useful features, but it's also a complex framework. If you're not aware of aspects like persistence context, lazy loading, dirty checking, or sessions, you might face issues that will be hard to debug without a sound familiarity with JPA and Hibernate. Once you know the framework better, you'll appreciate how much Spring Data JPA simplifies things and boosts your productivity.
 
-*Spring Data JDBC* (https://spring.io/projects/spring-data-jdbc) is a more recent addition to the Spring Data family. It integrates with relational databases following the domain-driven design (DDD) concepts like aggregates, aggregate roots, and reposi-
-tories. It's lightweight, simpler, and an excellent choice for microservices where
+*Spring Data JDBC* (https://spring.io/projects/spring-data-jdbc) is a more recent addition to the Spring Data family. It integrates with relational databases following the domain-driven design (DDD) concepts like aggregates, aggregate roots, and repositories. It's lightweight, simpler, and an excellent choice for microservices where
 domains are usually defined as bounded contexts (another DDD concept). It gives
 developers more control over SQL queries and allows the use of immutable entities.
 Being a simpler alternative to Spring Data JPA, it's not a drop-in replacement for every scenario, since it doesn't provide all the features offered by JPA.
@@ -115,15 +108,13 @@ You should considering your requirements, and then deciding which module suits t
 
 == Connection pooling
 Opening and closing database connections are relatively expensive operations, so you
-don’t want to do that every time your application accesses data. The solution is connec-
-tion pooling: the application establishes several connections with the database and
+don’t want to do that every time your application accesses data. The solution is connection pooling: the application establishes several connections with the database and
 reuses them, rather than creating new ones for each data access operation. This is a
 considerable performance optimization.
 
 Spring Boot uses HikariCP for connection pooling, and you can configure it from
 the application.yml file. You want to configure at least a connection timeout
-(spring.datasource.hikari.connection-timeout) and a maximum number of con-
-nections in the pool (spring.datasource.hikari.maximum-pool-size), because these
+(spring.datasource.hikari.connection-timeout) and a maximum number of connections in the pool (spring.datasource.hikari.maximum-pool-size), because these
 both affect application resilience and performance. As you saw for the Tomcat thread
 pool, multiple factors influence which values you should use. As a starting point, you
 can refer to the HikariCP analysis of pool sizing (https://github.com/brettwooldridge/
@@ -224,8 +215,7 @@ review service  application.yml::
 or update existing SQL tables during startup.
 * When running without Docker, using the default Spring profile, the database is expected to 
 be reachable on localhost using the default port 3306.
-* By default, HikariCP is used by Spring Data JPA as the JDBC connection pool. To minimize start-
-up problems on computers with limited hardware resources, the initializationFailTimeout
+* By default, HikariCP is used by Spring Data JPA as the JDBC connection pool. To minimize startup problems on computers with limited hardware resources, the initializationFailTimeout
 parameter is set to 60 seconds. This means that the Spring Boot application will wait for up to 
 60 seconds during startup to establish a database connection.
 * The log-level settings for Hibernate will cause Hibernate to print the SQL statements used and 
@@ -568,8 +558,7 @@ representing the layer to access a database
 == Data Auditing
 The Spring Data libraries support auditing to track who created an entity and
 who updated it last. You can enable this feature in both Spring Data JDBC and
-Spring Data R2DBC by configuring an AuditorAware (or ReactiveAuditor-
-Aware) bean to return the username of the currently authenticated user.
+Spring Data R2DBC by configuring an AuditorAware (or ReactiveAuditorAware) bean to return the username of the currently authenticated user.
 
 When data auditing is enabled, you can use the @CreatedBy and @LastModifiedBy
 annotations to automatically inject the right values when a create or update
