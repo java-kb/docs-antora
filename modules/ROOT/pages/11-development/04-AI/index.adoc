@@ -1,6 +1,47 @@
 = AI development
 :figures: 11-development/04-AI
 
+Software developers thrive on certainty. When you give a program certain input, you
+always get the same output. For ages, this pure deterministic logic was the heart and
+soul of software.
+
+But when you use AI-assisted programming tools, things get a bit topsy-turvy. Get‐
+ting results is like rolling dice since everything works on probabilities. When you
+prompt an AI tool to whip up some code, and even use the same prompt over multi‐
+ple tries, you might get different results each time. Sure, it’s a bit of a head-scratcher at
+first, but once you get the hang of it, it’s totally worth it. That’s why there is a chapter
+on prompt engineering that will help with this new approach to programming.
+
+A key theme of the evolution of programming languages is abstraction. This is a fancy
+way of describing how systems get easier for developers to use. When the tedious
+details are handled in the background, developers can focus on what matters most.
+This has been a driving force of innovation, allowing for breakthroughs like the inter‐
+net, cloud computing, mobile, and AI.
+
+image::{figures}/the-abstraction-of-programming-languages-and-tools-has-evolved-over-the-decades.png[The abstraction of programming languages and tools has evolved over the decades]
+
+
+AI is the big umbrella: it includes all systems that can pull off tasks with the flair of
+human intelligence. Tucked within AI is machine learning (ML). Instead of marching
+to the beat of explicit instructions, ML systems come up with insights based on heaps
+of data. ML is generally based on complex algorithms, which allow for making pre‐
+dictions or decisions without hardcoding.
+Take a step deeper, and you get deep learning (DL), a tighter slice of ML that rolls
+with neural networks stacked with hidden layers—hence the deep tag. These stacked
+models have shown standout results in areas like image and speech recognition.
+Within the corridors of deep learning, you’ll find generative AI (or GenAI). GenAI
+models create new data that reflects their training data.
+In the innermost circle sits LLMs, such as GPT-4, Gemini, Claude, and LLaMA 2.
+These powerful models—often called “foundation models”—churn out human-esque
+text based on cutting-edge algorithms and training on huge amounts of data.
+
+== Generative AI
+Generative AI is a branch of artificial intelligence (AI), which allows for the creation
+of new and unique content. 
+
+But generative AI is more than just LLMs. GenAI also has multimodal capabilities,
+meaning the ability to create images, audio, and video.
+
 == LLM
 LLMs (Large Language Models) are a type of AI model designed to understand and generate human-like text. They are trained on vast amounts of text data and can perform a variety of tasks, such as translation, summarization, and question answering.
 
@@ -14,14 +55,11 @@ As the name implies, these models are “large” not just in terms of the physi
 of the data they are trained on but also in the complexity and number of parameters. 
 Modern LLMs like OpenAI’s GPT-4 have up to hundreds of billions of parameters.
 
-nalyzing a wide range of internet texts, books, articles, and other forms of written com-
-munication to learn the structure, nuances, and complexities of human language.
+Analyzing a wide range of internet texts, books, articles, and other forms of written communication to learn the structure, nuances, and complexities of human language.
 Most LLMs use the Transformer architecture, a deep learning model that relies on 
 self-attention mechanisms to weigh the importance of different words in a sentence 
 regardless of their position. This allows LLMs to generate more contextually relevant 
-text. A typical Transformer model consists of an encoder and a decoder, each com-
-posed of multiple layers.
-
+text. A typical Transformer model consists of an encoder and a decoder, each composed of multiple layers.
 
 LLMs are deep learning models that are good at providing natural language responses 
 to natural language prompts. You can imagine simply describing what you need in 
@@ -66,12 +104,10 @@ There are, however, situations in which you should avoid using LLMs and generati
 AI tools such as ChatGPT and GitHub Copilot, mainly those related to data security 
 and privacy protection. Using AI in environments with sensitive or proprietary data 
 can risk unintended data leaks. There are several reasons for this, one of which is that 
-part or all of the code is sent to the model as context, meaning at least part of your pro-
-prietary code may find its way outside of your firewall. There is a question as to whether 
+part or all of the code is sent to the model as context, meaning at least part of your proprietary code may find its way outside of your firewall. There is a question as to whether 
 it may be included in the training data for the next round of training. 
 
-Another scenario in which you might limit your usage is when precision and exper-
-tise are required. Given that a feature of LLMs is their ability to add randomness to 
+Another scenario in which you might limit your usage is when precision and expertise are required. Given that a feature of LLMs is their ability to add randomness to 
 their output (sometimes referred to as hallucinations), the output may contain subtle 
 variations from the true and right answer. For this reason, you should always verify the 
 output before including it in your codebase. 
@@ -99,6 +135,7 @@ response = openai.Completion.create(
 )
 print(response.choices[0].text.strip())
 ----
+
 == Key concepts
 === Prompt
 a prompt refers to the input provided to the model to generate 
@@ -108,8 +145,7 @@ the prompt and the context in which the model responds, it is essential always t
 aware of the prompts you have issued in the current session. Therefore, starting with 
 a new session every time you begin a new project is advised.
 
-The purpose of the Persona Pattern is to design prompts that establish a spe-
-cific persona or role for the AI to assume, which guides the model’s responses 
+The purpose of the Persona Pattern is to design prompts that establish a specific persona or role for the AI to assume, which guides the model’s responses 
 in a consistent and contextually appropriate manner. By adhering to a defined 
 persona, the AI’s replies become more predictable and aligned with the user’s 
 expectations.
@@ -125,15 +161,14 @@ The Refinement Pattern involves iteratively refining or improving the prompt
 to get more accurate, relevant, or sophisticated responses. It’s about going from 
 general to specific, enhancing the output quality as the interaction progresses 
 with large language models like ChatGPT.
+
 === Persona Pattern
 The Persona Pattern is a technique used in prompt engineering where the model is instructed to adopt a specific persona or role. This helps guide the model's responses to align with the desired tone, style, or expertise level. For example, you might prompt the model to respond as a "software engineer" or "data scientist" to get more relevant and context-aware answers.
 
 In the context of prompt engineering, mainly related 
-to AI and LLMs, the Persona Pattern refers to a strategy of designing prompts that estab-
-lish a specific persona or role for the AI to assume. This approach guides the model’s 
+to AI and LLMs, the Persona Pattern refers to a strategy of designing prompts that establish a specific persona or role for the AI to assume. This approach guides the model’s 
 responses consistently and contextually appropriately. One of the key benefits of using 
-the Persona Pattern is maintaining consistency in responses. Adhering to a defined per-
-sona makes the AI’s replies more predictable and aligned with the user’s expectations. 
+the Persona Pattern is maintaining consistency in responses. Adhering to a defined persona makes the AI’s replies more predictable and aligned with the user’s expectations. 
 
 It bears repeating that when working with LLMs, even when applying personas, the 
 same input will not always produce the same output. For this reason, your output may 
@@ -146,10 +181,8 @@ explain some code in simplified terms or are attempting to understand complex or
 complicated topics.
 
 === Examples of the Persona Pattern
-* **The intern persona**: is often characterized by eagerness to learn, a basic to inter-
-mediate level of knowledge in the field, and a willingness to take on various tasks 
-for learning and experience. The intern may ask clarifying questions, seek guid-
-ance, and demonstrate a proactive approach to problem-solving. They are often 
+* **The intern persona**: is often characterized by eagerness to learn, a basic to intermediate level of knowledge in the field, and a willingness to take on various tasks 
+for learning and experience. The intern may ask clarifying questions, seek guidance, and demonstrate a proactive approach to problem-solving. They are often 
 resourceful but may lack the deep expertise of more experienced professionals 
 in the field. This persona is useful in scenarios where the AI needs to simulate a 
 learning and growth-oriented mindset.
@@ -184,8 +217,7 @@ ask questions to clarify the problem, gather data and information, and analyze t
 results. They are often skilled at identifying patterns, trends, and anomalies in data,
 and drawing conclusions based on evidence. This persona is useful in scenarios where
 the AI needs to provide data analysis, business intelligence, or decision support.
-* **The designer persona**: is characterized by a creative and innovative approach to problem-
-solving, a focus on aesthetics and user experience, and a willingness to experiment
+* **The designer persona**: is characterized by a creative and innovative approach to problemsolving, a focus on aesthetics and user experience, and a willingness to experiment
 and iterate. The designer may ask questions to clarify the design brief, gather
 inspiration and ideas, and create prototypes and mockups. They are often skilled at
 balancing form and function, and creating designs that are visually appealing and
@@ -210,6 +242,7 @@ engineering. It involves defining a profile or representation of the intended
 audience for a particular application or use case, which helps tailor the responses 
 generated by LLMs to better suit the needs and expectations of a specific group 
 of users or individuals.
+
 === Examples of the Audience Persona Pattern
 * **The beginner audience**: is characterized by limited knowledge and experience in a specific field.
 They may require explanations that are simple, clear, and devoid of jargon. The
@@ -240,13 +273,11 @@ The first dimension we will consider is the engagement model: how we engage with
 AI. In the case of ChatGPT, we log in to the chat website and enter prompts into a chat 
 input box. Then we refine our requirements in subsequent prompts. The feedback 
 loop takes the context from the previous prompts, applies it to the current prompt, 
-and generates output to which the user reacts and refires. If we contrast this engage-
-ment model against that of Copilot and CodeWhisperer, we note that the latter two 
+and generates output to which the user reacts and refires. If we contrast this engagement model against that of Copilot and CodeWhisperer, we note that the latter two 
 tools work within an IDE. We can’t use it outside our IDE, try as we may. The approach 
 is not inherently inferior; it just differs. 
 
-The way that Copilot and CodeWhisperer keep you in your IDE can be seen as a ben-
-efit rather than a deficiency. In later chapters, we will get acquainted with Copilot Chat, 
+The way that Copilot and CodeWhisperer keep you in your IDE can be seen as a benefit rather than a deficiency. In later chapters, we will get acquainted with Copilot Chat, 
 the best of both worlds: ChatGPT and GPT-4, all in your IDE. These tools keep you in 
 your code without distraction for longer. Working distraction-free is one of the keys to 
 productivity. Copilot and CodeWhisperer excel at getting out of your way, keeping you 
@@ -280,14 +311,18 @@ allowing you to focus on the business requirements, which add value and are like
 you are writing the software in the first place.
 
 image::{figures}/comparison-of-chat-gpt-copilot-code-whisperer.png[A comparison of the positives and negatives of ChatGPT, Copilot, and CodeWhisperer]
+
 === Further reading
 * [Understanding LLMs](https://www.example.com/understanding-llms)
 * [Applications of LLMs](https://www.example.com/applications-of-llms)
+
 === Related topics
 * [Natural Language Processing (NLP)](https://www.example.com/nlp)
 * [Machine Learning (ML)](https://www.example.com/machine-learning)
+
 === Challenges
 * **Bias**: LLMs can inherit biases present in the training data, leading to biased outputs.
 * **Resource-intensive**: Training and running LLMs require significant computational resources, making them expensive to deploy.
+
 === Future trends
 * **Improved efficiency**: Research is ongoing to make LLMs more efficient, reducing the computational resources needed.    

@@ -1,0 +1,44 @@
+= Prompt Engineering
+
+AI-assisted programming tools are crafted to enhance developers’ abilities, enabling
+them to zero in on advanced problem solving and innovations instead of being
+ensnared in monotonous tasks or complex code details. This is why GitHub’s use of
+the word copilot is spot on. It’s about having that reliable buddy in the cockpit, navi‐
+gating through the intricate and often tedious aspects of coding, allowing you to focus
+on what matters.
+
+== Evaluation of AI-Assisted Programming Tools
+* You’ve got to weigh many factors like its precision, chat features, security, speed, and user-friendliness.
+* get recommendations from other developers. 
+* Plus, it’s a good idea to test drive a few yourself. Luckily, most of these tools offer free trials, so you can give them a whirl without committing right off the bat.
+* Another key aspect to consider is the company’s financial backing. Does it have venture capital funding? Without this, a company might struggle not just to grow but also to keep its platform innovative. 
+
+
+Let’s look at a simple example. For this, we’ll use ChatGPT, which has a robust ability
+to gin up code. We will use a prompt to ask what we want the system to do. Suppose
+we give it the following prompt:
+Prompt: In Python, write a program that checks if a given integer is even or odd and
+print the result.
+
+[source,python,attributes]
+----
+# Ask the user for an integer input
+number = int(input("Enter an integer: "))
+
+# Check if the number is even or odd
+if number % 2 == 0:
+    print(f"{number} is even.")
+else:
+    print(f"{number} is odd.")
+----
+<pre>
+How it works:
+
+The program reads an integer from the user using input().
+
+It uses the modulus operator % to check the remainder when dividing by 2:
+
+If number % 2 == 0, it’s even.
+
+Otherwise, it’s odd.
+</pre>
