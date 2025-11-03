@@ -1,0 +1,248 @@
+= Typescript
+
+== transpiling
+Transpiling is a process that transforms TypeScript code into JavaScript), the 
+code delivered to the client’s browser is pure JavaScript, including some optimizations; that is, code 
+written in TypeScript is no less performant than code written directly in JavaScript.
+
+
+== Types
+=== Primitive and basic types
+JavaScript, despite not being a strongly typed language, has three types called primitives:
+• boolean: Represents the two binary values false and true
+• string: Represents a set of characters such as words
+• number: Represents numerical values
+For each of these primitive types, TypeScript already has a datatype that represents them, namely, 
+Boolean, String, and Number, respectively.
+
+The first letter of the primitive types in TypeScript is in uppercase to differentiate it from the 
+primitive JavaScript types. If you want to check a type at runtime using the typeof function, 
+use the names of the primitives in lowercase.
+
+To declare the variables of these types, just use the : symbol in front of the variable declaration, as 
+in the following example:
+[source,typescript,attributes]
+----
+export function primitive_example() {
+    let name: string;
+    let age: number;
+    let isAlive: boolean;
+    
+    name = "Mario";
+    age = 9;
+    isAlive = true;
+    
+    console.log(`Name:${name} Age:${age} is alive:${isAlive ? "yes" : "no"}`);
+}
+----
+we can use JavaScript type names in TypeScript because TypeScript allows both forms for these primitive types.
+
+=== array
+In JavaScript, it is very common to use the array data structure. This structure allows us to store and 
+manipulate a list of values for our applications. TypeScript has a type for this structure called Array, 
+where it is possible not only to create a variable with that type but also to typify what kind of values 
+the array will contain:
+[source,typescript,attributes]
+----
+export function array_example() {
+    let names: Array<string>;
+    let surnames: string[];
+    names = ["Mario", "Gabriel", "Lucy"];
+    surnames = ["Camillo", "Smith"];
+    names.forEach((name) => console.log(`Name:${name}`));
+    surnames.forEach((surname) => console.log(`Surname:${surname}`));
+}
+----
+In this function, we declare the names array using the Array type and declare that it is a string
+list because we are informing it between square braquets.. In the surnames array declaration, we 
+make the same declaration but use a TypeScript syntax sugar using [] after the string type. This 
+way of declaring has the same effect; it’s just more succinct.
+
+=== Any type
+This type tells the TypeScript transpiler not to perform any type checking on it, and its content can be type-changed anywhere in the code, as in the following example:
+[source,typescript,attributes]
+----
+export function any_example(){
+    let information: any;
+    information = 'Mario';
+    console.log(`Name: ${information}`);
+    information = 7;
+    console.log(`Age: ${information}`);
+}
+----
+By default, in TypeScript, every variable that does not have its type declared, or that has its value defined in its declaration, is of type any.
+
+This language rule allows, for example, a project with JavaScript code to be incrementally converted 
+to TypeScript by initially declaring all variables of the any type. Another use of the any type is when 
+your code needs the flexibility of JavaScript for some more general algorithm types.
+
+=== Classes
+Classes is an essential element of object-oriented programming, the class represents 
+a model, which can be real, such as a person or vehicle, or abstract, such as a text box on a web page.
+
+constructor is special method because it defines the rule for how the object will be instantiated from this class.
+
+[tabs]
+====
+Person(TypeScript)::
++
+[source,typescript,attributes]
+----
+class Person {
+    name: string;
+    age: number;
+
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+}}
+
+export function basic_class() {
+    let client: Person = new Person("Mario", 7);
+    console.log(`Name:${client.name} Age:${client.age}`);
+}
+----
+
+Person(JavaScript)::
++
+[source, typescript]
+----
+class Person {
+    constructor(name, age) {
+        this.name = name;
+        this.age = age;
+ }}
+
+function basic_class() {
+    let client = new Person("Mario", 7);
+    console.log(`Name:${client.name} Age:${client.age}`);
+}
+----
+====
+
+This declaration and use of class in TypeScript is almost the same as JavaScript except for typing the 
+attributes of the class.
+
+=== Interfaces
+To declare an interface, we use the reserved word interface and declare its properties as a class 
+[source, typescript]
+----
+export interface Animal {
+ species: string;
+ kingdom: string;
+ class: string;
+ }
+----
+To use interface, we can proceed as follows:
+[source, typescript]
+----
+import { Animal } from "./animals";
+export function basic_interface() {
+ let chicken: Animal = {
+ kingdom: "Animalia",
+ species: "Gallus",
+ class: "birds",
+};
+ console.log(
+ `kingdom:${chicken.kingdom} species:${chicken.species} class:${chicken.class}`
+ );
+}
+----
+To use a class, we just type the variable and declare its values, without using the reserved 
+word new. This happens because the interface is not a JavaScript element and is only used by the 
+TypeScript transpiler to check whether the object contains the defined properties.
+
+To prove that the interface does not exist, if we transpile the interface file, a blank file will be 
+generated by TypeScript!
+
+We can also make use of interfaces to create contracts for classes, should a class require certain methods 
+and attributes.
+[source, typescript]
+----
+export interface Animal {
+  species: string;
+  kingdom: string;
+  class: string;
+}
+
+export interface DoSound {
+  doASound: () => string;
+}
+
+export class Duck implements DoSound {
+    public doASound(){
+        return 'quack';
+    }
+}
+
+export class Dog implements DoSound {
+    public doASound(){
+        return 'bark';
+    }
+}
+----
+To define that a certain class follows the DoSound contract, we use the reserved word implements. 
+TypeScript then requires that a method called doASound be defined and that this method returns 
+a string.
+
+This feature of the interface facilitates the use of a very important capability of the object-oriented 
+language, which is polymorphism.
+[source, typescript]
+----
+export function animalDoSound() {
+    let duck = new Duck();
+    let dog = new Dog();
+    makeSound(duck);
+    makeSound(dog);
+}
+function makeSound(animal: DoSound) {
+    console.log(`The animal make this sound:${animal.doASound()}`);
+}
+----
+We create the makeSound function, which receives an animal that implements the DoSound
+contract. The function is not concerned with the type of animal or its attributes; it just needs to follow 
+the DoSound interface contract, as it will invoke one of its methods.
+
+== Type aliases
+Like interfaces, type aliases only exist in TypeScript
+[source, typescript]
+----
+type Machine = {
+    id: number;
+    description: string;
+    energyOutput: number;
+};
+
+export function basic_type() {
+    let car: Machine = {
+        id: 123,
+        description: "Car",
+        energyOutput: 1000,
+    };
+    console.log(`ID:${car.id} Description:${car.description} Energy Output:${car.energyOutput}`);
+}
+----
+A well-used feature of type aliases is the creation of a type from other types. One of the most common 
+is the union of types, as we can see in the following code:
+[source, typescript]
+----
+type ID = string | number;
+type Machine = {
+    id: ID;
+    description: string;
+    energyOutput: number;
+};
+----
+
+== When to use classes, interfaces, or types
+With all these ways of creating typed objects, you must be wondering in which situations we should 
+use each one. Based on the characteristics of each form, we can categorize the use of each one:
+• Type alias: The simplest form of creation, recommended for typing input parameters and 
+function returns.
+• Interfaces: Recommended for representing JSON data objects, where we won’t have methods, 
+just the data representation. An example is the return of an API that we will use in our Angular 
+project. The interface can also be used to define class contracts using the implements keyword.
+• Classes: The basis of object orientation, also present in JavaScript. We should use it whenever 
+we need an object with methods and attributes. In Angular, all components and services are 
+ultimately objects created from classes.
+

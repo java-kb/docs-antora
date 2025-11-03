@@ -1,5 +1,467 @@
 = Prompt Engineering
+:figures: 11-development/04-AI/prompt-engineering
 
+Prompt engineering is a subfield of machine learning and natural language processing,
+which is the study of enabling computers to understand and interpret human lan‐
+guage. The main goal is to figure out how to talk to large language models, sophistica‐
+ted AI systems designed to process and generate human-like language responses, in
+just the right way so they generate the answer we’re looking for.
+Think of it like this: You know how when you ask someone for advice, you’ve got to
+give them a bit of context and be clear about what you need? It’s like that with LLMs.
+You’ve got to craft your question or prompt carefully. Sometimes, you might even
+drop some hints or extra information in your question to make sure the LLM gets
+what you’re asking.
+This is not just about asking one-off questions either. Sometimes it’s like having a
+whole conversation with the LLM, going back and forth, tweaking your questions
+until you get that golden nugget of information you need.
+For instance, let’s say you’re using an AI-assisted programming tool to develop a web
+application. You start by asking how to create a simple user login system in JavaScript.
+The initial response might cover the basics, but then you realize you need more
+advanced features. So, you follow up with more specific prompts, asking about incor‐
+porating password encryption and connecting to a database securely. Each interac‐
+tion with the AI hones its response, gradually shaping it to fit your project’s specific
+needs
+
+Prompt engineering is a mix of art and science. On one hand, you’ve got to choose
+the right words and tone to get the AI to respond the way you want. It’s about guiding
+the conversation in a certain direction. It takes a bit of intuition and a creative touch
+to guide the conversation in a certain direction and refine your language, teasing out
+detailed and nuanced replies.
+Yes, this can be tricky, especially for software developers. Normally, you follow a set of
+rules to write your code, and it either works or the compiler tells you what you did
+wrong. It’s logical and predictable.
+But prompt engineering? Not so much. It’s more freeform and unpredictable.
+
+Then again, there is also quite a bit of science to prompt engineering. You need to
+understand the nuts and bolts of how AI models work.
+Along with creativity, you need precision, predictability, and the ability to replicate
+your results. Often this means you’ve got to experiment, try out different prompts,
+analyze the results, and tweak things until you get the right response.
+
+== Challenges
+* *Wordiness*
++
+LLMs can be chatterboxes. Give them a prompt, and they might just run with it,
+giving you a wordy response when all you wanted was a quick answer. They have
+a tendency to throw in a bunch of related ideas or facts, making the response
+* *Non-transferability*
++
+This means that a prompt that works nicely with one LLM might not be as effec‐
+tive with another. In other words, if you’re switching from ChatGPT to Gemini
+or GitHub Copilot, you might need to tweak your prompts due to the unique
+training, design, and specialization of each LLM. Different models are trained on
+different datasets and algorithms, leading to distinct understandings and inter‐
+pretations of prompts.
+* *Length sensitivity*
++
+LLMs can get overwhelmed by long prompts and start to overlook or misinter‐
+pret parts of your input. It’s as if the LLM’s attention span falters and its responses
+become somewhat distracted. This is why you should avoid providing detailed
+requirements in your prompts; keep a prompt to less than a page.
+* *Ambiguity*
++
+If your prompt is unclear, the LLM might get confused and serve up responses
+that are way off base or just plain make-believe. Clarity is key.
+
+== The Prompt
+You can think of a prompt as having four main components
+
+image::{figures}/prompt-engineering-components.png[A prompt has four main components]
+
+First, the context specifies the persona or role for the LLM to take when providing a
+response. Next, there are the instructions, such as to summarize, translate, or classify.
+Then there is the input of content if you want the LLM to process information to create a better response. Finally, you can show how you want the output formatted.
+Keep in mind that you do not need all of these components. In fact, you might need
+just one to get a good response. But as a general rule, it’s better to provide the LLM
+with more concrete details.
+
+=== Context
+You’ll often begin your prompt with a sentence or two that provide context. Often,
+you’ll specify the role or persona you want the AI to take on when providing the
+response. This leads to responses that are not only more accurate but also contextu‐
+ally relevant, ensuring a more meaningful result.
+
+For instance, if you want to debug a piece of code, you might use this as the context:
+
+ Prompt: You are an experienced software engineer specializing in debugging Java appli‐
+cations.
+
+Or suppose you want to learn about optimization techniques for a particular algo‐
+rithm. You could set the stage by stating:
+
+ Prompt: You are a senior software developer with expertise in algorithm optimization.
+Adding context helps the LLM approach your prompt with the right mindset.
+
+a prompt refers to the input provided to the model to generate 
+a response. It can be a single sentence, a paragraph, or even a longer text. It serves 
+as the instruction or query to the model, guiding its response. Given the quality of 
+the prompt and the context in which the model responds, it is essential always to be 
+aware of the prompts you have issued in the current session. Therefore, starting with 
+a new session every time you begin a new project is advised.
+
+The purpose of the Persona Pattern is to design prompts that establish a specific persona or role for the AI to assume, which guides the model’s responses 
+in a consistent and contextually appropriate manner. By adhering to a defined 
+persona, the AI’s replies become more predictable and aligned with the user’s 
+expectations.
+
+Better prompts make for better output. You may be asking, what makes for 
+a better prompt? Great question! General prompts produce general results. Specific 
+prompts produce specific results. As we engage with large language models (LLMs) 
+generally and ChatGPT specifically, we will go from general to specific, refining the output as we go. This is known as the Refinement Pattern in prompt engineering: iteratively 
+refining or improving the prompt to get more accurate, relevant, or sophisticated 
+responses.
+
+The Refinement Pattern involves iteratively refining or improving the prompt 
+to get more accurate, relevant, or sophisticated responses. It’s about going from 
+general to specific, enhancing the output quality as the interaction progresses 
+with large language models like ChatGPT.
+
+==== Persona Pattern
+The Persona Pattern is a technique used in prompt engineering where the model is instructed to adopt a specific persona or role. This helps guide the model's responses to align with the desired tone, style, or expertise level. For example, you might prompt the model to respond as a "software engineer" or "data scientist" to get more relevant and context-aware answers.
+
+In the context of prompt engineering, mainly related 
+to AI and LLMs, the Persona Pattern refers to a strategy of designing prompts that establish a specific persona or role for the AI to assume. This approach guides the model’s 
+responses consistently and contextually appropriately. One of the key benefits of using 
+the Persona Pattern is maintaining consistency in responses. Adhering to a defined persona makes the AI’s replies more predictable and aligned with the user’s expectations. 
+
+It bears repeating that when working with LLMs, even when applying personas, the 
+same input will not always produce the same output. For this reason, your output may 
+not match the following exactly, but hopefully it is similar. 
+
+You can apply the Persona Pattern in either direction: you can tell the LLM to respond 
+as though it were someone or something within a given role, or you can ask the LLM 
+to assume that you are a certain persona. This can be very useful when you need to 
+explain some code in simplified terms or are attempting to understand complex or 
+complicated topics.
+
+==== Examples of the Persona Pattern
+* **The intern persona**: is often characterized by eagerness to learn, a basic to intermediate level of knowledge in the field, and a willingness to take on various tasks 
+for learning and experience. The intern may ask clarifying questions, seek guidance, and demonstrate a proactive approach to problem-solving. They are often 
+resourceful but may lack the deep expertise of more experienced professionals 
+in the field. This persona is useful in scenarios where the AI needs to simulate a 
+learning and growth-oriented mindset.
+* **Software Engineer**: "You are a software engineer with expertise in Python. Explain how to implement a binary search algorithm."
+* **Data Scientist**: "You are a data scientist specializing in machine learning. Describe the process of training a neural network."
+* **Customer Support Agent**: "You are a customer support agent for a tech company. How would you handle a customer complaint about a faulty product?"
+* **The teacher persona**: is characterized by a deep understanding of the subject matter, 
+the ability to explain complex concepts in simple terms, and a patient and supportive
+approach to helping others learn. The teacher may ask questions to gauge the 
+learner’s understanding, provide examples and analogies, and encourage critical
+thinking. They are often skilled at breaking down complex topics into manageable
+parts and guiding learners through the learning process. This persona is useful in
+scenarios where the AI needs to provide explanations, tutorials, or educational
+content.
+* **The mentor persona**: is characterized by a wealth of experience, a willingness to share
+knowledge, and a supportive and encouraging approach to helping others grow.
+The mentor may ask questions to understand the learner’s goals, provide feedback
+and guidance, and share personal experiences and insights. They are often skilled at
+helping others navigate challenges, build confidence, and develop their skills. This
+persona is useful in scenarios where the AI needs to provide career advice, skill
+development, or personal growth support.
+* **The researcher persona**: is characterized by a deep curiosity, a methodical approach to
+investigation, and a focus on evidence-based conclusions. The researcher may ask
+questions to clarify the research question, gather data and information, and analyze
+the results. They are often skilled at synthesizing complex information, identifying
+patterns and trends, and drawing conclusions based on evidence. This persona is
+useful in scenarios where the AI needs to provide research support, data analysis,      
+or scientific inquiry.
+* **The analyst persona**: is characterized by a keen eye for detail, a logical and systematic
+approach to problem-solving, and a focus on data-driven insights. The analyst may
+ask questions to clarify the problem, gather data and information, and analyze the
+results. They are often skilled at identifying patterns, trends, and anomalies in data,
+and drawing conclusions based on evidence. This persona is useful in scenarios where
+the AI needs to provide data analysis, business intelligence, or decision support.
+* **The designer persona**: is characterized by a creative and innovative approach to problemsolving, a focus on aesthetics and user experience, and a willingness to experiment
+and iterate. The designer may ask questions to clarify the design brief, gather
+inspiration and ideas, and create prototypes and mockups. They are often skilled at
+balancing form and function, and creating designs that are visually appealing and
+user-friendly. This persona is useful in scenarios where the AI needs to provide
+design support, user experience design, or creative problem-solving.
+* **The project manager persona**: is characterized by strong organizational skills, a focus on
+planning and execution, and a willingness to take charge of projects. The project
+manager may ask questions to clarify the project scope, gather requirements and
+resources, and create project plans and timelines. They are often skilled at
+coordinating teams, managing risks, and ensuring that projects are delivered on
+time and within budget. This persona is useful in scenarios where the AI needs to
+provide project management support, team coordination, or process improvement.  
+
+==== The Audience Persona Pattern
+When you use the Persona Pattern in reverse, it is commonly referred to as the Audience Persona Pattern in the context of prompt engineering. This refers to a predefined 
+profile or representation of the intended audience for a particular application or use 
+case. It helps in tailoring the responses generated by LLMs to better suit the needs and 
+expectations of a specific group of users or individuals. 
+
+The Audience Persona Pattern is a variation of the Persona Pattern in prompt 
+engineering. It involves defining a profile or representation of the intended 
+audience for a particular application or use case, which helps tailor the responses 
+generated by LLMs to better suit the needs and expectations of a specific group 
+of users or individuals.
+
+==== Examples of the Audience Persona Pattern
+* **The beginner audience**: is characterized by limited knowledge and experience in a specific field.
+They may require explanations that are simple, clear, and devoid of jargon. The
+beginner audience may ask basic questions, seek step-by-step instructions, and
+demonstrate a desire to learn and understand fundamental concepts. This persona
+is useful in scenarios where the AI needs to provide foundational knowledge or
+explanations.
+* **The expert audience**: is characterized by a high level of knowledge and experience in a
+specific field. They may require explanations that are detailed, technical, and
+assume a deep understanding of the subject matter. The expert audience may ask
+complex questions, seek advanced insights, and demonstrate a familiarity with
+industry-specific terminology. This persona is useful in scenarios where the AI
+needs to provide in-depth analysis or specialized knowledge.
+* **The customer support audience**: is characterized by a need for assistance and problem-solving.
+They may require explanations that are empathetic, clear, and focused on resolving
+issues. The customer support audience may ask questions related to product
+functionality, troubleshooting, and service inquiries. This persona is useful in
+scenarios where the AI needs to provide support and guidance to users.  
+* **The technical writer audience**: is characterized by a need for clear and concise documentation.
+They may require explanations that are structured, well-organized, and easy to
+follow. The technical writer audience may ask questions related to formatting,
+style guidelines, and best practices for writing technical content. This persona is
+useful in scenarios where the AI needs to assist in creating documentation or
+technical content.
+
+=== Instructions
+Your prompt should include at least one clear instruction. There’s nothing stopping
+you from adding more instructions, but you need to be careful. Loading up your
+prompt with a bunch of queries can throw the LLM for a loop and make it harder to
+get the answer you’re looking for.
+
+Let’s break down why that happens. First off, when you have multiple instructions,
+things can get a bit fuzzy. If they’re not clear or if they seem to clash with each other,
+the LLM might get confused about which one to focus on or how to balance them all
+out.
+
+Next, having more instructions means more for the LLM to juggle. It’s got to process
+and understand each part of your prompt and then figure out how to weave all the
+parts into a coherent response. That’s a lot of mental gymnastics, and sometimes it
+can lead to mistakes or answers that are off.
+
+And don’t forget, LLMs go through instructions one at a time, in order. So, the way
+you line up those queries can influence how they’re interpreted and what kind of
+answer you get back.
+Given all this, a pro tip is to keep it simple. Instead of throwing a whole list of ques‐
+tions at the LLM all at once, try breaking them down into a series of smaller prompts.
+It’s like having a back-and-forth chat instead of delivering a monologue.
+
+There are also numerous types of instructions for a prompt.
+
+==== Summarization
+Summarization can condense a longer piece of text into a shorter version while keep‐
+ing the main ideas and points intact. This is useful for quickly getting a handle on
+lengthy documents. For a software developer, summarization can be an especially
+handy tool in the scenarios listed in Table 3-1.
+Table 3-1. Summarization prompts for coding tasks
+[options="header"]
+|===
+|Use case |Description |Example prompt
+
+|Code documentation
+|Provides a concise overview of extensive documentation highlighting key functionalities, dependencies, and structures.
+|"Summarize the main points of the following documentation to provide a quick overview of the codebase."
+
+|Bug reports
+|Quickly identifies the main issues reported by users in numerous or lengthy bug reports.
+|"Summarize the common issues reported in the following bug reports to identify the main problems to be addressed."
+
+|Research papers
+|Extracts succinct insights from lengthy research papers or technical articles to update the user on the latest research or technologies.
+|"Provide a summary of the key findings and technologies discussed in the following research paper."
+
+|Change logs
+|Enables an understanding of the key changes in a new version of a software library or tool from lengthy change logs.
+|"Summarize the key changes in the following change log of version 1.1.2."
+
+|Email threads
+|Extracts the key points of discussions or decisions from long email threads.
+|"Summarize the main points of discussion from the following email thread."
+|===
+
+Another type of summarization is topic modeling, in which a statistical model discov‐
+ers the abstract “topics” that occur in a collection of documents. Here are some topic-
+modeling prompts for developers:
+
+ Prompt: Identify the main topics discussed in the following text: {text}
+
+ Prompt: Extract the keywords from the following text to infer the main topics: {text}
+
+ Prompt: Suggest tags for the following text based on its content: {text}
+
+==== Text Classification
+Text classification involves giving a computer a bunch of text that it learns to tag with
+labels. A flavor of this is sentiment analysis, such as when you have a list of social
+media posts and the LLM figures out which have a positive or negative connotation.
+For developers, sentiment analysis can be a useful tool to gauge user feedback about
+an application. Some sample prompts include:
+
+ Prompt: Can you analyze these customer reviews and tell me if the sentiment is gener‐
+ally positive, negative, or neutral? {text}
+
+ Prompt: Here’s a thread from our user forum discussing the latest update. Could you
+summarize the overall sentiment for me? {text}
+
+ Prompt: I’ve compiled a list of feedback from our app store page. Can you categorize
+the comments by sentiment? {text}
+
+ Prompt: Evaluate the sentiment of these blog post comments regarding our product
+announcement. What’s the consensus? {text}
+
+==== Recommendation
+You can instruct an LLM to provide recommendations. Developers can use such
+feedback to improve the caliber of responses for activities like squashing bugs, refin‐
+ing code, or using APIs more effectively. Check out these example prompts you might use:
+
+ Prompt: The following code snippet is throwing a NullPointerException when I try to
+call <Method()>. Can you help identify the potential cause and suggest a fix?
+ 
+ Prompt: Here is a function I wrote to sort a list of integers. Can you recommend any
+optimizations to make it run faster or be more readable?
+
+LLM recommendations can be a powerful accelerator for your work, greatly saving
+time and providing ideas you may not have thought about. This technique is particularly beneficial when dealing with intricate or nuanced tasks.
+
+But there are downsides. One potential hitch is that the LLM might boil down the
+responses too much and miss the nuances. Also, keep in mind that the model’s
+knowledge is frozen at a certain point in time, so it might not be up-to-date with the
+latest information or trends.
+
+If anything, recommendations are a way to kick things off. But you’ll want to dive in
+and do some more digging on your own to get the full picture.
+
+==== Translation
+Localization is essentially attuning the software to the linguistic and cultural norms of
+a specific area. It allows your software to speak the local lingo and understand
+regional quirks, an ability that is key to broadening your market and cultivating a
+closer connection with your audience. This can lead to a ripple effect of benefits:
+users are happier because the software feels tailor-made for them, and happy users
+can mean a healthier bottom line for your business.
+
+In competitive markets, localization can give you an edge when alternatives fall short
+or simply don’t exist. Plus, by aligning your software with the local ways, including
+compliance with regional regulations, you’re not just making your software one
+option but often the only option for a market.
+
+On the flip side, localization is not without its challenges. It can be both expensive
+and time intensive. It requires meticulous quality assurance to maintain the software’s
+integrity in different languages. Additionally, software development doesn’t stand
+still. It’s a continuous cycle of updates and new features, each of which may require its
+own set of localization efforts. This ongoing process adds layers of complexity and
+additional costs to the project.
+
+This is where LLMs can come to the rescue. Advanced systems are capable of trans‐
+lating between numerous languages. They can serve as a powerful tool in a developer’s toolkit. the following table shows some prompts you might use for localization.
+[options="header"]
+|===
+|Task type |Description |Sample prompt
+
+|UI text translation
+|Translates buttons, menu items, error messages, dialog boxes, etc.
+|"Translate the following UI text into French: Save, Exit, File, Edit, Help."
+
+|Documentation translation
+|Translates user guides, help files, and other documentation.
+|"Translate the following user manual paragraph into Spanish."
+
+|Error message translation
+|Translates error messages that the software might generate.
+|"Translate the following error messages into German: File not found, Access denied, Network connection lost."
+
+|Tooltip translation
+|Translates tooltips that provide additional information when a user hovers over an item.
+|"Translate the following tooltips into Japanese: Click to save, Click to open a new file, Click to print."
+|===
+
+Even so, it’s crucial to approach the multilingual capabilities of LLMs with a degree of
+caution. They aren’t foolproof. These models may sometimes miss the subtleties,
+idiomatic expressions, and cultural contexts unique to a language. The nuances of
+language are complex, and getting them right is about more than just direct transla‐
+tion—it’s about conveying the right meaning in the right way.
+
+Handling specific terms or names can be tricky, especially when there isn’t a neat
+equivalent in another language. Then there’s the challenge of getting the tone and
+style right. It’s not just about the words but how you say them, and this can change a
+lot from one language or culture to the next.
+
+Having a language specialist take a look at the output could save you some headaches
+down the line.
+
+=== Input of Content
+When crafting prompts, it’s helpful to use special symbols like ### or """ to clearly
+separate your instructions from the content or information you want the LLM to
+work on. These symbols act like boundaries or markers, making it clear where the
+instructions end and where the content begins.
+
+Consider a scenario in which a software developer needs help summarizing key
+points from a lengthy piece of documentation regarding a new API they are integrating. Here’s how you could structure the prompt:
+
+ Prompt: Extract the key implementation steps for the API from the text below:
+ Documentation: """
+ {API documentation text here}
+ """
+
+Using the """ delimiters is a neat way to split the instruction from the API documen‐
+tation text. It gives the LLM a clearer picture of what needs to be done and increases
+the chances of getting a crisp summary of the main steps. Plus, these delimiters tidy
+up the prompt, making it easier to read, which is a real lifesaver for longer or more
+complex text inputs.
+
+=== Format
+In your prompt, you can tell the LLM how to format the output. Here’s an example:
+
+ Prompt: Create a Python function that takes a list of user objects (each object containing a user’s ID and name) and returns a JSON object that maps user IDs to names. Format the output as JSON.
+
+ChatGPT:
+
+[source,json,attributes]
+----
+{
+ "code": "def map_user_ids_to_names(users): 
+ user_map = {user['id']: user['name'] for user in users} 
+ return user_map",
+ "example_usage": {
+ "input": [
+ {"id": 1, "name": "Alice"},
+ {"id": 2, "name": "Bob"},
+{"id": 3, "name": "Charlie"}
+ ],
+ "output": {
+ "1": "Alice",
+ "2": "Bob",
+ "3": "Charlie"
+ }
+ }
+}
+----
+
+There are other ways you can format the output. following Table shows some options.
+[options="header"]
+|===
+|Format type |Sample prompt
+
+|Table
+|Create a table comparing the syntax, performance, and use cases of Python, Java, and C++.
+
+|List
+|List the steps to troubleshoot a slow-loading web page.
+
+|Markdown/HTML
+|Explain the differences between GET and POST HTTP methods in Markdown.
+
+|Text hierarchy
+|Provide a structured outline of the software development life cycle (SDLC), including its phases and key activities in each phase.
+
+|LaTeX formatting
+|Express the time complexity of the binary search algorithm in LaTeX notation.
+|===
+
+With a prompt, you can also specify the length of the response. You could guide the
+LLM with an instruction such as “Provide a brief summary” or “Write a detailed
+explanation.” Or you could be more specific, such as by saying that the response
+should be no more than 300 words. The LLM may exceed the word limit you provide,
+but it will at least be in the general vicinity.
+
+== AI-Assisted Programming
 AI-assisted programming tools are crafted to enhance developers’ abilities, enabling
 them to zero in on advanced problem solving and innovations instead of being
 ensnared in monotonous tasks or complex code details. This is why GitHub’s use of

@@ -1,0 +1,176 @@
+= Angular Best Practices and Patterns
+
+== Patterns
+=== SharedModule pattern(Optimizing the usage of common modules)
+If we look at Angular projects, we will see patterns of use of modules such as HttpModule, To avoid code duplication and also make it easier for new team members, don’t forget to add an 
+important module to the project; we can create the SharedModule call to centralize the common 
+dependencies of an Angular project. In this module, we are importing Angular Material’s dependencies and exporting the same dependencies, without declaring any component, directive, or pipe. In the home.module.ts file, we can refactor to use SharedModule:
+
+The modules present in SharedModule must be modules common to the majority of modules 
+in your project, as this can increase the size of the module’s bundle. If the module needs some 
+specific dependency, you must declare it in that dependency and not in SharedModule.
+
+[tabs]
+====
+shared.module.ts::
++
+[source,typescript,attributes]
+----
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { LayoutModule } from '@angular/cdk/layout';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatListModule } from '@angular/material/list';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatToolbarModule } from '@angular/material/toolbar';
+
+@NgModule({
+  imports: [
+    CommonModule,
+    LayoutModule,
+    MatToolbarModule,
+    MatButtonModule,
+    MatSidenavModule,
+    MatIconModule,
+    MatListModule,
+  ],
+  exports: [
+    CommonModule,
+    LayoutModule,
+    MatToolbarModule,
+    MatButtonModule,
+    MatSidenavModule,
+    MatIconModule,
+    MatListModule,
+  ]
+})
+export class SharedModule { }
+----
+
+home.module.ts::
++
+[source, typescript]
+----
+import { NgModule } from '@angular/core';
+import { HomeComponent } from './home/home.component';
+import { SharedModule } from '../shared/shared.module';
+import { HomeRoutingModule } from './home-routing.module';
+
+@NgModule({
+  declarations: [HomeComponent],
+  imports: [
+    SharedModule,HomeRoutingModule
+  ]
+})
+export class HomeModule {}
+----
+====
+
+=== lazy loading(Improving the size of your app)
+A good strategy for separating modules from your Angular application will increase your team’s 
+productivity and improve code organization. But another advantage that will impact the quality for 
+your user is the use of the lazy loading technique for modules.
+
+If we run the build process of the sample application using the ng build command, we can see 
+that the size of our application’s initial bundle (the main.ts file) is 94.73 kB, which may seem small, but 
+for the size of our application with few features, it is a considerable size.
+
+As the project has more features, the tendency is for this initial bundle to increase considerably, harming 
+our users’ experience as they will initially need to download a larger file. This problem particularly 
+manifests itself in environments where the internet is not very good, such as 3G networks.
+To reduce this file and consequently improve our user experience, the ideal is to have smaller packages 
+and for these packages to be loaded only when necessary – that is, in a lazy way.
+
+the most important part is the loadChildren attribute. This is where we configure 
+the lazy load, as we pass to Angular’s route mechanism a function that returns an import promise.
+Note that the import function is not an Angular function, but a standard JavaScript function that allows 
+dynamic loading of code. Angular’s route engine uses this language feature to bring this functionality.
+
+Running our application with the ng serve command, we didn’t notice any difference. However, 
+when executing the ng build command, we can notice the following diagnosis: The Angular build process has separated the Home module into its own bundle and the main.ts
+bundle has been made smaller. The difference may seem small but note that, this way, our application 
+can scale and grow in complexity and the initial bundle will remain small or grow very little.
+
+
+[tabs]
+====
+home-routing.module.ts::
++
+[source,typescript,attributes]
+----
+import { NgModule } from '@angular/core';
+import { Routes, RouterModule } from '@angular/router';
+import { HomeComponent } from './home/home.component';
+
+const routes: Routes = [
+  {
+    path: '',
+    component: HomeComponent,
+  },
+];
+
+@NgModule({
+  imports: [RouterModule.forChild(routes)],
+  exports: [RouterModule],
+})
+export class HomeRoutingModule {}
+----
+
+app-routing.module.ts::
++
+[source, typescript]
+----
+import { NgModule } from '@angular/core';
+import { Routes, RouterModule } from '@angular/router';
+
+const routes: Routes = [
+  { path: '', pathMatch: 'full', redirectTo: 'home' },
+  {
+    path: 'home',
+    loadChildren: () =>
+      import('./home/home.module').then((file) => file.HomeModule),
+  },
+];
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule],
+})
+export class AppRoutingModule {}
+----
+====
+The new features continue to exist and be loaded by the application, but the initial loading will be 
+faster, and these new features will be downloaded on demand only when the user accesses the route 
+they want, giving a very positive fluidity and responsiveness.
+
+Lazy loading for standalone components works similarly to lazy loading for NgModule-based components, but with a streamlined syntax.
+
+Instead of using loadChildren to load an NgModule, you use loadComponent in your route configuration to directly load a standalone component.
+[source,typescript,attributes]
+----
+// app.routes.ts
+import { Route } from '@angular/router';
+
+export const routes: Route[] = [
+  {
+    path: 'admin',
+    loadComponent: () => import('./admin/admin.component').then(m => m.AdminComponent)
+  },
+  // ... other routes
+];
+----
+In this example, the AdminComponent (which is a standalone component) will only be loaded when the user navigates to the /admin route. This ensures that the code for the admin section is not included in the initial bundle, improving the application's startup performance.
+
+== Anti-Patterns
+=== Avoiding single module app
+Problem: Avoid having single-module app(AppModule), The problems we have here are as follows:
+* Disorganized folder structure: The team will soon not know which components belong to 
+which area of the project. As the project grows, this file will get bigger and more confusing.
+• Bundle size and build time: Angular has several build and bundle optimizations that depend 
+on the definition of application modules. Staying in just one module, these optimizations are 
+not very effective.
+• Component maintainability and update issues: As this file grows, the team will have difficulties 
+deprecating no longer used components or updating those components where the Angular CLI 
+is unable to update automatically.
+
+Solution: The solution to this anti-pattern is to apply separating modules into business domain (or feature) and component modules. We can use NgModel to reduce the repetition of importing common components in the application, see Optimizing the usage of common modules – the SharedModule pattern above

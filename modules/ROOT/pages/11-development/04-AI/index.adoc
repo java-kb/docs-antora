@@ -20,7 +20,6 @@ net, cloud computing, mobile, and AI.
 
 image::{figures}/the-abstraction-of-programming-languages-and-tools-has-evolved-over-the-decades.png[The abstraction of programming languages and tools has evolved over the decades]
 
-
 AI is the big umbrella: it includes all systems that can pull off tasks with the flair of
 human intelligence. Tucked within AI is machine learning (ML). Instead of marching
 to the beat of explicit instructions, ML systems come up with insights based on heaps
@@ -45,8 +44,7 @@ meaning the ability to create images, audio, and video.
 == LLM
 LLMs (Large Language Models) are a type of AI model designed to understand and generate human-like text. They are trained on vast amounts of text data and can perform a variety of tasks, such as translation, summarization, and question answering.
 
-A large language model
-is a type of artificial intelligence model that processes, understands, and generates 
+A large language model is a type of artificial intelligence model that processes, understands, and generates 
 human-like text based on the data it has been trained on. These models are a subset 
 of deep learning and are particularly advanced in handling various aspects of natural 
 language processing (NLP).
@@ -133,138 +131,6 @@ response = openai.Completion.create(
 )
 print(response.choices[0].text.strip())
 ----
-
-== Key concepts
-=== Prompt
-a prompt refers to the input provided to the model to generate 
-a response. It can be a single sentence, a paragraph, or even a longer text. It serves 
-as the instruction or query to the model, guiding its response. Given the quality of 
-the prompt and the context in which the model responds, it is essential always to be 
-aware of the prompts you have issued in the current session. Therefore, starting with 
-a new session every time you begin a new project is advised.
-
-The purpose of the Persona Pattern is to design prompts that establish a specific persona or role for the AI to assume, which guides the model’s responses 
-in a consistent and contextually appropriate manner. By adhering to a defined 
-persona, the AI’s replies become more predictable and aligned with the user’s 
-expectations.
-
-Better prompts make for better output. You may be asking, what makes for 
-a better prompt? Great question! General prompts produce general results. Specific 
-prompts produce specific results. As we engage with large language models (LLMs) 
-generally and ChatGPT specifically, we will go from general to specific, refining the output as we go. This is known as the Refinement Pattern in prompt engineering: iteratively 
-refining or improving the prompt to get more accurate, relevant, or sophisticated 
-responses.
-
-The Refinement Pattern involves iteratively refining or improving the prompt 
-to get more accurate, relevant, or sophisticated responses. It’s about going from 
-general to specific, enhancing the output quality as the interaction progresses 
-with large language models like ChatGPT.
-
-=== Persona Pattern
-The Persona Pattern is a technique used in prompt engineering where the model is instructed to adopt a specific persona or role. This helps guide the model's responses to align with the desired tone, style, or expertise level. For example, you might prompt the model to respond as a "software engineer" or "data scientist" to get more relevant and context-aware answers.
-
-In the context of prompt engineering, mainly related 
-to AI and LLMs, the Persona Pattern refers to a strategy of designing prompts that establish a specific persona or role for the AI to assume. This approach guides the model’s 
-responses consistently and contextually appropriately. One of the key benefits of using 
-the Persona Pattern is maintaining consistency in responses. Adhering to a defined persona makes the AI’s replies more predictable and aligned with the user’s expectations. 
-
-It bears repeating that when working with LLMs, even when applying personas, the 
-same input will not always produce the same output. For this reason, your output may 
-not match the following exactly, but hopefully it is similar. 
-
-You can apply the Persona Pattern in either direction: you can tell the LLM to respond 
-as though it were someone or something within a given role, or you can ask the LLM 
-to assume that you are a certain persona. This can be very useful when you need to 
-explain some code in simplified terms or are attempting to understand complex or 
-complicated topics.
-
-=== Examples of the Persona Pattern
-* **The intern persona**: is often characterized by eagerness to learn, a basic to intermediate level of knowledge in the field, and a willingness to take on various tasks 
-for learning and experience. The intern may ask clarifying questions, seek guidance, and demonstrate a proactive approach to problem-solving. They are often 
-resourceful but may lack the deep expertise of more experienced professionals 
-in the field. This persona is useful in scenarios where the AI needs to simulate a 
-learning and growth-oriented mindset.
-* **Software Engineer**: "You are a software engineer with expertise in Python. Explain how to implement a binary search algorithm."
-* **Data Scientist**: "You are a data scientist specializing in machine learning. Describe the process of training a neural network."
-* **Customer Support Agent**: "You are a customer support agent for a tech company. How would you handle a customer complaint about a faulty product?"
-* **The teacher persona**: is characterized by a deep understanding of the subject matter, 
-the ability to explain complex concepts in simple terms, and a patient and supportive
-approach to helping others learn. The teacher may ask questions to gauge the 
-learner’s understanding, provide examples and analogies, and encourage critical
-thinking. They are often skilled at breaking down complex topics into manageable
-parts and guiding learners through the learning process. This persona is useful in
-scenarios where the AI needs to provide explanations, tutorials, or educational
-content.
-* **The mentor persona**: is characterized by a wealth of experience, a willingness to share
-knowledge, and a supportive and encouraging approach to helping others grow.
-The mentor may ask questions to understand the learner’s goals, provide feedback
-and guidance, and share personal experiences and insights. They are often skilled at
-helping others navigate challenges, build confidence, and develop their skills. This
-persona is useful in scenarios where the AI needs to provide career advice, skill
-development, or personal growth support.
-* **The researcher persona**: is characterized by a deep curiosity, a methodical approach to
-investigation, and a focus on evidence-based conclusions. The researcher may ask
-questions to clarify the research question, gather data and information, and analyze
-the results. They are often skilled at synthesizing complex information, identifying
-patterns and trends, and drawing conclusions based on evidence. This persona is
-useful in scenarios where the AI needs to provide research support, data analysis,      
-or scientific inquiry.
-* **The analyst persona**: is characterized by a keen eye for detail, a logical and systematic
-approach to problem-solving, and a focus on data-driven insights. The analyst may
-ask questions to clarify the problem, gather data and information, and analyze the
-results. They are often skilled at identifying patterns, trends, and anomalies in data,
-and drawing conclusions based on evidence. This persona is useful in scenarios where
-the AI needs to provide data analysis, business intelligence, or decision support.
-* **The designer persona**: is characterized by a creative and innovative approach to problemsolving, a focus on aesthetics and user experience, and a willingness to experiment
-and iterate. The designer may ask questions to clarify the design brief, gather
-inspiration and ideas, and create prototypes and mockups. They are often skilled at
-balancing form and function, and creating designs that are visually appealing and
-user-friendly. This persona is useful in scenarios where the AI needs to provide
-design support, user experience design, or creative problem-solving.
-* **The project manager persona**: is characterized by strong organizational skills, a focus on
-planning and execution, and a willingness to take charge of projects. The project
-manager may ask questions to clarify the project scope, gather requirements and
-resources, and create project plans and timelines. They are often skilled at
-coordinating teams, managing risks, and ensuring that projects are delivered on
-time and within budget. This persona is useful in scenarios where the AI needs to
-provide project management support, team coordination, or process improvement.  
-
-=== The Audience Persona Pattern
-When you use the Persona Pattern in reverse, it is commonly referred to as the Audience Persona Pattern in the context of prompt engineering. This refers to a predefined 
-profile or representation of the intended audience for a particular application or use 
-case. It helps in tailoring the responses generated by LLMs to better suit the needs and 
-expectations of a specific group of users or individuals. 
-
-The Audience Persona Pattern is a variation of the Persona Pattern in prompt 
-engineering. It involves defining a profile or representation of the intended 
-audience for a particular application or use case, which helps tailor the responses 
-generated by LLMs to better suit the needs and expectations of a specific group 
-of users or individuals.
-
-=== Examples of the Audience Persona Pattern
-* **The beginner audience**: is characterized by limited knowledge and experience in a specific field.
-They may require explanations that are simple, clear, and devoid of jargon. The
-beginner audience may ask basic questions, seek step-by-step instructions, and
-demonstrate a desire to learn and understand fundamental concepts. This persona
-is useful in scenarios where the AI needs to provide foundational knowledge or
-explanations.
-* **The expert audience**: is characterized by a high level of knowledge and experience in a
-specific field. They may require explanations that are detailed, technical, and
-assume a deep understanding of the subject matter. The expert audience may ask
-complex questions, seek advanced insights, and demonstrate a familiarity with
-industry-specific terminology. This persona is useful in scenarios where the AI
-needs to provide in-depth analysis or specialized knowledge.
-* **The customer support audience**: is characterized by a need for assistance and problem-solving.
-They may require explanations that are empathetic, clear, and focused on resolving
-issues. The customer support audience may ask questions related to product
-functionality, troubleshooting, and service inquiries. This persona is useful in
-scenarios where the AI needs to provide support and guidance to users.  
-* **The technical writer audience**: is characterized by a need for clear and concise documentation.
-They may require explanations that are structured, well-organized, and easy to
-follow. The technical writer audience may ask questions related to formatting,
-style guidelines, and best practices for writing technical content. This persona is
-useful in scenarios where the AI needs to assist in creating documentation or
-technical content.
 
 ==  comparison of ChatGPT, Copilot, and CodeWhisperer
 The first dimension we will consider is the engagement model: how we engage with 

@@ -50,25 +50,60 @@ to a destination binding.
 Gradle::
 [source,gradle,attributes]
 ----
+ext {
+ springCloudVersion = "2022.0.1"
+}
+dependencyManagement {
+ imports {
+ mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+ }
+}
 dependencies {
- implementation 'org.springframework.boot:spring-boot-starter'
- implementation 'org.springframework.cloud:spring-cloud-stream-binder-rabbit'
+ implementation 'org.springframework.cloud:spring-cloud-starter-stream-rabbit'
+ implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
+ testImplementation 'org.springframework.cloud:spring-cloud-stream::test-binder'
 }
 ----
 Maven::
 [source,xml,attributes]
 ----
-<dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-stream-binder-rabbit</artifactId>
-</dependency>
+    <properties>
+        <spring.cloud.version>2022.0.4</spring.cloud.version>
+    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring.cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
+            <version>${spring.cloud.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-stream-kafka</artifactId>
+            <version>${spring.cloud.version}</version>
+        </dependency
+                <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-stream-test-support</artifactId>
+            <scope>test</scope>
+        </dependency>
 ----
 ====
+
 == Implementing event producers
 Suppliers are message sources. They produce messages when an event happens. Unlike functions and consumers, suppliers need to be activated. They act only upon invocation.
 
-Spring Cloud Stream provides a few ways to define suppliers and cover different
-scenarios.
+Spring Cloud Stream provides a few ways to define suppliers and cover different scenarios.
+
 == Making messaging resilient to failures
 Spring Cloud Stream uses the retry pattern with an exponential backoff strategy by default, relying on the Spring Retry library for imperative consumers and the
 retryWhen() Reactor operator for reactive consumers, you can customize it via configuration properties.
@@ -76,6 +111,56 @@ retryWhen() Reactor operator for reactive consumers, you can customize it via co
 Spring Cloud Stream defines several defaults to make the interaction more resilient, including error channels and graceful shutdown. You can configure different
 aspects of message processing, including dead-letter queues, acknowledgment flows,
 and republishing messages on error.
+
+[tabs]
+======
+
+CaveatEmptor::
++
+[tabs]
+====
+
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Multiplication microservices::
++
+[source, java]
+----
+----
+
+Microservices with Spring Boot 3 and Spring Cloud::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
 
 == Testing
 see 11-development/02-spring/07-testing/spring-cloud-stream

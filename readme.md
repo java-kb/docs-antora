@@ -143,6 +143,25 @@ macOS::
 ----
 ====
 
+
+[tabs]
+====
+shared.module.ts::
++
+[source,typescript,attributes]
+----
+
+----
+
+home.module.ts::
++
+[source, typescript]
+----
+
+----
+====
+
+
 == Run
 === Locally
 === Docker
