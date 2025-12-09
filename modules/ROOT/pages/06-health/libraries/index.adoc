@@ -135,6 +135,11 @@ If your application is a web application (Spring MVC, Spring WebFlux, or Jersey)
   Requires a dependency on `micrometer-registry-prometheus`.
 |===
 +
+By default, an Actuator-based health endpoint responds with UP
+(and gives 200 as the HTTP return status) if the microservice itself and all the dependencies Spring Boot knows about are available. Dependencies that Spring Boot knows about include databases 
+and messaging systems. If the microservice itself or any of its dependencies are not available, the 
+health endpoint responds with DOWN (and returns 500 as the HTTP return status).
+
 == Usage
 +
 To add the actuator to a Maven-based project, add the following starter dependency:
@@ -195,6 +200,149 @@ management:
 The generic health endpoint provided by Spring Boot Actuator is useful for monitoring and configuring alerts or notifications, since it contains details regarding both the
 application and the integration with its backing services. 
 
+[tabs]
+======
+
+CaveatEmptor::
++
+[tabs]
+====
+
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Multiplication microservices::
++
+[source, java]
+----
+----
+
+Microservices with Spring Boot 3 and Spring Cloud::
++
+Testing a system landscape of microservices that uses a combination of synchronous APIs and asynchronous messaging is challenging. 
++
+For example, how do we know when a newly started landscape of microservices, together with their 
+databases and messaging system, are ready to process requests and messages?
++
+To make it easier to know when all the microservices are ready, we have added health APIs to the 
+microservices. The health APIs are based on the support for health endpoints that come with the 
+Spring Boot Actuator module.
++
+We can also extend health endpoints to cover dependencies that Spring Boot is not aware of. We 
+will use this feature to extend to the product composite’s health endpoint, so it also includes the 
+health of the three core services. This means that the product composite health endpoint will 
+only respond with UP if itself and the three core microservices are healthy. This can be used either 
+manually or automatically by the test-em-all.bash script to find out when all the microservices 
+and their dependencies are up and running.
++
+In the ProductCompositeIntegration class, we have added helper methods for checking the 
+health of the three core microservices.
++
+In the configuration class, HealthCheckConfiguration, we use these helper methods to register a 
+composite health check using the Spring Actuator class called CompositeReactiveHealthContributor
++
+Finally, in the application.yml configuration file of all four microservices, we configure the Spring 
+Boot Actuator so that it does the following:
++
+• Shows details about the state of health, which not only includes UP or DOWN but also information about its dependencies
+• Exposes all its endpoints over HTTP
++
+These configuration settings are helpful during development, but it can be a security issue to reveal too much information in actuator endpoints in production systems. Therefore, plan to minimize the information exposed by the actuator endpoints in production! This can be done by replacing "*" with, for example, health,info in the previous setting of the management.endpoints.web.exposure.include property.
+[tabs]
+====
+composite/product/services/ProductCompositeIntegration.java::
++
+[source, java]
+----
+public Mono<Health> getProductHealth() {
+        return getHealth(productServiceUrl);
+    }
+
+    public Mono<Health> getRecommendationHealth() {
+        return getHealth(recommendationServiceUrl);
+    }
+
+    public Mono<Health> getReviewHealth() {
+        return getHealth(reviewServiceUrl);
+    }
+
+    private Mono<Health> getHealth(String url) {
+        url += "/actuator/health";
+        LOG.debug("Will call the Health API on URL: {}", url);
+        return webClient.get().uri(url).retrieve().bodyToMono(String.class)
+                .map(s -> new Health.Builder().up().build())
+                .onErrorResume(ex -> Mono.just(new Health.Builder().down(ex).build()))
+                .log(LOG.getName(), FINE);
+    }
+----
+
+composite/product/HealthCheckConfiguration.java::
++
+[source, java]
+----
+package se.magnus.microservices.composite.product;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.health.CompositeReactiveHealthContributor;
+import org.springframework.boot.actuate.health.ReactiveHealthContributor;
+import org.springframework.boot.actuate.health.ReactiveHealthIndicator;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import se.magnus.microservices.composite.product.services.ProductCompositeIntegration;
+
+@Configuration
+public class HealthCheckConfiguration {
+
+    @Autowired
+    ProductCompositeIntegration integration;
+
+    @Bean
+    ReactiveHealthContributor coreServices() {
+
+        final Map<String, ReactiveHealthIndicator> registry = new LinkedHashMap<>();
+
+        registry.put("product", () -> integration.getProductHealth());
+        registry.put("recommendation", () -> integration.getRecommendationHealth());
+        registry.put("review", () -> integration.getReviewHealth());
+
+        return CompositeReactiveHealthContributor.fromMap(registry);
+    }
+}
+----
+
+microservices/product-composite-service/src/main/resources/application.yml:
++
+[source, yml]
+----
+management.endpoint.health.show-details: "ALWAYS"
+management.endpoints.web.exposure.include: "*"
+----
+====
+
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+
 == Monitoring Flyway migrations in Spring Boot
 Flyway keeps the history of all the migrations run on the application in a dedicated table in the database. It would be convenient to extract such information and
 monitor it, so you could be alerted if any migration should fail.
@@ -213,7 +361,13 @@ management:
 call the Flyway endpoint:
 
 http :9001/actuator/flyway
+
 == Exposing application information
+
+The health endpoint can be used manually with the following command:
+
+ curl localhost:8080/actuator/health -s | jq .
+
 Among all the endpoints implemented by Spring Boot Actuator, /actuator/info is
 the most peculiar one, since it doesn’t return any data. Instead, it’s up to you to define
 what data you consider useful.

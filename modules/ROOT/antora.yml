@@ -1,0 +1,9 @@
+
+# Minimal Antora component descriptor for `modules/ROOT`
+# This enables Antora to treat `modules/ROOT` as a component and
+# allows the preview script to run incremental builds for this component.
+name: root
+title: Root Component
+version: 0.1.0
+nav:
+  - nav.adoc

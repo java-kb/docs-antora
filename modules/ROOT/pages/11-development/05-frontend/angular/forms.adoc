@@ -1,0 +1,497 @@
+= Angular Forms
+
+Angular has two different ways of working with forms: template-driven and reactive.
+
+== Template-driven Forms
+
+We link the HTML input elements 
+with the data model that will represent the form. We do this through the [(ngModel)] directive.
+ngModel is an object managed by the FormModule module that represents the form’s data model. 
+The use of square brackets and parentheses signals to Angular that we are performing a two-way data 
+binding on the property.
+
+This means that the ngModel property will both receive the form property and emit events.
+
+This type of form can be used for simpler situations
+[tabs]
+======
+
+Calaculator Example::
++
+[tabs]
+====
+
+Country.ts::
++
+[source, javascript]
+----
+----
+====
+
+Gym Diary::
+We will evolve our Gym Diary application to better exemplify this concept. In the following command 
+line, we use the Angular CLI to create the new page component:
++
+ ng g c diary/new-entry-form-template
++
+To access the new assignment form, we’ll refactor the journal page component so the Add New Entry
+button takes the user to the component we created.
++
+In our form template, we will add the directives that will create and link the form information to its 
+data model:
++
+The first change we need to make to our template is to use the ngSubmit parameter to state which 
+method will be called by Angular when the user submits the form. Then, we link the HTML input elements 
+with the data model that will represent the form. We do this through the [(ngModel)] directive.
++
+for development and debugging purposes, we are placing the content of the entry object in the footer 
+and formatting it with the JSON pipe.
++
+Notice that at no point did we need to interact with the entry object, as Angular’s form template engine 
+took care of that for us!
+[tabs]
+====
+frontend/src/app/app.routes.ts::
++
+[source, javascript]
+----
+import { Routes } from '@angular/router';
+import { Diary } from './diary/diary/diary';
+import { NewEntryFormTemplate } from './diary/new-entry-form-template/new-entry-form-template';
+
+export const routes: Routes = [
+    {
+        path: '',
+        component: Diary,
+    },
+    {
+        path: 'new-template',
+        component: NewEntryFormTemplate,
+    },
+
+];
+----
+
+frontend/src/app/diary/new-entry-form-template/new-entry-form-template.html::
++
+[source, html]
+----
+<div class="flex h-screen items-center justify-center bg-gray-200">
+  <form
+    (ngSubmit)="newEntry()"
+    class="mx-auto max-w-sm rounded bg-gray-200 p-4"
+  >
+    <div class="mb-4">
+      <label for="date" class="mb-2 block font-bold text-gray-700">Date:</label>
+      <input
+        type="date"
+        id="date"
+        name="date"
+        class="w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow"
+        [(ngModel)]="entry.date"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="exercise" class="mb-2 block font-bold text-gray-700"
+        >Exercise:</label
+      >
+      <input
+        type="text"
+        id="exercise"
+        name="exercise"
+        class="w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow"
+        [(ngModel)]="entry.exercise"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="sets" class="mb-2 block font-bold text-gray-700">Sets:</label>
+      <input
+        type="number"
+        id="sets"
+        name="sets"
+        class="w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow"
+        [(ngModel)]="entry.sets"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="reps" class="mb-2 block font-bold text-gray-700">Reps:</label>
+      <input
+        type="number"
+        id="reps"
+        name="reps"
+        class="w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow"
+        [(ngModel)]="entry.reps"
+      />
+    </div>
+    <div class="flex items-center justify-center">
+      <button
+        type="submit"
+        class="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+      >
+        Add Entry
+      </button>
+    </div>
+  </form>
+</div>
+
+{{ entry | json }}
+
+----
+
+frontend/src/app/diary/new-entry-form-template/new-entry-form-template.ts::
++
+[source, javascript]
+----
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { ExerciseSet } from '../interfaces/exercise-set';
+import { ExerciseSetsService } from '../services/exercise-sets-service';
+import { FormsModule } from '@angular/forms';
+import { JsonPipe } from '@angular/common';
+
+@Component({
+  selector: 'app-new-entry-form-template',
+  imports: [FormsModule,JsonPipe],
+  templateUrl: './new-entry-form-template.html',
+  styleUrl: './new-entry-form-template.css',
+})
+export class NewEntryFormTemplate {
+  private exerciseSetsService = inject(ExerciseSetsService);
+  private router = inject(Router);
+
+  entry: ExerciseSet = { date: new Date(), exercise: '', reps: 0, sets: 0 };
+
+  newEntry() {
+    const newEntry = { ...this.entry };
+    this.exerciseSetsService
+      .addNewItem(newEntry)
+      .subscribe((entry) => this.router.navigate(['/home']));
+  }
+}
+
+----
+====
+
+======
+
+== Reactive Forms
+Reactive forms use a declarative and explicit approach to creating and manipulating form data.
+
+
+=== validations
+
+=== Custom validations
+We can expand the use of validations and create custom functions that can even receive parameters to 
+maximize reuse in our projects. 
+
+To illustrate this, let’s create a custom validation to evaluate whether 
+the number of repetitions or sets are multiples of two and three, respectively.
+Let’s create a new file called custom-validation.ts and add the following function:
+[source,typescript,attributes]
+----
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+
+export function multipleValidator(multiple: number): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const isNotMultiple = control.value % multiple !== 0;
+    return isNotMultiple ? { isNotMultiple: { value: control.value } } : null;
+  };
+}
+----
+For Angular to recognize the form validation function, it must return a new function with the 
+signature described in the ValidatorFn interface. This signature defines that it will receive 
+AbstractControl and must return an object of type ValidationErrors that allows the 
+template to interpret the new type of validation.
+
+Here, we get the input value using control.value, and if it is not a multiple of three, we will 
+return the error object. Otherwise, we will return null, which will indicate to Angular that the 
+value is correct.
+To use this function, we are going to refactor our form component as follows:
++
+[source,typescript,attributes]
+----
+ngOnInit() {
+    this.entryForm = this.formBuilder.group({
+        date: ['', Validators.required],
+        exercise: ['', Validators.required],
+        sets: ['',[Validators.required, Validators.min(0), multipleValidator(2)],],
+        reps: ['',[Validators.required, Validators.min(0), multipleValidator(3)],],
+    });
+}
+----
+To use our custom function, we import it from the new file we created and use it in the validation 
+array in the construction of the form object in the same way as standard Angular validations.
+
+To add the error message:
+[source,html,attributes]
+----
+<div
+  *ngIf="
+    entryForm.get('reps')?.invalid &&
+    entryForm.get('reps')?.touched
+  "
+  class="mt-1 text-red-500"
+>
+  Reps is required and must be multiple of 3.
+</div>
+----
+to specifically validate the error of multiples of the input, 
+we use the error attribute and in it the new isNotMultiple attribute of our custom function.
+We are using this parameter in square brackets because it is defined at runtime and Angular will warn 
+at compile time that it does not exist.
+
+=== Typed reactive forms
+
+== Examples 
+[tabs]
+======
+
+Calaculator Example::
++
+[tabs]
+====
+
+Country.ts::
++
+[source, javascript]
+----
+----
+====
+
+Gym Diary::
+Let’s put this concept into practice by creating a new form for our project.
+First, on the command line, let’s use the Angular CLI to generate the new component:
++
+ ng g c diary/new-entry-form-reactive
++
+the first attribute is entryForm of type FormGroup. It will represent our form—not just 
+the data model, but the whole form—as validations, field structure, and so on.
++
+Then, we inject the FormBuilder service responsible for assembling the entryForm object. Note 
+the name of the service that Angular uses from the Builder design pattern, which has the objective 
+of creating complex objects, such as a reactive form.
++
+To initialize the entryForm attribute, we’ll use the onInit component lifecycle hook. Here, we’ll 
+use the group method to define the form’s data model. This method receives the object, and each 
+attribute receives an array that contains the characteristics of that attribute in the form. The first 
+element of the array is the initial value of the attribute.
++
+The first difference is the use of the formGroup attribute to associate the template with the 
+object we created earlier. To associate each template field to the FormGroup attribute, we use the 
+formControlName element.
++
+ we are importing the Validators package from Angular that will 
+provide the utility class for the basic validations of our report. In the ngOnInit method where 
+we create the reactive form object, the validations are in the second position of the array that defines 
+the form’s fields.
+We use the required validation in all fields of the form, and in the sets and reps fields, we add 
+another validation to guarantee that the number is positive. To add more than one validation, we can 
+add another array with the validations.
++
+Another change we made to our component is that it now checks whether the form is valid before 
+starting the interaction with the backend. We do this by checking the valid attribute of the object. 
+Angular automatically updates this field as the user enters data.
++
+In the template file, let’s add the error messages for the user:
++
+To show validation in the template, we use div elements with the message we want. To decide whether 
+or not the message will appear, we use the ngIf directive, checking the status of the field.
+For this, we first get the field using the GET method and check the following two properties:
++
+• The invalid property checks whether the field is invalid according to what was configured 
+in the component.
+• The touched property checks whether the user has accessed the field. It is recommended not 
+to show all the validations when the interface is loaded.
++
+In addition to the validations in each field, to improve usability, we changed the Submission button 
+by disabling it while the form was invalid and applying the CSS to make it clear to the user.
++
+In our project, if we look at the types of objects and values, we can see that they are all of the any
+type. Although functional, it is possible to improve this development experience by better using 
+TypeScript’s type checking.
++
+we first need to change the service to receive an object that 
+can contain some of the attributes of ExerciseSet.
++
+Here, we use the Partial type of TypeScript to inform the function that it can receive an object 
+with part of the interface attributes
++
+We change the FormBuilder service to the NonNullableFormBuilder type, because it can receive null values in the form’s attributes.
+
+[tabs]
+====
+frontend/src/app/app.routes.ts::
++
+[source, javascript]
+----
+import { Routes } from '@angular/router';
+import { Diary } from './diary/diary/diary';
+import { NewEntryFormTemplate } from './diary/new-entry-form-template/new-entry-form-template';
+import { NewEntryFormReactive } from './diary/new-entry-form-reactive/new-entry-form-reactive';
+
+export const routes: Routes = [
+    { path: '', pathMatch: 'full', redirectTo: 'home' },
+    {
+        path: 'home',
+        component: Diary,
+    },
+    {
+        path: 'new-template',
+        component: NewEntryFormTemplate,
+    },
+    {
+        path: 'new-reactive',
+        component: NewEntryFormReactive,
+    },
+];
+----
+
+new-entry-form-reactive.html::
++
+[source, html]
+----
+<div class="flex h-screen items-center justify-center bg-gray-200">
+    <form [formGroup]="entryForm" (ngSubmit)="newEntry()" class="mx-auto max-w-sm rounded bg-gray-200 p-4">
+        <div class="mb-4">
+            <label for="date" class="mb-2 block font-bold text-gray-700">Date:</label>
+            <input type="date" id="date" name="date"
+                class="w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow"
+                formControlName="date" />
+            <div *ngIf="entryForm.get('date')?.invalid && entryForm.get('date')?.touched" class="mt-1 text-red-500">
+                Date is required.
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="exercise" class="mb-2 block font-bold text-gray-700">Exercise:</label>
+            <input type="text" id="exercise" name="exercise"
+                class="w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow"
+                formControlName="exercise" />
+            <div *ngIf="
+          entryForm.get('exercise')?.invalid &&
+          entryForm.get('exercise')?.touched
+        " class="mt-1 text-red-500">
+                Exercise is required.
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="sets" class="mb-2 block font-bold text-gray-700">Sets:</label>
+            <input type="number" id="sets" name="sets"
+                class="w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow"
+                formControlName="sets" />
+            <div *ngIf="entryForm.get('sets')?.invalid && entryForm.get('sets')?.touched" class="mt-1 text-red-500">
+                Sets is required and must be a positive number.
+            </div>
+            <div *ngIf="
+        entryForm.get('sets')?.errors?.['isNotMultiple'] &&
+        entryForm.get('sets')?.touched
+      " class="mt-1 text-red-500">
+                sets is required and must be multiple of 2.
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="reps" class="mb-2 block font-bold text-gray-700">Reps:</label>
+            <input type="number" id="reps" name="reps"
+                class="w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow"
+                formControlName="reps" />
+            <div *ngIf="entryForm.get('reps')?.invalid && entryForm.get('reps')?.touched" class="mt-1 text-red-500">
+                Reps is required and must be a positive number.
+            </div>
+            <div *ngIf="
+          entryForm.get('reps')?.errors?.['isNotMultiple'] &&
+          entryForm.get('reps')?.touched
+        " class="mt-1 text-red-500">
+                Reps is required and must be multiple of 3.
+            </div>
+        </div>
+        <div class="flex items-center justify-center">
+            <button type="submit" [disabled]="entryForm.invalid" [class.opacity-50]="entryForm.invalid"
+                class="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700">
+                Add Entry
+            </button>
+        </div>
+    </form>
+</div>
+
+{{ entryForm.value | json }}
+----
+
+new-entry-form-reactive.ts::
++
+[source, javascript]
+----
+import { CommonModule, JsonPipe } from '@angular/common';
+import { Component, inject, OnInit } from '@angular/core';
+import { FormGroup, FormBuilder, ReactiveFormsModule, Validators, NonNullableFormBuilder } from '@angular/forms';
+import { ExerciseSetsService } from '../services/exercise-sets-service';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-new-entry-form-reactive',
+  imports: [JsonPipe, ReactiveFormsModule, CommonModule],
+  templateUrl: './new-entry-form-reactive.html',
+  styleUrl: './new-entry-form-reactive.css',
+})
+export class NewEntryFormReactive {
+  private formBuilder = inject(NonNullableFormBuilder);
+  private exerciseSetsService = inject(ExerciseSetsService);
+  private router = inject(Router);
+
+  public entryForm = this.formBuilder.group({
+    date: [new Date(), Validators.required],
+    exercise: ['', Validators.required],
+    sets: [0, [Validators.required, Validators.min(0)]],
+    reps: [0, [Validators.required, Validators.min(0)]],
+  });
+
+  newEntry() {
+    if (this.entryForm.valid) {
+      const newEntry = { ...this.entryForm.value };
+      this.exerciseSetsService
+        .addNewItem(newEntry)
+        .subscribe((entry) => this.router.navigate(['/home']));
+    }
+  }
+}
+----
+
+exercise-sets-service.ts::
++
+[source, javascript]
+----
+import { inject, Injectable } from '@angular/core';
+import { ExerciseSet, ExerciseSetList, ExerciseSetListAPI } from '../interfaces/exercise-set';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class ExerciseSetsService {
+  private httpClient = inject(HttpClient);
+
+  private url = 'http://localhost:3000/diary';
+
+  getInitialList(): Observable<ExerciseSetListAPI> {
+    return this.httpClient.get<ExerciseSetListAPI>(this.url);
+  }
+
+  refreshList(): Observable<ExerciseSetListAPI> {
+    return this.httpClient.get<ExerciseSetListAPI>(this.url);
+  }
+
+  addNewItem(item: Partial<ExerciseSet>): Observable<ExerciseSet> {
+    return this.httpClient.post<ExerciseSet>(this.url, item);
+  }
+
+  updateItem(id: string, item: ExerciseSet): Observable<ExerciseSet> {
+    return this.httpClient.put<ExerciseSet>(`${this.url}/${id}`, item);
+  }
+  
+  deleteItem(id: string): Observable<boolean> {
+    return this.httpClient.delete<boolean>(`${this.url}/${id}`);
+  }
+}
+----
+
+====
+======

@@ -1,6 +1,32 @@
 = Frontend Development
 :figures: 11-development/05-frontend
 
+Frontend development involves making websites look great and navigate smoothly.
+At its core, it uses HTML to set up the basic structure of web pages, CSS to make
+things look nice and lay out everything, and JavaScript to make it interactive. Nowadays, frontend developers often use frameworks like React and Vue. These frameworks offer features like reusable components and ways to make data update in real
+time, which allows for building websites and apps that are dynamic and engaging.
+
+Frontend development can be challenging, even for experienced developers. First of
+all, there is the unpredictable nature of web browsers and user interactions. You need
+to deal with different browsers, devices, screen sizes, and user preferences. It’s like
+trying to make a one-size-fits-all T-shirt that looks good on everyone. Next, the frontend world changes fast. Framework updates pop up frequently.
+
+Another thing about frontend development is that it’s not just about coding. It’s also a
+lot about good user experience (UX) and user interface (UI) design. This is a unique
+skill set that many programmers don’t have. UX and UI design involves understanding how people interact with technology, what makes a design visually appealing, and
+how to create a smooth, logical flow in an app or website. It’s like being part artist,
+part psychologist. For a lot of traditional programmers, who might be wizards at
+things like algorithms and data structures, the world of colors, layouts, and user journeys can be unfamiliar territory.
+
+== single-page application (SPA) 
+A single-page application (SPA) is one in which the user originally receives only one index.html
+page and, from there, all the content of the web application is rendered using JavaScript.
+From the user’s perspective, however, they are interacting with the application on different interfaces 
+(or pages) such as the login screen, the home page, and the purchase form. Technically, they are all 
+rendered on the index.html page but, for the user, they are different experiences.
+The mechanism responsible for this flow of interfaces that the client interacts with in a SPA is the 
+routing engine
+
 == Serving Frontend applications in Cloud
 * One option is to let Edge Service serve the SPA static resources. Spring Boot applications serving a frontend usually host the source code in src/main/resources. That’s a convenient strategy when using template engines like Thymeleaf, but for SPAs like Angular, I prefer keeping the code in a separate module. SPAs have their own development, build, and release tools, so having a dedicated folder is cleaner and more maintainable. Then you can configure Spring Boot to process the SPA’s static resources
 at build time and include them in the final release.

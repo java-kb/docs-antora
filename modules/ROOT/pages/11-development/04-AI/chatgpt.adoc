@@ -15,3 +15,195 @@ We should always double-check ChatGPT’s work and
 never assume that it is 100% safe or accurate. You will occasionally find that ChatGPT 
 produces code that doesn’t work—ChatGPT is focused on generating the next token 
 rather than thinking of systems as we do.
+
+== Custom Instructions
+With custom instructions in ChatGPT, you can tweak how the responses come out to
+suit what you need. This feature lets you save time because you don’t have to keep
+fine-tuning responses or coming up with new prompts every time you chat with the
+bot. You can switch on custom instructions in your profile.
+When you set up a custom instruction, you’ll need to answer these two questions:
+
+ ChatGPT: What would you like ChatGPT to know about you to provide better
+responses?
+
+ ChatGPT: How would you like ChatGPT to respond?
+
+Let’s take an example:
+
+ ChatGPT: What would you like ChatGPT to know about you to provide better respon‐
+ses?
+
+ Developer: I am a programmer working with a team that follows the PEP 8 style guide
+for Python code. We value clean, readable code and adhere to best practices. I usually
+work on data processing and analysis tasks, and I often need help with writing efficient
+and well-structured code.
+
+ ChatGPT: How would you like ChatGPT to respond?
+
+ Developer: I would like ChatGPT to provide Python code snippets that adhere to the
+PEP 8 style guide. It should prioritize readability and best practices in coding. When
+suggesting solutions, I prefer explanations as to why a particular approach is recom‐
+mended and how it aligns with PEP 8 standards. I would also appreciate it if ChatGPT
+could point out any common pitfalls or errors related to the task at hand and provide
+tips for avoiding them.
+
+== Browse with Bing
+ChatGPT’s training has a cutoff of April 2023. This can be a problem for developers.
+With libraries, frameworks, and tools changing so fast, any number of new features or
+capabilities may have popped up since then, and ChatGPT won’t be up-to-date on
+them.
+
+But ChatGPT’s got a trick up its sleeve: Browsing with Bing. It lets you do real-time
+web searches to come up with answers.
+
+Let’s say you’re checking out a new framework, like LangChain. It’s been on the scene
+since late 2022, and it has evolved a lot. It’s also designed to make app development
+with LLMs smoother, so you might like to use it.
+
+To activate Browse with Bing and enhance ChatGPT’s understanding of where Lang‐
+Chain is at right now, add something like “Use the internet for this response” to your
+
+ prompt. Here are some examples of prompts designed to get general information
+about LangChain:
+
+ Prompt: Tell me about the LangChain framework and its primary features. Use the
+internet for the response.
+
+ Prompt: Check the internet for introductory resources or documentation for getting
+started with LangChain.
+
+ Prompt: Browse the internet for examples of applications that have been built using the
+LangChain framework.
+
+ Prompt: Look up any recent updates or releases related to the LangChain framework.
+Use the internet for the response.
+
+You can instruct ChatGPT to focus on certain types of sources. Following table provides some suggestions.
+
+[cols="1,3", options="header"]
+|===
+|Approach |Description
+
+|Domain restriction
+|Use the site operator to limit the search to reputable domains like .edu or .gov or to specific reputable organizations.
+
+|Use of scholarly keywords
+|Examples include peer-reviewed, journal, study, and research.
+
+|Use of publication date filters
+|Filter the search by recent publication dates to get current and relevant information.
+
+|Professional or scholarly associations
+|Specify professional or scholarly associations to seek authoritative publications or reports.
+|===
+
+== Regular Expressions
+
+ChatGPT can create a regex. Here’s a look at some common examples:
+
+ Prompt: Create a regex pattern to validate standard email addresses. The email should
+start with alphanumeric characters, followed by optional dots, hyphens, or under‐
+scores. Then, there should be an “@” symbol, followed by more alphanumeric charac‐
+ters, a dot, and finally, a domain name that is 2 to 6 characters long.
+Regex pattern: ^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$
+
+ Prompt: Provide me with a regex pattern to validate URLs. The URL may start with
+“http” or “https”, followed by “://”, then a domain name which can include alphanu‐
+meric characters and dots. After the domain, there can be an optional path that starts
+with a “/” and can include alphanumeric characters, slashes, dots, or hyphens. The
+URL may end with an optional “/”.
+Regex pattern: ^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$
+
+ Prompt: Create a regex pattern to validate dates in the MM/DD/YYYY format. The
+month should be between 01 and 12, the day should be between 01 and 31, and the
+year should be either in the 1900s or 2000s.
+Regex pattern: ^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/(19|20)\d\d$
+
+ Prompt: I’m looking for a regex pattern to validate IPv4 addresses. Each octet should be
+a number between 0 and 255, and the octets should be separated by dots. Create a
+regex pattern for this.
+Regex pattern: ^(25[0-5]|2[0-4]\d|[0-1]?\d\d?)\.((25[0-5]|2[0-4]\d|[0-1]?\d\d?)\.){2}
+(25[0-5]|2[0-4]\d|[0-1]?\d\d?)$
+
+ChatGPT can also help you decipher regex patterns. Here’s a sample prompt:
+
+ Prompt: What is this regex? ^(\(\d{3}\)\s?|\d{3}[-.])\d{3}[-.]\d{4}$
+
+== Starter Code
+Starter code is the initial code snippets or templates that give you a head start. 
+
+Following table shows some prompts for starter code.
+[cols="1,3", options="header"]
+|===
+|Programming language/framework |Prompt
+
+|Node.js/Express.js |Provide an example of a basic Express.js server.
+|React (JavaScript) |How do I create a simple React component?
+|JavaScript |Can you show me how to define a simple function in JavaScript?
+|Android (Java) |What is the starter code for a basic Android Activity in Java?
+|Python/Flask |Can you give me an example of a basic Flask application?
+|Vue.js (JavaScript) |Show me how to set up a basic Vue instance.
+|Django (Python) |How can I start a new Django project with a simple view?
+|Swift (iOS) |What’s the starter code for a simple UIViewController in Swift?
+|===
+
+== GitHub README
+Imagine you’ve just built this awesome app for digging up recipes. Here’s a prompt to kick things off:
+
+    Prompt: Write a GitHub readme for my project named “Recipe Finder.” This project is
+    developed using Vue.js and helps users find recipes based on the ingredients they have.
+    Users need to input the ingredients they have, and the app will return a list of recipes
+    they can cook with those ingredients. To kickstart, simply clone the repository, run
+    npm install, insert your API key into the .env file, and execute npm start to launch
+    the app.
+
+== Cross-Browser Compatibility
+Cross-browser compatibility is about making sure your website or web app works right
+on different browsers. It’s important because your users likely access your site or app
+using a whole mix of browsers like Chrome, Firefox, Safari, and Edge, all of which
+have various versions.
+[cols="1,3", options="header"]
+|===
+|Category |Prompt
+
+|HTML5 and CSS3 features
+|“I want to use the placeholder attribute in my input fields, but it doesn’t work in older versions of Internet Explorer. How can I create a fallback?”
+
+|CSS prefixes
+|“I want to use the transition property in my CSS, but I want to ensure it’s compatible across all browsers. How should I write it?”
+
+|JavaScript functionality
+|“I am using the fetch function in JavaScript to make HTTP requests, but it’s not supported in Internet Explorer. What can I do?”
+|===
+
+== Bash Commands
+you can use ChatGPT as your virtual assistant for working with bash com‐
+mands. Here are some example prompts:
+
+    Prompt: How can I use a bash command to list all the files in a directory sorted by
+    modification time?
+
+    Prompt: What is the bash command to count the number of lines in a file?
+    
+    Prompt: How can I create a directory and navigate into it using a single command?
+    
+    Prompt: How can I redirect the output of a command to a file?
+    
+    Prompt: What is the command to search for a specific process running on my system?
+    
+    Prompt: How can I compress a directory into a ZIP file using bash?
+    
+    Prompt: What command should I use to change the permissions of a file in bash?
+
+== GitHub Actions
+ChatGPT can help you create GitHub Actions. Here are some prompts:
+
+    Prompt: Create a GitHub Actions workflow template to build and deploy a static website using Hugo, with deployment to GitHub Pages.
+
+    Prompt: Generate a GitHub Actions workflow template for a Java project using Maven, including steps for compiling the code, running tests, and packaging the application.
+
+    Prompt: Create a GitHub Actions workflow template for a Dockerized application,
+    including steps for building the Docker image, pushing it to Docker Hub, and deploying it to a Kubernetes cluster.
+
+    Prompt: Generate a GitHub Actions workflow template for a React Native mobile
+    application, including steps for installing dependencies, building the app, and uploading the APK to a specified Google Drive folder.

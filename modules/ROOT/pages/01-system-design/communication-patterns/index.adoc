@@ -60,72 +60,7 @@ Both are viable options. Which strategy you adopt is up to your project requirem
 
 == Reactive Systems
 
-When you have applications extensively relying on I/O operations such as database calls or interactions with other services like HTTP request/response communications, the threadper-request model begins to expose its technical limits.
-
-In the thread-per-request model, each request is bound to a thread exclusively allocated to its processing. If database or service calls are part of the processing, the
-thread will send out a request and then block, waiting for a response. During idle
-time, the resources allocated for that thread are wasted, since they cannot be used for
-anything else. The reactive programming paradigm solves this problem and improves
-scalability, resilience, and cost-effectiveness for all I/O-bound applications.
-
-Reactive applications operate asynchronously and in a non-blocking way, meaning
-that computational resources are used more effectively. That’s a huge advantage in
-the cloud, since you pay for what you use. When a thread sends a call to a backing service, it will not wait idle, but it will move on to executing other operations. This eliminates the linear dependency between the number of threads and the number of
-concurrent requests, leading to more scalable applications. With the same amount of
-computational resources, reactive applications can serve more users than their nonreactive counterparts.
-A reactive system is a set of design principles to apply in software architecture to make the system responsive (responds on time), resilient (stays responsive if there are failures), elastic (adapts to be responsive under different workloads), and message-driven (ensures loose coupling and boundary isolation).
-
-The Reactive Manifesto (www.reactivemanifesto.org) describes a reactive system as
-responsive, resilient, elastic, and message-driven. Its mission to build loosely coupled,
-scalable, resilient, and cost-effective applications is fully compatible with our definition of cloud native.
-
-non-reactive applications allocate a thread per request. Until
-a response is returned, the thread will not be used for anything. That is the thread-perrequest model. When the request handling involves intensive operations like I/O, the
-thread will block until those operations are completed. For example, if a database
-read is required, the thread will wait until data is returned from the database. During
-the waiting time, the resources allocated to the handling thread are not used efficiently. If you want to support more concurrent users, you’ll have to ensure you have
-enough threads and resources available. In the end, this paradigm sets constraints on
-the application’s scalability and doesn’t use computational resources in the most efficient way possible.
-
-image::{figures}/The-thread-per-request-model.png[In the thread-per-request model, each request is handled by a thread dedicated exclusively to its handling.]
-
-Reactive applications are more scalable and efficient by design. Handling requests
-in a reactive application doesn’t involve allocating a given thread exclusively—requests
-are fulfilled asynchronously based on events. For example, if a database read is required,
-the thread handling that part of the flow will not wait until data is returned from the
-database. Instead, a callback is registered, and whenever the information is ready, a
-notification is sent, and one of the available threads will execute the callback. During that time, the thread that requested the data can be used to process other requests
-rather than waiting idle.
-
-This paradigm, called event loop, doesn’t set hard constraints on the application’s
-scalability. It actually makes it easier to scale, since an increase in the number of concurrent requests does not strictly depend on the number of threads. 
-
-image::{figures}/The-event-loop-model.png[In the event loop model, requests are handled by threads that don’t block while waiting for an  intensive operation, allowing them to process other requests in the meantime.]
-
-Scale and cost optimization are two critical reasons for moving to the cloud, so the
-reactive paradigm perfectly fits cloud native applications. Scaling applications to support a workload increase becomes less demanding. By using resources more efficiently,
-you can save money on the computational resources offered by a cloud provider.
-Another reason for moving to the cloud is resilience, and reactive applications also
-help with that.
-
-One of the essential features of reactive applications is that they provide nonblocking backpressure (also called control flow). This means that consumers can control the amount of data they receive, which lowers the risk of producers sending more
-data than consumers can handle, which can cause a DoS attack, slowing the application, cascading the failure, or even leading to a total crash.
-
-The reactive paradigm is a solution to the problem of blocking I/O operations that
-require more threads to handle high concurrency and which may lead to slow or entirely
-unresponsive applications. Sometimes the paradigm is mistaken as a way to increase the
-speed of an application. Reactive is about improving scalability and resilience, not speed.
-
-Going reactive is an excellent
-choice when you expect high traffic and concurrency with fewer computational
-resources or in streaming scenarios. However, you should also be aware of the additional complexity introduced by such a paradigm. Besides requiring a mindset shift to
-think in an event-driven way, reactive applications are more challenging to debug and
-troubleshoot because of the asynchronous I/O. Before rushing to rewrite all your
-applications to make them reactive, think twice about whether that’s necessary, and
-consider both the benefits and drawbacks.
-
-When you expect high traffic and concurrency with fewer computational
-resources, the reactive paradigm can improve the application’s scalability, resilience, and cost-effectiveness at the expense of a steeper initial learning curve.
+== Choosing between non-blocking synchronous APIs and event-driven asynchronous services
 
 When developing reactive microservices, it is not always obvious when to use non-blocking synchronous APIs and when to use event-driven asynchronous services. In general, to make a microservice 
 robust and scalable, it is important to make it as autonomous as possible, for example, by minimizing 
@@ -135,10 +70,8 @@ access to a number of other microservices.
 There are, however, a number of cases where synchronous APIs could be favorable. For example:
 
 * For read operations where an end user is waiting for a response
-* Where the client platforms are more suitable for consuming synchronous APIs, for example, 
-mobile apps or SPA web applications
-* Where the clients will connect to the service from other organizations – where it might be 
-hard to agree on a common messaging system to use across organizations
+* Where the client platforms are more suitable for consuming synchronous APIs, for example, mobile apps or SPA web applications
+* Where the clients will connect to the service from other organizations – where it might be hard to agree on a common messaging system to use across organizations
 
 [tabs]
 ======

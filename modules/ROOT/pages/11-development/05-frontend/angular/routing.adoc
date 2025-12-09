@@ -1,0 +1,49 @@
+= Angular Routing
+
+
+== Routes and navigation
+
+== Defining an error page and title
+
+== Dynamic routes – wildcards and parameters
+
+== Securing routes – guards
+
+== Optimizing the experience – Resolve
+
+
+== Examples
+[tabs]
+======
+
+Calaculator Example::
++
+[tabs]
+====
+
+Country.ts::
++
+[source, javascript]
+----
+----
+====
+
+Gym Diary::
++
+Let’s improve our project by creating a home page with a simplified menu for our interface, thereby 
+exploring the possibilities we can have with Angular routes. In the command line, we’ll use the Angular 
++
+ng g c home
++
+
+[tabs]
+====
+
+Country.ts::
++
+[source, javascript]
+----
+----
+====
+
+======

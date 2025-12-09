@@ -1,6 +1,12 @@
 = Event-driven architectures
 :figures: 01-system-design
 
+
+the foundation for reactive systems 
+is that they are message-driven—they use asynchronous communication. This enables them to be 
+elastic, in other words, scalable and resilient, meaning that they are tolerant of failures. Elasticity 
+and resilience together enable a reactive system to be responsive.
+
 == Publish-Subscribe Pattern
 The Publish-Subscribe pattern is a messaging pattern that allows decoupling of the components in a system. In this pattern, publishers send messages to a message broker, which then distributes those messages to subscribers that have expressed interest in receiving them.
 This pattern is particularly useful in event-driven architectures, where components can react to events without being tightly coupled to the source of those events. It allows for greater flexibility and scalability, as new subscribers can be added or removed without affecting the publishers or other subscribers.
@@ -97,3 +103,51 @@ Both publishers and subscribers should try to deal with that situation (e.g., wi
 You could also flag the services as unhealthy and stop accepting new operations
 
 
+== Examples
+[tabs]
+======
+
+CaveatEmptor::
++
+[tabs]
+====
+
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Multiplication microservices::
++
+[source, java]
+----
+----
+
+Microservices with Spring Boot 3 and Spring Cloud::
++
+we will learn how to develop event-driven and asynchronous versions of the create 
+and delete services. The composite service will publish create and delete events on each core service 
+topic and then return an OK response back to the caller without waiting for processing to take place 
+in the core services.
++
+To implement the event-driven create and delete services, we will use Spring Cloud Stream.
+
+Polar Book Shop::
++
+[source, java]
+----
+----
+======

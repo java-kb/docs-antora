@@ -1,0 +1,94 @@
+= Kafka
+:figures: 10-message-queuing/servers
+
+
+== Using Kafka with docker
+To run Kafka in a Docker container, you can use the official Kafka image from Docker Hub. Here’s a simple command to start a Kafka container with the management plugin enabled, which provides a web-based UI for managing Kafka:
+```bash
+docker run -d --name confluentinc/cp-kafka:7.3.1 -p 9092:9092
+```
+This command does the following:
+
+- `-d`: Runs the container in detached mode (in the background).
+- `--name Kafka`: Names the container "Kafka".
+- `-p 5672:5672`: Maps the Kafka default port (5672) for AMQP communication.
+- `-p 15672:15672`: Maps the Kafka management plugin port (15672) for the web UI.
+- `Kafka:management`: Specifies the Kafka image with the management plugin enabled. 
+
+After running this command, Kafka will be accessible at `http://localhost:15672` in your web browser, and you can log in with the default credentials:
+
+- Username: `guest`
+- Password: `guest`
+
+You can also customize the Kafka configuration by mounting a configuration file or using environment variables. For example, to set a custom username and password, you can use the following command:
+```bash
+docker run -d --name Kafka -p 5672:5672 -p 15672:15672 \
+  -e Kafka_DEFAULT_USER=myuser \
+  -e Kafka_DEFAULT_PASS=mypassword \
+  Kafka:management
+```
+This command sets the default username to `myuser` and the password to `mypassword`. You can then access the Kafka management UI using these credentials.
+
+== Using Kafka with docker compose
+To run Kafka using Docker Compose, you can create a `docker-compose.yml` file with the following content:
+```yaml
+  kafka:
+    image: confluentinc/cp-kafka:7.3.1
+    restart: always
+    mem_limit: 1024m
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_BROKER_ID=1
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.1
+    restart: always
+    mem_limit: 512m
+    ports:
+      - "2181:2181"
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+```
+
+
+To start Kafka using Docker Compose, run the following command in the directory where your `docker-compose.yml` file is located:
+```bash
+docker-compose up -d
+```
+== Managing Kafka
+Kafka doesn’t come with any graphical tools that can be used to 
+inspect topics, partitions, and the messages that are placed within them. Instead, 
+we can run CLI commands in the Kafka Docker container.
+
+To see a list of topics, run the following command:
+ 
+ docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --list
+
+To see the partitions in a specific topic (for example, the products topic), run the following command:
+
+ docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --describe --topic products
+
+To see all the messages in a specific partition (for example, partition 1 in the products topic), run 
+the following command:
+
+ docker compose exec kafka kafka-console-consumer --bootstrap-server localhost:9092 --topic products --from-beginning --timeout-ms 1000 --partition 1
+ 
+== Making messaging resilient to failures
+Kafka itself has several features in place to improve reliability and resilience.
+Among other things, it guarantees that each message is delivered at least once. Be aware that consumers in your applications might receive the same message twice, so
+your business logic should know how to identify and handle duplicates.
+
+see:
+
+Kafka (https://Kafka.com), Spring AMQP (https://spring.io/projects/
+spring-amqp), and Spring Cloud Stream (https://spring.io/projects/spring-cloud
+-stream). You can also check out the event-driven patterns described in Sam Newman’s
+Building Microservices (O’Reilly, 2021) and Chris Richardson’s Microservices Patterns
+(Manning, 2018).
+

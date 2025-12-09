@@ -1,5 +1,6 @@
 # Snipets
 ## Tabs
+
 [tabs]
 ====
 Maven::
@@ -98,7 +99,7 @@ Polar Book Shop::
 ----
 ======
 
-
+## Angular 
 [tabs]
 ======
 
@@ -107,18 +108,24 @@ Calaculator Example::
 [tabs]
 ====
 
-Country.java::
+Country.ts::
 +
-[source, java]
+[source, javascript]
 ----
 ----
 ====
 
-Another Example::
+Gym Diary::
 +
-[source, java]
+[tabs]
+====
+
+Country.ts::
++
+[source, javascript]
 ----
 ----
+====
 
 ======
 

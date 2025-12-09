@@ -161,6 +161,407 @@ export const routes: Route[] = [
 ----
 In this example, the AdminComponent (which is a standalone component) will only be loaded when the user navigates to the /admin route. This ensures that the code for the admin section is not included in the initial bundle, improving the application's startup performance.
 
+=== Separating responsibilities – Smart and Presentation components
+The information flow of a single-page application (SPA) can be quite complex and, if you don’t think 
+about this flow from the beginning of your design, it can affect the productivity and quality of your 
+project over time.
+
+a very common design pattern not only in Angular applications but 
+also in SPAs in general is the composition of interfaces using Smart and Presentation components. In 
+literature and in the community, you will also find this pattern under the name of Smart and Dumb
+components or Container and Presentation components.
+
+A Smart component has the UI business rule; it is where we will have injected the services that will 
+communicate with the backend and where the interface with the Presentation components will 
+be composed.
+A Presentation component is a component that has the sole purpose of showing the data passed by 
+the Smart component, normally via input. A Presentation component in turn can contain one or more 
+components of the Presentation type.
+
+Notice that we have a source of truth, which is the Smart component, and the communication occurs 
+in only one direction, this is what we call a Unidirectional Data Flow. The purpose of this pattern is 
+to isolate all states within a component and thereby simplify state management.
+
+[tabs]
+======
+
+Calaculator Example::
+
+Gym Diary::
++
+Let’s refactor our project to fit this design pattern. Let’s create a new presentation component using 
+the Angular CLI:
++
+  ng g c diary/list-entries
++
+In this new component, we are going to move the part that renders the list of diary entries into your 
+template.
++
+The list that will be displayed will come ready from the DiaryComponent component.
++
+Here, we move the itemTrackBy function into the component, as it will be its function to display
+the list, and we include the exerciseList attribute with the @Input decorator. In this example, we 
+didn’t specify any parameters, so the name of the template’s attribute will be the same as the attribute 
+of the exerciseList class.
++
+Let’s change the Diary template in the diary.component.html file to use the new presentation 
+component we have created:
++
+<app-list-entries [exerciseList]="exerciseList" />
++
+The DiaryComponent Smart component just passes the list to the ListEntriesComponent
+Presentation component, which iterates over the list by calling the EntryItemComponent
+Presentation component. With this structure, only the DiaryComponent component needs to 
+worry about the list of exercises, respecting SOLID’s Single Responsibility concept.
+
+[tabs]
+====
+chapters/ch04-gym-diary/src/app/diary/diary/diary.html::
++
+[source, html]
+----
+<div class="min-h-screen bg-gray-200">
+  <header class="bg-blue-500 py-4 text-white">
+    <div class="mx-auto max-w-6xl px-4">
+      <h1 class="text-2xl font-bold">Workout diary</h1>
+    </div>
+  </header>
+  <main class="mx-auto mt-8 max-w-6xl px-4">
+    <app-list-entries [exerciseList]="exerciseList" (deleteEvent)="deleteItem($event)" (newRepEvent)="newRep($event)" />
+    <app-new-item-button (newExerciseEvent)="addExercise($event)" />
+    <br />
+    <br />
+
+    <button class="rounded bg-blue-500 py-2 px-4 font-bold text-white hover:bg-blue-700" (click)="newList()">
+      Server Sync
+    </button>
+  </main>
+</div>
+----
+
+chapters/ch04-gym-diary/src/app/diary/diary/diary.ts::
++
+[source, typescript]
+----
+import { Component, inject } from '@angular/core';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { AsyncPipe, CommonModule } from '@angular/common';
+import { Observable } from 'rxjs';
+import { map, shareReplay } from 'rxjs/operators';
+import { EntryItem } from '../../diary/entry-item/entry-item';
+import { ExerciseSet, ExerciseSetList } from '../../diary/interfaces/exercise-set';
+import { ListEntries } from '../list-entries/list-entries';
+import { NewItemButton } from "../new-item-button/new-item-button";
+
+@Component({
+  selector: 'app-diary',
+  imports: [ListEntries, NewItemButton],
+  templateUrl: './diary.html',
+  styleUrl: './diary.css',
+})
+export class Diary {
+
+  exerciseList: ExerciseSetList = [
+    {
+      id: '1', date: new Date(), exercise: 'Deadlift', reps: 15, sets:
+        3
+    },
+    {
+      id: '2', date: new Date(), exercise: 'Squat', reps: 15, sets: 3
+    },
+    {
+      id: '3', date: new Date(), exercise: 'Barbell row', reps: 15,
+      sets: 3
+    },
+  ];
+
+  newList() {
+    this.exerciseList = [
+      {
+        id: '1', date: new Date(), exercise: 'Deadlift', reps: 15,
+        sets: 3
+      },
+      {
+        id: '2', date: new Date(), exercise: 'Squat', reps: 15, sets: 3
+      },
+      {
+        id: '3', date: new Date(), exercise: 'Barbell row', reps: 15,
+        sets: 3
+      },
+      {
+        id: '4', date: new Date(), exercise: 'Leg Press', reps: 15,
+        sets: 3
+      },
+    ];
+  }
+
+  addExercise(newSet: ExerciseSet) {
+    this.exerciseList.push(newSet);
+  }
+
+  deleteItem(id: string) {
+    this.exerciseList = this.exerciseList.filter((item) => item.id !==
+      id);
+  }
+  newRep(exerciseSet: ExerciseSet) {
+    const id = exerciseSet.id;
+    const i = this.exerciseList.findIndex((item) => item.id === id);
+    if (i >= 0) {
+      this.exerciseList[i] = { ...exerciseSet };
+    }
+  }
+}
+
+
+----
+
+src/app/diary/list-entries/list-entries.html::
++
+[source, html]
+----
+<section class="mb-8">
+    <h2 class="mb-4 text-xl font-bold">List of entries</h2>
+    <ul class="rounded border shadow">
+        <li *ngFor="let item of exerciseList; index as i; trackBy: itemTrackBy">
+            <app-entry-item [exercise-set]="item" (deleteEvent)="deleteEvent.emit($event)"
+                (newRepEvent)="newRepEvent.emit($event)" />
+        </li>
+    </ul>
+</section>
+----
+
+chapters/ch04-gym-diary/src/app/diary/list-entries/list-entries.ts::
++
+[source, typescript]
+----
+import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ExerciseSet, ExerciseSetList } from '../interfaces/exercise-set';
+import { EntryItem } from "../entry-item/entry-item";
+
+@Component({
+  selector: 'app-list-entries',
+  imports: [CommonModule, EntryItem],
+  templateUrl: './list-entries.html',
+  styleUrl: './list-entries.css',
+})
+export class ListEntries {
+
+  @Input() exerciseList!: ExerciseSetList;
+
+  @Output() newRepEvent = new EventEmitter<ExerciseSet>();
+  @Output() deleteEvent = new EventEmitter<string>();
+
+  itemTrackBy(index: number, item: ExerciseSet) {
+    return item.id;
+  }
+
+}
+
+----
+
+chapters/ch04-gym-diary/src/app/diary/entry-item/entry-item.html::
++
+[source, html]
+----
+<div class="mb-4 flex items-center justify-between border-b bg-white p-4">
+    <div>
+        <span class="font-bold">Date:</span> {{ exerciseSet.date | date }}<br />
+        <span class="font-bold">Exercise:</span> {{ exerciseSet.exercise }}<br />
+        <span class="font-bold">Sets:</span> {{ exerciseSet.sets }}<br />
+        <span class="font-bold">Reps:</span> {{ exerciseSet.reps }}
+    </div>
+    <div class="flex items-center">
+        <button class="mr-2 rounded bg-red-500 py-2 px-4 font-bold text-white hover:bg-red-700" (click)="delete()">
+            Delete
+        </button>
+        <button class="rounded bg-blue-500 py-2 px-4 font-bold text-white hover:bg-blue-700" (click)="newRep()">
+            New Rep
+        </button>
+    </div>
+</div>
+----
+
+chapters/ch04-gym-diary/src/app/diary/entry-item/entry-item.ts::
++
+[source, typescript]
+----
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ExerciseSet } from '../interfaces/exercise-set';
+import { DatePipe } from '@angular/common';
+
+@Component({
+  selector: 'app-entry-item',
+  imports: [DatePipe],
+  templateUrl: './entry-item.html',
+  styleUrl: './entry-item.css',
+})
+export class EntryItem {
+  @Input('exercise-set') exerciseSet!: ExerciseSet;
+
+  @Output() newRepEvent = new EventEmitter<ExerciseSet>();
+  @Output() deleteEvent = new EventEmitter<string>();
+
+  delete() {
+    this.deleteEvent.emit(this.exerciseSet.id);
+  }
+
+  newRep() {
+    const reps = ++this.exerciseSet.reps;
+    const newItem: ExerciseSet = {
+      ...this.exerciseSet,
+      reps,
+    };
+    this.newRepEvent.emit(newItem);
+  }
+}
+
+----
+
+chapters/ch04-gym-diary/src/app/diary/new-item-button/new-item-button.html::
++
+[source, html]
+----
+<button class="rounded bg-blue-500 py-2 px-4 font-bold text-white hover:bg-blue-700" (click)="addNewExercise()">Add new
+    entry</button>
+----
+
+chapters/ch04-gym-diary/src/app/diary/new-item-button/new-item-button.ts::
++
+[source, typescript]
+----
+import { Component, EventEmitter, Output } from '@angular/core';
+import { ExerciseSet } from '../interfaces/exercise-set';
+
+@Component({
+  selector: 'app-new-item-button',
+  imports: [],
+  templateUrl: './new-item-button.html',
+  styleUrl: './new-item-button.css',
+})
+export class NewItemButton {
+  @Output() newExerciseEvent = new EventEmitter<ExerciseSet>();
+
+  addNewExercise() {
+    const id = Date.now().toString();
+    const date = new Date();
+    const reps = 10;
+    const sets = 4;
+    const exercise = 'Leg Press';
+    const newExerciseSet: ExerciseSet = {
+      id, date, reps, sets, exercise
+    };
+    this.newExerciseEvent.emit(newExerciseSet);
+  }
+}
+
+----
+====
+======
+
+=== Defining an error page
+[tabs]
+======
+
+Calaculator Example::
+
+Gym Diary::
++
+In our current project, if the user enters a path that does not have a mapped route, they will be faced 
+with a blank screen. This is not a good user experience (UX) practice; ideally, we need to handle this 
+error by presenting an error page for it to be redirected to the correct page. First, let’s create the component using the Angular CLI:
++
+ng generate component ErrorPage
++
+Here, we are creating the component directly in AppModule because we want to give this treatment 
+to our entire system and not to a specific functional module.
++
+The next step is to update the AppRoutingModule routes file
++
+[tabs]
+====
+src/app/error-page/error-page.html::
++
+[source, html]
+----
+<div class="flex h-screen flex-col items-center justify-center">
+    <h1 class="mb-4 text-6xl font-bold text-red-500">Oops!</h1>
+    <h2 class="mb-2 text-3xl font-bold text-gray-800">Looks like you're lost!</h2>
+    <p class="mb-6 text-gray-600">
+        We couldn't find the page you're looking for.
+    </p>
+    <p class="text-gray-600">
+        But don't worry! Go back to the Gym Diary and continue your progress!
+    </p>
+    <a routerLink="/home" class="mt-4 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-600">
+        Go back to the Gym Diary
+    </a>
+</div>
+----
+
+src/app/app.routes.ts::
++
+[source, ts]
+----
+import { Routes } from '@angular/router';
+import { Diary } from './diary/diary/diary';
+import { NewEntryFormTemplate } from './diary/new-entry-form-template/new-entry-form-template';
+import { NewEntryFormReactive } from './diary/new-entry-form-reactive/new-entry-form-reactive';
+import { HomeComponent } from './home/home/home.component';
+import { ErrorPage } from './error-page/error-page';
+
+export const routes: Routes = [
+    { path: '', pathMatch: 'full', redirectTo: 'home', },
+    {
+        path: 'home',
+        component: HomeComponent,
+    },
+    {
+        path: 'diary',
+        component: Diary,
+    },
+    {
+        path: 'diary/entry',
+        component: NewEntryFormReactive,
+    },
+    { path: 'error', component: ErrorPage },
+    { path: '**', redirectTo: '/error' },
+];
+
+----
+====
+======
+
+== Defining Tite page
+we can use Angular’s routing mechanisms. we need to change the following code snippet:
+[source,ts,attributes]
+----
+const routes: Routes = [
+ {
+ path: '',
+ component: DiaryComponent,
+ title: 'Diary',
+ },
+ {
+ path: 'new-template',
+ component: NewEntryFormTemplateComponent,
+ },
+ {
+ path: 'new-reactive',
+ component: NewEntryFormReactiveComponent,
+ title: 'Entry Form',
+ },
+];
+----
+To change the title, we just need to inform the title property in the route definition
+
+=== using the TrackBy property
+The TrackBy attribute, in addition to avoiding unnecessary rendering, has the following advantages:
+
+• Enables animations when removing and adding items from the collection
+• Retains any DOM-specific UI state, such as focus and text selection, when the collection changes
+
+
 == Anti-Patterns
 === Avoiding single module app
 Problem: Avoid having single-module app(AppModule), The problems we have here are as follows:

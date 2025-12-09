@@ -88,6 +88,20 @@ services:
 volumes:
   rabbitmq_data:
 ```
+
+```yaml
+  rabbitmq:
+    image: rabbitmq:3.11.8-management
+    mem_limit: 512m
+    ports:
+      - 5672:5672
+      - 15672:15672
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+```
 This `docker-compose.yml` file defines a RabbitMQ service with the management plugin enabled. It maps the necessary ports and sets the default username and password. It also uses a named volume (`rabbitmq_data`) to persist RabbitMQ data across container restarts. 
 
 The configuration is based on a file mounted as a volume (`./rabbitmq/rabbitmq.conf`), which you can create to customize RabbitMQ settings. Make sure to create the `rabbitmq` directory in the same location as your `docker-compose.yml` file and place your configuration file there.
@@ -130,3 +144,4 @@ spring-amqp), and Spring Cloud Stream (https://spring.io/projects/spring-cloud
 -stream). You can also check out the event-driven patterns described in Sam Newman’s
 Building Microservices (O’Reilly, 2021) and Chris Richardson’s Microservices Patterns
 (Manning, 2018).
+

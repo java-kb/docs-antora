@@ -1,0 +1,88 @@
+=  GitHub Copilot
+
+== shortcuts
+=== @workspace command
+which refers to the files open in your workspace. 
+* For example, if you have a calculator program in Python, you can enter
++ 
+ Prompt: @workspace /explain
+
+=== @vscode
+you can ask questions or
+get help about some aspects of VS Code such as a feature, navigation, configuration,
+or an extension.
+
+ Prompt: @vscode How do I split the editor into multiple windows?
+ Prompt: @vscode How can I customize my keyboard shortcuts?
+ Prompt: @vscode How do I set up a multi-root workspace?
+ Prompt: @vscode How do I configure task automation in VS Code?
+ Prompt: @vscode How can I set up and use Docker with VS Code?
+
+=== /new command
+It will create a scaffold for a newproject or feature. Here are some examples:
+
+ Prompt: /new Create a Python script to scrape data from a website
+
+ Prompt: /new Generate a Java class for a student with fields for name, age, and grade
+ 
+ Prompt: /new Build a simple REST API using Flask
+
+ Prompt: /new Create a JavaScript function to sort an array of numbers in ascending order
+
+ Prompt: /new Design a SQL database schema for a blog, with tables for users, posts, and comments
+
+=== /newNotebook command
+creating a new Jupyter Notebook. You should specify what you want the notebook to do. Here are some sample prompts
+
+ Prompt: /newNotebook Create a notebook to visualize data from a csv file using matplotlib
+ Prompt: /newNotebook Create a notebook to preprocess and clean a dataset for machine learning
+ Prompt: /newNotebook Create a notebook to implement a simple linear regression model using scikit-learn
+ Prompt: /newNotebook Create a notebook to analyze time series data
+ Prompt: /newNotebook Create a notebook to scrape data from a website and analyze it
+
+===  /terminal 
+You can ask questions about or get help with terminal or command line operations, such as with navigating directories, running scripts, or installing packages. Here are some prompts:
+
+ Prompt: /terminal What is the command to list all environment variables?
+ Prompt: /terminal How do I use grep to find specific text in multiple files?
+ Prompt: /terminal How can I use the find command to search for files by their permissions?
+ Prompt: /terminal How do I redirect the output of a command to a file?
+ Prompt: /terminal How do I use awk to process text files?
+
+=== /api command
+You can ask questions about or get help with
+aspects of API development or usage including creation, testing, or integration. Here
+are some examples:
+
+ Prompt: /api How do I make a POST request with JSON data in Node.js?
+ Prompt: /api How can I handle CORS issues in an Express.js API?
+ Prompt: /api How do I authenticate a user in a Django REST API?
+ Prompt: /api How can I paginate results in a Rails API?
+ Prompt: /api How do I version an API in ASP.NET Core?
+
+You can also use /api in the context of VS Code:
+
+ Prompt: @vscode /api How do I create a new command in VS Code extension?
+ Prompt: @vscode /api How can I read and write settings in VS Code extension?
+ Prompt: @vscode /api How do I create a new webview panel in VS Code extension?
+ Prompt: @vscode /api How can I interact with the file system in VS Code Extension?
+ Prompt: @vscode /api How do I add a new item to the activity bar in VS Code Extension?
+
+===  /clear
+clear the chat
+
+== Command-Line Interface
+You can use Copilot in your CLI. Copilot’s two main functions there are to explain
+commands and to suggest them.
+
+To do this, you need to install 
+
+pnpm install -g @github/copilot
+
+Launching the CLI
+
+copilot
+
+Here’s an example of asking Copilot to explain a CLI command:
+
+ Prompt:  explain xcopy

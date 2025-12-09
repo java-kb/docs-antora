@@ -461,46 +461,168 @@ explanation.” Or you could be more specific, such as by saying that the respon
 should be no more than 300 words. The LLM may exceed the word limit you provide,
 but it will at least be in the general vicinity.
 
-== AI-Assisted Programming
-AI-assisted programming tools are crafted to enhance developers’ abilities, enabling
-them to zero in on advanced problem solving and innovations instead of being
-ensnared in monotonous tasks or complex code details. This is why GitHub’s use of
-the word copilot is spot on. It’s about having that reliable buddy in the cockpit, navi‐
-gating through the intricate and often tedious aspects of coding, allowing you to focus
-on what matters.
+== Best Practices
+=== Be Specific
+The more details, the better. 
 
-== Evaluation of AI-Assisted Programming Tools
-* You’ve got to weigh many factors like its precision, chat features, security, speed, and user-friendliness.
-* get recommendations from other developers. 
-* Plus, it’s a good idea to test drive a few yourself. Luckily, most of these tools offer free trials, so you can give them a whirl without committing right off the bat.
-* Another key aspect to consider is the company’s financial backing. Does it have venture capital funding? Without this, a company might struggle not just to grow but also to keep its platform innovative. 
+You also need to be clear. Otherwise, the LLM may make assumptions or even hallucinate.
 
+some prompts that are too vague.
 
-Let’s look at a simple example. For this, we’ll use ChatGPT, which has a robust ability
-to gin up code. We will use a prompt to ask what we want the system to do. Suppose
-we give it the following prompt:
-Prompt: In Python, write a program that checks if a given integer is even or odd and
-print the result.
+* Prompt: Develop a feature to enhance data security.
+* Prompt: Can you build a tool to automate the process?
+* Prompt: Optimize the code.
+* Prompt: We need a function to process transactions.
 
-[source,python,attributes]
-----
-# Ask the user for an integer input
-number = int(input("Enter an integer: "))
+The following are much more detailed and should get better results:
 
-# Check if the number is even or odd
-if number % 2 == 0:
-    print(f"{number} is even.")
-else:
-    print(f"{number} is odd.")
-----
-<pre>
-How it works:
+* Prompt: Develop a Python function to parse dates from strings. The function should be
+able to handle the formats YYYY-MM-DD, MM/DD/YYYY, and Month DD, YYYY. It
+should return a datetime object. Provide a script that demonstrates the function han‐
+dling at least three examples of each format correctly, along with a document explain‐
+ing any dependencies, the logic used in the function, and instructions on how to run
+the script.
+* Prompt: Develop a SQL query to retrieve from our database a list of customers who
+made purchases above $500 in the last quarter of 2023. The query should return the
+customer’s full name, their email address, the total amount spent, and the date of their
+last purchase. The results should be sorted by the total amount spent in descending
+order. Please ensure that the query is optimized for performance.
 
-The program reads an integer from the user using input().
+=== Acronyms and Technical Terms
+It’s crucial to be clear with technical terms and acronyms while drafting a prompt.
+This jargon often means different things in different contexts and can lead to unhelp‐
+ful responses. Thus, it’s a good idea to spell out acronyms and give clear definitions or
+explanations of any technical terms used.
 
-It uses the modulus operator % to check the remainder when dividing by 2:
+For example, suppose you are using ChatGPT to help resolve a database connection issue. A poorly crafted prompt might be:
 
-If number % 2 == 0, it’s even.
+ Prompt: Having DB connection issues. How to fix it?
 
-Otherwise, it’s odd.
-</pre>
+In this prompt, “DB” is ambiguous as it might refer to different database systems like MySQL, PostgreSQL, or others, and the nature of the connection issue is not clarified.
+
+A more effective prompt would be:
+
+ Prompt: I am encountering a connection timeout issue while trying to connect to my PostgreSQL database using JDBC. How can I resolve this?
+
+This prompt clearly spells out the database system in use, the method of connection,
+and the specific issue encountered.
+
+=== Zero- and Few-Shot Learning
+With zero-shot learning, you provide one prompt and get the answer you want. Often,
+this works fine. But given the complexities of programming languages and frame‐
+works, there are times when you need to nudge the LLM.
+
+You can do this with few-shot learning. This refers to an LLM’s capability to under‐
+stand and perform a task with very few examples or training data. This is a significant
+advantage over traditional machine learning models, which may require a large
+amount of training data to perform adequately on a task. The LLM’s capability is pri‐
+marily due to the extensive pretraining on a diverse range of internet text that the
+LLM undergoes before it is fine-tuned for a specific task.
+
+Let’s take a look at an example of few-shot learning. Consider a scenario in which we
+want to generate a function that normalizes a given list of numbers. It will scale the
+values in the list to a range of [0, 1]. In the instructions, we include a list of a few
+examples of the inputs and normalized outputs.
+
+ Prompt: Based on the following examples of normalizing a list of numbers to a range of [0, 1]:
+ 1. Input: [2, 4, 6, 8] Output: [0, 0.3333, 0.6667, 1]
+ 2. Input: [5, 10, 15] Output: [0, 0.5, 1]
+ 3. Input: [1, 3, 2] Output: [0, 1, 0.5]
+ Generate a function in Python that takes a list of numbers as input and returns a list of
+ normalized numbers.
+
+ChatGPT will “learn” from the data and come up with some code:
+
+=== Leading Words
+The concept of leading words refers to specific keywords or phrases that can guide an
+LLM toward creating a particular kind of output. Sometimes you can achieve the
+desired result using just one code word. Here’s an example:
+ Prompt:
+ # Create a simple Python function that
+ # 1. Prompts me for a temperature in Fahrenheit
+ # 2. Converts Fahrenheit to Celsius
+ def
+
+Using the word def as a leading word informs the model that it should begin writing a
+Python function. THe following able gives more examples of leading words.
+[options="header"]
+|===
+|Context |Leading word
+
+|JavaScript function
+|Function
+
+|HTML element
+|<button
+
+|CSS styling
+|P {
+
+|SQL insert query
+|INSERT INTO
+
+|Java method creation
+|public
+|===
+
+=== Chain of Thought (CoT) Prompting
+This approach enhances the reasoning abilities of LLMs by breaking down a
+complex problem into different steps. It’s actually similar to few-shot learning, which
+allows for nudging the model.
+
+CoT prompting can be very useful in software code generation tasks. Let’s look at an
+example. Suppose you want to create a web application with a user registration and
+login functionality using Flask, a Python web framework. The following table shows the CoT
+prompting steps.
+
+[options="header"]
+|===
+|Action description |Prompt
+
+|Understand the requirement
+|"I need to create a web application using Flask. The application should have a user registration and login functionality. Where should I start?"
+
+|Set up Flask application
+|"Let’s begin by setting up a basic Flask application. How can I do that?"
+
+|Create user model
+|"Now that the Flask application is set up, I need to create a user model for handling registration and login. How should I structure this model?"
+
+|Implement registration
+|"With the user model in place, how can I implement a registration page with the necessary fields?"
+
+|Implement login
+|"Now let’s move on to creating a login page. How can I ensure secure login?"
+
+|Session management
+|"After a user logs in, how should I manage user sessions to keep users logged in as they navigate through the app?"
+
+|Logout implementation
+|"Finally, how can I implement a logout function to securely log users out of the application?"
+|===
+
+=== Leading Questions
+Leading questions in a prompt can often fetch wonky responses from the LLM. It’s better to stay neutral and unbiased. Also, it’s good practice to avoid making assumptions; spell things out instead.
+
+This prompt is a leading question:
+
+ Prompt: Isn’t it true that migrating to a microservices architecture will always improve system scalability?
+
+A more balanced prompt would be:
+
+ Prompt: What are the advantages and potential challenges of migrating to a microserices architecture in terms of system scalability?
+
+=== Ask for Examples and Analogies
+Suppose you don’t know the concept of inheritance in object-oriented programming.
+You go to ChatGPT and enter this prompt:
+
+ Prompt: Explain inheritance that is used in object-oriented programming.
+
+You will get a detailed response. But you may want to get something that’s easier to
+understand. A good way to do this is by asking the LLM for an analogy:
+
+ Prompt: Explain inheritance that is used in object-oriented programming by using an analogy.
+
+ ChatGPT: Think of inheritance like a family tree, where children inherit certain traits and properties from their parents and, potentially, grandparents.
+
+From there, ChatGPT provides more detail, which proceeds from the analogy, to explain the key elements of inheritance.

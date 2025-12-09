@@ -64,9 +64,8 @@ Popular message brokers used in cloud native applications include Apache Kafka, 
 In summary, message queuing is a fundamental pattern in cloud native applications that enables asynchronous communication between services. It provides the necessary decoupling, scalability, and reliability needed to build modern applications that can handle varying workloads and adapt to changing requirements. By leveraging message brokers, cloud native applications can achieve greater flexibility and resilience, making them well-suited for the dynamic nature of cloud environments. 
 
 == Handling challenges with messaging
+Even though sending asynchronous messages is preferred over synchronous API calls, it comes with challenges of its own. 
 
-Even though sending asynchronous messages is preferred over synchronous API calls, it comes with 
-challenges of its own. 
 === Consumer groups
 The problem here is, if we scale up the number of instances of a message consumer, for example, if 
 we start two instances of the product microservice, both instances of the product microservice will 
@@ -86,17 +85,16 @@ the product microservice, it will look like this:
 [source,yml,attributes]
 ----
 spring.cloud.stream:
- bindings.messageProcessor-in-0:
- destination: products
- group: productsGroup
+  bindings.messageProcessor-in-0:
+    destination: products
+    group: productsGroup
 ----
 From this configuration, we can learn the following:
 
 * Spring Cloud Stream applies, by default, a naming convention for binding a configuration to a 
 function. For messages sent to a function, the binding name is <functionName>-in-<index>:
 * functionName is the name of the function, messageProcessor in the preceding example.
-* index is set to 0, unless the function requires multiple input or output arguments. We 
-will not use multi-argument functions, so index will always be set to 0 in our examples.
+* index is set to 0, unless the function requires multiple input or output arguments. 
 * For outgoing messages, the binding name convention is <functionName>-out-<index>.
 * The destination property specifies the name of the topic that messages will be consumed 
 from, products in this case.
@@ -108,11 +106,13 @@ If a consumer fails to process a message, it may be re-queued for the failing co
 message will block the consumer from processing other messages until it is manually removed. If the 
 failure is due to a temporary problem, for example, the database can’t be reached due to a temporary 
 network error, the processing will probably succeed after a number of retries.
+
 It must be possible to specify the number of retries until a message is moved to another storage 
 for fault analysis and correction. A failing message is typically moved to a dedicated queue called a 
 dead-letter queue. To avoid overloading the infrastructure during temporary failure, for example, a 
 network error, it must be possible to configure how often retries are performed, preferably with an 
 increasing length of time between each retry.
+
 In Spring Cloud Stream, this can be configured on the consumer side, for example, for the product
 microservice, as shown here:
 [source,yml,attributes]
@@ -131,6 +131,7 @@ spring.cloud.stream.kafka.bindings.messageProcessor-in-0.consumer:
 In the preceding example, we specify that Spring Cloud Stream should perform 3 retries before placing 
 a message on the dead-letter queue. The first retry will be attempted after 500 ms and the two other 
 attempts after 1000 ms.
+
 Enabling the use of dead-letter queues is binding-specific; therefore, we have one configuration for 
 RabbitMQ and one for Kafka.
 
@@ -238,6 +239,7 @@ Polar Book Shop::
 ----
 ----
 ======
+
 == Examples
 
 * https://github.com/spring-kb/logging-spring-rabbitmq-logging[A Simple Solution for Log Centralization Using Spring and RabbitMQ]

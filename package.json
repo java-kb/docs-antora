@@ -7,5 +7,8 @@
     "@springio/antora-extensions": "^1.14.2",
     "@springio/asciidoctor-extensions": "^1.0.0-alpha.14",
     "antora": "^3.1.9"
+  },
+  "devDependencies": {
+    "gulp": "^5.0.1"
   }
 }

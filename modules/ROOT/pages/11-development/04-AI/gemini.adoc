@@ -1,0 +1,40 @@
+= Gemini
+
+== Applications
+=== Excel
+you can use Gemini to explain a formula.
+
+ Prompt: Explain the following Excel formula: =SUM(OFFSET(A1,1,0,COUNT(A:A),1))
+
+Another use case is to create VBA scripts. Here are some sample prompts:
+
+ Prompt: How can I create a custom form in Excel using VBA for entering user login details?
+
+ Prompt: Can you help me write a VBA script for Excel to protect specific data with a password?
+
+ Prompt: I need VBA code to validate email addresses and date formats in my Excel user login sheet. Can you assist?
+
+ Prompt: Is it possible to send automated email notifications from Excel using VBA to get updates about user login information?
+
+Gemini can load and analyze Excel spreadsheets. You can then ask questions
+about them, such as to get a step-by-step understanding or to highlight a certain area of your data or logic.
+
+Suppose you have an Excel spreadsheet with data on book sales. Here are some example prompts:
+
+Prompt: Can you show me how to find the highest royalty amount earned by an author
+in Excel?
+
+ Prompt: I want to calculate the inventory turnover rate for each book in Excel. What
+formula should I use?
+
+ Prompt: How do I create a stock shortage alert in Excel, indicating when to order more
+based on the reorder level?
+ 
+ Prompt: How do I calculate the percentage of positive reviews (ratings 4 or higher) for
+books in Excel?
+
+== Coding
+Gemini understands over 20 computer programming languages. So let’s try out the system with this prompt:
+ 
+ Prompt: Generate a TypeScript function that converts a temperature from Celsius to Fahrenheit.
+== Extensions

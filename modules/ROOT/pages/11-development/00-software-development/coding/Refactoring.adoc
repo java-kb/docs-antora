@@ -35,6 +35,14 @@ alone. It would be nice to improve it, but unless someone needs to understand
 it, it isn’t causing any real harm. Yet as soon as someone does need to understand how that code works, and struggles to follow it, then you have to do
 something about it.
 
+Refactoring is like spring cleaning for your code. It’s all about tidying up, reorganiz‐
+ing, and sometimes sprucing things up. It’s not about adding new features or fixing
+bugs.
+Refactoring keeps the codebase healthy, less cluttered, and more intuitive. This means
+when you or someone else jumps back in later, it’s easier to understand what’s going
+on, which cuts down on headaches and, well, swearing at the screen. Plus, cleaner
+code is usually more efficient and less buggy, so it’s a win-win for everyone involved.
+
 
 ``When you have to add a feature to a program but the code is not structured in a convenient way, first refactor the program to make it easy to add the feature, then add the feature.``
 

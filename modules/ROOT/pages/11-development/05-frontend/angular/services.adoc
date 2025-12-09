@@ -1,0 +1,222 @@
+= Services
+
+One of the great differences between a static web page and a single-page application is the processing 
+capacity and interaction in the user’s browser, giving the feeling of an application installed on the 
+device. In the Angular framework, the elements for this processing and interaction, not only with the 
+backend but with the user, are the services.
+
+Services in Angular are TypeScript classes that aim to implement business logic for our interfaces. 
+Business logic in a frontend project can seem like a controversial issue because ideally, all logic and 
+processing should take place on the backend, which is correct.
+Here we are using business rules; these rules are generic behaviors that do not depend on a visual 
+component and can be reused in other components.
+
+Examples of frontend business rules could be as follows:
+
+• Application state control
+• Communication with the backend
+• Information validations with a fixed rule, such as the number of digits in a telephone number
+
+When we create a service, it has an @Injectable decorator, as in our example:
+@Injectable({
+ providedIn: 'root',
+})
+export class ExerciseSetsService {
+}
+
+The provideIn metadata determines the scope of the service. The value 'root' means that the 
+instance of the service will be unique for every application; that’s why, by default, Angular services 
+are singleton.
+
+by default, the services are singleton, but in Angular, it is possible to change this 
+configuration for another service if you need to solve some corner cases in your application.
+
+@Component({
+ templateUrl: './diary.component.html',
+ styleUrls: ['./diary.component.css'],
+ providers: [ExerciseSetsService],
+})
+export class DiaryComponent {
+}
+
+This technique, however, must be used in specific cases where the component must have its own 
+instance of the services it uses; it is recommended to leave the provideIn in the services.
+
+Calaculator Example::
++
+[tabs]
+====
+
+Country.ts::
++
+[source, javascript]
+----
+----
+====
+
+Gym Diary::
++
+Let’s change our gym diary so that the ListEntriesComponent component receives the initial 
+list by service instead of @Input:
++
+Let’s learn about this feature in practice by preparing our project to consume its backend.
+First, let’s upload the backend locally by accessing the gym-diary-backend folder and using the 
+following command in your command-line prompt:
+npm start
+We can leave this command running and can now create the services for the consumption of the API.
++
+Our project’s backend API returns some JSON, containing the list of exercises for the day. As good 
+practice, we should create an interface to facilitate typing and the manipulation of the results in our 
+frontend application(ExerciseSetListAPI)
++
+Now we can refactor our ExerciseSetsService service to use HttpClient:
+
+[tabs]
+====
+
+frontend/src/app/diary/interfaces/exercise-set.ts::
++
+[source, javascript]
+----
+export interface ExerciseSet {
+    id?: string;
+    date: Date;
+    exercise: string;
+    sets: number;
+    reps: number;
+}
+
+export type ExerciseSetList = Array<ExerciseSet>;
+
+export interface ExerciseSetListAPI {
+    hasNext: boolean;
+    items: ExerciseSetList;
+}
+----
+
+frontend/src/app/diary/services/exercise-sets-service.ts::
++
+First, we inject the HttpClient service into our class using the inject function. We then create 
+the url variable to contain the endpoint of this service that will be used in the service’s methods.
+Finally, we refactor the getInitialList and refreshList methods to consume the project’s 
+API.
++
+First, we inject the HttpClient service into our class using the inject function. We then create 
+the url variable to contain the endpoint of this service that will be used in the service’s methods.
+Finally, we refactor the getInitialList and refreshList methods to consume the project’s 
+API.
++
+Using the HttpClient service to consume a GET-type API, we declare the return type represented 
+here by the ExerciseSetListAPI type and the service’s get method, passing the URL of the 
+endpoint that we are going to consume as a parameter.
++
+[source, javascript]
+----
+import { inject, Injectable } from '@angular/core';
+import { ExerciseSet, ExerciseSetList, ExerciseSetListAPI } from '../interfaces/exercise-set';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class ExerciseSetsService {
+  private httpClient = inject(HttpClient);
+
+  private url = 'http://localhost:3000/diary';
+
+  getInitialList(): Observable<ExerciseSetListAPI> {
+    return this.httpClient.get<ExerciseSetListAPI>(this.url);
+  }
+
+  refreshList(): Observable<ExerciseSetListAPI> {
+    return this.httpClient.get<ExerciseSetListAPI>(this.url);
+  }
+
+  addNewItem(item: ExerciseSet): Observable<ExerciseSet> {
+    return this.httpClient.post<ExerciseSet>(this.url, item);
+  }
+
+  updateItem(id: string, item: ExerciseSet): Observable<ExerciseSet> {
+    return this.httpClient.put<ExerciseSet>(`${this.url}/${id}`, item);
+  }
+  
+  deleteItem(id: string): Observable<boolean> {
+    return this.httpClient.delete<boolean>(`${this.url}/${id}`);
+  }
+}
+----
+
+frontend/src/app/diary/diary/diary.ts::
++
+Let’s tailor our DiaryComponent component to consume the refactored service. Our challenge 
+here is to deal with the asynchrony of consuming a REST API via an HTTP request.
++
+In the DiaryComponent class, we will implement the OnInit interface and create the onInit
+method. This method is one of the lifecycle events of Angular components, which means that it will 
+be called at some point by Angular when building and rendering the interface.
+The onInit method is called after building the component, but before rendering the component. We 
+need to implement this method because the filling of the list of exercises will occur asynchronously. 
+Implementing this initialization in the onInit method will ensure that the data will be there when 
+Angular starts rendering the screen.
+In this method, we are using the service, but as it now returns an Observable, we need to call the 
+subscribe method and, within it, implement the initialization of the list. As we are using the 
+smart and presentation component architecture, we can implement the button methods in the 
+DiaryComponent smart component
+[source, javascript]
+----
+import { Component, inject, OnInit } from '@angular/core';
+import { ExerciseSet, ExerciseSetList } from '../../diary/interfaces/exercise-set';
+import { ListEntries } from '../list-entries/list-entries';
+import { NewItemButton } from "../new-item-button/new-item-button";
+import { ExerciseSetsService } from '../services/exercise-sets-service';
+
+@Component({
+  selector: 'app-diary',
+  imports: [ListEntries, NewItemButton],
+  templateUrl: './diary.html',
+  styleUrl: './diary.css',
+})
+export class Diary implements OnInit {
+  private exerciseSetsService = inject(ExerciseSetsService);
+
+  exerciseList!: ExerciseSetList;
+
+  ngOnInit(): void {
+    this.exerciseSetsService
+      .getInitialList()
+      .subscribe((dataApi) => (this.exerciseList = dataApi.items));
+  }
+
+  newList() {
+    this.exerciseSetsService
+      .refreshList()
+      .subscribe((dataApi) => (this.exerciseList = dataApi.items));
+  }
+  addExercise(newSet: ExerciseSet) {
+    this.exerciseSetsService
+      .addNewItem(newSet)
+      .subscribe((_) => this.newList());
+  }
+  deleteItem(id: string) {
+    this.exerciseSetsService.deleteItem(id).subscribe(() => {
+      this.exerciseList = this.exerciseList.filter(
+        (exerciseSet) => exerciseSet.id !== id
+      );
+    });
+  }
+  newRep(updateSet: ExerciseSet) {
+    const id = updateSet.id ?? '';
+    this.exerciseSetsService
+      .updateItem(id, updateSet)
+      .subscribe();
+  }
+}
+----
+
+frontend/src/app/diary/interfaces/exercise-set.ts::
++
+[source, javascript]
+----
+----
+====
