@@ -1,0 +1,286 @@
+:navtitle: AI-assisted Testing
+[[AI-in-Testing]]
+= AI-assisted Testing
+
+By combining techniques such as test-driven design (TDD) or the power 
+of LLMs, developers can increase their productivity while ensuring that their analytical 
+and design skills lead the charge.
+
+* If we have a limited understanding of what testing is, then the use of tools will also 
+be limited.
+* Testing is not a confirmatory exercise but rather a collection of different activi-
+ties that help those seeking to learn about the imagination and implementation 
+of a product.
+* The imagination implies our understanding of what we want to build.
+* The implementation implies our understanding of what we have built.
+* As our understanding of both aspects increases, we bring them into alignment, 
+which helps us deliver a higher-quality product.
+* We run many different types of testing activities to focus on different types of risks 
+and how they affect both imagination and implementation.
+* Tools are an essential component of successful testing. 
+* LLMs can be used to generate, transform, and enhance outputs.
+* LLMs should be used with smaller, specific tasks to generate outputs that provide 
+value.
+* LLMs can generate content that can help with specific tasks or create suggested 
+content.
+* LLMs can transform data to help convert raw data into useful formats or summa-
+rize it.
+* LLMs can also enhance existing material, adding new suggestions or expanding 
+details.
+* We can insert LLMs into many distinct and specific testing tasks, which reflects 
+the area of effect model
+
+==  when to use LLMs in testing
+LLMs can be inserted into distinct and specific tasks within the 
+wider testing lifecycle.  Instead of attempting to use LLMs to replicate the full gamut of testing activ-
+ities that exist within a lifecycle, we prioritize the best of our abilities as humans and the value we bring to testing. Then, we choose to add LLMs in select areas to expand 
+our work so that we can move faster, learn more, and help ensure our teams are better 
+informed so that they can build higher-quality products.
+
+image::{figures}/visualization-of-testing-process-with-llms.png[A visualization of the testing process, with the addition of LLMs]
+
+=== Generative capabilities
+In the vast field of artificial intelligence, LLMs fall under the banner of generative AI;
+that is, LLMs have been built with the purpose of generating content (which differs
+from other AI that may be used to predict or classify). For example, this means that if
+an LLM was asked to generate test cases for us, it would do so. However, just because it
+can generate material like test cases doesn’t mean that those test cases are of value to
+us. We must remind ourselves that how an LLM generates outputs is based on a com-
+plex model of probabilities. This means its generative abilities differ from how we as
+humans might generate ideas.
+
+How an LLM has generated these test cases is impressive, but they lack context and
+specificity for the feature or product we are testing. So instead, when working with
+LLMs, we need to make sure that how we prompt or extend them provides them with
+enough context to generate valuable outputs.
+
+The consequence of ensuring that we provide sufficient context is that it’s easier
+to use LLMs to generate outputs for very specific and targeted tasks. The alternative
+means we would have to provide a massive amount of input data that would result in
+a prompt that is expensive to build and maintain. For example, imagine the amount
+of context you would have to put into an LLM to obtain a test strategy relevant to our
+working context.
+
+Instead, we can get more value from LLMs if we focus on using them to help with
+tasks such as
+
+* Test data generation—When given explicit rules around data sets, LLMs can be
+used to generate rapid sets of data for use in a range of testing activities, from
+exploratory to performance testing.
+* Suggestions for risks and test ideas—We should always avoid letting the output of an
+LLM be the sole arbiter of what to test. We can use them to suggest test ideas and
+risks that can be used as jumping-off points for new ideas or factored into our
+existing work.
+* Code snippets—Swe gain little value from 
+LLMs if we ask them to generate complete automated tests or frameworks. How-
+ever, using them to generate smaller parts of automation or scripts used to sup-
+port testing activities such as exploratory testing can be advantageous.
+
+=== Transformation capabilities
+LLMs are capable of transforming all types of data
+from one abstraction to another. Here are some examples that can help with testing:
+
+* Transforming test data—Using LLMs to rapidly transform data from one structure
+to another can help speed up testing. For example, we might ask an LLM to con-
+vert plain-text test data into SQL statements or to convert SQL statements into
+helper functions that are called in test automation.
+* Converting code—LLMs can convert functions, classes, and other data into new
+iterations of code. What makes this valuable is that LLMs can transform code into
+different languages but still keep the logic and flow of the original code in 
+thenewly translated output (although we should always test it to be sure).
+* Summarizing notes—Although the conversion of data isn’t as direct as, say, con-
+verting a code snippet from one language to another, we can use LLMs to trans-
+form and summarize at the same time. Also, we can use LLMs to take raw testing
+notes from testing activities such as exploratory or design testing sessions and
+have them converted into summary notes to be shared with others.
+
+=== Enhancing capabilities
+we can use LLMs to enhance and expand existing material. This usually means
+providing an LLM with a snippet of data and prompting the LLM to expand on it. This
+has some overlap with the generative capabilities because we’re asking LLMs to gen-
+erate a certain degree of new output, but in this situation, we’re providing a lot more
+upfront context and instructing it to focus on existing material, as opposed to prompt-
+ing an LLM to generate something completely new. This means we can use this ability 
+to help us with testing tasks such as
+
+* Reviewing code—Not all who conduct testing are confident coders, and even those 
+who are comfortable with reading code can struggle at times to make sense of the 
+code required to analyze or test. LLMs can enhance our understanding by taking 
+code snippets and providing a natural language breakdown of how said code 
+works, which can help with risk analysis, test design, and more.
+* Descriptive code—Similar to reviewing code, we can use LLMs to help improve the 
+descriptiveness of code—for example, rapidly creating code comments that can 
+be easily created and maintained. This can be especially useful for automated 
+testing, where communicating what our automation code is doing is important 
+for maintenance.
+* Expanding analysis—We can also use LLMs to expand our analysis activities, such 
+as risk analysis and design testing (where we ask questions about requirements 
+before the feature is built). By providing it with our current analysis data, we can 
+ask LLMs to review and expand on it, suggesting new ideas that we can either 
+incorporate into our analysis or ignore.
+
+==  shift-left testing
+by introducing LLMs into the process, we can use prompts to generate 
+questions that might reveal assumptions or misunderstandings or questions that we 
+can simply disregard
+Let’s take a look at a sample prompt that can be used to rapidly generate questions that 
+might be useful. We use delimiters to inform the LLM where the data to analyze is found:
+
+MW You are a software testing expert. Analyze the text delimited by triple hashes and gen-
+erate questions that will clarify ambiguities in the text.
+
+We then set a series of rules around how questions are asked and output:
+
+* Questions will be generated by using the What, Where, Why, When, Who and How 
+heuristic
+* Multiple questions can be identified for each quality characteristic
+* The quality characteristics we care about are: Accuracy, Security and Accessibility
+* Output questions in the format of Question - Explanation
+
+Few-shot prompting allows us to create an example of how we expect the output to 
+look:
+
+MW Example:
+What does relevant mean?
+The acceptance criteria says relevant search results, but how do we determine what 
+is relevant and what isn’t?
+
+We then enter the data for analysis into the delimited section of the prompt:
+
+MW ###
+As a B&B owner
+I want to be able to manage user access
+So that I can allow different levels of access to multiple users
+Features:
+- DB is configured with an Admin user
+- Guests are asked to create an account to make a booking
+- Admin can see the accounts created on the platform and can delete them
+###
+
+The prompt outlines instructions for an LLM to analyze a user story and acceptance
+criteria and return a list of questions for us to consider. Notice how we also provide
+context in the quality characteristics instruction. If we want to focus on different char-
+acteristics, we can update these as well.
+
+[tabs]
+======
+ChatGPT::
+Below is a tester-style ambiguity analysis using the What / Where / Why / When / Who / How heuristic, focused on the quality characteristics Accuracy, Security, and Accessibility.
+
+Accuracy
+
+What are the different “levels of access” available?
+The text mentions different levels of access, but it does not define what roles exist or what each role can do.
+
+What actions can an Admin perform besides viewing and deleting accounts?
+It is unclear whether Admin access includes editing accounts, resetting passwords, or managing bookings.
+
+What information about user accounts can the Admin see?
+“See the accounts” is vague—does this include personal data, booking history, roles, or status?
+
+Who qualifies as a “guest” versus a “user”?
+The text uses “Guests” and “users” interchangeably, which may lead to confusion about system behavior.
+
+When is a guest required to create an account?
+Is account creation mandatory before browsing, before booking, or only at checkout?
+
+How is account deletion handled functionally?
+It is unclear whether deletion is soft (deactivated) or hard (permanently removed).
+
+Security
+
+Who is allowed to delete user accounts?
+The text says Admin can delete accounts, but does not specify whether other roles can perform similar actions.
+
+How is the Admin user initially created and secured?
+The DB is configured with an Admin user, but there is no explanation of password management or initial credentials.
+
+How is authentication implemented for users and Admins?
+There is no information about login mechanisms, password rules, or session management.
+
+What prevents an Admin from accidentally or maliciously deleting the wrong account?
+There is no mention of confirmations, audit logs, or role separation.
+
+Why is account deletion allowed instead of suspension or deactivation?
+Permanent deletion may introduce security, audit, or compliance risks.
+
+Where is sensitive user data stored and protected?
+The text does not clarify how personal or booking data is secured in the database.
+
+Accessibility
+
+Who are the intended users of the access management interface?
+It is unclear whether the interface is designed only for Admins or also for users managing their own accounts.
+
+How will users with disabilities create an account and authenticate?
+There is no mention of accessibility considerations such as screen reader support or keyboard navigation.
+
+What accessibility standards are being followed (e.g., WCAG)?
+The text does not specify any accessibility guidelines or compliance requirements.
+
+How are error messages communicated during account creation or deletion?
+It is unclear whether messages are clear, readable, and accessible to all users.
+
+Where will account management actions be performed (web, mobile, both)?
+Accessibility requirements may differ depending on the platform, but this is not specified.
+
+Summary Tester Insight
+
+The feature describes intent, but lacks clarity around roles, permissions, security controls, and accessibility expectations. Addressing these questions early will reduce implementation risk and prevent misunderstandings between stakeholders, developers, and testers.
+
+Gemini::
+Based on the provided user story and features, I have analyzed the text for ambiguities using the 5W1H heuristic across the requested quality characteristics.
+Accuracy
+
+What specific "levels of access" are required? The user story mentions allowing "different levels of access," but the features only describe an "Admin" and a "Guest." We need to clarify if there are intermediate roles (e.g., Staff, Manager) and what specific permissions each entails.
+
+How should the system behave when an Admin deletes an account with active bookings? The text states Admins can delete accounts, but it doesn't define the business rules for active data. Does deleting the account cancel the booking, or does the booking persist as an "orphaned" record?
+
+When exactly is a guest "asked" to create an account? The feature says guests create accounts "to make a booking," but it’s unclear if this happens before they can see prices, after they select dates, or at the final payment step. This impacts the accuracy of the conversion flow.
+Security
+
+Who is responsible for the initial "Admin" credentials? The text says the DB is "configured with an Admin user," but doesn't specify how that password is set or changed. Is it a hardcoded default (security risk) or an environment variable set during deployment?
+
+How is sensitive Guest data (PII) protected during and after account creation? The requirements mention guests must create accounts, but there is no mention of encryption, password complexity requirements, or how data is handled to comply with privacy regulations like GDPR or CCPA.
+
+Where is the "Delete" functionality restricted to prevent unauthorized access? While it says "Admin can delete," we need to clarify if there are API-level safeguards to ensure a Guest cannot maliciously trigger a delete request for another user’s account.
+Accessibility
+
+How will the account creation form comply with WCAG (Web Content Accessibility Guidelines)? The requirement mandates account creation for bookings. If the form isn't accessible to screen readers or keyboard-only users, those guests will be physically unable to spend money at the B&B.
+
+What alternative flow exists for users who cannot complete the digital account process? "Guests are asked to create an account to make a booking" suggests a hard gate. We need to clarify if there is a "Guest Checkout" or a manual override for users with accessibility needs who may find account creation a barrier.
+
+Where is the Admin interface optimized for different devices and assistive technologies? As a B&B owner may be managing the property on the go, we need to know if the "manage user access" screens are mobile-responsive and accessible for owners who may have visual impairments or require high-contrast modes.
+======
+
+Reading through the response, we can see that there is an interesting collection of 
+questions ranging in quality. For example, consider this question:
+
+----
+MW How are guests guided to create accounts for booking, and is the process accessible 
+to all users?
+Explanation: The text states that guests are asked to create accounts, but it doesn’t
+specify how this process is carried out and if it meets accessibility standards.
+----
+
+This is a helpful question that encourages us to consider in more detail the statement
+“Guests are asked to create an account to make a booking, ”found in our user story. We
+could consider this question and think about how we would design the booking pro-
+cess to make it accessible to all types of users.
+However, other questions are perhaps not quite as good. For example,
+
+----
+MW What criteria are used to determine the accuracy of user access management?
+Explanation: The text mentions managing user access, but it doesn’t specify how
+accuracy is ensured in granting different levels of access to multiple users.
+----
+
+What makes this question problematic is its reference to the quality characteristic accu-
+racy. Typically, accuracy would be more focused on the accuracy of data processed or
+stored (think bank interest rate calculations). Instead, the phrase “accuracy of user
+access” feels like an odd way to describe the rules set around users and what they can
+access. Ultimately, it’s up to us to evaluate each question for suitability and use. Some
+questions can encourage us to build products that are more closely aligned with what
+a user wants and help us avoid errors, whereas other generated questions will either
+make little sense or cover topics already considered.
+

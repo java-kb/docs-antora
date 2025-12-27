@@ -73,6 +73,7 @@ Kubernetes, on the other hand, allows you to create a load balancer on top of yo
 gateway, so you can add redundancy to that layer too. You'll read more about platform
 implementations at the end of this chapter.
 
+
 == Timeouts
 Whenever your application calls a remote service, you don’t know if and when a
 response will be received. Timeouts (also called time limiters) are a simple, yet effective,

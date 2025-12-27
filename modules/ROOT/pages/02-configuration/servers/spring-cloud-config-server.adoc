@@ -311,11 +311,27 @@ to the repository backing the config server.
 
 image::{figures}/Refreshing-configuration-at-runtime-with-Spring-Cloud-Bus-and-Spring-Cloud-Config-Monitor.png[Broadcasting configuration changes through Spring Cloud Bus after the Config Service receives push notifications on every config repo change.]
 
+Spring Cloud Config also supports detecting changes in the configuration and pushing notifications to the affected microservices. It uses Spring Cloud Bus to transport the notifications. Spring 
+Cloud Bus is an abstraction on top of Spring Cloud Stream; that 
+is, it supports the use of either RabbitMQ or Kafka as the messaging system for transporting 
+notifications out of the box.
+
 You can rely on Spring Cloud Bus to broadcast configuration changes
 even when you use other options like Consul (with Spring Cloud Consul),
 Azure Key Vault (Spring Cloud Azure), AWS Parameter Store or AWS Secrets
 Manager (Spring Cloud AWS), or Google Cloud Secret Manager (Spring
 Cloud GCP). Unlike Spring Cloud Config, they don’t have built-in push notification capabilities, so you need to trigger a configuration change or implement your monitor functionality manually. 
+
+the cooperation between Spring Cloud Config, its clients, a Git 
+repository, and Spring Cloud Bus:
+
+1. When the microservices start up, they ask the configuration server for its configuration.
+2. The configuration server gets the configuration from, in this case, a Git repository.
+3. Optionally, the Git repository can be configured to send notifications to the configuration 
+server when Git commits are pushed to the Git repository.
+4. The configuration server will publish change events using Spring Cloud Bus. The micro-
+services that are affected by the change will react and retrieve the updated configuration 
+from the configuration server.
 
 == Usage
 

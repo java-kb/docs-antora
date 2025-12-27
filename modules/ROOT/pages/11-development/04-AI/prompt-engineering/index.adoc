@@ -78,16 +78,13 @@ with more concrete details.
 === Context
 You’ll often begin your prompt with a sentence or two that provide context. Often,
 you’ll specify the role or persona you want the AI to take on when providing the
-response. This leads to responses that are not only more accurate but also contextu‐
-ally relevant, ensuring a more meaningful result.
+response. This leads to responses that are not only more accurate but also contextually relevant, ensuring a more meaningful result.
 
 For instance, if you want to debug a piece of code, you might use this as the context:
 
- Prompt: You are an experienced software engineer specializing in debugging Java appli‐
-cations.
+ Prompt: You are an experienced software engineer specializing in debugging Java applications.
 
-Or suppose you want to learn about optimization techniques for a particular algo‐
-rithm. You could set the stage by stating:
+Or suppose you want to learn about optimization techniques for a particular algorithm. You could set the stage by stating:
 
  Prompt: You are a senior software developer with expertise in algorithm optimization.
 Adding context helps the LLM approach your prompt with the right mindset.
@@ -98,6 +95,610 @@ as the instruction or query to the model, guiding its response. Given the qualit
 the prompt and the context in which the model responds, it is essential always to be 
 aware of the prompts you have issued in the current session. Therefore, starting with 
 a new session every time you begin a new project is advised.
+
+To get 
+value from LLMs, we need to design prompts that are clear, contextual, and specific so 
+that we can extract more value from an LLM. Instead of deferring all responsibility to a 
+tool to create the response we desire, we instead appreciate that our understanding of a 
+context and the ability to distill that understanding into clear instructions are required 
+to create a prompt that will maximize the response from an LLM, leading to better-
+written prompts
+
+let’s consider an example in which we want to create tests for a file upload feature. First, we receive a user story like the following:
+
+¡	As a paralegal, in order to store and share legal documents, I want to be able to 
+securely upload documents.
+¡	Acceptance criteria:
+– Upload should support the following common file formats: PDF, DOCX, TXT
+– The maximum file size should be 20MB
+– When a document is uploaded it should give a progress update to the user
+– Once uploaded, the document must initially be only accessible to the person 
+who has uploaded it
+– A report of the upload and whether it was successful or not will be stored in the 
+auditing feature
+
+sending a prompt like this:
+
+ Create tests for a file upload feature
+
+[tabs]
+====
+ChatGPT::
++
+Below are clear, structured, and practical test cases for a file upload feature.
+I’m providing manual test cases, edge cases, security tests, and API/automation examples so you can use them in any QA/testing environment.
+
+✅ 1. Functional Test Cases
+TC01: Upload a valid file
+
+Steps:
+
+Open the upload page.
+
+Select a valid file (e.g., PDF, JPG, PNG).
+
+Click “Upload”.
+Expected Result:
+
+File uploads successfully.
+
+Success message appears.
+
+File appears in the uploaded list (if applicable).
+
+TC02: Upload multiple valid files
+
+Steps:
+
+Select multiple allowed files.
+
+Upload them.
+Expected Result:
+
+All files upload successfully.
+
+UI shows each file’s progress and result.
+
+TC03: Cancel an upload mid-way
+
+Expected Result:
+
+Upload stops immediately.
+
+No partial/invalid file is created on the server.
+
+TC04: Replace an existing file
+
+Expected Result:
+
+System warns about replacement OR replaces automatically based on requirement.
+
+New version fully overwrites the old one.
+
+TC05: Upload file via drag-and-drop
+
+Expected Result:
+
+Drag-and-drop triggers the same upload behavior as using the file selector.
+
+⚠️ 2. Validation & Negative Test Cases
+TC06: Upload unsupported file type
+
+Examples: .exe, .bat, .sh, .js, .zip (if disallowed)
+Expected Result:
+
+Upload is blocked.
+
+Clear error message displayed.
+
+TC07: Upload a file exceeding maximum size limit
+
+Expected Result:
+
+System rejects the file.
+
+Error message shows max allowed size.
+
+TC08: Upload empty file (0 bytes)
+
+Expected Result:
+
+File is rejected.
+
+User sees helpful error message.
+
+TC09: Upload corrupted or incomplete file
+
+Expected Result:
+
+Server rejects it (checksum or validation fails).
+
+Error displayed.
+
+TC10: Try uploading with no file selected
+
+Expected Result:
+
+Upload button should be disabled OR
+
+User sees a validation error.
+
+🔐 3. Security Test Cases
+TC11: Try uploading a file with a spoofed MIME type
+
+Example: .exe renamed to .jpg
+Expected Result:
+
+Server validates actual binary content.
+
+File is rejected.
+
+TC12: Verify server-side antivirus/malware scanning
+
+Expected Result:
+
+Malicious files are blocked.
+
+Logs show detection.
+
+TC13: Test unauthorized upload
+
+Try uploading without login (or with insufficient permissions).
+Expected Result:
+
+Upload request is rejected with 401/403.
+
+TC14: Directory traversal attack attempt
+
+Upload file named:
+
+../../../../../etc/passwd
+
+
+Expected Result:
+
+App normalizes file paths.
+
+No overwrite or file access occurs.
+
+TC15: SQL/Script injection via file metadata
+
+Upload file with malicious metadata:
+
+Filename: "test.jpg; DROP TABLE users;"
+Expected Result:
+
+Filename sanitized.
+
+No script executed.
+
+📡 4. API Test Cases (If using REST API)
+TC16: Upload using correct POST request (multipart/form-data)
+
+Expected:
+
+Returns HTTP 200 or 201
+
+JSON includes file URL, ID, or metadata
+
+TC17: Upload using GET or unsupported method
+
+Expected:
+
+Returns HTTP 405 Method Not Allowed
+
+TC18: Upload with missing required fields
+
+Example: Missing file parameter
+Expected:
+
+Returns HTTP 400 Bad Request
+
+Clear error in JSON response
+
+TC19: Validate response time
+
+Upload a 10 MB file.
+Expected:
+
+Response time under performance threshold (e.g., 2–5 seconds).
+
+📂 5. UI/UX Tests
+TC20: Progress bar behavior
+
+Expected:
+
+Shows uploading percentage
+
+Should not freeze
+
+Should reach 100%
+
+TC21: Error message clarity
+
+Expected:
+
+Any upload failure shows a readable error
+
+No technical jargon
+
+TC22: Disable UI during upload
+
+Buttons should disable to prevent repeated uploads.
+
+🧬 6. Performance/Stress Tests
+TC23: Upload multiple files simultaneously (20–50+)
+
+Expected:
+
+No crashes
+
+Server queues or handles efficiently
+
+TC24: Upload very large number of small files
+
+Expected:
+
+No memory leak
+
+Stable performance
+
+TC25: Test upload with slow network (throttling)
+
+Expected:
+
+Progress bar updates correctly
+
+Upload eventually completes or times out gracefully
+
+Gemini::
++
+That's a great request! Testing a file upload feature requires covering various aspects, from basic functionality to security and performance.
+
+Here is a comprehensive set of test cases, categorized for clarity.
+
+*📝 Functional Test Cases*
+
+These tests ensure the feature works as intended with valid and invalid inputs.
+
+[options="header"]
+|===
+|Test Case ID |Test Case Description |Expected Result
+
+|F-001
+|Upload a file of a supported type (e.g., .jpg, .pdf) and valid size.
+|File is uploaded successfully, and a confirmation message is displayed.
+
+|F-002
+|Upload a file of an unsupported type (e.g., .exe, .zip if not allowed).
+|Upload fails, and an appropriate error message is displayed (e.g., "File type not supported").
+
+|F-003
+|Upload a file that exceeds the maximum allowed size (e.g., 5.1 MB if the limit is 5 MB).
+|Upload fails, and an appropriate error message is displayed (e.g., "File size exceeds the limit").
+
+|F-004
+|Upload a file that is 0 bytes (empty file).
+|Upload fails or is handled gracefully (e.g., "Cannot upload an empty file").
+
+|F-005
+|Upload a file with a very long file name (e.g., 255 characters).
+|File is uploaded successfully, and the file name is stored/displayed correctly (may be truncated in display, but the file is intact).
+
+|F-006
+|Upload a file containing special characters in the file name (e.g., !@#$%^&()).
+|File is uploaded successfully, and the name is correctly processed/encoded.
+
+|F-007
+|Upload the same file multiple times (if duplicate uploads are allowed).
+|The file is uploaded again successfully, often with a different/versioned name.
+
+|F-008
+|Attempt to submit the form without selecting a file.
+|The upload button/process should be disabled, or a validation message is shown.
+
+|F-009
+|Cancel the upload process while it is in progress.
+|The upload stops, and no file is stored on the server.
+
+|F-010
+|Verify the uploaded file by downloading/viewing it from the application.
+|The downloaded file matches the original uploaded file (content and integrity).
+|===
+
+*🔒 Security Test Cases*
+
+These are crucial to prevent common vulnerabilities like malicious file execution or directory traversal.
+Test Case ID	Test Case Description	Expected Result
+S-001	Upload an executable file (.exe, .sh, .bat) disguised with a permitted extension (e.g., script.txt).	The server should use content-type/magic-number validation and reject the file, or the file should be stored in a non-executable directory and its name sanitized.
+S-002	Upload an image file (.jpg) that contains an embedded malicious script (e.g., XSS payload).	The script should not execute when the file is viewed/accessed by other users. File content should be sanitized or stored securely.
+S-003	Attempt a directory traversal attack by using file names like ../../../etc/passwd.	The upload should fail, or the server-side code should properly sanitize the path and only use the provided file name without path components.
+S-004	Check that access permissions on the uploaded file directory prevent public execution (e.g., set to non-executable).	The file cannot be executed directly via a URL.
+S-005	Check if the user can upload a file without being authenticated/authorized (if authentication is required).	Upload fails, and the user is prompted to log in or shown an authorization error.
+⏱ Performance and Stress Test Cases
+
+These ensure the feature handles various load conditions efficiently.
+Test Case ID	Test Case Description	Expected Result
+P-001	Upload a file that is exactly the maximum allowed size (e.g., 5 MB).	Upload is successful within an acceptable timeframe.
+P-002	Upload a large number of small files simultaneously (if multi-file upload is supported).	All files are uploaded successfully without timeouts or server errors.
+P-003	Upload the maximum allowed size file over a slow network connection.	The application shows a clear progress indicator and handles potential connection timeouts gracefully.
+P-004	Stress the system by having multiple users uploading files concurrently.	The server maintains stability, and all uploads are processed without failure or significant slowdowns.
+🖥 User Interface (UI) / User Experience (UX) Test Cases
+
+These tests cover the presentation and interaction of the feature.
+Test Case ID	Test Case Description	Expected Result
+U-001	Verify that the file upload field is responsive and functional across different browsers (Chrome, Firefox, Safari).	The upload field and process work correctly in all supported browsers.
+U-002	Check the UI for clear messaging regarding file size limits and supported file types.	The limits are displayed prominently near the upload button.
+U-003	Verify the functionality of drag-and-drop (if supported).	A file dropped onto the designated area initiates the upload process successfully.
+U-004	Check the progress bar (if available) during a large file upload.	The progress bar accurately reflects the percentage of data uploaded.
+U-005	Verify that all error messages are clear, user-friendly, and suggest a solution (e.g., "File too large. Please upload a file under 5 MB.").	Error messages are displayed prominently and are easy to understand.
+
+====
+
+if we start to consider the response more carefully, we can notice some problems:
+
+1. Test case 1.1 suggests testing with valid formats but offers examples of formats 
+our user story doesn’t support.
+2. The suggestions from number 4 onward are shallow. For example, the Security test offers a test to insert a malicious file but nothing else. Surely, there would be other security problems to consider.
+3. The expected outcomes are also very broad for each test case. For example, what does this response mean?"Error messages should be descriptive, helping users understand and resolve issues"
+
+the responses we’ve received from the LLM are broad and vague because our prompt is vague.a better prompt
+
+Act as a professional software tester and suggest test ideas for the feature delimited 
+by three hashes. All test ideas should be focused on discovering risks that impact the 
+quality characteristics: Functionality, Data Integrity and Security
+###
+* As a paralegal, in order to store and share legal documents, I want to be able to 
+securely upload documents.
+* Acceptance criteria:
+** Upload should support the following common file formats: PDF, DOCX, TXT
+** he maximum file size should be 20MB
+** When a document is uploaded it should give a progress update to the user
+** Once uploaded, the document must initially be only accessible to the person 
+who has uploaded it
+** A report of the upload and whether it was successful or not will be stored in the auditing feature
+###
+
+By creating a more focused and contextual prompt, we have created a response that 
+offers a richer range of suggestions for our testing. This would not be achieved by an 
+LLM alone but rather through the symbiosis of our skills to learn and frame our con-
+text into instructions that LLMs can take and rapidly expand on.
+[tabs]
+====
+ChatGPT::
++
+Below are professional, risk-focused test ideas targeting Functionality, Data Integrity, and Security for the feature described.
+All ideas aim to uncover defects that could materially impact a legal-document workflow.
+
+✅ 1. Functionality Risks
+Supported file formats
+
+Attempt uploading valid formats: PDF, DOCX, TXT.
+
+Attempt uploading unsupported formats (e.g., JPG, ZIP, EXE) to verify rejection.
+
+Try uploading a file with a valid extension but invalid content (e.g., rename .exe to .pdf).
+
+File size and upload behavior
+
+Upload a file just below the 20MB limit (e.g., 19.9MB).
+
+Upload a file exactly at 20MB.
+
+Upload a file just above the limit (20.1MB).
+
+Upload a file with corrupted or incomplete data.
+
+Verify upload is blocked when no file is selected.
+
+Test slow network conditions to see if progress updates remain accurate.
+
+Upload progress feedback
+
+Interrupt network mid-upload and verify progress reflects failure.
+
+Temporarily throttle bandwidth to check if the progress bar updates smoothly.
+
+Test multiple uploads back-to-back to ensure progress UI resets correctly.
+
+Post-upload access
+
+Verify uploader can immediately access the uploaded document.
+
+Ensure the document cannot be accessed before upload completion.
+
+Validate the system correctly marks the document as private upon upload.
+
+Audit reporting
+
+Confirm that every upload attempt creates an audit entry (success/failure).
+
+Validate audit entry contains: timestamp, user ID, file name, size, status.
+
+Stress test with multiple uploads to ensure audit logs are not skipped.
+
+🔐 2. Security Risks
+Unauthorized access
+
+Attempt accessing the uploaded file using another user account.
+
+Try direct URL access to the file via guessing or enumeration.
+
+Attempt accessing a file before upload is fully complete.
+
+Malicious content
+
+Upload files with:
+
+embedded scripts inside PDF/DOCX (macro or JavaScript payloads),
+
+obfuscated content,
+
+known malware signatures.
+
+Test upload of files with double extensions: document.pdf.exe.
+
+Tampering & injection
+
+Attempt uploading a file with a malicious filename, e.g.
+../../etc/passwd or "; DROP TABLE users; --.pdf.
+
+Test multipart/form-data boundary manipulation.
+
+Modify file metadata to include script payloads.
+
+Data interception & leakage
+
+Inspect network traffic to ensure file is transmitted over HTTPS.
+
+Validate upload progress events do not leak sensitive metadata.
+
+Attempt MITM to check for possible downgrade attacks or weak TLS.
+
+Security around audit logging
+
+Ensure audit logs cannot be altered, deleted, or spoofed.
+
+Attempt log poisoning using special characters in filenames or user data.
+
+🧩 3. Data Integrity Risks
+File integrity after upload
+
+Compare hash of file before upload and after download to ensure no corruption.
+
+Verify server does not compress, modify, or strip metadata (unless specified).
+
+Storage correctness
+
+Ensure uploaded file is stored under the correct user.
+
+Verify system prevents duplicate entries in storage or audit logs.
+
+Validate that two files with the same name return unique or versioned entries.
+
+Interrupted transfers
+
+Upload a file, disconnect the network halfway, then reconnect:
+
+Verify partial files are not stored.
+
+Validate retry/resume behavior if supported.
+
+Encoding & metadata
+
+Upload files with:
+
+long filenames,
+
+special characters,
+
+Unicode characters,
+
+large metadata blocks (especially DOCX).
+
+Validate metadata doesn’t break indexing or auditing.
+
+Consistency across UI and API
+
+Ensure UI shows the correct status (success/failure) matching the audit log.
+
+Test simultaneous uploads from multiple devices for the same account.
+
+🎯 Summary (Risk-Based Focus)
+Functionality
+
+Format validation
+
+Size limit enforcement
+
+Accurate progress feedback
+
+Correct ownership permissions
+
+Reliable audit logging
+
+Data Integrity
+
+No corruption on upload
+
+No partial/duplicate files
+
+Metadata preserved correctly
+
+Hash checks match original
+
+Security
+
+Identity & access control
+
+Secure transport (HTTPS)
+
+Malicious file defenses
+
+Safe audit trail
+
+No filename/metadata injection
+
+Gemini::
++
+As a professional software tester, I have analyzed the feature requirements for the secure document upload for the paralegal user. My focus will be on generating high-impact test ideas to uncover risks related to Functionality, Data Integrity, and Security.
+
+Here are the test ideas, categorized by the quality characteristic they target.
+
+*🛠 Functionality Test Ideas*
+
+These ideas focus on whether the feature behaves according to the specified acceptance criteria under various conditions.
+[options="header"]
+|===
+|Area |Test Idea |Risk Addressed
+
+|File Format Support
+|Attempt to upload files with supported formats (.pdf, .docx, .txt) and verify successful completion.
+|Failure to support mandatory file types.
+
+|Unsupported Formats
+|Attempt to upload common, but unsupported formats (.xlsx, .jpg, .zip, .exe). Verify that the system rejects the upload with a specific, helpful error message.
+|System allowing forbidden or unsafe file types, or confusing error messages.
+
+|Boundary File Size
+|Upload a file of exactly 20 MB and verify successful upload. Upload a file of 20 MB + 1 Byte (or 20.1 MB) and verify rejection with a clear error.
+|Failure at boundary conditions or incorrect size limit implementation.
+
+|Progress Update
+|Upload a large file (near 20 MB) and observe the progress bar/indicator. Verify that it accurately reflects the upload status (0% to 100%) and does not freeze or jump erratically.
+|Poor UX; user cannot track upload status, leading to confusion or assumed failure.
+
+|Progress Interruption
+|Start a large file upload and interrupt the connection (e.g., disable Wi-Fi/network, close the browser tab). Verify the system handles the interruption gracefully (e.g., failure notification, no partial file stored).
+|Server storing incomplete/corrupted files due to client-side interruption.
+
+|Auditing Report
+|Perform successful and unsuccessful uploads (e.g., unsupported file type). Then, access the auditing feature and verify that a report entry is correctly created for each event, detailing the outcome, user, and timestamp.
+|Failure to log critical events, hindering compliance and troubleshooting.
+
+|Zero-Byte File
+|Upload a file that contains no data (0 bytes). Verify that the system handles it appropriately (e.g., success, or rejection with a specific error message).
+|System crash or storing phantom files that impact storage/auditing.
+|===
+
+*💾 Data Integrity Test Ideas*
+
+These ideas ensure that the document remains accurate, consistent, and intact throughout the upload and storage process.
+Area	Test Idea	Risk Addressed
+File Content Verification	Upload a document containing unique text, then immediately download the document and verify the content using a hash comparison (e.g., MD5/SHA) or by manually checking for content corruption, truncation, or unexpected modifications. File corruption during transmission or server-side storage/processing.
+Metadata Integrity	Verify that critical metadata (original file name, file size) is correctly stored and displayed after upload, even for files with long or special characters (e.g., file_with_€_and_ñ.docx).	Data loss or corruption of important file identifiers.
+Auditing Data Accuracy	For a successful upload, verify that the audit report correctly logs the final status (Success) and the actual file name of the document that was stored.	Inaccurate auditing data, leading to misreporting of system status.
+Version Control Check	Upload a file, and then upload a modified version of the same file name. Verify whether the system creates a new version or replaces the original (depending on the intended behavior).	Data loss if the system overwrites files unexpectedly.
+🛡 Security Test Ideas
+
+These ideas are critical for a "securely upload documents" requirement, focusing on authorization, access control, and preventing malicious uploads.
+Area	Test Idea	Risk Addressed
+Initial Access Control	After a successful upload, log in as a different user (another paralegal/admin) and attempt to access/view/download the uploaded document via its URL or through the file list. Verify that access is denied (403 Forbidden).	Breach of privacy/confidentiality; the core acceptance criterion is violated.
+Malicious File Injection	Create a seemingly valid document (.pdf or .docx) that contains an embedded malicious script (e.g., XSS payload). Upload it and attempt to view it. Verify that the script does not execute in the viewer/browser.	Cross-Site Scripting (XSS) attacks affecting other users when they access the file.
+Path Traversal	Attempt to upload a file with a name designed for a path traversal attack (e.g., ../../../../system/passwords.txt). Verify that the server sanitizes the file path and only stores the file name in the designated folder.	Attacker gaining access to sensitive server files.
+MIME Type Bypass	Rename a known malicious executable file (e.g., virus.exe) to a supported extension (e.g., virus.pdf). Upload the file. Verify that the server uses content-type checking (magic numbers) in addition to the extension to reject the file.	Circumvention of simple extension validation, leading to malware storage.
+Unauthenticated Upload	Log out of the system or use a session that has expired, and attempt to initiate a file upload using API calls or the UI. Verify that the request is rejected and requires a valid, authenticated session.	Unauthorized users gaining access to file storage.
+====
 
 The purpose of the Persona Pattern is to design prompts that establish a specific persona or role for the AI to assume, which guides the model’s responses 
 in a consistent and contextually appropriate manner. By adhering to a defined 
@@ -117,6 +718,13 @@ general to specific, enhancing the output quality as the interaction progresses
 with large language models like ChatGPT.
 
 ==== Persona Pattern
+LLMs are probabilistic in nature, and as a result, it can be useful to think of them as outputting simulations of roles rather than inhabiting specific 
+roles. An LLM has no more awareness of being a software tester than it does of being 
+a restauranteur. But with prompt engineering, we can create prompts that frame an 
+LLM’s probabilistic output to simulate a role, helping us to create rubber ducks to 
+interact with. This can be useful in a development capacity when testing resources are 
+limited in either availability or capability. 
+
 The Persona Pattern is a technique used in prompt engineering where the model is instructed to adopt a specific persona or role. This helps guide the model's responses to align with the desired tone, style, or expertise level. For example, you might prompt the model to respond as a "software engineer" or "data scientist" to get more relevant and context-aware answers.
 
 In the context of prompt engineering, mainly related 
@@ -462,10 +1070,8 @@ should be no more than 300 words. The LLM may exceed the word limit you provide,
 but it will at least be in the general vicinity.
 
 == Best Practices
-=== Be Specific
-The more details, the better. 
-
-You also need to be clear. Otherwise, the LLM may make assumptions or even hallucinate.
+=== Write clear and specific instructions
+The more details, the better. You also need to be clear. Otherwise, the LLM may make assumptions or even hallucinate.
 
 some prompts that are too vague.
 
@@ -488,6 +1094,338 @@ customer’s full name, their email address, the total amount spent, and the dat
 last purchase. The results should be sorted by the total amount spent in descending
 order. Please ensure that the query is optimized for performance.
 
+this principle suggests 
+is that we write prompts that are clear and specific for an LLM. And that means some-
+thing different from what might be clear and specific to a human. To implement this 
+concept, Fulford and Ng teach four tactics to achieve clear and specific prompts: use 
+delimiters, ask for structured output, check for assumptions, and use few-shot prompt-
+ing.
+
+==== Use delimiters
+
+When writing prompts, we may need to provide different content and data that serve 
+different purposes. For example, the start of our prompt might include instructions on 
+what we want an LLM to produce, whereas the end of our prompt might include raw 
+data that we want to process. LLMs can guess our intentions for different sections of 
+our prompts, but because our goal is to be as clear as possible, we can aid the process 
+by using delimiters, which are characters used to separate strings, to state our inten-
+tions for different parts of our prompt.
+
+So, when writing prompts that contain a large amount of data that changes context, we 
+can use delimiters to make clear what is being provided in a prompt at a specific point.
+
+For example:
+
+Prompt: *You are a SQL data generator*. Generate five rows of SQL for a MySQL database.
+* The table name is identified with a # sign. 
+* Each table column is identified with a % sign
+* Each column is described in order of name, data type and data options using the | sign
+* If a column data option says random, randomize data based on the suggested format and column name 
+Here are the instructions:
+# rooms
+% room_name | string | random
+% type | string | 'single' or 'double'
+% beds | integer | 1 to 6
+% accessible | boolean | true or false
+% image | string | random url
+% description | string | random max 20 characters
+% features | array[string] | 'Wifi', 'TV' or 'Safe'
+% roomPrice | integer | 100 to 200
+
+We use the * character to delimit rules:
+
+We then use the #, %, and | delimiters that we set in rules to provide instructions:
+
+The delimiters help to make the prompt clearer, but they also make it easy to modify. 
+For example, if we want to reconfigure the generated data, we could enter another line, 
+such as
+
+Prompt: MW % room_size | string | 20m2 to 50m2
+
+TODO: Using the delimiter prompt example, we create new instructions—this time, for a book-
+ing that would include information about who made the booking, contact details, and 
+check-in and check-out dates.
+
+====  Ask for structured output
+We must always remember that we need to be clear in a prompt about what structured format we want to see used. 
+
+By explicitly stating 
+what format we desire, we can instruct an LLM with exactly what format we want at a 
+given time and then alternate formats with ease.
+
+example:
+
+Prompt: Create a JSON object with random data that contains the following fields: firstname,
+lastname, totalprice, deposit paid. Also, include an object called booking dates that
+contains checkin and checkout dates.
+
+We begin the prompt by clearly stating what format we want to see our object in, in
+this case, JSON, before we start outlining the structure of the object. 
+
+we can modify our instructions to quickly change the format by send-
+ing an additional prompt, such as
+
+Prompt: Create this in a YAML format
+
+==== Check for assumptions
+we want to reduce the risk of producing hallucinations. LLMs are more likely to hallucinate if they are 
+provided with prompts that are focused on edge cases around a problem we want to 
+solve. If an LLM is not properly instructed, it’s more likely to make a guess at an answer 
+than to outright inform us that it cannot provide a useful answer. So, if we want to avoid 
+guesswork, we need to provide instructions in our prompt to allow the LLM to bail out 
+if it cannot execute our request. 
+
+TODO: Create a prompt that filters specific data out of a list of raw data and then outputs the 
+results (for example, filter fruit from a list of different foodstuffs). Next, modify the data to 
+include an edge case (for example, incorrect or missing data). Observe what the LLM out-
+puts, and then attempt to correct the output by adding to the prompt some instructions 
+that follow the check-for-assumptions prompt.
+
+[tabs]
+======
+ChatGPT::
+[tabs]
+====
+1️⃣ Original Filtering Prompt::
+
+Prompt:
+
+You are given a list of food items.
+Filter out only the fruits and return them as a list.
+
+Raw Data:
+
+apple, carrot, banana, bread, orange, chicken
+
+
+Expected Output:
+
+apple
+banana
+orange
+
+2️⃣ Modify the Data (Add Edge Cases)::
+
+Edge cases introduced:
+
+Mixed casing (Apple)
+
+Misspelling (bananna)
+
+Non-food item (rock)
+
+Missing / empty value
+
+Ambiguous item (tomato – fruit or vegetable)
+
+Modified Raw Data:
+
+Apple, carrot, bananna, , orange, rock, tomato
+
+3️⃣ Observed LLM Output (Typical Issue)::
+
+Likely LLM Output:
+
+Apple
+orange
+tomato
+
+❌ Problems:
+
+Misspelled bananna was ignored
+
+Empty value not acknowledged
+
+Assumed tomato is a fruit without clarification
+
+No explanation of decisions
+
+4️⃣ Improved Prompt (Check-for-Assumptions Added)::
+
+Revised Prompt:
+
+You are given a list of food items that may contain:
+
+misspellings
+
+empty or missing values
+
+non-food items
+
+ambiguous items
+
+Instructions:
+
+Normalize casing before processing
+
+Attempt to correct obvious misspellings
+
+Ignore empty or non-food values
+
+For ambiguous items, include them only if they are commonly considered fruits
+
+If an item is excluded, briefly state why
+
+Return:
+
+A list of fruits
+
+A separate list explaining exclusions
+
+Input Data:
+
+Apple, carrot, bananna, , orange, rock, tomato
+
+5️⃣ Corrected Output (After Prompt Improvement)::
+
+Fruits:
+
+apple
+banana
+orange
+tomato
+
+
+Excluded Items:
+
+carrot – vegetable
+(empty value) – missing data
+rock – non-food item
+
+✅ Key Takeaway::
+
+Adding check-for-assumptions instructions:
+
+Prevents silent errors
+
+Forces explicit handling of ambiguity
+
+Improves reliability on messy real-world data
+====
+
+Gemini::
++
+[tabs]
+====
+Step 1: The Initial Filter Prompt::
+
+This prompt is designed for perfect, clean data.
+
+The Prompt:
+
+    "I will provide a list of foodstuffs. Please filter this list and output only the items that are classified as Fruit.
+
+    Data List:
+
+        Apple
+
+        Spinach
+
+        Banana
+
+        Chicken Breast
+
+        Blueberry
+
+        Cheddar Cheese"
+
+Expected Output:
+
+    Apple
+
+    Banana
+
+    Blueberry
+
+Step 2: Modifying with Edge Cases::
+
+Now, we introduce "dirty" data: an ambiguous description, a botanical vs. culinary conflict, and a missing value.
+
+The Modified Data List:
+
+    Apple
+
+    Spinach
+
+    [N/A]
+
+    Tomato (Is it a fruit or vegetable?)
+
+    Yellow curved fruit
+
+    Concrete block
+
+Observed LLM Output (Typical): The LLM will likely output:
+
+    Apple
+
+    Tomato
+
+    Yellow curved fruit
+
+The Problem: It made an executive decision that "Tomato" is a fruit (botanically correct but perhaps not what a chef wants) and assumed "Yellow curved fruit" is a banana without asking. It ignored the [N/A] and the "Concrete block" silently.
+
+Step 3: The "Check-for-Assumptions" Refined Prompt::
+
+To fix this, we add instructions that force the LLM to identify its own assumptions and flag data that doesn't fit the schema.
+
+The Refined Prompt:
+
+    "I will provide a list of items. Your goal is to extract only the Fruits.
+
+    Instructions:
+
+        Filter: List all items clearly identified as fruits.
+
+        Check Assumptions: If an item is ambiguous (e.g., Tomato), state why you classified it the way you did.
+
+        Identify Anomalies: List any items that were missing data, were not food at all, or required a guess to categorize.
+
+        Flag Uncertainties: If you are unsure of a classification, do not include it in the main list; instead, put it in a 'Needs Clarification' section.
+
+    Data List:
+
+        Apple
+
+        Spinach
+
+        [N/A]
+
+        Tomato
+
+        Yellow curved fruit
+
+        Concrete block"
+
+The Resulting Corrected Output::
+
+By adding those instructions, the LLM will now provide a much more transparent and useful response:
+
+Confirmed Fruits:
+
+    Apple (Standard classification)
+
+Needs Clarification / Ambiguous:
+
+    Tomato: I have included this as a fruit based on botanical classification (seeds), though it is culinarily used as a vegetable.
+
+    Yellow curved fruit: I assume this refers to a Banana, but the name is descriptive rather than a specific noun.
+
+Anomalies & Exclusions:
+
+    [N/A]: Missing data; excluded.
+
+    Spinach: Vegetable; excluded.
+
+    Concrete block: Non-food item; excluded.
+
+Why this works
+
+The "Check-for-Assumptions" technique prevents the AI from "hallucinating" a clean list when the input is actually messy. It forces the model to move from pattern matching to critical analysis.
+====
+--
+======
+
 === Acronyms and Technical Terms
 It’s crucial to be clear with technical terms and acronyms while drafting a prompt.
 This jargon often means different things in different contexts and can lead to unhelp‐
@@ -508,9 +1446,12 @@ This prompt clearly spells out the database system in use, the method of connect
 and the specific issue encountered.
 
 === Zero- and Few-Shot Learning
+Few-shot prompting basically means providing explicit exam-
+ples to clarify instructions (The word few in this context indicates how many examples 
+you share. A prompt with no examples would be a zero-shot prompt).
+
 With zero-shot learning, you provide one prompt and get the answer you want. Often,
-this works fine. But given the complexities of programming languages and frame‐
-works, there are times when you need to nudge the LLM.
+this works fine. But given the complexities of programming languages and frameworks, there are times when you need to nudge the LLM.
 
 You can do this with few-shot learning. This refers to an LLM’s capability to under‐
 stand and perform a task with very few examples or training data. This is a significant
@@ -532,6 +1473,173 @@ examples of the inputs and normalized outputs.
  normalized numbers.
 
 ChatGPT will “learn” from the data and come up with some code:
+
+[tabs]
+======
+ChatGPT::
+Here is a clean Python function that follows the normalization pattern shown in the examples (min–max normalization to the range 
+[0,1]
+[0,1]):
+
+def normalize(numbers):
+    if not numbers:
+        return []
+
+    min_val = min(numbers)
+    max_val = max(numbers)
+
+    # Avoid division by zero when all values are the same
+    if min_val == max_val:
+        return [0 for _ in numbers]
+
+    return [(x - min_val) / (max_val - min_val) for x in numbers]
+
+Example usage
+print(normalize([2, 4, 6, 8]))
+# [0.0, 0.3333333333333333, 0.6666666666666666, 1.0]
+
+print(normalize([5, 10, 15]))
+# [0.0, 0.5, 1.0]
+
+print(normalize([1, 3, 2]))
+# [0.0, 1.0, 0.5]
+
+Explanation
+
+Uses min–max normalization:
+
+x−min⁡max⁡−min⁡
+max−min
+x−min
+	​
+
+
+Preserves relative ordering
+
+Handles edge cases such as empty input or all identical values
+
+Gemini::
+[tabs]
+====
+To normalize a list of numbers to the range [0,1], we use the Min-Max Scaling formula. This formula shifts the values so that the minimum value becomes 0 and the maximum value becomes 1, with everything else scaled proportionally in between.
+The Formula
+
+For any value x in your list:
+xnormalized​=max(list)−min(list)x−min(list)​
+Python Implementation
+
+Following the "check-for-assumptions" logic we discussed, this function includes a check for the edge case where all numbers in the list are identical (which would otherwise cause a "division by zero" error).
+Python
+
+def normalize_to_range(data):
+    """
+    Normalizes a list of numbers to a [0, 1] range.
+    Handles edge cases like empty lists or identical values.
+    """
+    # Assumption Check: Is the list empty?
+    if not data:
+        return []
+
+    min_val = min(data)
+    max_val = max(data)
+    range_val = max_val - min_val
+
+    # Assumption Check: Is the range zero? (All numbers are the same)
+    # If max and min are equal, we cannot divide by zero. 
+    # We return 0.0 for all elements as a default normalized state.
+    if range_val == 0:
+        return [0.0 for _ in data]
+
+    # Calculate normalization
+    return [(x - min_val) / range_val for x in data]
+
+# Testing the examples
+example_1 = [2, 4, 6, 8]
+example_2 = [5, 10, 15]
+example_3 = [1, 3, 2]
+edge_case = [7, 7, 7] # Edge case: No range
+
+print(f"Example 1: {normalize_to_range(example_1)}")
+print(f"Example 2: {normalize_to_range(example_2)}")
+print(f"Example 3: {normalize_to_range(example_3)}")
+print(f"Edge Case: {normalize_to_range(edge_case)}")
+
+Why the Edge Case Check is Necessary
+
+In your examples, there is always a difference between the highest and lowest numbers. However, if you encountered the list [7, 7, 7]:
+
+    The min is 7.
+
+    The max is 7.
+
+    The max - min is 0.
+
+    Dividing by 0 would crash the program.
+
+By adding the check if range_val == 0, the function identifies the anomaly and returns a safe result (usually 0.0) instead of failing.
+====
+======
+
+Another Example
+
+Prompt: You are an expert exploratory tester. Create three test charters for a booking system that focus on the risks around booking dates. The format should follow: Explore <Target> using <Resource> to discover <Information>
+For example:
+* Explore user permissions using different users to discover permission risks
+* Explore browser animations using different devices to discover how animations render
+
+Consider the format of “Explore <Target> using <Resource> to discover <Information>.”
+It is rule based, but it leans heavily on natural language to communicate the rules 
+(unlike JSON or XML structures that rely on explicit delimiter rules). By providing 
+examples in our prompt, we can help contextualize what we mean by <Target>, 
+<Resource>, and <Information> and reduce the risk of the LLM guessing what that 
+means.
+[tabs]
+======
+ChatGPT::
+
+Here are three exploratory test charters focused specifically on booking date risks, written in the requested format and from an exploratory testing perspective:
+
+Explore booking date selection using boundary dates (past dates, same-day check-in, far-future dates, leap days) to discover risks around invalid date acceptance and boundary handling.
+
+Explore booking date dependencies using varied check-in/check-out combinations (same day, reversed dates, overlapping ranges) to discover risks in date validation logic and duration calculations.
+
+Explore booking availability over time using concurrent bookings and rapid date changes to discover risks related to race conditions, stale availability, and double-booking.
+
+If you want, I can also:
+
+Tie these charters to specific heuristics (CRICCUPPS, SFDPOT, FEW HICCUPPS)
+
+Expand each charter with test ideas and oracles
+
+Rewrite them for API-level or mobile app testing
+
+Gemini::
+[tabs]
+As an expert exploratory tester, I’ve designed these charters to target the most common "pain points" in date-related logic: boundaries, logical consistency, and temporal synchronization.
+Test Charters for Booking Date Risks
+
+    Explore date selection boundaries using leap years, year-end transitions, and maximum allowable stay durations to discover if the system correctly calculates availability and pricing across calendar shifts.
+
+    Explore date input validation using "impossible" sequences—such as a checkout date preceding a check-in date or booking in the past—to discover vulnerabilities in business logic and the robustness of error-handling messages.
+
+    Explore cross-timezone synchronization using client devices set to different time zones and Daylight Savings Time (DST) transition windows to discover "off-by-one" day errors or data corruption during the server-client handshake.
+
+Why these focus areas?
+
+In booking systems, dates are rarely just "strings" of text; they are complex objects that must interact with server-side clocks and database constraints.
+
+    The Leap Year/Year-End Risk: Many systems fail when calculating the "next day" if that day is February 29th or January 1st.
+
+    The Logical Risk: If the UI doesn't block "Checkout before Check-in" on the front end, it relies entirely on the API to catch it. If both fail, you end up with "negative duration" bookings that can crash reporting tools.
+
+    The Time Zone Risk: A user in New York booking a hotel in Tokyo at 11:00 PM local time might accidentally book for the wrong day if the system doesn't clearly distinguish between "User Local Time" and "Property Local Time."
+
+Would you like me to expand one of these charters into a full test session report with specific test cases?
+
+======
+
+TODO: Create a prompt that uses the few-shot tactic. In your prompt, provide the instructions 
+you expect the LLM to follow and then add at least two examples to help guide it in providing a desired outcome
 
 === Leading Words
 The concept of leading words refers to specific keywords or phrases that can guide an
@@ -565,11 +1673,21 @@ Python function. THe following able gives more examples of leading words.
 |public
 |===
 
-=== Chain of Thought (CoT) Prompting
+=== Chain of Thought (CoT) Prompting(Give the model time to “think”)
 This approach enhances the reasoning abilities of LLMs by breaking down a
 complex problem into different steps. It’s actually similar to few-shot learning, which
 allows for nudging the model.
 
+considering LLMs as probabilistic machines and not entities that can think, we’re not actually giving an LLM time to think but rather emulating how we would give 
+someone time to think about a task in our prompt. If you give a model a task that’s too complex to do in a short amount of time, it may make up a guess which is likely to be incorrect.
+
+the same situation would happen if humans were given a complex 
+task with limited time to respond. We’d rely on educated guesswork and likely come 
+up with a less-than-satisfactory answer. Thus principle offers tactics to help us write 
+prompts that break down tasks and encourage LLMs to evaluate output to once again 
+maximize the chances of a desired response.
+
+==== Specify the steps to complete the task
 CoT prompting can be very useful in software code generation tasks. Let’s look at an
 example. Suppose you want to create a web application with a user registration and
 login functionality using Flask, a Python web framework. The following table shows the CoT
@@ -601,6 +1719,795 @@ prompting steps.
 |"Finally, how can I implement a logout function to securely log users out of the application?"
 |===
 
+another example
+
+Prompt:You are going to be given a list of instructions to follow.
+
+We then list each subtask clearly to instruct the LLM on what to do:
+
+Prompt:
+
+1 Identify functional risks that might impact the text delimited by three hashes
+2 Convert the risks into test charters
+3 Format each charter into a Discover <feature> using <resource> to discover <information> format
+
+Finally, we provide the data we would like to see processed:
+
+Prompt:
+###
+As a user
+I want to be able to calculate my tax
+So I know what tax I have to pay
+###
+
+[tabs]
+======
+ChatGPT::
++
+[tabs]
+====
+tab1::
+
+tab2::
+====
+--
+Based on the text provided—which is a high-level User Story—there is significant "functional surface area" despite the brevity of the requirement.
+
+Here are the functional risks identified and the resulting test charters formatted as requested.
+*1. Functional Risk Identification*
+
+Before creating the charters, I identified these key risks inherent in a "tax calculator":
+
+    Boundary Risk: Incorrect tax bracket application for income exactly at the threshold.
+
+    Precision Risk: "Off-by-one-cent" errors due to floating-point math or incorrect rounding.
+
+    Compliance Risk: Using outdated tax laws or missing regional/state variations.
+
+    Input Risk: Handling of negative numbers, non-numeric characters, or "null" inputs.
+
+    Temporal Risk: Calculating tax for the wrong fiscal year.
+
+*2. Test Charters*
+
+    Discover tax bracket logic using income values +/- $1 from threshold boundaries to discover if the system applies the correct marginal tax rates at the transition points.
+
+    Discover rounding and precision accuracy using complex decimal inputs and high-value transactions to discover discrepancies between the system's output and legally required currency rounding standards.
+
+    Discover input validation resilience using non-numeric strings, negative values, and empty fields to discover potential system crashes or unhandled exceptions in the calculation engine.
+
+    Discover regional compliance logic using diverse geographical profiles (e.g., different states or countries) to discover if local tax laws are correctly layered on top of federal tax calculations.
+
+    Discover fiscal year synchronization using different system date settings and historical data scenarios to discover if the calculator pulls the correct tax tables for the intended reporting year.
+
+*3. Check-for-Assumptions (Metacognitive Review)*
+
+Because the provided text (### As a user... ###) is very broad, I have made the following assumptions to generate these charters:
+
+    Assumption of Complexity: I assumed this is a Progressive Tax System (like Income Tax) rather than a Flat Tax (like Sales Tax), as progressive systems carry higher functional risk.
+
+    Assumption of Locality: I assumed the system is intended to handle multiple jurisdictions. If this is for a single city/state only, the "Regional Compliance" charter should be pivoted to "Deduction/Exemption Logic."
+
+    Assumption of Modern Standards: I am assuming the user expects a real-time calculation rather than a batch process.
+
+Would you like me to refine these charters for a specific type of tax (e.g., VAT, Corporate, or Property tax) or expand one into a detailed step-by-step test script?
+======
+
+TODO: Create a prompt that requires a complex task to be carried out. Attempt to break out the 
+complex task into multiple subtasks that the LLM can carry out.
+
+====  Instruct the model to work out its own solution first
+this principle focuses not on the process of creating an output, but rather on evaluating the output itself. Similar to checking for assumptions, ask an LLM to evaluate the 
+output to confirm that it aligns with what it has been instructed to produce. Let’s check 
+out an example to gain a better understanding of how this would work.
+
+take a look at a prompt that doesn’t ask an LLM to work out its solution first but sets out the 
+instructions for the LLM to follow:
+
+ Prompt: You are a software developer in test that is experienced in writing Java. Create a unit 
+test for the following method:
+
+We then provide the code it needs to provide unit tests for:
+
+ Prompt: public class AuthService {
+ public HttpStatus deleteToken(Token token) throws SQLException {
+ Boolean successfulDeletion = authDB.deleteToken(token);
+ if(successfulDeletion){
+ return HttpStatus.OK;
+ } else {
+ return HttpStatus.NOT_FOUND;
+ }
+ }
+}
+
+This looks like reasonable Java code for a unit test, but if this were added to a suite of
+unit checks, it would fail because the method authDB.deleteToken in the production
+code provided has not been handled correctly. Specifically, if we wanted this unit check
+to work, we would need to mock authDB.deleteToken.
+Now, if we run the prompt again but this time have it evaluate its solution before out-
+putting a final answer, we get a different result. So first we change the prompt to a new
+prompt that asks the LLM to confirm that the result of the check works:
+
+ Prompt: You are a software developer in test that is experienced in writing Java. Create a unit
+test for the following method that will be shared. Before outputting the unit tests,
+check to see that the assertion of each unit check will return a deterministic result.
+
+This time, we can see that because we asked the LLM to evaluate its solution before 
+returning a result, the output unit check uses Mockito to mock the authDB.delete-
+Token. So, if we observe problems with LLMs outputting erroneous solutions or they 
+start hallucinating, we can add an instruction to evaluate solutions first to minimize the 
+occurrence of hallucinations.
+
+Create a prompt that requires an LLM to work out a solution to a problem. Observe its out-
+put and see if the solution it produces is correct. Then add instructions to have the LLM 
+evaluate the solution. What happens? Does the solution change? Is it an improvement?
+
+[tabs]
+======
+ChatGPT::
+Below is a clear, experiment-style answer that you can directly submit or adapt.
+It shows the prompt, the LLM output, then the evaluation instruction, and finally the analysis of what happens.
+
+1. Initial Prompt (Problem-Solving Only)
+
+Prompt given to the LLM:
+
+Solve the following problem step by step:
+
+A company has 3 servers. Each server can handle 120 requests per minute.
+The system receives 290 requests per minute.
+
+Is the current system sufficient?
+
+If not, how many additional servers are required?
+
+Explain your reasoning clearly.
+
+2. Observed LLM Output (Without Self-Evaluation)
+
+LLM Output:
+
+Each server can handle 120 requests per minute.
+With 3 servers, total capacity is:
+
+3 × 120 = 360 requests per minute.
+
+The system receives 290 requests per minute, which is less than 360.
+
+Therefore, the current system is sufficient, and no additional servers are required.
+
+Assessment:
+✅ Correct solution
+✔ Logical
+✔ Correct arithmetic
+✔ Correct conclusion
+
+3. Modified Prompt (Add Evaluation Instruction)
+
+Updated Prompt:
+
+Solve the following problem step by step:
+
+A company has 3 servers. Each server can handle 120 requests per minute.
+The system receives 290 requests per minute.
+
+Is the current system sufficient?
+
+If not, how many additional servers are required?
+
+After producing your solution:
+
+Re-evaluate each step for correctness
+
+Look for hidden assumptions or possible mistakes
+
+If an error is found, correct the solution
+
+Clearly state whether the original answer was correct or not
+
+4. Observed LLM Output (With Self-Evaluation)
+
+LLM Output:
+
+Initial calculation:
+
+3 servers × 120 requests per minute = 360 requests per minute capacity.
+
+Incoming load is 290 requests per minute.
+
+Since 290 < 360, the system has spare capacity.
+
+Re-evaluation:
+
+The arithmetic is correct.
+
+No constraints such as redundancy or peak load are specified.
+
+No hidden assumptions invalidate the conclusion.
+
+Final conclusion:
+The original solution is correct.
+The current system is sufficient, and no additional servers are required.
+
+5. What Happens When Evaluation Is Added?
+Does the solution change?
+
+❌ No — the final answer remains the same.
+
+Is it an improvement?
+
+✅ Yes, in terms of:
+
+Confidence
+
+Transparency
+
+Error checking
+
+Trustworthiness
+
+The self-evaluation step confirms correctness and makes the reasoning more robust, even when no correction is needed.
+
+6. Key Insight
+
+Adding evaluation instructions does not always change the answer, but it:
+
+Reduces the chance of unnoticed errors
+
+Improves explanation quality
+
+Makes the output safer for high-stakes use (testing, engineering, math, logic)
+
+This technique is especially powerful when:
+
+Problems are multi-step
+
+Edge cases exist
+
+Assumptions are implicit
+
+7. Conclusion
+
+Requiring an LLM to evaluate its own solution generally improves reliability.
+The solution may or may not change, but the quality and confidence of the result almost always improve.
+
+If you want, I can:
+
+Show a case where self-evaluation fixes an incorrect answer
+
+Turn this into a formal experiment report
+
+Apply it to code, math proofs, or test case generation
+
+Just say the word.
+
+Show a case where self-evaluation fixes an incorrect answer
+
+Below is a clear, concrete example where an LLM initially produces an incorrect solution, and self-evaluation causes it to detect and fix the mistake.
+This directly demonstrates why adding evaluation instructions improves correctness.
+
+1. Initial Prompt (Problem Solving Only)
+
+Prompt:
+
+Solve the following problem step by step:
+
+A store offers a 20% discount on an item priced at $80.
+After the discount, an 8% sales tax is applied.
+
+What is the final price the customer pays?
+
+2. Observed LLM Output (Incorrect Solution)
+
+LLM Output:
+
+First, apply the 8% sales tax:
+
+8% of $80 = $6.40
+Price after tax = $80 + $6.40 = $86.40
+
+Then apply the 20% discount:
+
+20% of $86.40 = $17.28
+Final price = $86.40 − $17.28 = $69.12
+
+❌ Incorrect
+
+Error:
+The model applied tax before discount, which contradicts the problem statement.
+
+3. Modified Prompt (With Self-Evaluation Instruction)
+
+Updated Prompt:
+
+Solve the following problem step by step:
+
+A store offers a 20% discount on an item priced at $80.
+After the discount, an 8% sales tax is applied.
+
+What is the final price the customer pays?
+
+After producing your solution:
+
+Verify the order of operations matches the problem description
+
+Re-check all calculations
+
+Identify and correct any errors
+
+Clearly state whether the original answer was correct
+
+4. Observed LLM Output (Self-Evaluation Fixes the Error)
+
+LLM Output:
+
+Initial solution review:
+
+The problem states that the discount is applied before tax, but the initial solution applied tax first.
+This violates the problem requirements.
+
+Corrected calculation:
+
+Discount amount:
+20% of $80 = $16
+Price after discount = $80 − $16 = $64
+
+Apply sales tax:
+8% of $64 = $5.12
+Final price = $64 + $5.12 = $69.12
+
+Final assessment:
+
+The original answer was incorrect due to wrong operation order.
+
+The corrected final price is $69.12.
+
+✅ Corrected
+
+5. What Changed?
+Aspect	Before Evaluation	After Evaluation
+Order of operations	❌ Wrong	✅ Correct
+Logical consistency	❌ Violated requirements	✅ Matches prompt
+Final answer	❌ Incorrect	✅ Correct
+Confidence in result	Low	High
+6. Why Self-Evaluation Works Here
+
+Self-evaluation forced the LLM to:
+
+Re-read the problem constraints
+
+Check semantic correctness, not just arithmetic
+
+Compare steps against requirements
+
+Correct a procedural mistake, not a math error
+
+This is exactly the type of error LLMs are prone to — and self-review is effective at catching it.
+
+7. Key Takeaway
+
+Self-evaluation transforms LLMs from fast problem solvers into safer reasoners.
+
+It doesn’t just fix math — it fixes:
+
+Misordered steps
+
+Ignored constraints
+
+Logical mismatches
+
+Hidden assumptions
+
+Show a coding example where self-review fixes a bug
+
+Below is a clear, concrete coding example showing how self-review causes an LLM to detect and fix a bug.
+The example is realistic, simple, and typical of mistakes LLMs (and humans) make.
+
+1. Initial Prompt (Code Generation Only)
+
+Prompt given to the LLM:
+
+Write a Java method that returns true if a string is a palindrome, ignoring case.
+
+2. Observed LLM Output (Buggy Code)
+public boolean isPalindrome(String s) {
+    s = s.toLowerCase();
+    int left = 0;
+    int right = s.length() - 1;
+
+    while (left < right) {
+        if (s.charAt(left) != s.charAt(right)) {
+            return false;
+        }
+        left++;
+        right--;
+    }
+    return true;
+}
+
+
+❌ Bug present
+
+What’s wrong?
+
+Null input is not handled → NullPointerException
+
+Common real-world expectation: handle "A man a plan a canal Panama"
+
+Prompt says ignore case, but not spaces → ambiguous behavior
+
+Even if we focus strictly on the prompt, null safety is a legitimate bug in production code.
+
+3. Modified Prompt (Add Self-Review Instruction)
+
+Updated Prompt:
+
+Write a Java method that returns true if a string is a palindrome, ignoring case.
+
+After writing the code:
+
+Review it for bugs and edge cases
+
+Check behavior for null, empty strings, and mixed input
+
+Fix any issues you find
+
+Explain what was corrected
+
+4. Observed LLM Output (Self-Review Fixes the Bug)
+public boolean isPalindrome(String s) {
+    if (s == null) {
+        return false;
+    }
+
+    s = s.toLowerCase();
+    int left = 0;
+    int right = s.length() - 1;
+
+    while (left < right) {
+        if (s.charAt(left) != s.charAt(right)) {
+            return false;
+        }
+        left++;
+        right--;
+    }
+    return true;
+}
+
+Explanation Provided by the LLM
+
+The original implementation would throw a NullPointerException if the input string was null.
+A null check was added to safely handle this case.
+
+✅ Bug fixed
+
+5. Stronger Example (Self-Review Improves Logic Too)
+Initial Buggy Code
+public int findMax(int[] numbers) {
+    int max = 0;
+    for (int n : numbers) {
+        if (n > max) {
+            max = n;
+        }
+    }
+    return max;
+}
+
+
+❌ Bug:
+Fails for arrays with all negative numbers.
+
+Self-Reviewed & Corrected Version
+public int findMax(int[] numbers) {
+    if (numbers == null || numbers.length == 0) {
+        throw new IllegalArgumentException("Array must not be null or empty");
+    }
+
+    int max = numbers[0];
+    for (int i = 1; i < numbers.length; i++) {
+        if (numbers[i] > max) {
+            max = numbers[i];
+        }
+    }
+    return max;
+}
+
+What Self-Review Caught
+
+Incorrect initialization (max = 0)
+
+Missing null/empty checks
+
+Incorrect behavior for valid inputs
+
+6. Why This Matters (SDET Perspective)
+
+Self-review helps LLMs:
+
+Catch edge cases
+
+Detect implicit assumptions
+
+Improve defensive coding
+
+Reduce production bugs
+
+This mirrors real-world practices:
+
+Code reviews
+
+Static analysis
+
+Unit testing
+
+7. Key Takeaway
+
+LLMs write better code when asked to read their own code critically.
+
+Self-review transforms code from:
+
+“Works in the happy path”
+➡️
+
+“Safe, correct, production-ready”
+
+If you want next:
+
+A JUnit test that exposes the original bug
+
+A prompt template for self-review in coding tasks
+
+An example where self-review still fails (important limitation)
+
+Just say which one.
+A prompt template for self-review in coding tasks
+
+Below is a reusable, production-quality prompt template you can apply to any coding task to reliably trigger self-review, bug detection, and improvement in an LLM.
+
+This is written in a way that works well for Java, Python, backend services, and test code.
+
+Self-Review Prompt Template for Coding Tasks
+1️⃣ Primary Instruction (Code Generation)
+You are an experienced software engineer.
+
+Task:
+<Describe the coding task clearly, including language, constraints, and expected behavior>
+
+Requirements:
+- Language: <e.g., Java 17>
+- Style: clean, readable, production-ready
+- Do not include explanations in the first pass
+
+2️⃣ Mandatory Self-Review Phase (Critical Part)
+After writing the code, do NOT stop.
+
+Perform a structured self-review with the following steps:
+
+1. Correctness Check
+   - Verify the code satisfies every requirement in the task
+   - Check logical flow and algorithm correctness
+
+2. Edge Case Analysis
+   - Identify edge cases (nulls, empty inputs, limits, invalid data)
+   - Explain how the code handles each one
+
+3. Error & Exception Handling
+   - Identify possible runtime errors
+   - Ensure failures are handled safely and explicitly
+
+4. Code Quality Review
+   - Check naming, readability, and structure
+   - Remove unnecessary complexity
+   - Apply best practices for the language
+
+5. Performance & Scalability
+   - Identify time and space complexity
+   - Point out any obvious inefficiencies
+
+6. Security & Robustness (if applicable)
+   - Validate inputs
+   - Avoid unsafe assumptions
+
+If any issue is found:
+- Clearly describe the issue
+- Fix the code
+- Present the corrected version only
+
+3️⃣ Output Format Constraint (Very Important)
+Output format:
+- Section 1: Initial Code
+- Section 2: Self-Review Findings (bullet points)
+- Section 3: Final Corrected Code
+
+Example Usage (Java)
+Input Prompt
+You are an experienced software engineer.
+
+Task:
+Write a Java method that returns the maximum number in an integer array.
+
+Requirements:
+- Language: Java
+- Throw an exception for null or empty arrays
+
+After writing the code, perform the structured self-review described above.
+
+Why This Template Works
+
+✔ Forces deliberate reasoning
+✔ Separates generation from evaluation
+✔ Reduces hallucinated correctness
+✔ Mimics real code review practices
+✔ Increases reliability in tests, interviews, and production code
+
+SDET / Test Engineering Tip
+
+To push reliability even further, add this line:
+
+Assume this code will be reviewed by a senior engineer and tested with adversarial inputs.
+
+
+This increases:
+
+Defensive coding
+
+Explicit validation
+
+Edge-case coverage
+
+Minimal Version (When You Need Speed)
+Write the code.
+Then review it as if you were a strict code reviewer.
+Fix any bugs, edge cases, or design flaws.
+Output only the final corrected code.
+
+Key Takeaway
+
+LLMs produce better code when explicitly instructed to switch from “creator” to “critic”.
+
+This template operationalizes that switch.
+
+If you want, I can:
+
+Customize this template for unit tests
+
+Create a CI-friendly version
+
+Show how to combine it with mutation testing
+
+Provide a one-line reusable macro
+
+Just tell me.
+
+Gemini::
++
+[tabs]
+====
+tab1::
+This is a classic experiment in "Self-Correction" or "Recursive Critique." As an SDET, I see this as the AI equivalent of a "Code Review" session. When an LLM is asked to simply "solve," it often takes the path of least resistance. When asked to "evaluate," it shifts into a more analytical state of mind.
+
+Let’s run this experiment using a common logic puzzle that often trips up standard models.
+Part 1: The Initial Problem
+
+Prompt: "I have 3 shirts that need to be washed and dried. It takes 30 minutes to wash one load and 30 minutes to dry one load. I have one washing machine and one dryer. How long does it take to finish all 3 shirts?"
+The Initial Output (Solution A)
+
+    To finish 3 shirts:
+
+        Shirt 1: 30 mins wash + 30 mins dry = 60 mins.
+
+        Shirt 2: 30 mins wash + 30 mins dry = 60 mins.
+
+        Shirt 3: 30 mins wash + 30 mins dry = 60 mins. Total time: 180 minutes (3 hours).
+
+Part 2: The Evaluation Instruction
+
+Instruction: "Now, evaluate your previous solution. Are there any inefficiencies? Can tasks be performed in parallel (pipelining)? Provide a corrected answer if necessary."
+The Evaluated Output (Solution B)
+
+    Evaluation: My previous solution was inefficient because it assumed the machines could not run at the same time. In a real-world scenario, the dryer can dry the first shirt while the second shirt is being washed. This is known as pipelining.
+
+    Corrected Timeline:
+
+        0–30 mins: Wash Shirt 1. (Dryer empty)
+
+        30–60 mins: Wash Shirt 2 AND Dry Shirt 1.
+
+        60–90 mins: Wash Shirt 3 AND Dry Shirt 2.
+
+        90–120 mins: Dry Shirt 3. (Washer empty)
+
+    Total time: 120 minutes (2 hours).
+
+Analysis of the Experiment
+1. What happens?
+
+When the evaluation instruction is added, the LLM stops "generating text" and starts "verifying logic." It moves from a System 1 (fast/intuitive) mode of thinking to a System 2 (slow/deliberate) mode. It identifies the missed opportunity for concurrency.
+2. Does the solution change?
+
+Yes, significantly. It dropped from 180 minutes to 120 minutes. The LLM recognized that the "Total Time" is limited by the bottleneck of the longest sequence, plus the "tail" of the process (the final drying cycle).
+3. Is it an improvement?
+
+Absolutely. * Logic: It corrected a linear thinking error (Sequential vs. Parallel).
+
+    Context: It added technical terminology (Pipelining) which provides more depth.
+
+    Efficiency: The final answer is mathematically and practically more accurate for a real-world scenario.
+
+SDET Perspective: The "Rubber Duck" Effect
+
+In software testing, we call this Rubber Ducking. By forcing the model to explain its reasoning, it "stumbles" upon its own bugs.
+
+This is why, when you are using an LLM for complex Java logic or architecture, you should always use a Multi-Step Prompting strategy:
+
+    Draft: "Write the code."
+
+    Critique: "Find the bugs and performance bottlenecks in that code."
+
+    Refactor: "Rewrite the code based on your critique."
+
+Would you like to try this experiment with a specific piece of Java code to see if I can find an optimization you might have missed?
+
+tab2::
+Great! Let’s apply this "Self-Correction" experiment to a common Java coding challenge I see during code reviews.
+
+I will play both roles: the Initial LLM (providing a first-pass solution) and then the Evaluator LLM (critiquing and refining the logic).
+Phase 1: The Initial Solution
+
+The Task: "Write a Java method that takes a list of integers and returns a list of only the unique elements, maintaining their original order."
+
+Initial Output:
+Java
+
+public List<Integer> getUniqueElements(List<Integer> input) {
+    List<Integer> result = new ArrayList<>();
+    for (Integer item : input) {
+        if (!result.contains(item)) {
+            result.add(item);
+        }
+    }
+    return result;
+}
+
+Reasoning: This code iterates through the list and checks if the element is already in the result list before adding it. This ensures no duplicates are added and the order is preserved.
+Phase 2: Adding the Evaluation Instruction
+
+The Instruction: "Now, evaluate this solution for Big O time complexity. Is it efficient for a list of 100,000 items? If not, provide a more performant version using a different data structure while still maintaining the insertion order."
+
+Evaluated Output:
+
+    Evaluation: My initial solution has a major performance flaw. The result.contains(item) check is an O(n) operation because it performs a linear search through the ArrayList. Since this is inside a loop that also runs n times, the total time complexity is O(n2).
+
+    For 100,000 items, this could result in up to 10 billion operations, making it extremely slow.
+
+    Shutterstock
+
+The Improved Solution: To optimize this to O(n), we should use a LinkedHashSet. This provides O(1) lookup time (to check for duplicates) while preserving the insertion order.
+Java
+
+public List<Integer> getUniqueElements(List<Integer> input) {
+    if (input == null) return new ArrayList<>();
+    
+    // LinkedHashSet handles uniqueness and maintains order in O(n) time
+    return new ArrayList<>(new LinkedHashSet<>(input));
+}
+
+What happened in this experiment?
+
+    The Solution Changed: It moved from a "brute force" nested loop logic to a specialized collection-based approach.
+
+    It is a Massive Improvement: We went from a quadratic time complexity (O(n2)) to a linear one (O(n)). In an SDET's world, this is the difference between a test suite that passes in milliseconds and one that hangs for minutes.
+
+    Depth of Insight: By asking for an "evaluation," the LLM accessed its knowledge of the Java Collections Framework and Algorithm Analysis, which it bypassed during the simple "write this" phase.
+
+Why this works
+
+When you ask for a solution, an LLM often provides the most "readable" or "standard" answer. When you ask it to evaluate, you are forcing it to run a "mental simulation" of the code's execution. It’s like moving from coding to debugging.
+
+Would you like to try this with a piece of your own code, or should we try to find a "hidden" thread-safety bug in a multi-threaded Java example?
+====
+--
+======
 === Leading Questions
 Leading questions in a prompt can often fetch wonky responses from the LLM. It’s better to stay neutral and unbiased. Also, it’s good practice to avoid making assumptions; spell things out instead.
 
@@ -626,3 +2533,13 @@ understand. A good way to do this is by asking the LLM for an analogy:
  ChatGPT: Think of inheritance like a family tree, where children inherit certain traits and properties from their parents and, potentially, grandparents.
 
 From there, ChatGPT provides more detail, which proceeds from the analogy, to explain the key elements of inheritance.
+
+
+== Improving results with prompt engineering
+We use natural language to prompt an LLM to return a desired outcome, but because 
+they are probabilistic, we can communicate with them in a way that differs from nor-
+mal interaction with humans. As LLMs have developed, a new field of engineering 
+has appeared known as prompt engineering, which contains a collection of patterns and 
+techniques that we can use to increase the likelihood of getting a desired output from 
+an LLM.
+

@@ -13,6 +13,10 @@ to the other services involved. By using that correlation ID, we could fetch all
 If we follow that idea further, we’ll get to distributed tracing, a technique for tracking requests as they flow through a distributed system, letting us localize where errors
 occur and troubleshoot performance issues. 
 
+To understand what is going on in a distributed system such as a system landscape of cooperat-
+ing microservices, it is crucial to be able to track and visualize how requests and messages flow 
+between microservices when processing an external call to the system landscape.
+
 A distributed tracing backend is responsible for aggregating, storing, and making traces searchable.
 
 a mature event-driven system may have processes that span different microservices. Knowing what's going on with many concurrent users and multiple event chains might become an impossible task, especially when these chains have branches with multiple event types triggering the same action.To solve this problem, you need to correlate all actions and events within the same process chain. A simple way to do this is to inject the same identifier across all HTTP calls, RabbitMQ messages, and Java threads handling the different actions. Then, you can print this identifier in all the related logs.
@@ -69,11 +73,24 @@ care of instrumenting commonly used libraries in Spring applications and provide
 abstraction layer on top of specific distributed tracing libraries. OpenZipkin is the
 default choice.
 
-Spring Cloud Sleuth will not be developed further once Spring Framework 6
-and Spring Boot 3 are released. The Spring project donated the Sleuth core framework to Micrometer and created a new Micrometer Tracing subproject aiming to provide a vendor-neutral façade for traces, similar to what Micrometer already does for
-metrics. Micrometer Tracing will provide support for OpenZipkin and OpenTelemetry.
-Based on Micrometer Tracing, code instrumentation will become a core aspect of all
-Spring libraries as part of the Spring Observability initiative.
+Starting with Spring Boot 3, distributed tracing is handled by Micrometer Tracing, replacing 
+Spring Cloud Sleuth. Micrometer Tracing can mark requests and messages/events that are part 
+of the same processing flow with a common correlation ID.
+
+Micrometer Tracing can also be used to decorate log records with correlation IDs to make it 
+easier to track log records from different microservices that come from the same processing flow. 
+Zipkin is a distributed tracing system (http://zipkin.io) that Micrometer Tracing can send 
+tracing data to for storage and visualization. Later on, in Chapter 19, Centralized Logging with the 
+EFK Stack, we will learn how to find and visualize log records from one and the same processing 
+flow using the correlation ID.
+
+The infrastructure for handling distributed tracing information in Micrometer Tracing and Zip-
+kin is originally based on Google Dapper (https://research.google/pubs/dapper-a-large-
+scale-distributed-systems-tracing-infrastructure/). In Dapper, the tracing information 
+from a complete workflow is called a trace tree, and subparts of the tree, such as the basic units 
+of work, are called spans. Spans can, in turn, consist of sub-spans, which form the trace tree. A 
+correlation ID is called TraceId, and a span is identified by its own unique SpanId, along with 
+the TraceId of the trace tree it belongs to.
 
 //TODO read https://docs.lightstep.com/docs/quick-start-infra-otel-first
 

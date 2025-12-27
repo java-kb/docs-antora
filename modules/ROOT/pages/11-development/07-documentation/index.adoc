@@ -1,0 +1,27 @@
+= Documentation
+
+some factors to keep in mind when writing docs:
+1.Know your audience
+Think about who’s going to use your docs. Are they newbies looking for a guide
+to get started quickly, or are they tech wizards needing the nitty-gritty details like
+API docs and code snippets? Getting a bead on what your readers need is key to
+hitting the mark with your content.
+2.Keep it simple
+Nobody likes to wade through jargon or tech-speak that needs a decoder ring.
+Keep your words straightforward and to the point. If your grandparent couldn’t
+get it, you’re probably not there yet.
+3.Stick to the plan
+Keep your docs looking familiar. Use the same style, headings, fonts...you name
+it. Consistency is your friend. It’s like having a good rhythm in a song. It just
+flows better.
+4.Show, don’t just tell
+People understand things faster when they see it in action. So, throw in real-life
+examples or scenarios. If you’re talking to coders, some code examples are gold.
+For others, screenshots or step-by-step walkthroughs can be helpful.
+5.A picture is worth a thousand words
+Sometimes, text just doesn’t cut it. Use diagrams, screenshots, or even videos to
+get your point across, especially when you’re dealing with complex stuff.
+6.The why matters as much as the how
+Don’t just lay out the steps. Tell your readers why they’re doing what they’re
+doing.
+

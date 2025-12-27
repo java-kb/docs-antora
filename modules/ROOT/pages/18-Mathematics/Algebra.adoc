@@ -1,0 +1,245 @@
+= Algebra
+
+== Basic arithmetic
+*Whole Numbers* are simply the numbers 0, 1, 2, 3, 4,5, ...
+
+*Counting Numbers* are whole numbers, but without the zero, i.e. 1, 2, 3, 4, 5, ...
+
+*Natural Numbers* can mean either counting numbers orwhole numbers.
+
+*Integers* are like whole numbers, but they also include negative numbers.Examples of integers include ... − 5,−4,−3,−2,−1,0,1,2,3,4,5,...
+
+=== Prime Numbers
+A prime number can be divided, without a remainder, only by itself and by 1. For example, 17 can be divided only by 17 and by 1.
+=== Arithmetic operators
+The four basic arithmetic operators are add (+), subtract (−), multiply (×) and divide (÷).
+
+When *unlike signs* occur together in a calculation, the overall sign is negative. For example, 5 + (−2) = 5 +− 2 = 3 and (+5) × (−2) = −10
+
+*Like signs* together give an overall positive sign. For example, 3 − (−4) = 3 − −4 = 3 + 4 = 7 and (−6) × (−4) = +24
+
+=== addition and subtraction 
+  HTU
+  735
++ 167
+  ---
+  902
+    ---
+  1 1
+
+(i) 5 + 7 = 12. Place 2 in units (U) column. Carry 1 in the tens (T) column.
+(ii) 3 + 6 + 1 (carried) = 10. Place the 0 in the tens column. Carry the 1 in the hundreds (H) column.
+(iii) 7 + 1 + 1 (carried) = 9. Place the 9 in the hundreds column.
+
+
+  HTU
+  632
+− 369
+  ---
+  263
+
+(i) 2 − 9 is not possible; therefore change one ten into ten units (leaving 2 in the tens column). In the units column, this gives us 12 − 9 = 3
+(ii) Place 3 in the units column.
+(iii) 2 − 6 is not possible; therefore change one hundred into ten tens (leaving 5 in the hundreds column). In the tens column, this gives us 12 − 6 = 6
+(iv) Place the 6 in the tens column.
+(v) 5 − 3 = 2
+(vi) Place the 2 in the hundreds column. Hence, 632 − 369 = 263
+
+=== multiplication and division 
+  H T U
+  8 6
+× 7
+  -----
+  6 0 2
+  -----
+  4
+
+(i)7 × 6 = 42. Place the 2 in the units (U)column and ‘carry’ the 4 into the tens (T) column.
+(ii) 7 × 8 = 56;56 + 4 (carried) = 60. Place the 0 in the tens column and the 6 in the hundreds (H) column.
+Hence, 86 × 7 = 602
+
+  764
+× 3 8
+  -----
+  6 112
+  2 2 920
+  -----
+  2 9 032
+
+(i) 8 × 4 = 32. Place the 2 in the units column and
+carry 3 into the tens column.
+(ii) 8 × 6 = 48;48 + 3 (carried) = 51. Place the 1 in
+the tens column and carry the 5 into the hundreds
+column.
+(iii) 8 × 7 = 56;56 + 5 (carried) = 61. Place 1 in the
+hundreds column and 6 in the thousands column.
+(iv) Place 0 in the units column under the 2. This is
+done because we are multiplying by tens.
+(v) 3 × 4 = 12. Place the 2 in the tens column and
+carry 1 into the hundreds column.
+(vi) 3 × 6 = 18;18 + 1 (carried) = 19. Place the 9 in
+the hundreds column and carry the 1 into the
+thousands column.
+(vii) 3 × 7 = 21;21 + 1 (carried) = 22. Place 2 in the
+thousands column and 2 in the ten thousands
+column.
+(viii) 6112 + 22920 = 29032
+Hence, 764 × 38 = 29032
+
+==== short division
+262/7=1834
+
+(i) 7 into 18 goes 2, remainder 4. Place the 2 above
+the 8 of 1834 and carry the 4 remainder to the
+next digit on the right, making it 43
+(ii) 7 into 43 goes 6, remainder 1. Place the 6 above
+the 3 of 1834 and carry the 1 remainder to the
+next digit on the right, making it 14
+(iii) 7 into 14 goes 2, remainder 0. Place 2 above the
+4 of 1834
+Hence, 1834÷ 7 = 1834/7 = 1834
+7 = 262
+
+The method shown is called short division.
+
+==== long division
+  483
+  -----
+  5796
+/ 12
+  -----
+  48
+  -----
+   99
+  −96
+  -----
+    36
+   −36
+  -----
+    00
+
+(i) 12 into 5 won’t go. 12 into 57 goes 4; place 4
+above the 7 of 5796
+(ii) 4 × 12 = 48; place the 48 below the 57 of 5796
+(iii) 57 − 48 = 9
+(iv) Bring down the 9 of 5796 to give 99
+(v) 12 into 99 goes 8; place 8 above the 9 of 5796
+(vi) 8 × 12 = 96; place 96 below the 99
+(vii) 99 − 96 = 3
+(viii) Bring down the 6 of 5796 to give 36
+(ix) 12 into 36 goes 3 exactly
+(x) Place the 3 above the final 6
+(xi) 3 × 12 = 36; Place the 36 below the 36
+(xii) 36 − 36 = 0
+Hence, 5796 ÷ 12 = 5796/12 = 5796
+12 = 483
+The method shown is called long division.
+
+*Exercise*
+
+10. A screw has a mass of 15 grams. Calculate,
+in kilograms, the mass of 1200 such screws
+(1 kg = 1000 g).
+
+18 kg
+
+11. Holes are drilled 35.7 mm apart in a metal
+plate. If a row of 26 holes is drilled, deter-
+mine the distance, in centimetres, between
+the centres of the first and last holes.
+
+89.25 cm
+
+12. A builder needs to clear a site of bricks and
+top soil. The total weight to be removed is 696
+tonnes. Trucks can carry a maximum load of
+24 tonnes. Determine the number of truck
+loads needed to clear the site.
+
+29
+
+=== Highest common factors
+*factor* is a number which divides into another number exactly. 
+
+[quote, attribution, cite title]
+____
+"Divides into a" means
+to split something into smaller parts, groups, or categories, in Mathematical Context divide into" mean fitting one number into another,(e.g., "Divide 2 into 10" means 10 ÷ 2).
+____
+
+When two or more numbers are multiplied together, the individual numbers are called factors. 
+
+*The highest common factor (HCF)* is the largest number which divides into two or more numbers exactly.
+
+For example, consider the numbers 12 and 15 The factors of 12 are 1, 2, 3, 4, 6 and 12 (i.e. all the
+numbers that divide into 12)
+The factors of 15 are 1, 3, 5 and 15 (i.e. all the numbers
+that divide into 15)
+1 and 3 are the only common factors; i.e. numbers
+which are factors of both 12 and 15.
+Hence, the HCF of 12 and 15 is 3 since 3 is the highest
+number which divides into both 12 and 15.
+
+the simplest way of determining an HCF is to
+express each number in terms of its lowest factors. This
+is achieved by repeatedly dividing by the prime numbers
+2, 3, 5, 7, 11, 13, … (where possible) in turn. Thus,
+
+ 12 = *2* × 2 × *3*
+ 30 = *2* ×     *3* × 5
+ 42 = *2 *×     *3* × 7
+
+The factors which are common to each of the numbers
+are 2 in column 1 and 3 in column 3, shown by the broken
+lines. Hence, the HCF is 2 × 3; i.e. 6. That is, 6 is the
+largest number which will divide into 12, 30 and 42.
+
+=== lowest common multiples
+A *multiple* is a number which contains another number an exact number of times. 
+
+The smallest number which is exactly divisible by each of two or more numbers is called the lowest common multiple (LCM).
+
+For example, the multiples of 12 are 12, 24, 36, 48, 60, 72, ... and the multiples of 15 are 15, 30, 45, 60, 75, ...
+60 is a common multiple (i.e. a multiple of both 12 and 15) and there are no lower common multiples.
+Hence, the LCM of 12 and 15 is 60 since 60 is the lowest number that both 12 and 15 divide into.
+
+The LCM is obtained by finding the lowest factors of
+each of the numbers, as shown in Problems 12 and 13
+above, and then selecting the largest group of any of the
+factors present. Thus,
+
+ 12 = *2 × 2* × 3
+ 42 = 2 ×     3 × *7*
+ 90 = 2 ×     *3 × 3* × *5*
+
+The largest groups of any of the factors present are
+shown by the broken lines and are 2 × 2 in 12, 3 × 3
+in 90, 5 in 90 and 7 in 42
+Hence, the LCM is 2 × 2 × 3 ×3 ×5 × 7 = 1260 and
+is the smallest number which 12, 42 and 90 will all
+divide into exactly
+
+Problem 15. Determine the LCM of the numbers
+150, 210, 735 and 1365
+Using the method shown in Problem 14 above:
+
+ 150 = *2* × *3* × *5 × 5*
+ 210 =  2  ×  3 ×   5     ×  7
+ 735 =        3 ×   5     × *7 × 7*
+ 1365 =       3 ×   5     ×  7     × *13*
+
+Hence, the LCM is 2 × 3 × 5 × 5 × 7 × 7 × 13= 95550
+
+=== Order of operation and brackets
+When we read, we read from left to right. However,
+with mathematics there is a definite order of precedence
+which we need to adhere to. The order is as follows:
+
+1. Brackets
+2. Order (or pOwer)
+3. Division
+4. Multiplication
+5. Addition
+6. Subtraction
+
+Notice that the first letters of each word spell BODMAS, a handy aide-memoire. Order means pOwer

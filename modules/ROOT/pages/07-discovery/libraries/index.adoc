@@ -1,6 +1,7 @@
 = Service Discovery Libraries
 :figures: 07-discovery/libraries
 
+== Spring Cloud 
 The Spring Cloud project offers a few options for adding client-side service discovery to your Spring applications. One of the popular choices is Spring Cloud Netflix
 Eureka, which wraps the Eureka service registry developed by Netflix. Alternatives
 are Spring Cloud Consul, Spring Cloud Zookeeper Discovery, and Spring Cloud
@@ -8,10 +9,27 @@ Alibaba Nacos. For each of the previously mentioned options,
 Spring Cloud provides a client library you can add to your Spring application so it can
 use the service registry with minimal effort.
 
+Spring Cloud comes with an abstraction of how to communicate with a discovery service such 
+as Netflix Eureka and provides an interface called DiscoveryClient. This can be used to interact 
+with a discovery service to get information regarding available services and instances. Implemen-
+tations of the DiscoveryClient interface are also capable of automatically registering a Spring 
+Boot application with the discovery server.
 
-== Spring Cloud Consul
+Spring Boot can find implementations of the DiscoveryClient interface automatically during 
+startup, so we only need to bring in a dependency on the corresponding implementation to 
+connect to a discovery server. In the case of Netflix Eureka, the dependency that’s used by our 
+microservices is spring-cloud-starter-netflix-eureka-client
 
-== Usage
+Spring Cloud also comes with an abstraction – the LoadBalancerClient interface – for clients that 
+want to make requests through a load balancer to registered instances in the discovery service. 
+The standard reactive HTTP client, WebClient, can be configured to use the LoadBalancerClient
+implementation. By adding the @LoadBalanced annotation to a @Bean declaration that returns 
+a WebClient.Builder object, a LoadBalancerClient implementation will be injected into the 
+Builder instance as an ExchangeFilterFunction
+
+=== Spring Cloud Consul
+
+==== Usage
 
 *Service: Adding the Spring Cloud Consul Discovery Dependency in Maven*
 
@@ -156,10 +174,12 @@ spring:
             methods: GET,POST
 ----
 
+
+
 == Examples
 
 * https://github.com/spring-kb/baeldung-spring-cloud-consul[Quick Guide to Spring Cloud Consul]
 * https://github.com/spring-kb/spring-boot-microservices-with-consul-spring-cloud-gateway-and-docker[Spring Boot Microservices with Consul, Spring Cloud Gateway and Docker])
-+
+
 == Samples
 * https://github.com/books-java/Learn-Microservices-with-Spring-Boot-3[Multiplication Microservices Example]

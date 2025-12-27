@@ -1,6 +1,8 @@
-= AI development
+= AI 
 :figures: 11-development/04-AI
 
+
+== AI development
 Software developers thrive on certainty. When you give a program certain input, you
 always get the same output. For ages, this pure deterministic logic was the heart and
 soul of software.
@@ -41,7 +43,70 @@ of new and unique content.
 But generative AI is more than just LLMs. GenAI also has multimodal capabilities,
 meaning the ability to create images, audio, and video.
 
+Advocates of LLMs are celebrating that these types of AI tools have democratized
+theuse of AI, allowing anyone to use it to get results. However, this democratization
+is a double-edged sword. The nature in which we interact with LLMs can give us the
+illu- sion that we’re talking with a machine that reasons in the same way we humans
+do. But making that assumption can affect our ability to get the most out of an LLM.
+So, to get the best results out of tools such as ChatGPT, we should know how they
+work (at least in general terms) to better understand how they can fit into our
+testing activities and how to extract the most value from them.
+
 == LLM
+Take out your phone and open a messaging app, or any other app that makes your 
+keyboard appear. Above the keyboard, you’ll likely see a range of suggested words to 
+insert into your message. For example, my keyboard offers the following suggestions: 
+I, I am, and The. Selecting one of these options, such as I am, causes the suggestions to 
+update. For me, it offered the options away, away for, and now. Selecting the option away
+for once again updates the available options. So, how does the keyboard know which 
+options to show?
+
+In your keyboard, there is an AI model that behaves in a manner resembling LLMs. 
+This description is an oversimplification, but at its core, the keyboard on your phone 
+is applying the same machine learning approach as an LLM by using probability. Lan-
+guage is a complex and fluid set of rules, meaning any attempt to codify relationships 
+explicitly is almost impossible. So instead, a model is trained on massive data sets to 
+implicitly learn the relationships in language and create a probability distribution that 
+is used to predict what the next word might be. This can best be described by visualizing 
+the options available from the keyboard example
+
+image::{figures}/probability-distribution-in-action.png[Probability distribution in action]
+
+As we can see, when we select the term I am, the model in our keyboard has been 
+trained to assign probabilities to a vast range of words. Some of these will have a high 
+probability of coming after I am, such as away, and some will have a low probability, 
+such as sandalwood. As mentioned before, these probabilities come from a model 
+that has completed a training process, known as unsupervised learning, in which vast 
+amounts of data have been sent to an algorithm for processing. It’s from that training 
+process that a model is created with complex weights and balances that provide the 
+model with its predictive abilities.
+
+Chances are good that if you play around with the predictive function on your key-
+board, the output will differ from mine—even if we have the same phone and oper-
+ating system. This is because once the model has been trained and is utilized in our 
+phones, it’s still being fine-tuned by what we type into our phones. I travel for work, 
+so I must let people know when I am away and when I’m available. (It is perhaps a 
+damning indictment of my work–life balance!) So, words such as I am and away have 
+an increased probability as they are words I use more regularly. This is known as Rein-
+forcement Learning with Human Feedback, or RLHF.
+
+comparing predictive messaging on a phone to an LLM is an oversimplifica-
+tion, but the comparison holds true. LLMs also use unsupervised learning and RLHF. 
+The difference, however, is that although an AI model on a phone can look at perhaps 
+the last five words typed to predict the next, LLMs use cutting-edge techniques, such as
+* Generative pretrained transformers (which is what makes the GPT abbreviation in ChatGPT)
+* Powerful hardware infrastructure using thousands of servers
+* Training data on a scale that would dwarf what our humble keyboard model will have been trained on
+
+The output of LLMs, no matter how powerful, is 
+probabilistic. LLMs are not a repository of information—there is structured knowl-
+edge stored within them like we would see on the wider internet. This means that how 
+it comes to conclusions differs from how we humans do (probability rather than expe-
+rience), which is what makes them so powerful but also risky to use if we aren’t vigilant 
+about how we use them.
+
+At first glance, LLMs work by simply taking instructions from a user and responding with an answer using natural language.
+
 LLMs (Large Language Models) are a type of AI model designed to understand and generate human-like text. They are trained on vast amounts of text data and can perform a variety of tasks, such as translation, summarization, and question answering.
 
 A large language model is a type of artificial intelligence model that processes, understands, and generates 

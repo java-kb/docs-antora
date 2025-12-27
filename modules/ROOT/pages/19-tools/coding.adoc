@@ -1,0 +1,6 @@
+= Coding
+
+==  What The Diff
+https://whatthediff.ai
+
+What The Diff automatically writes pull request descriptions, sends out summarized notifications to keep non-technical stakeholders in the loop, and helps you to refactor minor issues during the review.

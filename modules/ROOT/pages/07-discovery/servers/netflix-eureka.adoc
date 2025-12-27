@@ -1,0 +1,185 @@
+= Spring Cloud Netflix
+Netflix Eureka is a highly configurable discovery server that can be set up for a number of differ-
+ent use cases, and it provides robust, resilient, and fault-tolerant runtime characteristics. 
+
+== Setting up a Netflix Eureka server
+To setup a Netflix Eureka server using Spring Cloud just follow these steps:
+
+1. Create a Spring Boot project using Spring Initializr.
+2. Add a dependency to spring-cloud-starter-netflix-eureka-server.
++
+[source,xml,attributes]
+----
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.clou</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+		</dependency>
+	</dependencies>
+----
+
+3. Add the @EnableEurekaServer annotation to the application class.
++
+[source,java,attributes]
+----
+package se.magnus.springcloud.eurekaserver;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+@EnableEurekaServer
+@SpringBootApplication
+public class EurekaServerApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(EurekaServerApplication.class, args);
+	}
+
+}
+----
+
+4. Add a Dockerfile, similar to the Dockerfiles that are used for our microservices, with the 
+exception that we export the default Eureka port, 8761, instead of the default port for our 
+microservices, 8080.
++
+[source,docker,attributes]
+----
+FROM eclipse-temurin:21.0.1_12-jre-jammy as builder
+WORKDIR extracted
+ADD ./build/libs/*.jar app.jar
+RUN java -Djarmode=layertools -jar app.jar extract
+
+FROM eclipse-temurin:21.0.1_12-jre-jammy
+WORKDIR application
+COPY --from=builder extracted/dependencies/ ./
+COPY --from=builder extracted/spring-boot-loader/ ./
+COPY --from=builder extracted/snapshot-dependencies/ ./
+COPY --from=builder extracted/application/ ./
+
+EXPOSE 8761
+
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+----
+5. Add the Eureka server to our Docker Compose files, like this:
++
+[source,yml,attributes]
+----
+eureka:
+ build: spring-cloud/eureka-server
+ mem_limit: 512m
+ ports:
+ - "8761:8761"
+----
+6. Finally, add some configuration. 
+
+== Connecting microservices to a Netflix Eureka server
+To be able to register a microservice instance in the Eureka server, we need to do the following:
+
+1. Add a dependency to spring-cloud-starter-netflix-eureka-client
++
+In maven 
++
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
++
+in the build file, build.gradle:
++
+Implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+2. When running tests on a single microservice, we don’t want to depend on having the 
+Eureka server up and running. Therefore, we will disable the use of Netflix Eureka in all 
+Spring Boot tests, that is, JUnit tests annotated with @SpringBootTest. This can be done 
+by adding the eureka.client.enabled property and setting it to false in the annotation, 
+like so:
++
+@SpringBootTest(webEnvironment=RANDOM_PORT, properties = {"eureka.client.enabled=false"})
+3. Finally, add some configuration.
+
+There is one property in the configuration that is extra important: spring.application.name. It 
+is used to give each microservice a virtual hostname, a name used by the Eureka service to iden-
+tify each microservice. Eureka clients will use this virtual hostname in the URLs that are used to 
+make HTTP calls to the microservice
+
+== Setting up the configuration
+The configuration parameters for Eureka are divided into three groups:
+
+• Parameters for the Eureka server, prefixed with eureka.server.
+• Parameters for Eureka clients, prefixed with eureka.client. This is for clients who want 
+to communicate with the Eureka server.
+• Parameters for Eureka instances, prefixed with eureka.instance. This is for the micros-
+ervice instances that want to register themselves in the Eureka server.
+
+=== development use
+Netflix Eureka comes with good default values for most of the configurable parameters – at least when it comes to using them in a production environment.
+
+When it comes to using Netflix Eureka during development, the default values cause long start-
+up times. For example, it can take a long time for a client to make an initial successful call to a 
+microservice instance that is registered in the Eureka server.
+
+Up to two minutes of wait time can be experienced when using the default configuration values. 
+This wait time is added to the time it takes for the Eureka service and the microservices to start 
+up. The reason for this wait time is that the involved processes need to synchronize registration 
+information with each other. The microservice instances need to register with the Eureka server, 
+and the client needs to gather information from the Eureka server. This communication is main-
+ly based on heartbeats, which happen every 30 seconds by default. A couple of caches are also 
+involved, which slows down the propagation of updates.
+
+We shall use a configuration that minimizes this wait time, which is useful during development. 
+In production environments, the default values should be used as a starting point!
+
+We can only use one Netflix Eureka server instance, which is okay in a development 
+environment. In a production environment, we should always use two or more 
+instances to ensure high availability for the Netflix Eureka server.
+
+=== Configuring the Eureka server
+To configure the Eureka server for use in a development environment, the following configuration 
+can be used:
+[source,yml,attributes]
+----
+server:
+  port: 8761
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    registerWithEureka: false
+    fetchRegistry: false
+    serviceUrl:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+  # from: https://github.com/spring-cloud-samples/eureka/blob/master/src/main/resources/application.yml
+  server:
+    waitTimeInMsWhenSyncEmpty: 0
+    response-cache-update-interval-ms: 5000
+----
+The last two parameters used for the Eureka server, waitTimeInMsWhenSyncEmpty
+and response-cache-update-interval-ms, are used to minimize the startup time.
+
+=== Configuring clients to the Eureka server
+To be able to connect to the Eureka server, the microservices have the following configuration:
+
+[source,yml,attributes]
+----
+eureka:
+ client:
+ serviceUrl:
+ defaultZone: http://localhost:8761/eureka/
+ initialInstanceInfoReplicationIntervalSeconds: 5
+ registryFetchIntervalSeconds: 5
+ instance:
+ leaseRenewalIntervalInSeconds: 5
+ leaseExpirationDurationInSeconds: 5
+----
+
+
+== Prodcution Use
+[source,yml,attributes]
+----
+spring.config.activate.on-profile: docker
+eureka.client.serviceUrl.defaultZone: http://eureka:8761/eureka/
+----
+The eureka.client.serviceUrl.defaultZone parameter is used to find the Eureka server, using 
+the localhost hostname when running without Docker and the eureka hostname when running 
+as containers in Docker

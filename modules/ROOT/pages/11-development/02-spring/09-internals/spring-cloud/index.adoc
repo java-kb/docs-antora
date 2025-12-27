@@ -1,0 +1,15 @@
+= Spring cloud
+
+== Spring cloud Eureka server
+Some of the available parameters are described in the Spring Cloud Netflix documentation: 
+https://docs.spring.io/spring-cloud-netflix/docs/current/reference/html/.
+
+For an extensive list of available parameters, I recommend reading the source code:
+
+• For Eureka server parameters, look at the org.springframework.cloud.netflix.eureka.
+server.EurekaServerConfigBean class for default values and the com.netflix.eureka.
+EurekaServerConfig interface for the relevant documentation
+• For Eureka client parameters, look at the org.springframework.cloud.netflix.eureka.
+EurekaClientConfigBean class for the default values and documentation
+• For Eureka instance parameters, look at the org.springframework.cloud.netflix.
+eureka.EurekaInstanceConfigBean class for default values and documentation

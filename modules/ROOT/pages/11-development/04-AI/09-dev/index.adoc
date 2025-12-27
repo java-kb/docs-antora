@@ -1,6 +1,8 @@
 = AI-Assisted Programming
 :figures: 11-development/04-AI/dev
 
+TODO: Add thhis prompts to modules/ROOT/pages/11-development/04-AI/prompt-engineering/prompts.adoc
+
 AI-assisted programming tools are crafted to enhance developers’ abilities, enabling
 them to zero in on advanced problem solving and innovations instead of being
 ensnared in monotonous tasks or complex code details. This is why GitHub’s use of
@@ -1038,11 +1040,258 @@ Sample prompts for data conversion:
 Prompt: Here’s a CSV row: ‘John Doe, 35, New York’. Can you convert this into an XML
 format for me?
 
-Prompt: I have a JSON array like this: [{‘name’: ‘Alice’, ‘job’: ‘Engineer’}, {‘name’: ‘Bob’,
-‘job’: ‘Designer’}]. How would I represent this in a SQL table format?
+****
+Prompt: I have a JSON array like this: [{‘name’: ‘Alice’, ‘job’: ‘Engineer’}, {‘name’: ‘Bob’,‘job’: ‘Designer’}]. How would I represent this in a SQL table format?
+****
 
-Prompt: I need to convert this TOML configuration: ‘title = “My Project” owner =
-“Sara”’ into an equivalent YAML format. How would you convert this?
+Prompt: I need to convert this TOML configuration: ‘title = “My Project” owner =“Sara”’ into an equivalent YAML format. How would you convert this?
+
+=== Debugging
+To get information about long error messages like  stack traces
+
+Prompt: What does this mean? {error message}
+
+
+If you have code and there is a logic error. The program simply will not do
+what you want it to do. In this case, you can copy-and-paste the code into the
+prompt. Then include this:
+
+Prompt: This program is supposed to allow users to upload photos and display them in
+a gallery. However, when it is executed, the photos are not appearing. What is the
+problem with this program? {code}
+
+
+=== Documentation
+You can create any type of documentation, such as:
+• User manuals
+• README files
+• API documentation
+• FAQs
+• Troubleshooting guides
+
+=== Code Review
+Using this prompt is akin to simulating the role of a 
+developer or tester that you are pairing with by having them analyze your work as you 
+develop to offer suggestions for consideration
+
+----
+MW You are a software testing expert. Analyze the code delimited by triple hashes and 
+identify risks that might impact the code. If no code is provided, respond with “No 
+risks could be found.”
+----
+
+We then provide instructions around quality characteristics and output structure:
+
+----
+* Risks must be related to the quality characteristics: Performance, security and 
+interoperability
+* Multiple risks can be identified for each quality characteristic
+* Output identified risks in the format of Risk - Quality Characteristic - Explanation
+----
+
+Few-shot prompting allows us to give an example of output structure:
+
+----
+MW Example:
+Overflow - Security - Adding in large integers as parameters might cause the method
+to trigger a buffer overflow.
+Code is provided within the instructed delimiters:
+###
+public BookingResult createBooking(Booking bookingToCreate) 
+throws➥SQLException {
+if(dateCheckValidator.isValid(bookingToCreate.getBookingDates())) {
+if (bookingDB.checkForBookingConflict(bookingToCreate)) {
+return new BookingResult(HttpStatus.CONFLICT);
+} else {
+CreatedBooking createdBooking =bookingDB.create(bookingToCreate);
+if(bookingToCreate.getEmail() != null &&bookingToCreate.getPhone() != null){
+MessageBuilder messageBuilder = new MessageBuilder();
+Message message = messageBuilder.build(bookingToCreate);
+messageRequests.postMessage(message);
+}
+return new BookingResult(createdBooking,HttpStatus.CREATED);
+}
+} else {
+return new BookingResult(HttpStatus.CONFLICT);
+}
+}
+###
+----
+
+[tabs]
+======
+ChatGPT::
+Below is a risk-based analysis of the provided code, focused on Performance, Security, and Interoperability.
+
+Performance Risks
+
+Synchronous External Messaging Call – Performance –
+messageRequests.postMessage(message) appears to be a synchronous external call. If the messaging service is slow or unavailable, booking creation may be delayed, increasing response time and reducing system throughput.
+
+Multiple Database Calls per Booking – Performance –
+The method performs at least two database operations (checkForBookingConflict and create). Under high load, this could lead to performance degradation if not optimized or wrapped in a transaction.
+
+No Short-Circuit for Notification Logic – Performance –
+Message construction and sending are performed immediately after booking creation. If notifications are optional, performing them inline may unnecessarily slow down the booking flow.
+
+Security Risks
+
+Lack of Input Validation on Booking Object – Security –
+The method assumes bookingToCreate and its fields (email, phone, booking dates) are valid. Missing validation may allow malformed or malicious input to propagate to the database or messaging systems.
+
+Potential SQL Injection Risk – Security –
+The method throws SQLException, but there is no evidence that bookingDB uses prepared statements. If user input is directly used in SQL queries, this could introduce SQL injection vulnerabilities.
+
+Sensitive Data Exposure via Messaging – Security –
+Email and phone number data are passed to an external messaging system without indication of encryption, masking, or consent checks, potentially exposing personally identifiable information (PII).
+
+Missing Authorization Checks – Security –
+There is no verification that the caller is authorized to create a booking, which could allow unauthorized users or systems to create bookings.
+
+Interoperability Risks
+
+Tight Coupling to Messaging Implementation – Interoperability –
+The method directly instantiates MessageBuilder and calls messageRequests.postMessage, making it harder to integrate with alternative messaging providers or change protocols.
+
+No Handling of Messaging Failures – Interoperability –
+If the messaging service is unavailable or returns an error, there is no fallback, retry, or compensation logic, which may cause inconsistent behavior across integrated systems.
+
+Implicit Dependency on External Systems – Interoperability –
+Successful booking creation partially depends on external systems (database, messaging). Differences in data formats, availability, or response behavior may impact system-to-system compatibility.
+
+Summary
+
+The main risks in this method are related to synchronous external dependencies, insufficient validation and security controls, and tight coupling to external services, all of which could negatively impact performance, security, and interoperability as the system scales or integrates with other platforms.
+
+Gemini::
+As a software testing expert, I have analyzed the provided createBooking method. The code reveals several critical vulnerabilities regarding how it handles data, external dependencies, and database transactions.
+
+Here are the identified risks:
+Performance
+
+    Synchronous External Blocking - Performance - The method calls messageRequests.postMessage(message) directly within the execution flow. If the external messaging service is slow or unresponsive, the entire booking transaction remains open, leading to thread exhaustion and increased latency for the user.
+
+    Database Race Conditions - Performance - The "check-then-act" pattern (checking for conflict, then creating) without explicit locking mechanisms can lead to performance degradation under high concurrency as the database struggles with contention or duplicate entries that require rollback.
+
+    Sequential Execution - Performance - The notification logic (MessageBuilder and postMessage) is performed sequentially. In a high-traffic B&B platform, this adds unnecessary overhead to the main execution thread that should focus solely on the database transaction.
+
+Security
+
+    SQL Injection Vulnerability - Security - The bookingToCreate object is passed directly into bookingDB methods. If these methods do not use prepared statements or proper parameterization, an attacker could use malicious input in fields like "name" or "notes" to execute unauthorized SQL commands.
+
+    Insecure Data Transmission - Security - The code checks for the existence of Email and Phone but does not appear to sanitize or encrypt this PII (Personally Identifiable Information) before passing it to the MessageBuilder and messageRequests. This increases the risk of data exposure if the messaging logs or external service are compromised.
+
+    Improper Error Handling - Security - The method throws SQLException. If the calling layer does not catch this and sanitize the output, raw database error messages (containing table names or schema details) could be leaked to the end-user.
+
+Interoperability
+
+    Tight Coupling with Messaging Service - Interoperability - The core booking logic is strictly dependent on the messageRequests implementation. If the external API changes its signature or data format, the createBooking method will fail, preventing any bookings from being processed.
+
+    Lack of Fault Tolerance - Interoperability - There is no retry logic or circuit breaker for the external postMessage call. If the messaging system is down, the booking might be created in the DB, but the failure of the message service could potentially crash the process or leave the system in an inconsistent state.
+
+Summary of Risk Impact
+
+The most severe risk here is Performance, specifically the synchronous call to an external messaging service. This is a "bottleneck" pattern that often causes applications to crash under load because the database connection stays tied up while waiting for a network response from a third party.
+
+Would you like me to rewrite this code snippet using an Asynchronous pattern (such as a Message Queue) to mitigate the performance and interoperability risks identified?
+======
+
+the quality of these different risks varies. For example, the risk “Performance - Message Posting” feels quite abstract, as we can see in its explanation:
+---
+If the message posting process involves network communication or I/O operations, it 
+could slow down the execution of the createBooking method.
+---
+Suggesting risks around network communication or I/O operations feels vague 
+because it might refer to a range of implementations, some of which might relate to 
+our work and some that might not.
+However, other risks are more concrete and potentially useful—for example, 
+---
+“Security - Inadequate Authorization,” which highlights the following:
+The code does not perform explicit authorization checks before creating bookings, 
+potentially allowing unauthorized users to create bookings.
+---
+This risk feels more concrete because it refers to actions that are carried out in our 
+method and the absence of potentially important checks within it. Of course, we may 
+carry out authorization checks elsewhere, but the information it has given highlighted 
+an explicit activity that we might need to discuss further to improve the security of our 
+booking feature.
+
+if we want to solicit more questions and risks? We simply ask by submitting an additional prompt, such as “Generate more questions” or “Identify further risks.”  Be wary, though, as this has diminishing returns. An LLM will try to fulfill 
+our requests at the risk of increasing hallucinations. So, as options start to dry out, we 
+may see more suggestions that are less connected to the ideas and code we wanted 
+feedback on in the first place.
+
+== Unit Testing
+Prompt: For this program, suggest unit tests to correctly calculate the total amount,
+check the typical and edge cases, such as zero and negative bill amounts and high tip
+values. Also check for invalid inputs. For the unit tests, you can have console logs.
+
+If you want to use a testing framework, to allow for a more structured and comprehensive approach, you can ask ChatGPT for this:
+
+Prompt: Create unit tests that use a testing framework.
+
+if you already have a file with unit tests, you can evaluate them. Here’s a prompt:
+
+Prompt: Below is the file for unit tests for a program that <explain what it does or point
+to the code>. Any other tests I should have? What is missing here?
+
+
+=== Pull Requests
+ChatGPT can help you in PR descriptions. 
+* Need to kickstart a draft? Tell ChatGPT what you did, and it will help you structure it into
+something clear and to the point. 
+* If you’ve already written a description, ChatGPT
+can check it out for clarity and grammar and suggest ways to make it even better.
+* ChatGPT can also help you figure out the best way to lay out your PR, like starting
+with a summary and then getting into the nitty-gritty. And if there are technical
+details that need simplifying, it’s got your back in making the PR more understandable for everyone in your team.
+
+Copilot can create PR descriptions based on the repository that is loaded into your project. you’ll just need to click the sparkle button in the lefthand panel beside the commit message
+
+some helpful prompts:
+
+Prompt: I added a new search feature to the application that filters results based on user
+input. Can you help me write a PR description for this?
+
+Prompt: I fixed a bug where the app crashed when a user entered special characters in
+the text field. How should I describe this in a PR?
+
+Prompt: I refactored the authentication module to improve performance and readability. What should I include in the PR description?
+
+Prompt: I updated the user interface to make the navigation more intuitive and added
+new icons. Can you help me draft a PR description?
+
+Prompt: What’s a good way to phrase this in a PR description?
+
+Prompt: I added new unit tests for the payment-processing module. Can you assist me
+in writing a PR description that highlights these changes?
+
+Prompt: I resolved merge conflicts that arose due to recent changes in the main branch.
+What should I mention in the PR description about this?
+
+=== Deployment
+Prompt: Can you guide me in creating a deployment checklist for my team to follow?
+
+Prompt: What are some good learning resources for getting started with Docker for
+deployment purposes?
+
+Prompt: Can you provide best practices for zero-downtime deployment in a web application?
+
+Prompt: I’m encountering a “server timeout” error during deployment. What are some
+common causes and solutions for this?
+
+
+Prompt: Could you help me write a bash script for automating the deployment of my
+Python web app?
+
+Prompt: What are the essential configuration settings I should check before deploying
+an app in a production environment?
+
+Prompt: How do I plan a rollback strategy for a failed deployment in a cloud environment?
+
+Prompt: What security measures should I consider during the deployment of a financial application?
+
+Prompt: How can I optimize the performance of a deployed Node.js application?
 
 == Frontend Development
 
@@ -1113,4 +1362,56 @@ ChatGPT describes the main steps. You can then ask it to show how to make a requ
 Prompt: How do I create a request using the OpenWeather API? How do I do this using Python?
 
 
+== User Feedback
+Generative AI is particularly good at processing large amounts of unstructured data like user feedback.
+For example, suppose you have a file that includes lots of emails, IMs, and contact
+form information from users. You can then go to ChatGPT and use this prompt:
 
+Prompt: Identify the common themes and categories, such as usability, performance,
+features, bugs, and customer service. Also, do sentiment analysis on this file. Based on
+the frequency and severity of issues mentioned, help prioritize which bugs to fix first
+or which features to consider adding. With all this, create a report that includes charts.
+
+Another way ChatGPT can help is with response drafting. If you’re dealing with cus‐
+tomer feedback, it can help you write better responses, such as by creating templates
+for answers to common questions. This way, you’re always on point and professional
+when you’re chatting with users or customers.
+
+you can use ChatGPT for more personalized responses. You can cut-and-paste
+user email and use a prompt like this:
+Prompt: Write a reply to the user email, focusing on a calm and understanding tone.
+Make sure the response is friendly and helps to ease any concerns without escalating
+the situation. {email}
+
+you can create your own LLM-based application(i.e using the OpenAI API) to handle user feedback(i.e categorize and prioritize the incoming feedback).
+
+== Launching
+you can start mapping out a marketing plan. Here’s a sample prompt:
+
+Prompt: You have created an app to help people plan healthy meals. It creates custom
+meal plans based on dietary preferences, health goals, and nutritional needs. It can also
+generate shopping lists, offer recipe suggestions, and track nutritional intake. For this
+app, put together a marketing plan. The company is an early-stage startup and does
+not have much resources for a marketing budget.
+
+Here are some other helpful ChatGPT prompts:
+
+Prompt: Write an engaging introduction for a blog post announcing the launch of the
+new health planner app, highlighting its unique features and benefits.
+
+Prompt: Craft a series of social media posts for announcing our new health planner
+app, focusing on its user-friendly interface and how it helps in managing health goals.
+
+Prompt: Compose a product announcement email for our health planner app, emphasizing its ability to track and improve users’ health routines.
+
+Prompt: Create a persuasive sales email targeting gym instructors and health coaches,
+promoting our health planner app as a tool for their clients.
+
+Prompt: Generate a list of catchy and relevant names for a new health planner app that
+conveys a sense of wellness and organization.
+
+Prompt: Develop ad copy for Facebook and Instagram ads promoting our health planner app, highlighting its ease of use and personalization options.
+
+Prompt: Formulate a template to request testimonials from early users of our health planner app, to be used in marketing materials.
+
+Prompt: Create an invitation for a virtual launch event of our health planner app, detailing the agenda and special guests.

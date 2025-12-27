@@ -55,8 +55,7 @@ can switch between the two using configuration flags or explicitly excluding one
 ----
 
 *make load-balanced calls between two services*
-To make load-balanced calls between two applications, you can simply use the @
-LoadBalanced annotation when creating a RestTemplate object. Then, you use the
+To make load-balanced calls between two applications, you can simply use the @LoadBalanced annotation when creating a RestTemplate object. Then, you use the
 service name as the hostname in your URLs when performing requests to that service.
 The Spring Cloud Consul and load balancer components will do the rest, querying the
 registry and selecting the next instance in order.
@@ -80,6 +79,26 @@ ResponseEntity<String> r = restTemplate.postForEntity(
  String.class);
 ----
 
+
+[,java]
+----
+@Bean
+@LoadBalanced
+public WebClient.Builder loadBalancedWebClientBuilder() {
+    return WebClient.builder();
+}
+----
+
+[,java]
+----
+private WebClient webClient;
+
+public ProductCompositeIntegration(
+ WebClient.Builder webClientBuilder,
+) {
+ this.webClient = webClientBuilder.build();
+}
+----
 *Gateway: Configure Service Discovery and Load Balancing in the Gateway*
 
 All you need to do to take advantage of these new patterns is add some configuration
@@ -92,6 +111,10 @@ retrieve only the healthy services.
 * Routing configuration: Instead of using explicit hosts and ports,
 switch to service names with a URL pattern that also enables load
 balancing
++
+The hostnames are not actual DNS names. Instead, they are the 
+virtual hostnames that are used by the microservices when they register themselves to 
+the Load Balancing server – in other words, the values of the spring.application.name property
 * Resilience: In case the gateway fails to proxy a request to a service, you
 want it to retry a few times. We elaborate on this topic in a bit.
 

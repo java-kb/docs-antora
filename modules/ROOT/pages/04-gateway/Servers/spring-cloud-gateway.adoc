@@ -303,6 +303,9 @@ Authorization: Bearer <access_token>
 ----
 
 == Resilience with Spring Cloud Gateway
+In a fairly large-scale system landscape of cooperating microservices, we must assume that there 
+is something going wrong all of the time. Failures must be seen as a normal state, and the system 
+landscape must be designed to handle it!
 === Configure timeout
 Edge Service uses Netty’s HTTP client to forward requests to downstream services. whenever an application calls an external service, it’s essential to configure a timeout to make it resilient to interprocess communication failures. Spring Cloud Gateway provides dedicated properties to configure the HTTP client timeouts.
 

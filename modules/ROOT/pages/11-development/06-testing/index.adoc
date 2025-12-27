@@ -1,5 +1,203 @@
 = Testing
 
+== shift-left testing 
+teams apply shift-left testing to help build quality into applications as early as possible. Shift-left testing means bringing 
+testing analysis earlier into the development process, ideally around the point at which 
+ideas are being discussed and details clarified. This process results in many questions 
+being asked that help us identify issues earlier, deliver valuable features, and improve 
+the quality of our products. Shift-left activities are an invaluable approach to improving 
+quality and should be encouraged.
+
+Shift-left testing is
+a strategy to move testing activities earlier in the software development lifecycle (SDLC), shifting them "left" on the timeline from a late, separate phase to integrated parts of planning, design, and coding. The core idea is to find and fix defects sooner, making them cheaper and easier to resolve, which leads to higher quality, faster delivery, better collaboration, and reduced costs by preventing issues from propagating, supporting Agile and DevOps. 
+How it works
+
+* Early involvement: Testers and QA engage from the requirements/discovery phase, analyzing user stories and acceptance criteria for testability and clarity.
+* Developer ownership: Developers write and run tests (like unit and integration tests) concurrently with coding, not after.
+* Continuous feedback: Testers provide rapid feedback to developers, creating short feedback loops for quick adjustments.
+* Automation: Security and functional tests are automated and integrated into CI/CD pipelines, running frequently. 
+
+Shift-left testing means moving testing activities earlier ("to the left") in the software development lifecycle instead of waiting until the end.  
+
+The main goal is to find defects as early as possible, when they are cheaper and easier to fix.
+
+=== Traditional vs Shift-Left Testing
+
+==== Traditional (Right-heavy testing)
+----
+Requirements → Design → Code → Test → Release
+                               ↑
+                           Most testing here
+----
+
+==== Shift-Left Testing
+----
+Requirements → Design → Code → Test → Release
+   ↑            ↑         ↑
+ Testing     Testing   Testing
+----
+
+Testing is no longer a separate phase; it becomes a continuous activity throughout development.
+
+=== What Gets Shifted Left?
+
+[cols="1,1,1", options="header"]
+|===
+| Phase | Traditional Testing | Shift-Left Testing
+| Requirements | Rarely tested | Reviews, acceptance criteria, examples
+| Design | Mostly ignored | Design reviews, threat modeling
+| Coding | Manual testing later | Unit tests, static analysis
+| Integration | Late discovery | Contract and integration tests early
+|===
+
+=== Practical Examples
+
+==== Example 1: Requirements Testing (Before Code Exists)
+
+*Feature*: User password reset
+
+Traditional approach:
+- Requirements are written
+- Code is implemented
+- QA later finds ambiguity (e.g., what happens if the email does not exist)
+
+Shift-left approach:
+- Tester reviews requirements before coding
+- Questions are raised early:
+  * What if the email is invalid?
+  * Is there rate limiting?
+  * What are the security expectations?
+
+Example acceptance criteria:
+----
+Given an unregistered email
+When a password reset is requested
+Then the system responds with a generic success message
+----
+
+Result:
+- Clear requirements
+- Fewer changes during development
+
+==== Example 2: Unit Testing During Coding
+
+Traditional approach:
+----
+def divide(a, b):
+    return a / b
+----
+
+Bug (division by zero) is found late.
+
+Shift-left approach:
+----
+def divide(a, b):
+    if b == 0:
+        raise ValueError("Cannot divide by zero")
+    return a / b
+----
+
+Unit test:
+----
+def test_divide_by_zero():
+    with pytest.raises(ValueError):
+        divide(10, 0)
+----
+
+Result:
+- Defect detected during development
+- No late-stage failures
+
+==== Example 3: API Contract Testing (Before Frontend Exists)
+
+Traditional approach:
+- Backend and frontend are developed independently
+- Integration breaks due to mismatched fields
+
+Shift-left approach:
+- API contract is defined first (e.g., OpenAPI)
+- Tests validate the response structure early
+
+Example contract:
+----
+{
+  "id": "integer",
+  "email": "string",
+  "created_at": "ISO-8601"
+}
+----
+
+Result:
+- No integration surprises
+- Clear agreement between teams
+
+==== Example 4: Early Security Testing
+
+*Feature*: File upload
+
+Shift-left security considerations:
+- Allowed file types
+- Maximum file size
+- Malware scanning
+- Path traversal risks
+
+Early tests:
+- Upload forbidden file extensions
+- Upload files with suspicious names (e.g., ../../etc/passwd)
+
+Result:
+- Security vulnerabilities removed before release
+
+=== Shift-Left Testing in Agile and CI/CD
+
+Typical CI pipeline with shift-left principles:
+----
+Commit →
+  Static Code Analysis →
+  Unit Tests →
+  API Tests →
+  Integration Tests →
+  UI Tests →
+Deploy
+----
+
+Most tests are automated and executed early.  
+Manual exploratory testing focuses on high-risk areas instead of basic checks.
+
+=== Common Tools for Shift-Left Testing
+
+[cols="1,1", options="header"]
+|===
+| Area | Tools
+| Static Analysis | SonarQube, ESLint
+| Unit Testing | PyTest, JUnit
+| API Testing | Postman, REST Assured
+| Contract Testing | Pact
+| Security Testing | Snyk, OWASP ZAP
+| Requirements & BDD | Gherkin
+|===
+
+=== Benefits of Shift-Left Testing
+
+- Bugs are detected earlier
+- Fixes are cheaper
+- Faster release cycles
+- Higher overall product quality
+- Reduced release pressure
+
+=== Common Pitfalls
+
+- Over-automation without strategy
+- Ignoring exploratory testing
+- Treating testers only as script writers
+
+Shift-left testing should complement, not replace, human exploration.
+
+=== Summary
+
+Shift-left testing is about testing earlier, smarter, and continuously throughout development rather than testing late and reacting to defects.
+
+
 == Test-Driven Development
 Test-Driven Development (TDD) is a software development process widely used in development to ensure code quality and reduce the time spent debugging. TDD is an agile 
 approach to software development that emphasizes the iterative writing of tests before writing the 

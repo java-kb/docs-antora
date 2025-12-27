@@ -42,7 +42,74 @@ degradation. You can adopt different strategies for the fallback method. For exa
 you might decide to return a default value or the last available value from a cache, in
 case of a GET request.
 
+the classic design of a circuit breaker, as illustrated in the following state 
+diagram:
+image::{figures}/circuit-breaker-state-diagram.png[Circuit breaker state diagram]
+1. A circuit breaker starts as Closed, allowing requests to be processed.
+2. As long as the requests are processed successfully, it stays in the Closed state.
+3. If failures start to happen, a counter starts to count up.
+4. If a threshold of failures is reached within a specified period of time, the circuit breaker 
+will trip, that is, go to the Open state, not allowing further requests to be processed. Both 
+the threshold of failures and the period of time are configurable.
+5. Instead, a request will fast fail, meaning it will return immediately with an exception.
+6. After a configurable period of time, the circuit breaker will enter a Half Open state and 
+allow one request to go through, as a probe, to see whether the failure has been resolved.
+7. If the probe request fails, the circuit breaker goes back to the Open state.
+8. If the probe request succeeds, the circuit breaker goes to the initial Closed state, allowing 
+new requests to be processed.
+
+Let’s assume we have a REST service, called myService, that is protected by a circuit breaker 
+using Resilience4j.
+If the service starts to produce internal errors – for example, because it can’t reach a service it 
+depends on – we might get a response from the service such as 500 Internal Server Error. 
+After a number of configurable attempts, the circuit will open and we will get a fast failure that 
+returns an error message such as CircuitBreaker 'myService' is open. When the error is 
+resolved and we make a new attempt (after the configurable wait time), the circuit breaker will 
+allow a new attempt as a probe. If the call succeeds, the circuit breaker will be closed again; that 
+is, operating normally.
+
+
 == Resilient applications with Spring
+In a fairly large-scale system landscape of cooperating microservices, we must assume that there 
+is something going wrong all of the time. Failures must be seen as a normal state, and the system 
+landscape must be designed to handle it!
+
+When using Resilience4j together with Spring Boot, we will be able to monitor the state of the 
+circuit breakers in a microservice using its Spring Boot Actuator health endpoint. If it operates 
+normally, that is, the circuit is closed, it will respond with something such as the following:
+{
+	"status": "UP",
+	"components": {
+		"circuitBreakers": {
+			"status": "UP",
+			"details": {
+				"myService": {
+					"status": "UP",
+					"details": {
+						"state": "CLOSED"
+					}
+				}
+			}
+		}
+	}
+}
+If something is wrong and the circuit is open, it will respond with something such as the following:
+{
+	"status": "DOWN",
+	"components": {
+		"circuitBreakers": {
+			"status": "DOWN",
+			"details": {
+				"myService": {
+					"status": "DOWN",
+					"details": {
+						"state": "OPEN"
+					}
+				}
+			}
+		}
+	}
+}
 === Timeouts
 Here are some examples of timeouts:
 
@@ -54,9 +121,20 @@ pool through the spring.datasource.hikari.connection-timeout property.
 * Read timeout—This is the time limit for reading from a remote resource after
 establishing the initial connection.you can for example define a read
 timeout for the call to the Catalog Service performed by the BookClient class.
+
 == Libraries
 
 === Resilience4j
+Resilience4j is an open source-based fault tolerance library. It comes with a larger range of fault tolerance mechanisms:
+
+• A circuit breaker is used to prevent a chain of failure reaction if a remote service stops 
+responding.
+• A rate limiter is used to limit the number of requests to a service during a specified time 
+period.
+• A bulkhead is used to limit the number of concurrent requests to a service.
+• Retries are used to handle random errors that might happen from time to time.
+• A time limiter is used to avoid waiting too long for a response from a slow or unrespon-
+sive service.
 
 === Spring Cloud Circuit Breaker
 The Spring Cloud Circuit Breaker project provides an abstraction for defining

@@ -1,0 +1,99 @@
+= Chatbots
+
+== Comparing LLMs
+What makes an LLM good? How do we determine whether a model is worth using?
+These are not easy questions to answer. The complex nature of LLMs, how they’re
+trained, and what data was used close these systems off to deep analysis, compromising
+an area that some researchers are trying to improve or shed light upon. However, that
+doesn’t mean we shouldn’t educate ourselves on some of the key aspects of LLMs and
+how they affect them. We might not all be AI researchers attempting to explore the
+deep inner workings of LLMs, but we are or will be their users and will want to know
+that what we spend resources on is giving us value. 
+
+=== parameter count
+The parameter count essentially refers to the amount of statistical weights that exist in a model. Each individual weight provides
+a piece of the statistical puzzle that makes up an LLM. So, roughly speaking, the more
+parameters an LLM has, the better it will perform. The parameter count can also give
+us a sense of cost. The higher the parameter count, the more expensive it is to run, and
+there is a cost that may be, in part, handed down to users.
+
+== trained Data
+LLMs require huge quantities of data to be trained on, so the size and quality of data
+will have an effect on the quality of an LLM. If we want an LLM to be accurate in how
+it responds to requests, it’s not enough to just throw as much data as possible. It needs
+to be data that can help influence the probability of a model in a sensible manner.
+
+the more isn’t necessarily better. Still, similar to parameter count, the
+more high-quality data an LLM has been trained on, the better it will likely perform.
+The challenge is in knowing what data an LLM has been trained on—something that
+corporate creators of AI are keen on keeping a secret.
+
+== Extensiablity and INtegeration
+Just like with any other tool, the value of an LLM can be increased further if it can
+offer other features beyond its core abilities, such as integrating into existing systems
+or training models further for our specific needs. What features are available to inte-
+grate and extend LLMs depends largely on who was responsible for training.
+
+== quality of responses
+ the most important factor to consider is whether an LLM provides responses
+that are legible, useful, and free (or as close to free) of hallucination as possible.
+Although criteria such as parameter count and training data are useful indicators of
+an LLM’s performance, it’s up to us to understand what we want to use an LLM for
+and then determine how each responds to our prompts and helps solve our specific
+problems. Not all challenges we face need the largest, most expensive LLM in the mar-
+ket. Thus, it’s important that we take time to try out different models, compare their
+outputs, and then make a judgment for ourselves. For example, GPT models from
+OpenAI are found to perform better with code examples than Google Gemini. These
+details have been discovered through experimentation and observation.
+
+== popular LLMs
+check https://llmmodels.org/
+
+=== OpenAI
+At the time of writing, OpenAI is the most ubiquitous of organizations offering LLMs 
+for use. Although OpenAI has been working on LLM models for quite some time, 
+releasing their GPT-3 model in 2020, it was their release of ChatGPT in November 
+2022 that kick-started the popular wave of interest and use of LLMs.
+
+OpenAI offers a range of different LLM models, but the two that stand out are 
+GPT-3.5-Turbo and GPT-4o, which you can learn about more at https://platform.openai.com/docs/models/overview. These two models are used as foundation models or 
+models that can be trained further for specific purposes, for a range of products such as 
+ChatGPT, GitHub Copilot, and Microsoft Bing AI.
+
+In addition to their models, OpenAI has offered a range of features such as API 
+access to their direct GPT-3.5-Turbo and GPT-4 models and a collection of apps that 
+integrate with ChatGPT (if you subscribe to their plus membership). It’s by far the most 
+popular LLM (for now) and has kick-started a race with organizations to release their 
+own LLMs.
+
+
+=== Google Gemini
+Google offers access to their Gemini models via their Google
+Cloud platform (https://ai.google.dev/) and has recently started offering apps that
+work similarly to OpenAI’s ChatGPT apps, with the added integration into other Goo-
+gle Suite tools such as Google Drive and Gmail. You can access and experiment with
+Gemini at https://gemini.google.com/app.
+
+=== Meta LLaMa
+LLaMa, which is the name for a collection of models, was first released by Meta in July
+2023. What sets LLaMa apart from OpenAI’s GPT models and Google’s Gemini is that
+LLaMa is open source. In addition to the open source license, LLaMa comes in a range
+of sizes: 8 and 70 billion parameters, respectively. The combination of these sizes and
+their access means that LLaMa has been adopted by the AI community as a popular
+foundational model. The flip side of this access, though, is that Meta doesn’t provide
+a public platform to train and run versions of LLaMa. So, data sets and infrastructure
+must be personally sourced for use.
+More details on LLaMa can be found at the following links:
+¡ https://ai.meta.com/blog/meta-llama-3/
+¡ https://www.llama.com/llama-downloads/
+
+=== Hugging Face
+Hugging Face offers no proprietary model but
+instead facilitates an AI community that contains a wide variety of different models,
+most of which are open source. Looking at their index page of models available at
+https://huggingface.co/models, we can see hundreds of thousands of differently
+trained models that have come from different companies and research labs. Hugging
+Face also offers datasets for training, apps, and documentation that allows the reader
+to dive deeper into how models are built. All of these resources are available so that
+theAI community can access pretrained models, tweak them, and further train them
+for a specific use

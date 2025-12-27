@@ -2,17 +2,6 @@
 
 
 == Routes and navigation
-
-== Defining an error page and title
-
-== Dynamic routes – wildcards and parameters
-
-== Securing routes – guards
-
-== Optimizing the experience – Resolve
-
-
-== Examples
 [tabs]
 ======
 
@@ -47,3 +36,290 @@ Country.ts::
 ====
 
 ======
+== Defining an error page and title
+if the user enters a path that does not have a mapped route, they will be faced 
+with a blank screen. This is not a good user experience (UX) practice; ideally, we need to handle this 
+error by presenting an error page for it to be redirected to the correct page.
+
+Another point that we can improve in our application is the title of the page in the Browser tab.
+For this, we can once again use Angular’s routing mechanisms. To change the title, we just need to inform the title property in the route definition. 
+
+Another approach that is possible (but longer) is to use Angular’s Title service.
+[source,typescript,attributes]
+----
+import { Title } from '@angular/platform-browser';
+export class NewEntryFormTemplateComponent implements OnInit {
+    private titleService = inject(Title);
+    ngOnInit(): void {
+        this.titleService.setTitle('Template Form');
+    }
+}
+----
+After injecting the Title service, we are using it in the OnInit lifecycle hook. Although the 
+route approach is much simpler and more intuitive, the Title service can be used if the title can 
+change dynamically.
+
+[tabs]
+======
+Calaculator Example::
++
+[tabs]
+====
+
+Country.ts::
++
+[source, javascript]
+----
+----
+====
+
+Gym Diary::
++
+First, let’s create the component using the Angular CLI:
+ ng generate component ErrorPage
++
+Let’s create the template for this component with the error message:
+Note that we have the link to the home page as a call to action for the user to return to the home page.
++
+The next step is to update the routes file.
++
+At this point, Angular will do its job. Just by defining the error page route and then creating another 
+entry in the array, we have defined the '**' path and redirected it to the error route.
++
+When we run our project, if the user enters an incorrect page, the following message will be displayed.
+
+[tabs]
+====
+
+frontend/src/app/error-page/error-page.html::
++
+[source, html]
+----
+<div class="flex h-screen flex-col items-center justify-center">
+    <h1 class="mb-4 text-6xl font-bold text-red-500">Oops!</h1>
+    <h2 class="mb-2 text-3xl font-bold text-gray-800">Looks like you're lost!</h2>
+    <p class="mb-6 text-gray-600">
+        We couldn't find the page you're looking for.
+    </p>
+    <p class="text-gray-600">
+        But don't worry! Go back to the Gym Diary and continue your progress!
+    </p>
+    <a routerLink="/home" class="mt-4 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-600">
+        Go back to the Gym Diary
+    </a>
+</div>
+----
+
+frontend/src/app/app.routes.ts::
++
+[source, typescript]
+----
+export const routes: Routes = [
+    { path: '', pathMatch: 'full', redirectTo: 'home', },
+    {
+        path: 'home',
+        component: HomeComponent,
+        title: 'Home',
+    },
+    {
+        path: 'diary',
+        component: Diary,
+        title: 'Diary',
+    },
+    {
+        path: 'diary/entry',
+        component: NewEntryFormReactive,
+        title: 'Entry Form',
+    },
+    { path: 'error', component: ErrorPage },
+    { path: '**', redirectTo: '/error' },
+];
+----
+====
+======
+
+== Dynamic routes
+
+=== Getting route information
+==== Using withComponentInputBinding feature with provideRouter
+1. Add withComponentInputBinding
+Add the withComponentInputBinding feature to the provideRouter method.
+providers: [  provideRouter(appRoutes, withComponentInputBinding()),]
+2. Add an input to the component
+Update the component to have an input() property matching the name of the parameter.
+id = input.required<string>()
+hero = computed(() => this.service.getHero(id()));
+3. Optional: Use a default value
+The router assigns values to all inputs based on the current route when withComponentInputBinding is enabled. The router assigns undefined if no route data matches the input key, such as when an optional query parameter is missing. You should include undefined in the input's type when there's a possibility that an input might not be matched by the route.
+
+Provide a default value by either using the transform option on the input or managing a local state with a linkedSignal.
+
+id = input.required({
+  transform: (maybeUndefined: string | undefined) => maybeUndefined ?? '0',
+});
+// or
+id = input<string|undefined>();
+internalId = linkedSignal(() => this.id() ?? getDefaultId());
+
+==== Using bindToComponentInputs option of RouterModule.forRoot
+From version 16 of Angular, we have an improvement in the use of route parameters. In addition to 
+the ActivatedRoute service, we can map the inputs of page components directly to route variables 
+in our applications.
+
+Angular automatically binds the information that comes from the 
+route in the attribute, simplifying even more the passing of parameters via the URL to the component.
+[source,typescript,attributes]
+----
+@NgModule({
+ imports: [
+ RouterModule.forRoot(routes, {
+ bindToComponentInputs: true,
+ }),
+ ],
+ exports: [RouterModule],
+})
+export class AppRoutingModule {}
+----
+To use this resource, we need to add the bindToComponentInputs attribute in the general 
+configuration of the application’s route.
+[source,typescript,attributes]
+----
+export class NewEntryFormReactiveComponent implements OnInit {
+ @Input('id') entryId?: string;
+}
+----
+
+[tabs]
+======
+Calaculator Example::
++
+[tabs]
+====
+
+Country.ts::
++
+[source, javascript]
+----
+----
+====
+
+Gym Diary::
++
+We want to change the function of the New Rep button so that instead of adding a rep to the entry, 
+the user can actually edit the entry, opening the form with the data filled in.
++
+First, let’s add a new method to the ExerciseSetsService service,In addition to creating the new method by getting a specific item, we also prepared the update
+method to accept Partial of the ExerciseSet object.
++
+The form for editing the diary entry will be the same as for adding a new entry, with the difference that it will 
+be filled in and will call the update method. So, let’s reuse the NewEntryFormReactiveComponent
+component for this.
++
+We’ll start by editing the routes file, In the route array, we change the route of the new form to entry and create the entry/:id route.
+This route is pointing to the same component, but note that :id tells Angular that it is a dynamic route – that is, it will receive a variable value that must be directed to the route.
++
+We also need to adjust the journal and input components to call the new route instead of increasing 
+the number of repetitions. We will also adjust the ListEntriesComponent component to properly propagate editEvent.
++
+[tabs]
+====
+
+frontend/src/app/diary/services/exercise-sets-service.ts::
++
+[source, typescript]
+----
+  updateItem(id: string, item: Partial<ExerciseSet>):
+    Observable<ExerciseSet> {
+    return this.httpClient.put<ExerciseSet>(`${this.url}/${id}`,
+      item);
+  }
+  getItem(id: string): Observable<ExerciseSet> {
+    return this.httpClient.get<ExerciseSet>(`${this.url}/${id}`);
+  }
+----
+
+frontend/src/app/app.routes.ts::
++
+[source, typescript]
+----
+export const routes: Routes = [
+    {
+        path: 'diary/entry/:id',
+        component: NewEntryFormReactive,
+        title: 'Edit Entry',
+    },
+];
+----
+
+frontend/src/app/diary/new-entry-form-reactive/new-entry-form-reactive.ts::
++
+[source, typescript]
+----
+export class NewEntryFormReactive implements OnInit {
+  private formBuilder = inject(NonNullableFormBuilder);
+  private exerciseSetsService = inject(ExerciseSetsService);
+
+  private router = inject(Router);
+
+  // Using  withComponentInputBinding
+  id = input.required<string>()
+
+  public entryForm = this.formBuilder.group({
+    date: [new Date(), Validators.required],
+    exercise: ['', Validators.required],
+    sets: [0, [Validators.required, Validators.min(0)]],
+    reps: [0, [Validators.required, Validators.min(0)]],
+  });
+
+  ngOnInit(): void {
+    if (this.id()) {
+      this.exerciseSetsService
+        .getItem(this.id())
+        .subscribe((entry) => this.updateForm(entry));
+    }
+  }
+
+  updateForm(entry: ExerciseSet): void {
+    // One detail here is that we are using the destructuring assignment to remove the id field from the 
+    // object because it does not exist in the form’s data model.
+    let { id: _, ...entryForm } = entry;
+    this.entryForm.setValue(entryForm);
+  }
+
+  newEntry() {
+    if (this.entryForm.valid) {
+      const newEntry = { ...this.entryForm.value };
+      if (this.id()) {
+        this.exerciseSetsService
+          .updateItem(this.id(), newEntry)
+          .subscribe((entry) => this.router.navigate(['/diary']));
+      } else {
+        this.exerciseSetsService
+          .addNewItem(newEntry)
+          .subscribe((entry) => this.router.navigate(['/diary']));
+      }
+    }
+  }
+}
+
+----
+
+frontend/src/app/app.routes.ts::
++
+[source, typescript]
+----
+----
+
+frontend/src/app/app.routes.ts::
++
+[source, typescript]
+----
+----
+====
+======
+
+
+== Optimizing the experience – Resolve
+
+
+== Examples

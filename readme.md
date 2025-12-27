@@ -168,6 +168,26 @@ home.module.ts::
 ----
 ====
 
+## AI
+
+[tabs]
+======
+ChatGPT::
+[tabs]
+====
+tab1::
+
+tab2::
+====
+
+Gemini::
+[tabs]
+====
+tab1::
+
+tab2::
+====
+======
 
 == Run
 === Locally

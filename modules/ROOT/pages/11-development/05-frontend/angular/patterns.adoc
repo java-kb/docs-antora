@@ -532,7 +532,7 @@ export const routes: Routes = [
 ====
 ======
 
-== Defining Tite page
+=== Defining Tite page
 we can use Angular’s routing mechanisms. we need to change the following code snippet:
 [source,ts,attributes]
 ----
@@ -561,6 +561,39 @@ The TrackBy attribute, in addition to avoiding unnecessary rendering, has the fo
 • Enables animations when removing and adding items from the collection
 • Retains any DOM-specific UI state, such as focus and text selection, when the collection changes
 
+=== Optimizing the experience using Resolve
+we can increase perceived perception that your user will have may. We can load the information that our page will require before it renders and, for that, we 
+will use the Resolve route saver resource.
+
+export const diaryResolver: ResolveFn<ExerciseSetListAPI> = (route, state) => {
+  const exerciseSetsService = inject(ExerciseSetsService);
+  return exerciseSetsService.getInitialList();
+};
+
+{
+ path: '',
+ component: DiaryComponent,
+ title: 'Diary',
+ resolve: { diaryApi: diaryResolver },
+},
+
+. . .
+private route = inject(ActivatedRoute);
+. . .
+ ngOnInit(): void {
+ this.route.data.subscribe(({ diaryApi }) => {
+ this.exerciseList = diaryApi.items;
+ });
+ }
+. . .
+
+When we run our project again, we see that the behavior of the screen does not change externally; 
+however, internally, we are fetching information from the gym diary before the component is loaded. 
+This change in our example may have been imperceptible, but in a larger and more complex application, 
+it could be the difference that you and your team are looking for.
+
+It is important to bear in mind that this will not speed up the request to the backend. It will take the 
+same time as before, but the performance perception that your user will have may be impacted.
 
 == Anti-Patterns
 === Avoiding single module app

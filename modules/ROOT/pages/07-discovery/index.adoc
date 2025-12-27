@@ -1,6 +1,107 @@
 = Service Discovery
 :figures: 07-discovery
 
+== The problem with DNS-based service discovery
+The idea behind round-robin DNS is that each instance of a microservice registers its IP address 
+under the same name in a DNS server. When a client asks for IP addresses for the DNS name, the 
+DNS server will return a list of IP addresses for the registered instances. The client can use this 
+list of IP addresses to send requests to the microservice instances in a round-robin fashion, using 
+the IP addresses one after another.
+
+A DNS client asks a DNS server to resolve a DNS name and receives a list of IP addresses. Next, the 
+DNS client tries out the received IP addresses one by one until it finds one that works – in most 
+cases, the first one in the list. A DNS client typically holds on to a working IP address; it does not 
+apply a round-robin approach per request. Added to this, neither a typical DNS server implemen-
+tation nor the DNS protocol itself is well suited for handling volatile microservice instances that 
+come and go all the time. Because of this, even though DNS-based round robin is appealing in 
+theory, it is not very practical to use for the service discovery of microservice instances.
+[tabs]
+======
+
+CaveatEmptor::
++
+[tabs]
+====
+
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Cities API::
++
+[tabs]
+====
+Country.java::
++
+[source, java]
+----
+----
+====
+
+Multiplication microservices::
++
+[source, java]
+----
+----
+
+Microservices with Spring Boot 3 and Spring Cloud::
++
+Let’s try it out and see what happens! Follow these steps:
++
+1. Assuming that you have followed the instructions from Chapter 7, Developing Reactive 
+Microservices, start the system landscape and insert some test data with the following 
+command:
+cd $BOOK_HOME/Chapter07
+ ./test-em-all.bash start
+2. Scale up the review microservice to two instances:
+docker compose up -d --scale review=2
+3. Ask the composite product service for the IP addresses it finds for the review microservice:
+docker compose exec product-composite getent hosts review
+Expect an answer like the following:
+Figure 9.1: Review microservice IP addresses
+Great, the composite product service sees two IP addresses – in my case, 192.168.96.9
+and 192.168.96.8 – one for each instance of the review microservice!
+4. If you want to, you can verify that these are the correct IP addresses by using the following 
+commands. The commands ask each instance of the review microservice for its IP address:
+docker compose exec --index=1 review cat /etc/hosts
+docker compose exec --index=2 review cat /etc/hosts
+The last line in the output from each command should contain one of the IP addresses, as 
+shown in the preceding code. Here’s an example:
+5. Now, let’s try out a couple of calls to the product-composite service and see whether it
+uses both instances of the review microservice:
+curl localhost:8080/product-composite/1 -s | jq -r 
+ .serviceAddresses.rev
+Unfortunately, we will only get responses from one of the microservice instances, as in 
+this example:
++
+
+Polar Book Shop::
++
+[source, java]
+----
+----
+======
+
+== Challenges with service discovery
+So, we need something a bit more powerful than a plain DNS to keep track of available micros-
+ervice instances!
+We must take the following into consideration when we’re keeping track of many small moving 
+parts, that is, microservice instances:
+
+• New instances can start up at any point in time.
+• Existing instances can stop responding and eventually crash at any point in time.
+• Some of the failing instances might be okay after a while and should start to receive traffic 
+again, while others will not and should be removed from the service registry.
+• Some microservice instances might take some time to start up; that is, just because they 
+can receive HTTP requests doesn’t mean that traffic should be routed to them.
+• Unintended network partitioning and other network-related errors can occur at any time.
+Service discovery is probably the most important support function required to make a landscape 
+of cooperating microservices production-ready.  a service discovery service (or a discovery service as 
+an abbreviation) can be used to keep track of existing microservices and their instances.
+
 In the cloud, you’ll probably want to have multiple instances of a service running, and
 each service instance will have its own IP address. Unlike physical machines or longrunning virtual machines, a service instance will not live long in the cloud. Application instances are disposable—they can be removed or replaced for different reasons,
 such as when they are not responsive anymore. You can even enable the auto-scaling
@@ -40,6 +141,9 @@ library, like it'll be this case.
 image::{figures}/image.png[alt text]
 
 == Client-side discovery
+Client-side service discovery, meaning that the clients run software 
+that talks to the discovery server, Netflix Eureka, to get information about the available micros-
+ervice instances.
 
 Other services may query a given service name from the registry, retrieve a list, and
 then decide which instance to call. This technique is known as client-side discovery,
@@ -55,6 +159,19 @@ a backing service, they ask the service registry for an IP address. If multiple 
 choose one of them, depending on a load-balancing strategy defined by the application itself.
 
 image::{figures}/Client-side service discovery and load balancing model.png[The interprocess communication between Alpha App and Beta App is based on the IP address of the specific instance to call, chosen from a list of IP addresses returned upon lookup in the service registry.]
+
+The process is as follows:
+
+1. Whenever a microservice instance starts up – for example, the Review service – it registers 
+itself to one of the Eureka servers.
+2. On a regular basis, each microservice instance sends a heartbeat message to the Eureka 
+server, telling it that the microservice instance is okay and is ready to receive requests.
+3. Clients – for example, the Product Composite service – use a client library that regularly 
+asks the Eureka service for information about available services.
+4. When the client needs to send a request to another microservice, it already has a list of 
+available instances in its client library and can pick one of them without asking the dis-
+covery server. Typically, available instances are chosen in a round-robin fashion; that is, 
+they are called one after another before the first one is called once more.
 
 A benefit of such a solution is that your applications have complete control
 over the load-balancing strategy. Suppose you need to implement patterns like hedging:sending the same request to multiple instances to increase the chance one responds
