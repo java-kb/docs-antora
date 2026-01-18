@@ -129,6 +129,7 @@ Country.ts::
 
 ======
 
+# OS
 [tabs]
 ====
 Linux::
@@ -187,6 +188,106 @@ tab1::
 
 tab2::
 ====
+======
+
+
+.From AI
+[%collapsible]
+====
+====
+
+
+.From AI
+[%collapsible]
+======
+[tabs]
+=====
+ChatGPT::
++
+[tabs]
+====
+Concept:: Concept
+
+Concept:: Concept
+====
+=====
+
+Gemini::
+[tabs]
+=====
+ChatGPT::
++
+[tabs]
+====
+Concept:: Concept
+
+Concept:: Concept
+====
+
+=====
+======
+
+.Code
+[%collapsible]
+======
+[tabs]
+=====
+Code.c::
+[source, C]
+----
+----
+
+Code.c::
+[source, C]
+----
+----
+=====
+======
+
+
+.Parameters And Return Value
+[%collapsible]
+======
+[tabs]
+=====
+Parameters::
+[source, C]
+----
+----
+
+Return Value::
+[source, C]
+----
+----
+=====
+======
+
+
+.Code
+[%collapsible]
+======
+[tabs]
+=====
+Clang::
+[source, C]
+----
+----
+
+C++::
+[source, C++]
+----
+----
+
+Java::
+[source, Java]
+----
+----
+
+Python::
+[source, Python]
+----
+----
+=====
 ======
 
 == Run

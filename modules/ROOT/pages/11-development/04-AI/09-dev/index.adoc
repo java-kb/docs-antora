@@ -891,6 +891,10 @@ Prompt: A chic, modern design with vibrant visuals and an intuitive layout, high
 ====
 
 == Coding
+While constantly being trained on code that is being pushed to
+GitHub, Copilot runs the risk of lagging behind the latest versions of libraries and
+APIs. So, we need to be vigilant when adding in dependencies via AI code assistants to
+ensure they are suggesting the version we want.
 === Comments
 you could  ask the tool to break code down for you
 

@@ -1,0 +1,415 @@
+= Digital Logic Design
+
+== Fundamentals
+
+=== Number Systems and Representations
+
+==== Binary, Octal, Decimal, Hexadecimal
+
+==== Conversion Between Number Systems
+
+==== Binary Arithmetic
+===== Addition
+===== Subtraction
+===== Multiplication
+===== Division
+
+==== Two's Complement Representation
+
+==== Floating-Point Representation
+
+=== Boolean Algebra and Logic Gates
+
+==== Boolean Variables and Operations
+
+===== AND Operation
+===== OR Operation
+===== NOT Operation
+===== NAND Gate
+===== NOR Gate
+===== XOR Gate
+===== XNOR Gate
+
+==== Boolean Theorems and Laws
+
+===== Commutative Laws
+===== Associative Laws
+===== Distributive Laws
+===== De Morgan's Theorems
+===== Absorption Laws
+===== Redundance Laws
+
+==== Logic Gate Truth Tables
+
+==== Universal Gates
+
+=== Simplification Techniques
+
+==== Karnaugh Map Method
+
+===== 2-Variable K-Maps
+===== 3-Variable K-Maps
+===== 4-Variable K-Maps
+===== 5-Variable K-Maps
+===== Don't Care Conditions
+
+==== Quine-McCluskey Algorithm
+
+==== Boolean Function Minimization
+
+==== Prime Implicants
+
+===== Essential Prime Implicants
+===== Non-Essential Prime Implicants
+
+== Combinatorial Logic Circuits
+
+=== Design Methods
+
+==== Canonical Forms
+
+===== Sum-of-Products (SOP)
+===== Product-of-Sums (POS)
+
+==== Implementation Techniques
+
+===== NAND-NAND Implementation
+===== NOR-NOR Implementation
+===== NAND-NOR Hybrid Implementation
+
+=== Standard Combinatorial Circuits
+
+==== Multiplexers
+
+===== 2-to-1 Multiplexer
+===== 4-to-1 Multiplexer
+===== 8-to-1 Multiplexer
+===== Cascading Multiplexers
+
+==== Demultiplexers
+
+===== 1-to-2 Demultiplexer
+===== 1-to-4 Demultiplexer
+===== 1-to-8 Demultiplexer
+
+==== Encoders
+
+===== Priority Encoders
+===== Standard Encoders
+
+==== Decoders
+
+===== 2-to-4 Decoder
+===== 3-to-8 Decoder
+===== BCD Decoder
+
+==== Code Converters
+
+===== Binary to BCD Converter
+===== Gray Code Converter
+===== BCD to 7-Segment Display Converter
+
+=== Arithmetic Circuits
+
+==== Adders
+
+===== Half Adder
+===== Full Adder
+===== Ripple Carry Adder
+===== Carry Look-Ahead Adder
+===== Carry Save Adder
+
+==== Subtractors
+
+===== Half Subtractor
+===== Full Subtractor
+
+==== Multipliers
+
+===== Array Multiplier
+===== Wallace Tree Multiplier
+===== Baugh-Wooley Multiplier
+
+==== Dividers
+
+===== Restoring Division
+===== Non-Restoring Division
+
+==== Comparators
+
+===== Equality Comparator
+===== Magnitude Comparator
+
+=== Parity and Error Detection
+
+==== Parity Generation and Checking
+
+==== Hamming Code
+
+==== Error Detection Circuits
+
+== Sequential Logic Circuits
+
+=== Memory Elements
+
+==== Latches
+
+===== SR Latch
+====== NOR-based SR Latch
+====== NAND-based SR Latch
+
+===== Gated SR Latch
+
+===== D Latch
+
+===== JK Latch
+
+==== Flip-Flops
+
+===== SR Flip-Flop
+
+===== D Flip-Flop
+
+===== JK Flip-Flop
+
+===== T Flip-Flop
+
+===== Master-Slave Flip-Flops
+
+==== Flip-Flop Characteristics
+
+===== Setup Time
+===== Hold Time
+===== Propagation Delay
+===== Clock-to-Output Delay
+
+=== Counters
+
+==== Asynchronous Counters
+
+===== Ripple Counter
+===== Up Counters
+===== Down Counters
+===== Up-Down Counters
+
+==== Synchronous Counters
+
+===== Synchronous Binary Counter
+
+===== Ring Counter
+
+===== Johnson Counter
+
+===== Gray Code Counter
+
+===== Modulo-N Counters
+
+=== Shift Registers
+
+==== Serial Input Serial Output (SISO)
+
+==== Serial Input Parallel Output (SIPO)
+
+==== Parallel Input Serial Output (PISO)
+
+==== Parallel Input Parallel Output (PIPO)
+
+==== Applications of Shift Registers
+
+===== Data Storage
+===== Data Conversion
+===== Pattern Generation
+
+=== State Machines
+
+==== Mealy Machines
+
+==== Moore Machines
+
+==== State Diagrams and State Tables
+
+==== State Minimization
+
+==== Design of Synchronous Sequential Circuits
+
+==== Asynchronous Sequential Circuits
+
+===== Races and Hazards
+===== Fundamental Mode Operation
+
+== Digital Systems and Design
+
+=== Memory Systems
+
+==== RAM (Random Access Memory)
+
+===== SRAM (Static RAM)
+
+===== DRAM (Dynamic RAM)
+
+===== Memory Organization
+
+===== Address Decoding
+
+==== ROM (Read-Only Memory)
+
+===== PROM
+===== EPROM
+===== EEPROM
+
+==== Memory Interfacing
+
+===== Memory Hierarchy
+===== Cache Memory Concepts
+
+=== Register Transfer Level (RTL) Design
+
+==== RTL Notation and Operations
+
+==== Data Path Design
+
+==== Control Unit Design
+
+==== Instruction Execution
+
+==== Microoperations
+
+=== Programmable Logic Devices
+
+==== Programmable Logic Array (PLA)
+
+==== Programmable Array Logic (PAL)
+
+==== Field Programmable Gate Array (FPGA)
+
+==== Complex Programmable Logic Device (CPLD)
+
+=== Microprocessor Basics
+
+==== Basic Microprocessor Organization
+
+==== CPU Architecture
+
+==== Instruction Set Architecture (ISA)
+
+==== Fetch-Execute Cycle
+
+==== Instruction Types and Formats
+
+== Hazards and Timing
+
+=== Static and Dynamic Hazards
+
+==== Static 0 Hazard
+
+==== Static 1 Hazard
+
+==== Dynamic Hazards
+
+==== Hazard Detection and Elimination
+
+=== Timing Considerations
+
+==== Clock Skew
+
+==== Setup and Hold Time Violations
+
+==== Metastability
+
+==== Clock Distribution
+
+==== Synchronization Problems
+
+== Advanced Topics
+
+=== Logic Families and Implementations
+
+==== TTL (Transistor-Transistor Logic)
+
+==== CMOS (Complementary Metal-Oxide-Semiconductor)
+
+==== ECL (Emitter-Coupled Logic)
+
+==== Power Consumption Analysis
+
+==== Noise Margin and Fan-Out
+
+=== Testing and Verification
+
+==== Fault Models
+
+===== Stuck-at Faults
+===== Bridging Faults
+===== Timing Faults
+
+==== Testability Concepts
+
+===== Design for Testability (DFT)
+===== Built-in Self-Test (BIST)
+
+==== Simulation and Verification
+
+===== Logic Simulation
+===== Formal Verification
+===== Behavioral Verification
+
+=== Design Tools and Languages
+
+==== Hardware Description Languages (HDL)
+
+===== Verilog
+===== VHDL
+
+==== Synthesis Tools
+
+==== Place and Route Tools
+
+==== Simulation Environments
+
+=== Application Domains
+
+==== Digital Signal Processing Circuits
+
+==== Audio and Video Processing
+
+==== Communication Systems
+
+==== Control Systems
+
+==== Embedded Systems
+
+== Practice and Problem Solving
+
+=== Design Exercises
+
+==== Logic Circuit Design from Specifications
+
+==== Optimization Problems
+
+==== Trade-off Analysis
+
+==== Performance vs. Area vs. Power
+
+=== Case Studies
+
+==== Real-World Circuit Implementations
+
+==== Industrial Applications
+
+==== Emerging Technologies
+
+===== Quantum Computing Basics
+===== Photonic Logic
+===== Neuromorphic Computing
+
+=== Case Studies
+
+==== Real-World Circuit Implementations
+
+==== Industrial Applications
+
+==== Emerging Technologies
+
+===== Quantum Computing Basics
+===== Photonic Logic
+===== Neuromorphic Computing

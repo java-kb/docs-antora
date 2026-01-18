@@ -1,0 +1,1577 @@
+= Linux Development
+:figures: 19-OS/linux/development
+
+
+== Static and Shared Libraries
+An object library is a file containing the compiled object code for a (usually logically
+related) set of functions that may be called from application programs. Placing
+code for a set of functions in a single object library eases the tasks of program creation
+and maintenance. Modern UNIX systems provide two types of object libraries:
+static libraries and shared libraries
+
+=== Static libraries
+A static library is essentially a structured bundle of compiled
+object modules. 
+
+To use functions from a static library, we specify that library in the
+link command used to build a program. After resolving the various function refer-
+ences from the main program to the modules in the static library, the linker
+extracts copies of the required object modules from the library and copies these
+into the resulting executable file. We say that such a program is statically linked.
+
+The fact that each statically linked program includes its own copy of the object
+modules required from the library creates a number of disadvantages. 
+
+* One is that
+the duplication of object code in different executable files wastes disk space. 
+* A cor-
+responding waste of memory occurs when statically linked programs using the
+same library function are executed at the same time; each program requires its own
+copy of the function to reside in memory.
+* Additionally, if a library function
+requires modification, then, after recompiling that function and adding it to the
+static library, all applications that need to use the updated function must be
+relinked against the library.
+
+=== Shared libraries
+Shared libraries were designed to address the problems with static libraries.
+If a program is linked against a shared library, then, instead of copying object
+modules from the library into the executable, the linker just writes a record into
+the executable to indicate that at run time the executable needs to use that shared
+library. When the executable is loaded into memory at run time, a program called
+the dynamic linker ensures that the shared libraries required by the executable are
+found and loaded into memory, and performs run-time linking to resolve the func-
+tion calls in the executable to the corresponding definitions in the shared libraries.
+At run time, only a single copy of the code of the shared library needs to be resi-
+dent in memory; all running programs can use that copy.
+
+* The fact that a shared library contains the sole compiled version of a function
+saves disk space. 
+* It also greatly eases the job of ensuring that programs employ the
+newest version of a function. Simply rebuilding the shared library with the new
+function definition causes existing programs to automatically use the new defini-
+tion when they are next executed.
+
+== Linux kernel interfaces
+The Linux kernel provides multiple interfaces to user-space and kernel-mode code. The interfaces can be classified as either application programming interface (API) or application binary interface (ABI), and they can be classified as either kernel–user space or kernel-internal. 
+
+image::{figures}/Linux_kernel_interfaces.png[Linux API, Linux ABI, and in-kernel APIs and ABIs]
+
+The kernel's interface is a low-level abstraction layer. When a process requests a service from the kernel, it must invoke a system call, usually through a wrapper function. 
+
+== Linux API
+The Linux API includes the kernel–user space API, which allows code in user space to access system resources and services of the Linux kernel.
+
+It is composed of the system call interface of the Linux kernel and the subroutines in the C standard library. 
+
+image::{figures}/Linux_API.png[The Linux API is composed out of the system call interface of the Linux kernel, the GNU C Library (by GNU),libcgroup,[1] libdrm, libalsa and libevdev[2](by freedesktop.org)]
+
+The focus of the development of the Linux API has been to provide the usable features of the specifications defined in POSIX in a way which is reasonably compatible, robust and performant, and to provide additional useful features not defined in POSIX, just as the kernel–user space APIs of other systems implementing the POSIX API also provide additional features not defined in POSIX. 
+
+Programming for the full Linux API, rather than just the POSIX API, may provide advantages in cases where those additional features are useful. Well-known current examples are udev, systemd and Weston.
+
+image::{figures}/Linux_API_vs_POSIX_API.png[Linux API vs POSIX_API]
+
+=== System call interface
+Operating systems have two main functions: providing
+abstractions to user programs and managing the computer’s resources. For the most
+part, the interaction between user programs and the operating system deals with the
+former; for example, creating, writing, reading, and deleting files. The resource--
+management part is largely transparent to the users and done automatically. Thus,
+the interface between user programs and the operating system is primarily about
+dealing with the abstractions. To really understand what operating systems do, we
+must examine this interface closely. The system calls available in the interface vary
+from one operating system to another, but the underlying concepts are similar.
+
+The architecture of most modern processors, with the exception of some embedded systems, involves a security model. For example, the rings model specifies multiple privilege levels under which software may be executed: a program is usually limited to its own address space so that it cannot access or modify other running programs or the operating system itself, and is usually prevented from directly manipulating hardware devices (e.g. the frame buffer or network devices).
+
+However, many applications need access to these components, so system calls are made available by the operating system to provide well-defined, safe implementations for such operations. The operating system executes at the highest level of privilege, and allows applications to request services via system calls, which are often initiated via interrupts. An interrupt automatically puts the CPU into some elevated privilege level and then passes control to the kernel, which determines whether the calling program should be granted the requested service. If the service is granted, the kernel executes a specific set of instructions over which the calling program has no direct control, returns the privilege level to that of the calling program, and then returns control to the calling program
+
+In computing, a system call is how a process requests a service from an operating system's kernel that it does not normally have permission to run. System calls provide the interface between a process and the operating system. Most operations interacting with the system require permissions not available to a user-level process, e.g., I/O performed with a device present on the system, or any form of communication with other processes requires the use of system calls. 
+
+a system call (syscall) is the programmatic way in which a computer program requests a service from the operating system[a] on which it is executed. This may include hardware-related services (for example, accessing a hard disk drive or accessing the device's camera), creation and execution of new processes, and communication with integral kernel services such as process scheduling. System calls provide an essential interface between a process and the operating system.
+
+The system call interface of a kernel is the set of all implemented and available system calls in a kernel. In the Linux kernel, various subsystems, such as the Direct Rendering Manager (DRM), define their own system calls, all of which are part of the system call interface. 
+
+In most systems, system calls can only be made from userspace processes, while in some systems, OS/360 and successors for example, privileged system code also issues system calls. For embedded systems, system calls typically do not change the privilege mode of the CPU. 
+
+A system call is a mechanism that is used by the application program to request a service from the operating system. They use a machine-code instruction that causes the processor to change mode. An example would be from supervisor mode to protected mode. This is where the operating system performs actions like accessing hardware devices or the memory management unit. Generally the operating system provides a library that sits between the operating system and normal user programs. Usually it is a C library such as Glibc or Windows API. The library handles the low-level details of passing information to the kernel and switching to supervisor mode. System calls include close, open, read, wait and write. 
+
+image::{figures}/System_call_Interface.png[Simplified illustration of the Linux kernel's structure.]
+
+A system call is the controlled way for a user program to ask the Linux kernel to do something privileged (read a file, create a process, allocate memory, etc.).
+
+A system call is a controlled entry point into the kernel, allowing a process to
+request that the kernel perform some action on the process’s behalf. The kernel
+makes a range of services accessible to programs via the system call application
+programming interface (API). These services include, for example, creating a 44 Chapter 3
+new process, performing I/O, and creating a pipe for interprocess communica-
+tion. (The syscalls(2) manual page lists the Linux system calls.)
+
+A system call changes the processor state from user mode to kernel mode, so
+that the CPU can access protected kernel memory.
+
+* The set of system calls is fixed. Each system call is identified by a unique number.
+(This numbering scheme is not normally visible to programs, which identify
+system calls by name.)
+* Each system call may have a set of arguments that specify information to be
+transferred from user space (i.e., the process’s virtual address space) to kernel
+space and vice versa.
+
+To actually perform useful work, a process must be able to access the services provided by the kernel. This is implemented differently by each kernel, but most provide a C library or an API, which in turn invokes the related kernel functions.[7] 
+
+From a programming point of view, invoking a system call looks much like calling a
+C function. However, behind the scenes, many steps occur during the execution of a system call.
+
+=== Categories of system calls
+With UNIX, there is almost a one-
+to-one relationship between the system calls (e.g., read) and the library procedures
+(e.g., read) used to invoke the system calls. In other words, for each system call,
+there is roughly one library procedure that is called to invoke it. Furthermore, POSIX has only on the order of 100 procedure calls.
+
+System calls can be grouped roughly into six major categories:
+
+* Process control
+   - create process (for example, fork on Unix-like systems, or NtCreateProcess in the Windows NT Native API)
+   - terminate process
+   - load, execute
+   - get/set process attributes
+   - wait for time, wait event, signal event
+   - allocate and free memory
+* File management
+   - create file, delete file
+   - open, close
+   - read, write, reposition
+   - get/set file attributes
+* Device management
+   - request device, release device
+   - read, write, reposition
+   - get/set device attributes
+   - logically attach or detach devices
+* Information maintenance
+   - get/set total system information (including time, date, computer name, enterprise etc.)
+   - get/set process, file, or device metadata (including author, opener, creation time and date, etc.)
+* Communication
+   - create, delete communication connection
+   - send, receive messages
+   - transfer status information
+   - attach or detach remote devices
+* Protection
+   - get/set file permissions
+
+To a large extent, the services offered by these calls determine most of what
+the operating system has to do, since the resource management on personal com-
+puters is minimal (at least compared to big machines with multiple users). The
+services include things like creating and terminating processes, creating, deleting,
+reading, and writing files, managing directories, and performing input and output.
+
+As an aside, it is worth pointing out that the mapping of POSIX procedure
+calls onto system calls is not one-to-one. The POSIX standard specifies a number
+of procedures that a conformant system must supply, but it does not specify wheth-
+er they are system calls, library calls, or something else. If a procedure can be car-
+ried out without invoking a system call (i.e., without trapping to the kernel), it will
+usually be done in user space for reasons of performance. However, most of the
+POSIX procedures do invoke system calls, usually with one procedure mapping
+directly onto one system call. In a few cases, especially where several required
+procedures are only minor variations of one another, one system call handles more
+than one library call.
+
+Some of the most important
+ones are listed in Fig. 1-18, grouped for convenience in four categories.
+
+The return code s is <1 if
+an error has occurred. The return codes are as follows: pid is a process id, fd is a
+file descriptor, n is a byte count, position is an offset within the file, and seconds
+is the elapsed time. The parameters are explained in the text.
+[cols="1,3", options="header"]
+|===
+| Call | Description
+
+2+^| *Process Management*
+
+| pid = fork()
+| Create a child process identical to the parent
+
+| pid = waitpid(pid, &statloc, options)
+| Wait for a child to terminate
+
+| s = execve(name, argv, environp)
+| Replace a process’ core image
+
+| exit(status)
+| Terminate process execution and return status
+
+2+^| *File Management*
+
+| fd = open(file, how, ...)
+| Open a file for reading, writing, or both
+
+| s = close(fd)
+| Close an open file
+
+| n = read(fd, buffer, nbytes)
+| Read data from a file into a buffer
+
+| n = write(fd, buffer, nbytes)
+| Write data from a buffer into a file
+
+| position = lseek(fd, offset, whence)
+| Move the file pointer
+
+| s = stat(name, &buf)
+| Get a file’s status information
+
+2+^| *Directory and File-System Management*
+
+| s = mkdir(name, mode)
+| Create a new directory
+
+| s = rmdir(name)
+| Remove an empty directory
+
+| s = link(name1, name2)
+| Create a new entry, name2, pointing to name1
+
+| s = unlink(name)
+| Remove a directory entry
+
+| s = mount(special, name, flag)
+| Mount a file system
+
+| s = umount(special)
+| Unmount a file system
+
+2+^| *Miscellaneous*
+
+| s = chdir(dirname)
+| Change the working directory
+
+| s = chmod(name, mode)
+| Change a file’s protection bits
+
+| s = kill(pid, signal)
+| Send a signal to a process
+
+| seconds = time(&seconds)
+| Get the elapsed time since Jan. 1, 1970
+|===
+
+==== implementation
+Since the actual
+mechanics of issuing a system call are highly machine dependent and often must
+be expressed in assembly code, a procedure library is provided to make it possible
+to make system calls from C programs and often from other languages as well
+
+Any single-CPU computer can
+execute only one instruction at a time. If a process is running a user program in
+user mode and needs a system service, such as reading data from a file, it has to
+execute a trap instruction to transfer control to the operating system. The operating
+system then figures out what the calling process wants by inspecting the parame-
+ters. Then it carries out the system call and returns control to the instruction fol-
+lowing the system call. In a sense, making a system call is like making a special
+kind of procedure call—only system calls enter the kernel and procedure calls do
+not.
+
+Implementing system calls requires a transfer of control from user space to kernel space, which involves some sort of architecture-specific feature. A typical way to implement this is to use a software interrupt or trap. Interrupts transfer control to the operating system kernel, so software simply needs to set up some register with the system call number needed, and execute the software interrupt.
+
+This is the only technique provided for many RISC processors, but CISC architectures such as x86 support additional techniques. For example, the x86 instruction set contains the instructions SYSCALL/SYSRET and SYSENTER/SYSEXIT (these two mechanisms were independently created by AMD and Intel, respectively, but in essence they do the same thing). These are "fast" control transfer instructions that are designed to quickly transfer control to the kernel for a system call without the overhead of an interrupt.[8] Linux 2.5 began using this on the x86, where available; formerly it used the INT instruction, where the system call number was placed in the EAX register before interrupt 0x80 was executed
+
+The method of invoking the kernel function varies from kernel to kernel. If memory isolation is in use, it is impossible for a user process to call the kernel directly, because that would be a violation of the processor's access control rules. A few possibilities are:
+
+* Using a software-simulated interrupt. This method is available on most hardware, and is therefore very common.
+* Using a call gate. A call gate is a special address stored by the kernel in a list in kernel memory at a location known to the processor. When the processor detects a call to that address, it instead redirects to the target location without causing an access violation. This requires hardware support, but the hardware for it is quite common.
+* Using a special system call instruction. This technique requires special hardware support, which common architectures (notably, x86) may lack. System call instructions have been added to recent models of x86 processors, however, and some operating systems for PCs make use of them when available.
+* Using a memory-based queue. An application that makes large numbers of requests but does not need to wait for the result of each may add details of requests to an area of memory that the kernel periodically scans to find requests.
+
+==== Processor mode and context 
+System calls in most Unix-like systems are processed in kernel mode, which is accomplished by changing the processor execution mode to a more privileged one, but no process context switch is necessary – although a privilege context switch does occur. The hardware sees the world in terms of the execution mode according to the processor status register, and processes are an abstraction provided by the operating system. A system call does not generally require a context switch to another process; instead, it is processed in the context of whichever process invoked it.
+
+In a multithreaded process, system calls can be made from multiple threads. The handling of such calls is dependent on the design of the specific operating system kernel and the application runtime environment. The following list shows typical models followed by operating systems:
+
+Many-to-one model: All system calls from any user thread in a process are handled by a single kernel-level thread. This model has a serious drawback – any blocking system call (like awaiting input from the user) can freeze all the other threads. Also, since only one thread can access the kernel at a time, this model cannot utilize multiple cores of processors.
+
+One-to-one model: Every user thread gets attached to a distinct kernel-level thread during a system call. This model solves the above problem of blocking system calls. It is found in all major Linux distributions, macOS, iOS, recent Windows and Solaris versions.
+
+Many-to-many model: In this model, a pool of user threads is mapped to a pool of kernel threads. All system calls from a user thread pool are handled by the threads in their corresponding kernel thread pool.
+
+Hybrid model: This model implements both many-to-many and one-to-one models depending upon the choice made by the kernel. This is found in old versions of IRIX, HP-UX and Solaris.
+    
+==== Workflow
+System calls are performed in a series of step
+
+The flow looks like this:
+----
+
+User program
+   ↓
+C library (glibc)
+   ↓
+CPU instruction (syscall)
+   ↓
+Kernel entry point
+   ↓
+Kernel syscall handler
+   ↓
+Specific syscall implementation
+   ↓
+Return to user space
+----
+
+To make the system-call mechanism clearer, let us take a quick look at the read
+system call. it has three parameters: the first one specifying
+the file, the second one pointing to the buffer, and the third one giving the number
+of bytes to read. 
+
+image::{figures}/system-calls-read-call-steps.png[he 10 steps in making the system call read(fd, buffer, nbytes)]
+. Like nearly all system calls, it is invoked from C programs by cal-
+ling a library procedure with the same name as the system call: read. A call from a
+C program might look like this:
++
+----
+count = read(fd, buffer, nbytes);
+----
++
+The system call (and the library procedure) returns the number of bytes actually
+read in count.
+. In preparation for calling the read
+library procedure, which actually makes the read system call, the calling program
+first prepares the parameters, for instance by storing them in a set of registers that
+by convention are used for parameters. 
+** For instance, on x86-64 CPUs, Linux,
+FreeBSD, Solaris, and macOS use the System V AMD64 ABI calling convention,
+which means that the first six parameters are passed in registers RDI, RSI, RDX,
+RCX, R8, and R9. 
+** If there are more than six arguments, the remainder will be
+pushed onto the stack. 
++
+As we have only three arguments for read library proce-
+dure, this is shown as steps 1–3
++
+The first and third parameters are passed by value, but the second parameter is
+a reference, meaning that the address of the buffer is passed, not the contents of the
+buffer
+. Then comes the actual call to the library procedure (step 4). This instruc-
+tion is the normal procedure-call instruction used to call all procedures
+. The library procedure, written in assembly language, typically puts the sys-
+tem-call number in a place where the operating system expects it, such as the RAX
+register (step 5). 
+. Then it executes a trap instruction (such the X86-64 SYSCALL
+instruction) to switch from user mode to kernel mode and start execution at a fixed
+address within the kernel (step 6).
++
+The trap instruction is actually fairly similar to
+the procedure-call instruction in the sense that the instruction following it is taken
+from a distant location and the return address is saved on the stack for use later.
++
+Nevertheless, the trap instruction also differs from the procedure-call instruc-
+tion in two fundamental ways. First, as a side effect, it switches into kernel mode.
+The procedure call instruction does not change the mode. Second, rather than giv-
+ing a relative or absolute address where the procedure is located, the trap instruc-
+tion cannot jump to an arbitrary address. Depending on the architecture, either it jumps to a single fixed location (this is the case for the x86-4 SYSCALL instruction)
+or there is an 8-bit field in the instruction giving the index into a table in memory
+containing jump addresses, or equivalent.
+. The kernel code that starts following the trap examines the system-call number
+in the RAX register and then dispatches to the correct system-call handler, usually
+via a table of pointers to system-call handlers indexed on system-call number (step
+7).
+. at that point, the system-call handler runs (step 8).
+. Once it has completed its
+work, control may be returned to the user-space library procedure at the instruction
+following the trap instruction (step 9). 
++
+control may not  be returned as the system call may block the caller, preventing it from continu-
+ing. For example, if it is trying to read from the keyboard and nothing has been
+typed yet, the caller has to be blocked. In this case, the operating system will look
+around to see if some other process can be run next. Later, when the desired input
+is available, this process will get the attention of the system and run steps 9 and 10
+. This procedure then returns to the user pro-
+gram in the usual way procedure calls return (step 10), which then continues with
+the next instruction in the program (step 11).
+
+
+Another example, consider the steps in the order that they occur
+on a specific hardware implementation, the x86-32. The steps are as follows:
+
+1. The application program makes a system call by invoking a wrapper functionin the C library.
++
+Example in user space \(C):
++
+----
+execve("/bin/ls", argv, envp);
+----
++
+What this means:
++
+** Your program stops being itself
+*** It becomes /bin/ls
+** Same PID, new program image
+2. The wrapper function must make all of the system call arguments available to
+the system call trap-handling routine . These arguments are
+passed to the wrapper via the stack, but the kernel expects them in specific registers. The wrapper function copies the arguments to these registers.
++
+so C library (glibc)
++
+** Loads system call number 11
+** Places arguments in registers
+** Triggers a system call instruction: On x86-32: int 0x80
+3. Since all system calls enter the kernel in the same way, the kernel needs some
+method of identifying the system call. To permit this, the wrapper function
+copies the system call number(Inside the kernel, each system call has a number) into a specific CPU register (%eax).
++
+On Linux x86-32:
++
+----
+execve() → system call number 11
+----
+This is defined as:
++
+----
+#define __NR_execve 11
+----
++
+Why numbers?
++
+** Numbers are fast and compact
+** CPU registers can easily carry integers
+** Kernel doesn’t compare strings like "execve"
++
+CPU switches to kernel mode
++
+----
+User mode → Kernel mode
+----
++
+Kernel now has full privileges
+4. The wrapper function executes 
+** a trap machine instruction (int 0x80), which
+causes the processor to switch from user mode to kernel mode and execute
+code pointed to by location 0x80 (128 decimal) of the system’s trap vector.
+** More recent x86-32 architectures implement the sysenter instruction, which
+provides a faster method of entering kernel mode than the conventional
+int 0x80 trap instruction. The use of sysenter is supported in the 2.6 kernel and
+from glibc 2.3.2 onward.
+5. In response to the trap to location 0x80, the kernel invokes its system_call() routine (located in the assembler file arch/i386/entry.S) to handle the trap. This
+handler:
+. Saves register values onto the kernel stack.
+. Checks the validity of the system call number.
+. Invokes the appropriate system call service routine, which is found by
+using the system call number to index a table of all system call service routines (the kernel variable sys_call_table is an array of function pointers inside the kernel. Index = system call number, Value = address of the kernel function that handles it). 
++
+----
+#define __NR_execve 11
+----
++
+The kernel keeps a table called:
++
+----
+sys_call_table
+----
++
+This is essentially:
++
+----
+sys_call_table[syscall_number] = address_of_kernel_function;
+----
++
+So in this case:
++
+----
+sys_call_table[11] = &sys_execve;
+----
++
+Meaning:
++
+** Entry 11 points to the function sys_execve()
+** This function actually does the work
++
+then
+** If the system call service routine(Every system call has a service routine in the kernel.)
+has any arguments, it first checks their validity; for example, it checks that
+addresses point to valid locations in user memory. 
+** Then the service routine performs the required task, which may involve modifying values at
+addresses specified in the given arguments and transferring data between user memory and kernel memory (e.g., in I/O operations).
++
+Inside the kernel: User calls execve(), Kernel runs sys_execve()
++
+Naming convention:
++
+----
+sys_xyz()  ← kernel implementation
+xyz()      ← user-space wrapper
+----
++
+So: User space: execve(), Kernel space: sys_execve()
+** Finally, the
+service routine returns a result status to the system_call() routine.
+. Restores register values from the kernel stack and places the system call
+return value on the stack.
+. Returns to the wrapper function, simultaneously returning the processor
+to user mode.
+6. If the return value of the system call service routine indicated an error, the
+wrapper function sets the global variable errno using this
+value. The wrapper function then returns to the caller, providing an integer
+return value indicating the success or failure of the system call.
++
+On Linux, system call service routines follow a convention of returning a
+nonnegative value to indicate success. In case of an error, the routine returns a
+negative number, which is the negated value of one of the errno constants.
+When a negative value is returned, the C library wrapper function negates it
+(to make it positive), copies the result into errno, and returns –1 as the function
+result of the wrapper to indicate an error to the calling program.
++
+This convention relies on the assumption that system call service routines
+don’t return negative values on success. However, for a few of these routines,
++
+this assumption doesn’t hold. Normally, this is not a problem, since the range
+of negated errno values doesn’t overlap with valid negative return values. How-
+ever, this convention does cause a problem in one case: the F_GETOWN operation
+of the fcntl() system call.
+
+image::{figures}/Steps-in-the-execution-of-a-system-call.png[Steps in the execution of a system call]
+
+Figure illustrates the above sequence using the example of the execve() system call(The
+execve() function is a Unix-like system call that replaces the current process image with a new program. It does not create a new process; instead, the existing process's memory space (text, data, heap, and stack) is overwritten by the new program's contents, but its Process ID (PID) remains the same).
+
+On Linux/x86-32, execve() is system call number 11 (__NR_execve). Thus, in the
+sys_call_table vector, entry 11 contains the address of sys_execve(), the service routine
+for this system call. (On Linux, system call service routines typically have names of
+the form sys_xyz(), where xyz() is the system call in question.)
+
+Full flow (from user to kernel)
+
+. Step 1: User program calls execve()
++
+----
+execve("/bin/ls", argv, envp);
+----
+. Step 2: C library prepares the system call
+.. Puts 11 into a register (e.g., EAX)
+.. Puts arguments into other registers
+.. Executes a special instruction (int 0x80 on x86-32)
+. Step 3: CPU switches to kernel mode
+.. User mode → kernel mode
+.. Kernel entry code runs
+. Step 4: Kernel reads the system call number
+.. syscall_number = 11;
+. Step 5: Kernel indexes sys_call_table
++
+----
+handler = sys_call_table[11];
+----
++
+Which gives:
++
+----
+handler = sys_execve;
+----
+. Step 6: Kernel calls the handler
++
+----
+sys_execve(filename, argv, envp);
+----
+.Step 7: Return to user mode
+.. If successful: program image is replaced
+.. If error: return -errno
+
+Visual mental model
+----
+User program
+    |
+    | execve()
+    v
+libc wrapper
+    |
+    | syscall #11
+    v
+CPU (mode switch)
+    |
+    v
+sys_call_table[11]
+    |
+    v
+sys_execve()
+----
+
+*analogy*
+
+Imagine a hotel reception desk:
+
+. You (user program) say:
+.. “I want service number 11”
+. Receptionist (kernel syscall handler):
+.. Looks at the service list
+.. Finds service 11 → “Change room”
+. Calls the staff member (kernel function sys_execve)
+. Staff performs the action
+
+You never talk directly to the staff — only through the desk.
+
+Even for a simple system call, quite a bit of work must be done, and thus
+system calls have a small but appreciable overhead.
+
+As an example of the overhead of making a system call, consider the getppid()
+system call, which simply returns the process ID of the parent of the calling
+process. On a x86-32 system running Linux 2.6.25, 10 million
+calls to getppid() required approximately 2.2 seconds to complete. This amounts
+to around 0.3 microseconds per call. By comparison, on the same system, 10 mil-
+lion calls to a C function that simply returns an integer required 0.11 seconds, or
+around one-twentieth of the time required for calls to getppid(). Of course, most
+system calls have significantly more overhead than getppid()
+
+==== Examples and tools
+On Unix, Unix-like and other POSIX-compliant operating systems, popular system calls are open, read, write, close, wait, exec, fork, exit, and kill. Many modern operating systems have hundreds of system calls. For example, Linux and OpenBSD each have over 300 different calls, NetBSD has close to 500, FreeBSD has over 500.
+
+Tools such as 'strace', 'ftrace' and truss allow a process to execute from start and report all system calls the process invokes, or can attach to an already running process and intercept any system call made by the said process if the operation does not violate the permissions of the user. This special ability of the program is usually also implemented with system calls such as ptrace or system calls on files in procfs. 
+
+=== Library Functions
+A library function is simply one of the multitude of functions that constitutes the
+standard C library. 
+
+The purposes of
+these functions are very diverse, including such tasks as opening a file, converting a
+time to a human-readable format, and comparing two character strings.
+
+Many library functions don’t make any use of system calls (e.g., the string manipulation functions). On the other hand, some library functions are layered on
+top of system calls. For example, the fopen() library function uses the open() system
+call to actually open a file. 
+
+Often, library functions are designed to provide a more
+caller-friendly interface than the underlying system call. For example, the printf()
+function provides output formatting and data buffering, whereas the write() system call just outputs a block of bytes. Similarly, the malloc() and free() functions perform
+various bookkeeping tasks that make them a much easier way to allocate and free
+memory than the underlying brk() system call.
+
+=== The C standard library
+Generally, systems provide a library or API that sits between normal programs and the operating system. On Unix-like systems, that API is usually part of an implementation of the C library (libc), such as glibc, that provides wrapper functions for the system calls, often named the same as the system calls they invoke. 
+
+A C standard library for Linux includes wrappers around the system calls of the Linux kernel; the combination of the Linux kernel system call interface and a C standard library is what builds the Linux API. Some popular implementations of the C standard library are
+
+* glibc
+* uClibc
+* klibc
+* Newlib
+* musl
+* dietlibc
+* libbionic and libhybris
+
+Although the landscape is shifting, amongst these options, glibc remains the most popular implementation, to the point of many treating it as the default and the term equivalent to libc. 
+
+The library's wrapper functions expose an ordinary function calling convention (a subroutine call on the assembly level) for using the system call, as well as making the system call more modular. Here, the primary function of the wrapper is to place all the arguments to be passed to the system call in the appropriate processor registers (and maybe on the call stack as well), and also setting a unique system call number for the kernel to call. In this way the library, which exists between the OS and the application, increases portability. 
+
+The call to the library function itself does not cause a switch to kernel mode and is usually a normal subroutine call (using, for example, a "CALL" assembly instruction in some Instruction set architectures (ISAs)). The actual system call does transfer control to the kernel (and is more implementation-dependent and platform-dependent than the library call abstracting it). For example, in Unix-like systems, fork and execve are C library functions that in turn execute instructions that invoke the fork and exec system calls. Making the system call directly in the application code is more complicated and may require embedded assembly code to be used (in C and C++), as well as requiring knowledge of the low-level binary interface for the system call operation, which may be subject to change over time and thus not be part of the application binary interface; the library functions are meant to abstract this away. 
+
+==== Additions to POSIX
+ additional capabilities of the Linux kernel exist that are not part of POSIX:
+
+* cgroups subsystem, the system calls it introduces and libcgroup[1]
+* The system calls of the Direct Rendering Manager, especially the driver-private ioctls for the command submission, are not part of the POSIX specifications.
+* Advanced Linux Sound Architecture could set system calls, which are not part of the POSIX specifications
+* The system calls futex (fast userspace mutex), epoll, splice, dnotify, fanotify, and inotify have been exclusive to the Linux kernel so far.
+* The system call getrandom was introduced in version 3.17 of the Linux kernel mainline[12]
+* memfd was proposed by the kdbus developers[13]
+** memfd_create was merged into the Linux kernel mainline in kernel version 3.17
+* readahead initiates a file "read-ahead" into page cache
+
+==== Determining the version of glibc on the system
+*From Command*
+In some Linux distributions, the GNU C library resides at a pathname other than
+/lib/libc.so.6. One way of determining the location of the library is to run the ldd
+(list dynamic dependencies) program against an executable linked dynamically
+against glibc (most executables are linked in this manner). We can then inspect the
+resulting library dependency list to find the location of the glibc shared library:
+----
+ldd myprog | grep libc
+----
+Then run 
+----
+$ /lib/libc.so.6
+----
+
+*From Code*
+
+There are two means by which an application program can determine the version
+of the GNU C library present on the system: 
+
+. by testing constants 
++
+From version 2.0 onward, glibc defines two constants, __GLIBC__
+and __GLIBC_MINOR__, that can be tested at compile time (in #ifdef statements). On a
+system with glibc 2.12 installed, these constants would have the values 2 and 12.
+However, these constants are of limited use in a program that is compiled on one
+system but run on another system with a different glibc
+. or by calling a library function. 
++
+To handle this possibility, a
+program can 
++
+.. call the gnu_get_libc_version() function to determine the version of
+glibc available at run time.
++
+[source,C,attributes]
+----
+#include <gnu/libc-version.h>
+const char *gnu_get_libc_version(void);
+----
++
+Returns pointer to null-terminated, statically allocated string
+containing GNU C library version number
+.. We can also obtain version information by using the confstr() function to
+retrieve the value of the (glibc-specific) _CS_GNU_LIBC_VERSION configuration variable. This call returns a string such as glibc 2.12
+----
+   #include <unistd.h>
+
+       size_t confstr(size_t size;
+                      int name, char buf[size], size_t size);
+----
+confstr() gets the value of configuration-dependent string variables.
+[source,C,attributes]
+----
+// create a hello world program that prints the glibc version
+
+// To compile this program, use the following command:
+// gcc -o get_glibc_version get_glibc_version.c
+// To run the program, use the following command:
+// ./get_glibc_version
+
+#include <stdio.h>
+#include <gnu/libc-version.h>
+#include <unistd.h> 
+
+int main()
+{
+    printf("Glibc version: %s\n", gnu_get_libc_version());
+    // obtain version information by using the confstr() function to retrieve the value of the (glibc-specific) _CS_GNU_LIBC_VERSION configuration variable
+    char version[256];
+    confstr(_CS_GNU_LIBC_VERSION, version, sizeof(version));
+    printf("Glibc version (confstr): %s\n", version);
+    return 0;
+}
+----
+
+==== Handling Errors from System Calls and Library Functions
+Almost every system call and library function returns some type of status value indi-
+cating whether the call succeeded or failed. This status value should always be
+checked to see whether the call succeeded. If it did not, then appropriate action
+should be taken—at the very least, the program should display an error message
+warning that something unexpected occurred
+
+A few system calls never fail. For example, getpid() always successfully returns
+the ID of a process, and _exit() always terminates a process. It is not necessary
+to check the return values from such system calls.
+
+===== Handling system call errors
+The manual page for each system call documents the possible return values of the
+call, showing which value(s) indicate an error. Usually, an error is indicated by a
+return of –1. Thus, a system call can be checked with code such as the following
+
+[source,C,attributes]
+----
+fd = open(pathname, flags, mode); /* system call to open a file */
+if (fd == -1) {
+/* Code to handle the error */
+}
+
+if (close(fd) == -1) {
+/* Code to handle the error */
+}
+----
+
+When a system call fails, it sets the global integer variable errno to a positive value
+that identifies the specific error. Including the <errno.h> header file provides a dec-
+laration of errno, as well as a set of constants for the various error numbers. All of
+these symbolic names commence with E. The section headed ERRORS in each manual
+page provides a list of possible errno values that can be returned by each system call.
+Here is a simple example of the use of errno to diagnose a system call error:
+[source,C,attributes]
+----
+cnt = read(fd, buf, numbytes);
+if (cnt == -1) {
+if (errno == EINTR)
+fprintf(stderr, "read was interrupted by a signal\n");
+else {
+/* Some other error occurred */
+}
+}
+----
+Successful system calls and library functions never reset errno to 0, so this variable
+may have a nonzero value as a consequence of an error from a previous call. Further-
+more, SUSv3 permits a successful function call to set errno to a nonzero value
+(although few functions do this). Therefore, when checking for an error, we should
+always first check if the function return value indicates an error, and only then
+examine errno to determine the cause of the error.
+
+A common course of action after a failed system call is to print an error mes-
+sage based on the errno value. The perror() and strerror() library functions are pro-
+vided for this purpose.
+The perror() function prints the string pointed to by its msg argument, followed
+by a message corresponding to the current value of errno.
+[source,C,attributes]
+----
+#include <stdio.h>
+void perror(const char *msg);
+----
+
+A simple way of handling errors from system calls would be as follows:
+[source,C,attributes]
+----
+fd = open(pathname, flags, mode);
+if (fd == -1) {
+perror("open");
+exit(EXIT_FAILURE);
+}
+----
+The strerror() function returns the error string corresponding to the error number
+given in its errnum argument
+[source,C,attributes]
+----
+#include <string.h>
+char *strerror(int errnum); //Returns pointer to error string corresponding to errnum
+----
+The string returned by strerror() may be statically allocated, which means that it
+could be overwritten by subsequent calls to strerror().
+If errnum specifies an unrecognized error number, strerror() returns a string of
+the form Unknown error nnn. On some other implementations, strerror() instead
+returns NULL in this case.
+Because perror() and strerror() functions are locale-sensitive, error
+descriptions are displayed in the local language
+
+[source,C,attributes]
+----
+// create a hello world program that prints the glibc version
+
+// To compile this program, use the following command:
+// gcc -o handle_system_call_errors handle_system_call_errors.c
+// To run the program, use the following command:
+// ./handle_system_call_errors
+
+#include <stdio.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
+
+int main()
+{
+    int fd = open("non_existent_file.txt", O_RDONLY);
+    if (fd == -1)
+    {
+        if (errno == ENOENT)
+            fprintf(stderr, "File not found.\n");
+
+        perror("Error opening file");
+        // print error using strerror
+        fprintf(stderr, "Error details: %s\n", strerror(errno));
+        return 1;
+    }
+
+    return 0;
+}
+----
+
+A few system calls (e.g., getpriority()) can legitimately return –1 on success. To
+determine whether an error occurs in such calls, we set errno to 0 before the call,
+and then check it afterward. If the call returns –1 and errno is nonzero, an error
+occurred. (A similar statement also applies to a few library functions.)
+
+===== Handling errors from library functions
+The various library functions return different data types and different values to
+indicate failure. (Check the manual page for each function.).
+library functions can be divided into the following categories:
+
+* Some library functions return error information in exactly the same way as sys-
+tem calls: a –1 return value, with errno indicating the specific error. An example
+of such a function is remove(), which removes a file (using the unlink() system
+call) or a directory (using the rmdir() system call). Errors from these functions
+can be diagnosed in the same way as errors from system calls.
+* Some library functions return a value other than –1 on error, but nevertheless
+set errno to indicate the specific error condition. For example, fopen() returns a
+NULL pointer on error, and the setting of errno depends on which underlying sys-
+tem call failed. The perror() and strerror() functions can be used to diagnose
+these errors.
+* Other library functions don’t use errno at all. The method for determining the
+existence and cause of errors depends on the particular function and is docu-
+mented in the function’s manual page. For these functions, it is a mistake to
+use errno, perror(), or strerror() to diagnose errors.
+
+===== Universal error-handling rules
+* Always check the return value first
+* Only check errno if the man page says the function sets it
+* Clear errno before calls where it matters
+* Never check errno alone
+* Different function classes need different patterns
+
+Before writing error handling, ask:
+
+* Does this function return -1?
+* Does it return NULL?
+* Does it return an error code?
+* Does the man page say not to use errno?
+
+If you don’t answer these → read the man page again.
+
+===== safe error-handling template for C programs
+[tabs]
+====
+Core helper macros::
++
+These separate kernel-style errors from logic errors, which is critical.
++
+[source, C]
+----
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+
+/* For system calls and libc functions that return -1 and set errno */
+#define HANDLE_ERR(msg) \
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+/* For functions that return NULL and set errno */
+#define HANDLE_NULL(ptr, msg) \
+    do { if ((ptr) == NULL) HANDLE_ERR(msg); } while (0)
+
+/* For logic/format errors (not errno-based) */
+#define HANDLE_LOGIC_ERR(msg) \
+    do { fprintf(stderr, "Error: %s\n", msg); exit(EXIT_FAILURE); } while (0)
+----
+
+Template 1: System calls (-1 + errno)::
++
+Example: open(), read(), write()
++
+* Return value checked
+* errno used correctly
+* Diagnostic message accurate
+[source, C]
+----
+int fd = open("data.txt", O_RDONLY);
+if (fd == -1) {
+    HANDLE_ERR("open");
+}
+----
+
+Template 2: libc functions returning NULL + errno::
++
+Example: fopen(), malloc()
++
+Equivalent expanded form:
++
+----
+if (fp == NULL) {
+    perror("fopen");
+    exit(EXIT_FAILURE);
+}
+----
++
+[source, C]
+----
+FILE *fp = fopen("data.txt", "r");
+HANDLE_NULL(fp, "fopen");
+----
+
+Template 3: Functions with custom error reporting (NO errno)::
++
+Example: strtol()
++
+* Syntax errors handled via endptr
+* Range errors handled via errno
+* No misuse of perror()
++
+[source, C]
+----
+long parse_long(const char *s)
+{
+    char *end;
+    long val;
+
+    errno = 0;
+    val = strtol(s, &end, 10);
+
+    if (end == s) {
+        HANDLE_LOGIC_ERR("no digits found");
+    }
+    if (*end != '\0') {
+        HANDLE_LOGIC_ERR("invalid trailing characters");
+    }
+    if (errno == ERANGE) {
+        HANDLE_LOGIC_ERR("number out of range");
+    }
+
+    return val;
+}
+----
+
+Template 4: Functions returning error codes (not errno)::
++
+Example: POSIX threads
++
+* errno is not used here
+* Error code passed directly
++
+[source, C]
+----
+int ret = pthread_mutex_lock(&mutex);
+if (ret != 0) {
+    fprintf(stderr, "pthread_mutex_lock: %s\n", strerror(ret));
+    exit(EXIT_FAILURE);
+}
+----
+
+
+Template 5: Functions with valid failure values::
++
+Example: getpwnam()
++
+* Distinguishes “not found” vs “real error”
++
+[source, C]
+----
+errno = 0;
+struct passwd *pw = getpwnam("user");
+
+if (pw == NULL) {
+    if (errno != 0) {
+        HANDLE_ERR("getpwnam");
+    } else {
+        HANDLE_LOGIC_ERR("user not found");
+    }
+}
+----
+
+
+A complete minimal program (real-world safe)::
++
+[source, C]
+----
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+
+int main(void)
+{
+    int fd = open("file.txt", O_RDONLY);
+    if (fd == -1) {
+        perror("open");
+        return EXIT_FAILURE;
+    }
+
+    char buf[128];
+    ssize_t n = read(fd, buf, sizeof(buf));
+    if (n == -1) {
+        perror("read");
+        close(fd);
+        return EXIT_FAILURE;
+    }
+
+    close(fd);
+    return EXIT_SUCCESS;
+}
+----
+
+==== 
+
+===== production-grade error module
+[tabs]
+====
+Design goals::
++
+* Centralized error handling
+* Correct use of errno (never blindly)
+* Supports:
+* system calls
+** libc wrappers
+** logic/validation errors
+** POSIX APIs returning error codes
+*** Optional fatal vs non-fatal handling
+*** Clean messages (file, line, function)
+*** No global side effects
+*** Thread-safe
+
+Public API — error.h::
++
+[source, C]
+----
+#ifndef ERROR_H
+#define ERROR_H
+
+#include <errno.h>
+#include <stdarg.h>
+
+/* ---------- Error categories ---------- */
+
+typedef enum {
+    ERR_SYS,        /* syscall or libc using errno */
+    ERR_POSIX,      /* POSIX APIs returning error codes */
+    ERR_LOGIC,      /* validation / state errors */
+    ERR_FATAL       /* unrecoverable internal errors */
+} err_type_t;
+
+/* ---------- Core reporting ---------- */
+
+void err_report(
+    err_type_t type,
+    int errnum,
+    const char *file,
+    int line,
+    const char *func,
+    const char *fmt,
+    ...
+);
+
+/* ---------- Convenience macros ---------- */
+
+#define ERR_SYS(msg, ...) \
+    err_report(ERR_SYS, errno, __FILE__, __LINE__, __func__, msg, ##__VA_ARGS__)
+
+#define ERR_POSIX(code, msg, ...) \
+    err_report(ERR_POSIX, code, __FILE__, __LINE__, __func__, msg, ##__VA_ARGS__)
+
+#define ERR_LOGIC(msg, ...) \
+    err_report(ERR_LOGIC, 0, __FILE__, __LINE__, __func__, msg, ##__VA_ARGS__)
+
+#define ERR_FATAL(msg, ...) \
+    err_report(ERR_FATAL, 0, __FILE__, __LINE__, __func__, msg, ##__VA_ARGS__)
+
+/* ---------- Fatal variants ---------- */
+
+#define DIE_SYS(msg, ...)    do { ERR_SYS(msg, ##__VA_ARGS__);    _exit(1); } while (0)
+#define DIE_POSIX(c,msg,...) do { ERR_POSIX(c,msg,##__VA_ARGS__); _exit(1); } while (0)
+#define DIE_LOGIC(msg, ...)  do { ERR_LOGIC(msg,##__VA_ARGS__);   _exit(1); } while (0)
+#define DIE_FATAL(msg, ...)  do { ERR_FATAL(msg,##__VA_ARGS__);   _exit(1); } while (0)
+
+#endif /* ERROR_H */
+
+----
+
+Implementation — error.c::
++
+* Uses strerror() safely
+* No global state
+* Thread-safe
+* No allocation
+* Works in signal-unsafe contexts (fatal path uses _exit)
++
+[source, C]
+----
+#include "error.h"
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+static const char *type_str(err_type_t t)
+{
+    switch (t) {
+        case ERR_SYS:   return "SYS";
+        case ERR_POSIX:return "POSIX";
+        case ERR_LOGIC:return "LOGIC";
+        case ERR_FATAL:return "FATAL";
+        default:       return "UNKNOWN";
+    }
+}
+
+void err_report(
+    err_type_t type,
+    int errnum,
+    const char *file,
+    int line,
+    const char *func,
+    const char *fmt,
+    ...
+)
+{
+    va_list ap;
+    char msg[512];
+
+    va_start(ap, fmt);
+    vsnprintf(msg, sizeof(msg), fmt, ap);
+    va_end(ap);
+
+    fprintf(stderr,
+        "[%s] %s:%d (%s): %s",
+        type_str(type), file, line, func, msg
+    );
+
+    if (type == ERR_SYS || type == ERR_POSIX) {
+        fprintf(stderr, ": %s", strerror(errnum));
+    }
+
+    fputc('\n', stderr);
+}
+----
+
+Usage patterns (real-world examples)::
++
+*System call*
++
+[source, C]
+----
+int fd = open("data.txt", O_RDONLY);
+if (fd == -1) {
+    DIE_SYS("open failed");
+}
+----
++
+Output:
++
+[SYS] file.c:42 (main): open failed: No such file o
++
+*libc function returning NULL*
++
+[source, C]
+----
+FILE *fp = fopen("data.txt", "r");
+if (!fp) {
+    ERR_SYS("fopen failed");
+    return -1;
+}
+----
+*POSIX error-code API*
++
+[source, C]
+----
+int rc = pthread_mutex_lock(&m);
+if (rc != 0) {
+    DIE_POSIX(rc, "mutex lock failed");
+}
+
+----
+*Logic / validation error*
++
+[source, C]
+----
+if (count < 0) {
+    ERR_LOGIC("count must be non-negative");
+}
+----
+*strtol() done right*
++
+[source, C]
+----
+errno = 0;
+long v = strtol(s, &end, 10);
+
+if (end == s || *end != '\0') {
+    ERR_LOGIC("invalid integer: '%s'", s);
+}
+if (errno == ERANGE) {
+    ERR_LOGIC("integer out of range: '%s'", s);
+}
+----
+
+====
+
+=== Further libraries
+* libdrm (for Direct Rendering Manager)
+* libnl (The libnl suite is a collection of libraries providing APIs to netlink protocol based Linux kernel interfaces.)
+* libevdev (for evdev)
+* libasound (Advanced Linux Sound Architecture)
+
+== Linux ABI
+The Linux ABI (Application Binary Interface) is a low-level contract defining how compiled programs (user-space) interact with the kernel and libraries at the binary level, covering system calls, data layouts, and function calling conventions, ensuring that compiled applications can run across different Linux distributions and kernel versions without recompilation, which is vital for stability and adoption. It specifies details like data structure alignment, memory layout, and system call numbers, differing from APIs (Application Programming Interfaces) which deal with source code. 
+
+Key Aspects of the Linux ABI
+
+* Kernel-User Space Contract: Defines the system calls (e.g., mount, open) and data formats (like those in /proc, /sys) that user programs use to request services from the kernel.
+* Binary Compatibility: Ensures that a program compiled on one Linux system can run on another, provided the ABI hasn't been broken, which allows independent updates of kernels and applications.
+* Low-Level Specification: Deals with machine code, memory addresses, function prologues/epilogues, and register usage, unlike APIs which are source-code level.
+* Stability: Crucial for Linux adoption; breaking the ABI can force developers to recompile everything, hindering security updates and system upgrades. 
+
+ABI vs. API
+
+* API (Application Programming Interface): Source code level; high-level, hardware-independent definitions (e.g., C functions in headers).
+* ABI (Application Binary Interface): Binary level; low-level guarantees for compiled code (e.g., system call numbers, data structure layouts). 
+
+Why it Matters
+
+* Independent Updates: Allows users to update kernels or libraries without breaking applications.
+* Software Distribution: Enables software vendors to create binaries that work across many distributions.
+* System Maintenance: Prevents catastrophic breakages when the OS or core libraries are updated. 
+== In-kernel APIs
+
+== In-kernel ABIs
+
+== Abstraction APIs
+For many use cases, the Linux API is considered too low-level, so APIs of higher abstraction must be used. Higher-level APIs must be implemented on top of lower-level APIs. Examples:
+
+* Implementation of the OpenGL and Vulkan specifications in proprietary Linux graphics drivers and the free and open-source implementation in Mesa.
+* Implementation of the OpenAL specification.
+* Simple DirectMedia Layer: abstraction API for input/sound/etc. available for many operating systems.
+* Simple and Fast Multimedia Library: like above.
+
+image::{figures}/Linux_kernel_and_OpenGL_video_game.png[OpenGL is indeed an abstraction API to make use of diverse GPUs of multiple vendors without the need to program for each one specifically.]
+
+== Portability Issues
+=== Feature Test Macros
+Various standards govern the behavior of the system call and library function APIs
+(see Section 1.3). Some of these standards are defined by standards bodies such
+The Open Group (Single UNIX Specification), while others are defined by the two
+historically important UNIX implementations: BSD and System V Release 4 (and
+the associated System V Interface Definition).
+
+Sometimes, when writing a portable application, we may want the various
+header files to expose only the definitions (constants, function prototypes, and so
+on) that follow a particular standard. To do this, we define one or more of the
+feature test macros listed below when compiling a program. 
+
+Feature test macros are
+preprocessor definitions used in C and C++ to determine at compile-time whether a compiler or standard library supports specific language features or standards. They are critical for writing portable code that can adapt to different compiler versions and environment capabilities. 
+
+The exact set of features available when you compile a source file is controlled by which feature test macros you define.
+
+If you compile your programs using ‘gcc -ansi’, you get only the ISO C library features, unless you explicitly request additional features by defining one or more of the feature macros.
+
+. One way that we can do
+this is by defining the macro in the program source code before including any
+header files:
++
+ #define _BSD_SOURCE 1
+. Alternatively, we can use the –D option to the C compiler:
++
+ $ cc -D_BSD_SOURCE prog.c
+
+The following feature test macros are specified by the relevant standards, and con-
+sequently their usage is portable to all systems that support these standards:
+
+* *_POSIX_SOURCE*
++
+If defined (with any value), expose definitions conforming to POSIX.1-1990
+and ISO C (1990). This macro is superseded by _POSIX_C_SOURCE.
+* *_POSIX_C_SOURCE*
+** If defined with the value 1, this has the same effect as _POSIX_SOURCE. 
+** If
+defined with a value greater than or equal to 199309, also expose defini-
+tions for POSIX.1b (realtime). 
+** If defined with a value greater than or equal
+to 199506, also expose definitions for POSIX.1c (threads). 
+** If defined with
+the value 200112, also expose definitions for the POSIX.1-2001 base speci-
+fication (i.e., the XSI extension is excluded). (Prior to version 2.3.3, the glibc headers don’t interpret the value 200112 for _POSIX_C_SOURCE.) 
+** If
+defined with the value 200809, also expose definitions for the POSIX.1-2008
+base specification. (Prior to version 2.10, the glibc headers don’t interpret
+the value 200809 for _POSIX_C_SOURCE.)
+* *_XOPEN_SOURCE*
+** If defined (with any value), expose POSIX.1, POSIX.2, and X/Open
+(XPG4) definitions. 
+** If defined with the value 500 or greater, also expose
+SUSv2 (UNIX 98 and XPG5) extensions. 
+** Setting to 600 or greater addition-
+ally exposes SUSv3 XSI (UNIX 03) extensions and C99 extensions. (Prior to
+version 2.2, the glibc headers don’t interpret the value 600 for _XOPEN_SOURCE.)
+** Setting to 700 or greater also exposes SUSv4 XSI extensions. (Prior to ver-
+sion 2.10, the glibc headers don’t interpret the value 700 for _XOPEN_SOURCE.)
+The values 500, 600, and 700 for _XOPEN_SOURCE were chosen because SUSv2,
+SUSv3, and SUSv4 are Issues 5, 6, and 7, respectively, of the X/Open
+specifications.
+
+The following feature test macros listed are glibc-specific:
+
+* *_BSD_SOURCE*
++
+If defined (with any value), expose BSD definitions. Defining this macro
+also defines _POSIX_C_SOURCE with the value 199506. Explicitly setting just
+this macro causes BSD definitions to be favored in a few cases where stan-
+dards conflict.
+* *_SVID_SOURCE*
++
+If defined (with any value), expose System V Interface Definition (SVID)
+definitions.
+* *_GNU_SOURCE*
++
+If defined (with any value), expose all of the definitions provided by setting
+all of the preceding macros, as well as various GNU extensions
+
+When the GNU C compiler is invoked without special options, _POSIX_SOURCE,
+_POSIX_C_SOURCE=200809 (200112 with glibc versions 2.5 to 2.9, or 199506 with glibc
+versions earlier than 2.4), _BSD_SOURCE, and _SVID_SOURCE are defined by default.
+
+If individual macros are defined, or the compiler is invoked in one of its stan-
+dard modes (e.g., cc –ansi or cc –std=c99), then only the requested definitions are
+supplied. There is one exception: if _POSIX_C_SOURCE is not otherwise defined, and
+the compiler is not invoked in one of its standard modes, then _POSIX_C_SOURCE is
+defined with the value 200809 (200112 with glibc versions 2.4 to 2.9, or 199506 with
+glibc versions earlier than 2.4).
+
+Defining multiple macros is additive, so that we could, for example, use the
+following cc command to explicitly select the same macro settings as are provided
+by default:
+
+ $ cc -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199506 \
+ -D_BSD_SOURCE -D_SVID_SOURCE prog.c
+
+Only the _POSIX_C_SOURCE and _XOPEN_SOURCE feature test macros are specified in
+POSIX.1-2001/SUSv3, which requires that these macros be defined with the values
+200112 and 600, respectively, in conforming applications. Defining _POSIX_C_SOURCE
+as 200112 provides conformance to the POSIX.1-2001 base specification (i.e.,
+POSIX conformance, excluding the XSI extension). Defining _XOPEN_SOURCE as 600 pro-
+vides conformance to SUSv3 (i.e., XSI conformance, the base specification plus the
+XSI extension). Analogous statements apply for POSIX.1-2008/SUSv4, which
+require that the two macros be defined with the values 200809 and 700.
+
+SUSv3 specifies that setting _XOPEN_SOURCE to 600 should supply all of the features
+that are enabled if _POSIX_C_SOURCE is set to 200112. Thus, an application needs to
+define only _XOPEN_SOURCE for SUSv3 (i.e., XSI) conformance. SUSv4 makes an analo-
+gous specification that setting _XOPEN_SOURCE to 700 should supply all of the features
+that are enabled if _POSIX_C_SOURCE is set to 200809.
+
+The <features.h> header file and the feature_test_macros(7) manual page provide further
+information on precisely what values are assigned to each of the feature test macros
+
+=== System Data Types
+Various implementation data types are represented using standard C types, for
+example, process IDs, user IDs, and file offsets. Although it would be possible to
+use the C fundamental types such as int and long to declare variables storing such
+information, this reduces portability across UNIX systems, for the following reasons:
+
+* The sizes of these fundamental types vary across UNIX implementations (e.g.,
+a long may be 4 bytes on one system and 8 bytes on another), or sometimes
+even in different compilation environments on the same implementation.
+Furthermore, different implementations may use different types to represent
+the same information. For example, a process ID might be an int on one sys-
+tem but a long on another.
+* Even on a single UNIX implementation, the types used to represent informa-
+tion may differ between releases of the implementation. Notable examples on
+Linux are user and group IDs. On Linux 2.2 and earlier, these values were rep-
+resented in 16 bits. On Linux 2.4 and later, they are 32-bit values.
+
+Different systems may define basic C types differently:
+----
+Type	Possible size
+int	16, 32, or 64 bits
+long	32 bits on 32-bit systems, 64 bits on 64-bit systems
+pid_t	could be int, long, or something else
+----
+
+To avoid such portability problems, SUSv3 specifies various standard system data
+types, and requires an implementation to define and use these types appropriately.
+
+Each of these types is defined using the C typedef feature. For example, the pid_t
+data type is intended for representing process IDs, and on Linux/x86-32 this type
+is defined as follows:
+
+typedef int pid_t;
+
+Most of the standard system data types have names ending in _t. Many of them are
+declared in the header file <sys/types.h>, although a few are defined in other
+header files.
+
+An application should employ these type definitions to portably declare the
+variables it uses. For example, the following declaration would allow an application
+to correctly represent process IDs on any SUSv3-conformant system:
+pid_t mypid;
+
+If you see statement that some type “is an integer type [specified by SUSv3].” This means
+that SUSv3 requires the type to be defined as an integer, but doesn’t require that a
+particular native integer type (e.g., short, int, or long) be used. (Often, we won’t say
+which particular native data type is actually used to represent each of the system
+data types in Linux, because a portable application should be written so that it
+doesn’t care which data type is used.
+
+==== Printing system data type values
+When printing values of one of the numeric system data types shown in Table 3-1
+(e.g., pid_t and uid_t), we must be careful not to include a representation depen-
+dency in the printf() call. A representation dependency can occur because C’s argu-
+ment promotion rules convert values of type short to int, but leave values of type int
+and long unchanged. This means that, depending on the definition of the system
+data type, either an int or a long is passed in the printf() call. However, because
+printf() has no way to determine the types of its arguments at run time, the caller
+must explicitly provide this information using the %d or %ld format specifier. The
+problem is that simply coding one of these specifiers within the printf() call creates
+an implementation dependency. The usual solution is to use the %ld specifier and
+always cast the corresponding value to long, like so:
+[source,C,attributes]
+----
+pid_t mypid;
+mypid = getpid(); /* Returns process ID of calling process */
+printf("My PID is %ld\n", (long) mypid);
+----
+one exception to the above technique. Because the off_t data type is the
+size of long long in some compilation environments, we cast off_t values to this type
+and use the %lld specifier
+
+The C99 standard defines the z length modifier for printf(), to indicate that the
+following integer conversion corresponds to a size_t or ssize_t type. Thus, we
+could write %zd instead of using %ld plus a cast for these types. Although this
+specifier is available in glibc, we avoid it because it is not available on all UNIX
+implementations.
+
+The C99 standard also defines the j length modifier, which specifies that
+the corresponding argument is of type intmax_t (or uintmax_t), an integer type
+that is guaranteed to be large enough to be able to represent an integer of any
+type. Ultimately, the use of an (intmax_t) cast plus the %jd specifier should
+replace the (long) cast plus the %ld specifier as the best way of printing numeric
+system data type values, since the former approach also handles long long values
+and any extended integer types such as int128_t. However, (again) we avoid
+this technique since it is not possible on all UNIX implementations.
+
+=== Initializing and using structures
+Each UNIX implementation specifies a range of standard structures that are used
+in various system calls and library functions. As an example, consider the sembuf
+structure, which is used to represent a semaphore operation to be performed by
+the semop() system call:
+[source,C,attributes]
+----
+struct sembuf {
+unsigned short sem_num; /* Semaphore number */
+short sem_op; /* Operation to be performed */
+short sem_flg; /* Operation flags */
+};
+----
+Although SUSv3 specifies structures such as sembuf, it is important to realize the
+following:
+z* In general, the order of field definitions within such structures is not specified.
+* In some cases, extra implementation-specific fields may be included in such
+structures.
+Consequently, it is not portable to use a structure initializer such as the following:
+[source,C,attributes]
+----
+struct sembuf s = { 3, -1, SEM_UNDO };
+----
+Although this initializer will work on Linux, it won’t work on another implementa-
+tion where the fields in the sembuf structure are defined in a different order. To
+portably initialize such structures, we must use explicit assignment statements, as in
+the following:
+[source,C,attributes]
+----
+struct sembuf s;
+s.sem_num = 3;
+s.sem_op = -1;
+s.sem_flg = SEM_UNDO;
+----
+
+If we are using C99, then we can employ that language’s new syntax for structure
+initializers to write an equivalent initialization:
+struct sembuf s = { .sem_num = 3, .sem_op = -1, .sem_flg = SEM_UNDO };
+Considerations about the order of the members of standard structures also apply
+if we want to write the contents of a standard structure to a file. To do this port-
+ably, we can’t simply do a binary write of the structure. Instead, the structure fields
+must be written individually (probably in text form) in a specified order.
+
+=== Using macros that may not be present on all implementations
+In some cases, a macro may be not be defined on all UNIX implementations. For
+example, the WCOREDUMP() macro (which checks whether a child process produced a
+core dump file) is widely available, but it is not specified in SUSv3. Therefore, this
+macro might not be present on some UNIX implementations. In order to portably
+handle such possibilities, we can use the C preprocessor #ifdef directive, as in the
+following example:
+[source,C,attributes]
+----
+#ifdef WCOREDUMP
+/* Use WCOREDUMP() macro */
+#endif
+----
+
+=== Variation in required header files across implementations
+In some cases, the header files required to prototype various system calls and
+library functions vary across UNIX implementations.
+
+For many of the functions that it specified, POSIX.1-1990 required that the
+header <sys/types.h> be included before any other headers associated with the
+function. However, this requirement was redundant, because most contempo-
+rary UNIX implementations did not require applications to include this
+header for these functions. Consequently, SUSv1 removed this requirement.
+Nevertheless, when writing portable programs, it is wise to make this one of
+the first header files included.

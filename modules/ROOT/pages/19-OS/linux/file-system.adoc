@@ -1,0 +1,3677 @@
+= Linux
+:figures: 19-OS/linux/io
+:glibcsourcedir: https://github.com/bminor/glibc/blob/master
+
+== File System
+The kernel maintains a single hierarchical directory structure to organize all files in
+the system. (This contrasts with operating systems such as Microsoft Windows,
+where each disk device has its own directory hierarchy.) At the base of this hier-
+archy is the root directory, named / (slash). All files and directories are children or
+further removed descendants of the root directory. 
+
+The process and file hierarchies both are organized as trees, but the similarity
+stops there. Process hierarchies usually are not very deep (more than five levels is
+unusual), whereas file hierarchies are commonly six, seven, or even more levels
+deep. Process hierarchies are typically more short-lived than directory hierarchies
+which may exist for years. Ownership and protection also differ for processes and
+files. Typically, only a parent process may control or even access a child process,
+but mechanisms nearly always exist to allow files and directories to be read by a
+wider group than just the owner.
+
+=== File types
+Within the file system, each file is marked with a type, indicating what kind of file it
+is. One of these file types denotes ordinary data files, which are usually called
+regular or plain files to distinguish them from other file types. These other file types
+include devices, pipes, sockets, directories, and symbolic links.
+The term file is commonly used to denote a file of any type, not just a regular file.
+
+=== Directories and links
+A directory is a special file whose contents take the form of a table of filenames coupled
+with references to the corresponding files. This filename-plus-reference association
+is called a link, and files may have multiple links, and thus multiple names, in the
+same or in different directories.
+
+Directories may contain links both to files and to other directories. The links
+between directories establish the directory hierarchy shown in Figure 2-1.
+Every directory contains at least two entries: . (dot), which is a link to the direc-
+tory itself, and .. (dot-dot), which is a link to its parent directory, the directory above
+it in the hierarchy. Every directory, except the root directory, has a parent. For the
+root directory, the dot-dot entry is a link to the root directory itself (thus, /..
+equates to /)
+
+=== Symbolic links
+Like a normal link, a symbolic link provides an alternative name for a file. But
+whereas a normal link is a filename-plus-pointer entry in a directory list, a symbolic
+link is a specially marked file containing the name of another file. (In other words,
+a symbolic link has a filename-plus-pointer entry in a directory, and the file referred
+to by the pointer contains a string that names another file.) This latter file is often
+called the target of the symbolic link, and it is common to say that the symbolic link
+“points” or “refers” to the target file. 
+
+When a pathname is specified in a system call,
+in most circumstances, the kernel automatically dereferences (or synonymously,
+follows) each symbolic link in the pathname, replacing it with the filename to which
+it points. This process may happen recursively if the target of a symbolic link is
+itself a symbolic link. (The kernel imposes limits on the number of dereferences to
+handle the possibility of circular chains of symbolic links.) 
+
+If a symbolic link refers
+to a file that doesn’t exist, it is said to be a dangling link.
+
+Often hard link and soft link are used as alternative terms for normal and sym-
+bolic links. 
+
+=== Filenames
+On most Linux file systems, filenames can be up to 255 characters long. 
+
+Filenames
+may contain any characters except slashes (/) and null characters (\0). However, it is
+advisable to employ only letters and digits, and the . (period), _ (underscore), and
+* (hyphen) characters. This 65-character set, [-._a-zA-Z0-9], is referred to in SUSv3
+as the portable filename character set.
+
+We should avoid the use of characters in filenames that are not in the portable
+filename character set because those characters may have special meanings within
+the shell, within regular expressions, or in other contexts. If a filename containing
+characters with special meanings appears in such contexts, then these characters
+must be escaped; that is, specially marked—typically with a preceding backslash (\)—
+to indicate that they should not be interpreted with those special meanings. 
+
+In con-
+texts where no escape mechanism is available, the filename is not usable.
+
+We should also avoid filenames beginning with a hyphen (-), since such file-
+names may be mistaken for options when specified in a shell command.
+
+=== Pathnames
+A pathname is a string consisting of an optional initial slash (/) followed by a series
+of filenames separated by slashes. 
+
+All but the last of these component filenames
+identifies a directory (or a symbolic link that resolves to a directory). 
+
+The last component of a pathname may identify any type of file, including a directory. 
+
+The
+series of component filenames preceding the final slash is sometimes referred to as
+the directory part of a pathname, while the name following the final slash is some-
+times referred to as the file or base part of the pathname.
+
+A pathname is read from left to right; each filename resides in the directory
+specified by the preceding part of the pathname. The string .. can be used any-
+where in a pathname to refer to the parent of the location so far specified in the
+pathname.
+
+A pathname describes the location of a file within the single directory hierarchy, and is either absolute or relative:
+
+* An absolute pathname begins with a slash (/) and specifies the location of a file
+with respect to the root directory. Examples of absolute pathnames for files in are /home/mtk/.bashrc, /usr/include, and / (the pathname of the root
+directory).
+* A relative pathname specifies the location of a file relative to a process’s current
+working directory (see below), and is distinguished from an absolute pathname
+by the absence of an initial slash. For example, from the directory usr, the file
+types.h could be referenced using the relative pathname include/sys/types.h,
+while from the directory avr, the file .bashrc could be accessed using the rela-
+tive pathname ../mtk/.bashrc.
+
+=== Current working directory
+Each process has a current working directory (sometimes just referred to as the pro-
+cess’s working directory or current directory). This is the process’s “current location”
+within the single directory hierarchy, and it is from this directory that relative path-
+names are interpreted for the process.
+
+A process inherits its current working directory from its parent process. A
+login shell has its initial current working directory set to the location named in the
+home directory field of the user’s password file entry. The shell’s current working
+directory can be changed with the cd command.
+
+Processes can
+change their working directory by issuing a system call specifying the new work-
+ing directory.
+
+=== File ownership and permissions
+Each file has an associated user ID and group ID that define the owner of the file
+and the group to which it belongs. The ownership of a file is used to determine the
+access rights available to users of the file.
+
+For the purpose of accessing a file, the system divides users into three catego-
+ries: 
+
+* the owner of the file (sometimes termed the user of the file), 
+* users who are
+members of the group matching the file’s group ID ( group), 
+* and the rest of the
+world (other). 
+
+Three permission bits may be set for each of these categories of user
+(making a total of nine permission bits): 
+
+* read permission allows the contents of the
+file to be read; 
+* write permission allows modification of the contents of the file; 
+* and
+execute permission allows execution of the file, which is either a program or a script
+to be processed by some interpreter (usually, but not always, one of the shells).
+
+These permissions may also be set on directories, although their meanings are
+slightly different: 
+
+* read permission allows the contents of (i.e., the filenames in) the
+directory to be listed; 
+* write permission allows the contents of the directory to be
+changed (i.e., filenames can be added, removed, and changed); 
+* and execute (some-
+times called search) permission allows access to files within the directory (subject to
+the permissions on the files themselves).
+
+== File I/O Model
+One of the distinguishing features of the I/O model on UNIX systems is the concept of universality of I/O. This means that the same system calls (open(), read(),
+write(), close(), and so on) are used to perform I/O on all types of files, including
+devices. (The kernel translates the application’s I/O requests into appropriate filesystem or device-driver operations that perform I/O on the target file or device.)
+Thus, a program employing these system calls will work on any type of file.
+
+The kernel essentially provides one file type: a sequential stream of bytes,
+which, in the case of disk files, disks, and tape devices, can be randomly accessed
+using the lseek() system call.
+
+Many applications and libraries interpret the newline character (ASCII code 10
+decimal, sometimes also known as linefeed) as terminating one line of text and commencing another. UNIX systems have no end-of-file character; the end of a file is
+detected by a read that returns no data.
+
+== File descriptors
+All system calls for performing I/O refer to open files using a file descriptor, a (usually
+small) nonnegative integer. File descriptors are used to refer to all types of open
+files, including pipes, FIFOs, sockets, terminals, devices, and regular files. Each
+process has its own set of file descriptors
+
+The I/O system calls refer to open files using a file descriptor, a (usually small) non-
+negative integer. A file descriptor is typically obtained by a call to open(), which
+takes a pathname argument specifying a file upon which I/O is to be performed.
+
+Normally, a process inherits three open file descriptors when it is started by
+the shell: descriptor 0 is standard input, the file from which the process takes its
+input; descriptor 1 is standard output, the file to which the process writes its output;
+and descriptor 2 is standard error, the file to which the process writes error
+messages and notification of exceptional or abnormal conditions. In an interactive
+shell or program, these three descriptors are normally connected to the terminal.
+In the stdio library, these descriptors correspond to the file streams stdin, stdout, and
+stderr.
+
+A file descriptor (FD) is a non-negative integer that serves as a unique identifier or handle for an open file or an input/output (I/O) resource (such as a pipe, socket, or device) within a running process. The operating system uses the file descriptor to manage and perform operations on that resource. 
+Key Concepts
+
+* Abstraction: File descriptors provide an abstract interface, allowing programs to interact with various I/O resources (files on a disk, network connections, or the terminal) using a consistent set of system calls, such as read(), write(), and close().
+* Integer Representation: FDs are small, non-negative integers. When a program opens a new resource, the operating system typically returns the lowest available integer value as the file descriptor.
+* Per-Process Scope: File descriptors are unique to each process. However, a child process created via fork() inherits all open file descriptors from its parent process, which allows for inter-process communication. 
+
+Since kernel 2.6.22, the Linux-specific files in the directory /proc/PID/fdinfo
+can be read to obtain information about the file descriptors of any process on
+the system. There is one file in this directory for each of the process’s open file
+descriptors, with a name that matches the number of the descriptor. The pos
+field in this file shows the current file offset (Section 4.7). The flags field is an
+octal number that shows the file access mode flags and open file status flags.
+(To decode this number, we need to look at the numeric values of these flags
+in the C library header files.)
+
+.From AI
+[%collapsible]
+======
+[tabs]
+=====
+ChatGPT::
++
+[tabs]
+====
+Concept::
+1️⃣ Every process has file descriptors (FDs)
++
+In Linux, every open file, socket, pipe, etc. is identified by a number called a file descriptor.
++
+Common examples:
++
+0 → standard input (keyboard)
++
+1 → standard output (terminal)
++
+2 → standard error
++
+If a program opens more files:
++
+int fd = open("data.txt", O_RDONLY);
++
+Linux might assign:
++
+fd = 3
++
+2️⃣ /proc is a live view into the kernel 🧠
++
+/proc is not a real filesystem on disk.
+It is a window into the kernel’s internal data.
++
+Each running process gets a directory:
++
+/proc/<PID>/
++
+Example for a process with PID 1234:
++
+/proc/1234/
++
+3️⃣ /proc/PID/fdinfo → detailed FD information
++
+Inside each process directory:
++
+/proc/1234/fdinfo/
++
+This directory contains one file per open file descriptor.
++
+Example:
++
+/proc/1234/fdinfo/0
+/proc/1234/fdinfo/1
+/proc/1234/fdinfo/2
+/proc/1234/fdinfo/3
++
+Each filename is the FD number.
++
+4️⃣ What’s inside an fdinfo file?
++
+Let’s read one:
++
+$ cat /proc/1234/fdinfo/3
++
+Typical output:
++
+pos:    128
+flags:  0100000
+mnt_id: 25
++
+The selection focuses on two key fields:
++
+5️⃣ pos → current file position (offset)
+What it means
++
+pos tells you:
++
+“Where in the file will the next read or write happen?”
++
+It is the same value manipulated by:
++
+read()
++
+write()
++
+lseek()
++
+Example
++
+If a file contains:
++
+HelloWorld
++
+And the program already read:
++
+Hello
++
+Then:
++
+pos: 5
++
+If the program calls:
++
+lseek(fd, 0, SEEK_SET);
++
+Then:
++
+pos: 0
++
+✅ Important:
++
+This offset is per open file description, not just per FD.
++
+If two FDs share the same open file (via dup() or fork()), they share the same pos.
++
+6️⃣ flags → how the file was opened
+What it is
++
+flags is an octal number that encodes:
++
+File access mode (O_RDONLY, O_WRONLY, O_RDWR)
++
+Status flags (O_APPEND, O_NONBLOCK, O_SYNC, etc.)
++
+Example:
++
+flags: 0100000
++
+This number is not meant for humans directly.
++
+7️⃣ Why flags are shown as numbers
++
+Internally, flags are stored as bitmasks.
++
+Example:
++
+O_RDONLY   = 0000000
+O_WRONLY   = 0000001
+O_RDWR     = 0000002
+O_APPEND   = 0002000
+O_NONBLOCK = 0004000
++
+When you open a file:
++
+open("log.txt", O_WRONLY | O_APPEND);
++
+Linux ORs the bits together:
++
+0000001 | 0002000 = 0002001
++
+That combined value is what you see in:
++
+flags: 020001
++
+8️⃣ Why the book says “look at C library header files”
++
+To decode flags, you must check:
++
+#include <fcntl.h>
++
+Common headers:
++
+/usr/include/fcntl.h
++
+/usr/include/bits/fcntl.h
++
+Because:
++
+Linux shows numeric values
++
+Humans understand symbolic names (O_RDONLY, O_APPEND, …)
++
+Tools like strace do this decoding for you automatically.
++
+9️⃣ Practical example 🧪
+Program:
+int fd = open("data.txt", O_RDWR | O_APPEND);
+write(fd, "X", 1);
++
+Kernel state:
+pos:    end_of_file
+flags:  0200002
++
+Meaning:
++
+O_RDWR → read + write
++
+O_APPEND → writes always go to the end
++
+pos tracks where the kernel is in the file
++
+🔑 Key takeaways
++
+/proc/PID/fdinfo shows live kernel state
++
+One file per open file descriptor
++
+pos = current read/write position
++
+flags = how the file was opened (encoded as bits)
++
+You decode flags using C headers, not intuition
+
+Map to kernel structures (struct file)::
+this is where userspace observations (/proc) connect directly to kernel internals.
+I’ll map everything you saw in /proc/PID/fdinfo to struct file, using simple language and concrete kernel references.
++
+Big Picture First 🧠
+----
+Process
+  └── file descriptor table
+        └── fd (int) ──► struct file
+                               ├── f_pos
+                               ├── f_flags
+                               ├── f_inode / f_path
+                               └── file_operations
+----                               
++
+/proc/PID/fdinfo/N is basically a text dump of selected fields inside struct file.
++
+Where struct file lives
++
+In the Linux kernel source:
++
+include/linux/fs.h
++
+Core definition (simplified):
++
+struct file {
+    struct path     f_path;
+    struct inode   *f_inode;
+    const struct file_operations *f_op;
++
+    loff_t          f_pos;
+    unsigned int    f_flags;
++
+    /* reference counting */
+    atomic_long_t   f_count;
+};
++
+This structure represents an open file description (not just a filename).
++
+Mapping /proc/PID/fdinfo → struct file
+1️⃣ fd number → pointer to struct file
++
+When you see:
++
+/proc/1234/fdinfo/3
++
+This means:
++
+process 1234
+  └── fd table[3] ──► struct file *
++
+Kernel path:
++
+task_struct
+  └── files_struct
+        └── fdtable
+              └── fd[3] → struct file
++
+2️⃣ pos: → file->f_pos
+/proc output
+pos: 128
++
+Kernel field
+loff_t f_pos;
++
+Meaning
++
+Current offset in the file
++
+Updated by:
++
+read()
++
+write()
++
+lseek()
++
+Important behavior
+lseek(fd, 0, SEEK_SET);
++
+Kernel does:
++
+file->f_pos = 0;
++
+Shared offset
++
+If you do:
++
+int fd2 = dup(fd);
++
+Both fd and fd2 point to the same struct file, so:
++
+fd      ─┐
+         ├──► struct file (shared f_pos)
+fd2     ─┘
++
+That’s why reading via one FD moves the offset for the other.
++
+3️⃣ flags: → file->f_flags
+/proc output
+flags: 0100002
++
+Kernel field
+unsigned int f_flags;
++
+What’s stored here
++
+Access mode:
++
+O_RDONLY
++
+O_WRONLY
++
+O_RDWR
++
+Status flags:
++
+O_APPEND
++
+O_NONBLOCK
++
+O_SYNC
++
+O_CLOEXEC (stored elsewhere but related)
++
+Example
+open("x.txt", O_WRONLY | O_APPEND);
++
+Kernel:
++
+file->f_flags = O_WRONLY | O_APPEND;
++
+/proc just prints that number in octal.
++
+4️⃣ Why /proc shows octal numbers
++
+Kernel internally uses bit masks.
++
+Example:
++
+#define O_WRONLY  00000001
+#define O_APPEND  00002000
++
+Combined:
++
+00002001  (octal)
++
+So /proc prints:
++
+flags: 020001
++
+Human-friendly decoding requires checking:
++
+include/uapi/asm-generic/fcntl.h
++
+5️⃣ mnt_id: → file->f_path
++
+You may also see:
++
+mnt_id: 25
++
+This maps to:
++
+struct path f_path;
++
+Which contains:
++
+struct path {
+    struct vfsmount *mnt;
+    struct dentry   *dentry;
+};
++
+mnt_id identifies which mount namespace / filesystem instance the file belongs to.
++
+This is crucial for:
++
+Containers
++
+Chroot
++
+Mount namespaces
++
+6️⃣ inode linkage (not shown directly)
++
+Even though /proc/PID/fdinfo doesn’t show it, every struct file links to:
++
+struct inode *f_inode;
++
+This inode represents:
++
+File type (regular, directory, socket)
++
+Permissions
++
+File size
++
+Device info
++
+Multiple struct file objects may point to the same inode, but still have:
++
+Different f_pos
++
+Different f_flags
++
+7️⃣ Why struct file ≠ inode
++
+This is a classic Linux concept:
++
+Concept	Kernel Structure
+Filename	dentry
+File metadata	inode
+Open instance	struct file
++
+Example:
++
+fd1 = open("x.txt", O_RDONLY);
+fd2 = open("x.txt", O_WRONLY);
++
+Result:
++
+fd1 ─► struct file (flags=RDONLY, pos=0)
+fd2 ─► struct file (flags=WRONLY, pos=0)
+             │
+             └── same inode
++
+8️⃣ How /proc/PID/fdinfo is generated
++
+Kernel code path (simplified):
++
+fs/proc/fd.c
++
+The kernel:
++
+Walks the process FD table
++
+Gets struct file *
++
+Prints:
++
+file->f_pos
++
+file->f_flags
++
+file->f_path
++
+So /proc is not magic — it is formatted kernel memory.
++
+Mental Model (Remember This)
+FD number (int)
+   ↓
+struct file  ←── this is what fdinfo shows
+   ├── f_pos   → pos:
+   ├── f_flags → flags:
+   ├── f_path  → mnt_id
+   └── f_inode → actual file
+
+====
+
+Gemini::
+[tabs]
+=====
+ChatGPT::
++
+[tabs]
+====
+Concept::Concept
+
+Concept::Concept
+
+=====
+======
+
+=== Standard File Descriptors
+Every Unix-like process starts with three standard file descriptors automatically opened and assigned specific roles: 
+|===
+| File Descriptor (FD) | Name | Description | Default Destination | POSIX name | stdio stream 
+
+| 0
+| stdin (Standard Input)
+| Used for reading input data.
+| Keyboard
+| STDIN_FILENO
+| stdin
+
+| 1
+| stdout (Standard Output)
+| Used for writing normal output.
+| Terminal/Console
+| STDOUT_FILENO
+| stdout
+
+
+| 2
+| stderr (Standard Error)
+| Used for writing error messages.
+| Terminal/Console
+| STDERR_FILENO
+| stderr
+|===
+The shell uses file descriptors to implement I/O redirection (e.g., the > or | operators), allowing the default destinations to be changed (e.g., redirecting standard output to a file or a pipe). 
+
+By convention, most programs expect to be able to use the three standard file
+descriptors listed in Table. These three descriptors are opened on the program’s
+behalf by the shell, before the program is started. Or, more precisely, the program
+inherits copies of the shell’s file descriptors, and the shell normally operates with
+these three file descriptors always open. (In an interactive shell, these three file
+descriptors normally refer to the terminal under which the shell is running.) If I/O
+redirections are specified on a command line, then the shell ensures that the file
+descriptors are suitably modified before starting the program.
+
+When referring to these file descriptors in a program, we can use either the numbers
+(0, 1, or 2) or, preferably, the POSIX standard names defined in `<unistd.h>`.
+
+Although the variables `stdin`, `stdout`, and `stderr` initially refer to the process’s
+standard input, output, and error, they can be changed to refer to any file by
+using the `freopen()` library function. As part of its operation, `freopen()` may
+change the file descriptor underlying the reopened stream. In other words,
+after an `freopen()` on stdout, for example, it is no longer safe to assume that the
+underlying file descriptor is still 1.
+
+==== STDIN_FILENO
+STDIN_FILENO
+is a preprocessor macro used in POSIX-compliant C programming to represent the integer file descriptor for the standard input stream, which is always 0. 
+Overview
+
+* Purpose: It provides a symbolic, readable name for the integer 0, making code clearer than using the raw number.
+* Value: Its defined value is always 0.
+* Header: It is defined in the <unistd.h> header file on POSIX systems (like Linux, macOS, and BSD).
+* Usage: It is used with low-level, raw UNIX file I/O system calls like read() and dup2(). 
+
+STDIN_FILENO vs. stdin
+It is important to distinguish STDIN_FILENO from stdin: 
+[cols="1,2,2"]
+|===
+|Feature |STDIN_FILENO	|stdin
+
+|*Type*	|Integer constant (int)	|Pointer to a FILE object (FILE*)
+
+|*Library*	|Low-level UNIX I/O	|Standard C Library (stdio.h)
+
+|*Functions* |Used With	read(), write(), close(), dup2()	|fread(), fgets(), scanf(), fprintf()
+
+|*Buffering*	|Unbuffered (or buffered by the terminal/kernel)	|Buffered by the C library
+|===
+While both refer to the standard input stream, STDIN_FILENO is for low-level system calls, and stdin is for higher-level, buffered C library functions. Mixing the two approaches in a single program can lead to unexpected results and should generally be avoided. 
+
+
+=== System Implementation
+The operating system manages file descriptors using several internal tables: 
+
+* File Descriptor Table: A per-process table, indexed by the file descriptor integer, which points to an entry in the system-wide open file table.
+* Open File Table: A system-wide table that contains details about each open instance of a file, including the current file offset (cursor position), access mode, and a reference count.
+* Inode Table: Contains metadata about the actual file data on the storage medium, such as its location on disk, size, and permissions. 
+
+Forgetting to close a file descriptor when it is no longer needed can lead to resource leaks and a "too many open files" error.
+
+== Development
+To read or write a file, it must first be opened. This call specifies the file name
+to be opened, either as an absolute path name or relative to the working directory,
+as well as a code of O_RDONLY, O_WRONLY, or O_RDWR, meaning open for
+reading, writing, or both. To create a new file, the O CREAT parameter is used.
+The file descriptor returned can then be used for reading or writing. Afterward, the
+file can be closed by close, which makes the file descriptor available for reuse on a
+subsequent open.
+
+Although most programs read and write files sequentially, for some applica-
+tions programs need to be able to access any part of a file at random. Associated
+with each file is a pointer that indicates the current position in the file. When read-
+ing (writing) sequentially, it normally points to the next byte to be read (written).
+The lseek call changes the value of the position pointer, so that subsequent calls to
+read or write can begin anywhere in the file.
+
+For each file, UNIX keeps track of the file mode (regular file, special file,
+directory, and so on), size, time of last modification, and other information. Pro-
+grams can ask to see this information via the stat system call. 
+
+=== GNU Headers
+
+.Details
+[%collapsible]
+======
+[tabs]
+=====
+glibc/include/fcntl.h::
+Central header and implementation area for file-control and file-opening APIs (open, fcntl, openat, etc.) and their internal variants.
++
+*Repository Structure Highlighted*
++
+* Header files:
+** Public and internal libc headers (e.g., fcntl.h, unistd.h, statx.h, poll.h)
+** Architecture- and ABI-related headers under bits/ and sysdeps/
+* C source files (.c):
+** Implementations of POSIX file operations:
+*** File creation/opening: open, openat, creat
+** Descriptor control: fcntl, dup, pipe
+** Metadata ops: stat, lstat, fstat, statx
+** Filesystem ops: mkdir, unlink, symlink, rename
+* 64-bit and time64 variants:
+** _64, time64, and large-file–safe implementations to support LFS and Y2038 safety
+* Tests (ctst-*):
+** Extensive regression and conformance tests for file and directory syscalls
++
+*Key Symbols Identified in fcntl.h*
++
+These are internal glibc entry points, not direct kernel syscalls:
++
+* Open-related
+** __open, __open64
+** __libc_open, __libc_open64
+** __openat, __openat_2, __openat64_2
+* fcntl-related
+** __fcntl, __fcntl64
+** __libc_fcntl, __libc_fcntl64
+** __fcntl64_nocancel_adjusted
++
+*What These Symbols Mean*
++
+* __libc_* functions
+** Core libc implementations used internally and by public APIs
++
+*_64 variants
++
+Enable Large File Support (LFS) with 64-bit offsets on 32-bit systems
++
+*_2 variants
++
+Fortified versions used by _FORTIFY_SOURCE for extra runtime checks
++
+nocancel variants
++
+Used internally to avoid thread cancellation points in critical sections
++
+libc_hidden_proto
++
+Marks symbols as internal to glibc to avoid exporting them in the public ABI
++
+Big Picture
++
+This file is part of glibc’s abstraction layer between:
++
+User-facing POSIX APIs (open(), fcntl())
++
+Kernel syscalls (sys_open, sys_fcntl, etc.)
++
+It ensures:
++
+ABI stability
++
+Large-file and Y2038 safety
++
+Security hardening (_FORTIFY_SOURCE)
++
+Thread-cancellation correctness
+
+glibc/include/fcntl.h::
+[source, C]
+----
+----
+=====
+======
+
+=== System calls
+System calls don’t allocate memory for buffers that are used to return informa-
+tion to the caller(i,e buffer of read system call). Instead, we must pass a pointer to a previously allocated
+memory buffer of the correct size. This contrasts with several library functions
+that do allocate memory buffers in order to return information to the caller. 
+[cols="2,4,5,5", options="header"]
+|===
+| Call method name | Description | Parameters | Return value
+
+| open()
+| Open or create a file and return a file descriptor
+a|
+* `const char *pathname` – path to the file
+* `int flags` – access mode and options (e.g. `O_RDONLY`, `O_CREAT`)
+* `mode_t mode` – permission bits (used only with `O_CREAT`)
+a|
+* *int* – file descriptor on success
+* `-1` – on error (errno set)
+
+| close()
+| Close an open file descriptor
+a|
+* `int fd` – file descriptor to close
+a|
+* `0` – success
+* `-1` – error
+
+| read()
+| Read data from a file into a buffer
+a|
+* `int fd` – file descriptor
+* `void *buf` – destination buffer
+* `size_t count` – maximum bytes to read
+a|
+* *ssize_t* – number of bytes read
+* `0` – end of file
+* `-1` – error
+
+| write()
+| Write data from a buffer to a file
+a|
+* `int fd` – file descriptor
+* `const void *buf` – source buffer
+* `size_t count` – number of bytes to write
+a|
+* *ssize_t* – number of bytes written
+* `-1` – error
+
+| lseek()
+| Reposition the file offset
+a|
+* `int fd` – file descriptor
+* `off_t offset` – byte offset
+* `int whence` – reference (`SEEK_SET`, `SEEK_CUR`, `SEEK_END`)
+a|
+* *off_t* – new file offset
+* `-1` – error
+
+| stat()
+| Get file status information by path
+a|
+* `const char *pathname` – file path
+* `struct stat *statbuf` – structure to fill
+a|
+* `0` – success
+* `-1` – error
+
+| fstat()
+| Get file status information by file descriptor
+a|
+* `int fd` – file descriptor
+* `struct stat *statbuf` – structure to fill
+a|
+* `0` – success
+* `-1` – error
+
+| lstat()
+| Get file status information without following symlinks
+a|
+* `const char *pathname` – file path
+* `struct stat *statbuf` – structure to fill
+a|
+* `0` – success
+* `-1` – error
+
+| mkdir()
+| Create a new directory
+a|
+* `const char *pathname` – directory path
+* `mode_t mode` – permission bits
+a|
+* `0` – success
+* `-1` – error
+
+| rmdir()
+| Remove an empty directory
+a|
+* `const char *pathname` – directory path
+a|
+* `0` – success
+* `-1` – error
+
+| unlink()
+| Remove a directory entry (delete a file)
+a|
+* `const char *pathname` – file path
+a|
+* `0` – success
+* `-1` – error
+
+| link()
+| Create a hard link to an existing file
+a|
+* `const char *oldpath` – existing file
+* `const char *newpath` – new link name
+a|
+* `0` – success
+* `-1` – error
+
+| symlink()
+| Create a symbolic link
+a|
+* `const char *target` – target path
+* `const char *linkpath` – symlink name
+a|
+* `0` – success
+* `-1` – error
+
+| rename()
+| Rename or move a file or directory
+a|
+* `const char *oldpath` – existing path
+* `const char *newpath` – new path
+a|
+* `0` – success
+* `-1` – error
+
+| chmod()
+| Change file permission bits
+a|
+* `const char *pathname` – file path
+* `mode_t mode` – new permissions
+a|
+* `0` – success
+* `-1` – error
+
+| chown()
+| Change file owner and group
+a|
+* `const char *pathname` – file path
+* `uid_t owner` – user ID
+* `gid_t group` – group ID
+a|
+* `0` – success
+* `-1` – error
+
+| mount()
+| Mount a filesystem
+a|
+* `const char *source` – device or filesystem
+* `const char *target` – mount point
+* `const char *fstype` – filesystem type
+* `unsigned long flags` – mount options
+* `const void *data` – filesystem-specific data
+a|
+* `0` – success
+* `-1` – error
+
+| umount()
+| Unmount a filesystem
+a|
+* `const char *target` – mount point
+a|
+* `0` – success
+* `-1` – error
+|===
+
+=== System Call Details
+
+==== open
+[source,c]
+----
+#include <fcntl.h>
+
+int open(const char *path, int flags, ...  /* mode_t mode */ );
+
+int creat(const char *path, mode_t mode);
+
+int openat(int dirfd, const char *path, int flags, ...  /* mode_t mode */ );
+
+/* Documented separately, in openat2(2): */
+int openat2(int dirfd, const char *path,
+          const struct open_how *how, size_t size);
+----
+opens the file identified by pathname, returning
+a file descriptor used to refer to the open file in subsequent calls. If the file
+doesn’t exist, open() may create it, depending on the settings of the flags bit-
+mask argument. The flags argument also specifies whether the file is to be
+opened for reading, writing, or both. The mode argument specifies the permis-
+sions to be placed on the file if it is created by this call. If the open() call is not
+being used to create a file, this argument is ignored and can be omitted.
+
+*Man Page*: https://man7.org/linux/man-pages/man2/open.2.html#
+
+**What it does**
+
+* Opens an existing file or creates a new one
+* Returns a file descriptor referring to an open file instance
+
+**Why it matters**
+
+* Entry point for all file I/O
+* Connects a pathname to kernel objects:
+** dentry
+** inode
+** file structure
+
+.*Parameters And Return Value*
+[%collapsible]
+======
+[tabs]
+=====
+Parameter(pathname)::
+* `const char *pathname`
+** Path to the file
+** If pathname is a symbolic link, it is dereferenced
+
+Parameter(flags)::
+* `int flags`
+* Access mode and options, The flags argument is a bit mask that specifies the access mode for the file, using one of the constants. An integer created by bitwise ORing (using |) various constants defined in <fcntl.h>
+* The constants are divided into the following groups:
+** File access mode flags:  (one must be specified), These are the O_RDONLY, O_WRONLY, and O_RDWR flags described
+earlier. They can be retrieved using the fcntl() F_GETFL operation
++
+[cols="1,3,1", options="header"]
+|===
+| Flag | Purpose | SUS?
+
+| O_RDONLY | Open for reading only | v3
+| O_WRONLY | Open for writing only | v3
+| O_RDWR | Open for reading and writing | v3
+|===
+** File creation flags: They control various aspects of the behavior of the open() call, as well as
+options for subsequent I/O operations. These flags can’t be retrieved or
+changed.
++
+|===
+| O_CLOEXEC | Set the close-on-exec flag (since Linux 2.6.23) | v4
+| O_CREAT | Create file if it doesn’t already exist | v3
+| O_DIRECT | File I/O bypasses buffer cache | 
+| O_DIRECTORY | Fail if pathname is not a directory | v4
+| O_EXCL | With O_CREAT: create file exclusively | v3
+| O_LARGEFILE | Used on 32-bit systems to open large files | 
+| O_NOATIME | Don’t update file last access time on read() (since Linux 2.6.8) | 
+| O_NOCTTY | Don’t let pathname become the controlling terminal | v3
+| O_NOFOLLOW | Don’t dereference symbolic links | v4
+| O_TRUNC | Truncate existing file to zero length | v3
+|===
+** Open file status flags: They can be
+retrieved and modified using the fcntl() F_GETFL and F_SETFL operations. These flags are sometimes simply called the file status flags.
++
+|===
+| O_APPEND | Writes are always appended to end of file | v3
+| O_ASYNC | Generate a signal when I/O is possible | 
+| O_DSYNC | Provide synchronized I/O data integrity (since Linux 2.6.33) | v3
+| O_NONBLOCK | Open in nonblocking mode | v3
+| O_SYNC | Make file writes synchronous | v3
+|===
+* Details for the flags constants are as follows:
++
+[cols="1,5"]
+|===
+| O_APPEND
+| Writes are always appended to the end of the file.
+
+| O_ASYNC
+| Generate a signal when I/O becomes possible on the file descriptor
+returned by open(). This feature, termed signal-driven I/O, is available only
+for certain file types, such as terminals, FIFOs, and sockets. (The O_ASYNC
+flag is not specified in SUSv3; however, it, or the older synonym, FASYNC, is
+found on most UNIX implementations.) On Linux, specifying the O_ASYNC
+flag when calling open() has no effect. To enable signal-driven I/O, we must
+instead set this flag using the fcntl() F_SETFL operation . (Sev-
+eral other UNIX implementations behave similarly.) 
+
+| O_CLOEXEC (since Linux 2.6.23)
+| Enable the close-on-exec flag (FD_CLOEXEC) for the new file descriptor. We
+describe the FD_CLOEXEC flag in Section 27.4. Using the O_CLOEXEC flag allows a
+program to avoid additional fcntl() F_SETFD and F_SETFD operations to set the
+close-on-exec flag. It is also necessary in multithreaded programs to avoid
+the race conditions that could occur using the latter technique. These
+races can occur when one thread opens a file descriptor and then tries to
+mark it close-on-exec at the same time as another thread does a fork() and
+then an exec() of an arbitrary program. (Suppose that the second thread
+manages to both fork() and exec() between the time the first thread opens
+the file descriptor and uses fcntl() to set the close-on-exec flag.) Such races could result in open file descriptors being unintentionally passed to unsafe
+programs. (We say more about race conditions in Section 5.1.)
+
+| O_CREAT
+| If the file doesn’t already exist, it is created as a new, empty file. This flag is
+effective even if the file is being opened only for reading. If we specify
+O_CREAT, then we must supply a mode argument in the open() call; otherwise,
+the permissions of the new file will be set to some random value from the
+stack.
+
+| O_DIRECT
+| Allow file I/O to bypass the buffer cache. This feature is described in Sec-
+tion 13.6. The _GNU_SOURCE feature test macro must be defined in order to
+make this constant definition available from <fcntl.h>.
+O_DIRECTORY
+Return an error (errno equals ENOTDIR) if pathname is not a directory. This
+flag is an extension designed specifically for implementing opendir() (Sec-
+tion 18.8). The _GNU_SOURCE feature test macro must be defined in order to
+make this constant definition available from <fcntl.h>.
+
+| O_DSYNC (since Linux 2.6.33)
+| Perform file writes according to the requirements of synchronized I/O
+data integrity completion. See the discussion of kernel I/O buffering in
+Section 13.3.
+
+| O_EXCL
+| This flag is used in conjunction with O_CREAT to indicate that if the file
+already exists, it should not be opened; instead, open() should fail, with
+errno set to EEXIST. In other words, this flag allows the caller to ensure that it
+is the process creating the file. The check for existence and the creation of
+the file are performed atomically. We discuss the concept of atomicity in
+Section 5.1. When both O_CREAT and O_EXCL are specified in flags, open() fails
+(with the error EEXIST) if pathname is a symbolic link. SUSv3 requires this
+behavior so that a privileged application can create a file in a known loca-
+tion without there being a possibility that a symbolic link would cause the
+file to be created in a different location (e.g., a system directory), which
+would have security implications.
+
+| O_LARGEFILE
+| Open the file with large file support. This flag is used on 32-bit systems in
+order to work with large files. Although it is not specified in SUSv3, the
+O_LARGEFILE flag is found on several other UNIX implementations. On 64-
+bit Linux implementations such as Alpha and IA-64, this flag has no effect.
+See Section 5.10 for more information.
+
+| O_NOATIME (since Linux 2.6.8)
+| Don’t update the file last access time (the st_atime field | described in Sec-
+tion 15.1) when reading from this file. To use this flag, the effective user
+ID of the calling process must match the owner of the file, or the process
+must be privileged (CAP_FOWNER); otherwise, open() fails with the error EPERM.
+Fi le I/O : The Uni versal I/O Model 77
+(In reality, for an unprivileged process, it is the process’s file-system user
+ID, rather than its effective user ID, that must match the user ID of the file
+when opening a file with the O_NOATIME flag, as described in Section 9.5.)
+This flag is a nonstandard Linux extension. To expose its definition from
+<fcntl.h>, we must define the _GNU_SOURCE feature test macro. The O_NOATIME
+flag is intended for use by indexing and backup programs. Its use can sig-
+nificantly reduce the amount of disk activity, because repeated disk seeks
+back and forth across the disk are not required to read the contents of a
+file and to update the last access time in the file’s i-node (Section 14.4).
+Functionality similar to O_NOATIME is available using the MS_NOATIME mount()
+flag (Section 14.8.1) and the FS_NOATIME_FL flag (Section 15.5).
+
+| O_NOCTTY
+| If the file being opened is a terminal device, prevent it from becoming the
+controlling terminal. Controlling terminals are discussed in Section 34.4.
+If the file being opened is not a terminal, this flag has no effect.
+
+| O_NOFOLLOW
+| Normally, open() dereferences pathname if it is a symbolic link. However, if
+the O_NOFOLLOW flag is specified, then open() fails (with errno set to ELOOP) if
+pathname is a symbolic link. This flag is useful, especially in privileged pro-
+grams, for ensuring that open() doesn’t dereference a symbolic link. To
+expose the definition of this flag from <fcntl.h>, we must define the
+_GNU_SOURCE feature test macro.
+
+| O_NONBLOCK
+| Open the file in nonblocking mode. See Section 5.9.
+
+| O_SYNC
+| Open the file for synchronous I/O. See the discussion of kernel I/O buff-
+ering in Section 13.3.
+
+| O_TRUNC
+| If the file already exists and is a regular file, then truncate it to zero length,
+destroying any existing data. On Linux, truncation occurs whether the file
+is being opened for reading or writing (in both cases, we must have write per-
+mission on the file). SUSv3 leaves the combination of O_RDONLY and O_TRUNC
+unspecified, but most other UNIX implementations behave in the same
+way as Linux.
+|===
+
+Parameter(mode)::
+* `mode_t mode`
+** Permission bits (only with `O_CREAT`)
+** (Optional) Specifies the permissions to use if a new file is created with O_CREAT. The actual permissions of the created file will be affected by the process's umask setting. It uses constants like S_IRWXU (read/write/execute by owner)
+** When open() is used to create a new file, the mode bit-mask argument specifies the
+permissions to be placed on the file. (The mode_t data type used to type mode is an
+integer type specified in SUSv3.) If the open() call doesn’t specify O_CREAT, mode can
+be omitted.
+
+Return Value::
+**Return value**: `int`
++
+* ≥ 0: file descriptor
+* `-1`: error (`errno` set)
++
+On success, open() returns a file descriptor that is used
+to refer to the file in subsequent system calls. If an error occurs, open() returns –1
+and errno is set accordingly.
++
+SUSv3 specifies that if open() succeeds, it is guaranteed to use the lowest-numbered
+unused file descriptor for the process. We can use this feature to ensure that a file
+is opened using a particular file descriptor. For example, the following sequence
+ensures that a file is opened using standard input (file descriptor 0).
++
+[source,c]
+----
+f (close(STDIN_FILENO) == -1) /* Close file descriptor 0 */
+  errExit("close");
+fd = open(pathname, O_RDONLY);
+if (fd == -1)
+  errExit("open");
+----
++
+Since file descriptor 0 is unused, open() is guaranteed to open the file using that
+descriptor. 
+
+=====
+======
+
+**Errors**
+
+If an error occurs while trying to open the file, open() returns –1, and errno identi-
+fies the cause of the error. The following are some possible errors that can occur
+(in addition to those already noted when describing the flags argument above):
+[cols="1,5"]
+|===
+|EACCES
+|The file permissions don’t allow the calling process to open the file in the
+mode specified by flags. Alternatively, because of directory permissions,
+the file could not be accessed, or the file did not exist and could not be
+created.
+
+|EISDIR
+|The specified file is a directory, and the caller attempted to open it for writ-
+ing. This isn’t allowed. (On the other hand, there are occasions when it can
+be useful to open a directory for reading. We consider an example in
+Section 18.11.)
+
+|EMFILE
+|he process resource limit on the number of open file descriptors has
+been reached (RLIMIT_NOFILE, described in Section 36.3).
+
+|ENFILE
+|The system-wide limit on the number of open files has been reached.
+
+|ENOENT
+|The specified file doesn’t exist, and O_CREAT was not specified, or O_CREAT
+was specified, and one of the directories in pathname doesn’t exist or is a
+symbolic link pointing to a nonexistent pathname (a dangling link).
+
+|EROFS
+|The specified file is on a read-only file system and the caller tried to open it
+for writing.
+
+|ETXTBSY
+|The specified file is an executable file (a program) that is currently execut-
+ing. It is not permitted to modify (i.e., open for writing) the executable file
+associated with a running program. (We must first terminate the program
+in order to be able to modify the executable file.
+|===
+
+**Example**
+[source,c]
+----
+#include <fcntl.h>
+/* Open existing file for reading */
+fd = open("startup", O_RDONLY);
+
+/* Open new or existing file for reading and writing, truncating to zero
+bytes; file permissions read+write for owner, nothing for all others */
+fd = open("myfile", O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+
+/* Open new or existing file for writing; writes should always
+append to end of file */
+fd = open("w.log", O_WRONLY | O_CREAT | O_TRUNC | O_APPEND,
+S_IRUSR | S_IWUSR);
+----
+
+**True syscall vs libc wrapper**
+
+* libc wrapper
+** glibc uses `openat()` internally
+
+.**glibc source paths**
+[%collapsible]
+======
+[tabs]
+=====
+Lifecycle::
+trace the exact lifecycle of open(), from userspace syscall to struct file creation, keeping it accurate, layered, and readable.
++I’ll assume modern Linux (5.x/6.x), but I’ll note where older names differ.
++
+0️⃣ Userspace: open() is just a wrapper
+Your code
+int fd = open("data.txt", O_RDONLY | O_CREAT, 0644);
++
+What really happens
++
+open() is a glibc wrapper
++
+It invokes:
++
+openat(AT_FDCWD, ...)
++
+So the real syscall is:
++
+sys_openat()
++
+1️⃣ System call entry → kernel mode
+CPU transition
+userspace
+   ↓ syscall instruction
+kernel
++
+Entry point (x86-64)
+entry_SYSCALL_64()
++
+Kernel dispatches to:
++
+__x64_sys_openat()
++
+2️⃣ sys_openat() → do_sys_open()
+Location
+fs/open.c
++
+Code path (simplified)
+long sys_openat(int dfd, const char __user *filename,
+                int flags, umode_t mode)
+{
+    return do_sys_open(dfd, filename, flags, mode);
+}
++
+So now we’re in VFS land.
++
+3️⃣ do_sys_open() — validation & setup
+Responsibilities
++
+Copy filename from userspace
++
+Validate flags
++
+Prepare for path lookup
++
+Core logic
+long do_sys_open(int dfd, const char __user *filename,
+                 int flags, umode_t mode)
+{
+    struct open_flags op;
+    struct filename *name;
++
+    name = getname(filename);      // copy from userspace
+    build_open_flags(flags, mode, &op);
++
+    return do_filp_open(dfd, name, &op);
+}
++
+📌 No file created yet
++
+4️⃣ do_filp_open() — path resolution
+Location
+fs/namei.c
++
+What happens here
++
+Resolve path:
++
+"data.txt" → dentry + inode
++
+Handle:
++
+O_CREAT
++
+O_EXCL
++
+O_TRUNC
++
+Key call:
++
+struct file *filp = path_openat(&nd, &op, flags);
++
+This is where filesystem-specific code may run.
++
+5️⃣ path_openat() — filesystem hooks
+Responsibilities
++
+Walk directory tree
++
+Check permissions
++
+Possibly create file
++
+Internally calls:
++
+open_last_lookups()
++
+If O_CREAT:
++
+vfs_create()
+  └── fs-specific create()
++
+Example:
++
+ext4 → ext4_create()
++
+📌 Still no struct file allocated yet
++
+6️⃣ vfs_open() — struct file is created 🚀
+This is the key moment
++
+Location:
++
+fs/open.c
++
+Core call
+vfs_open(&path, file);
++
+Before this:
++
+struct file *file = alloc_empty_file(flags, cred);
++
+alloc_empty_file() — actual allocation
+struct file *alloc_empty_file(int flags, const struct cred *cred)
+{
+    struct file *f = kmem_cache_alloc(file_cachep, GFP_KERNEL);
++
+    f->f_flags = flags;
+    f->f_pos   = 0;
+    f->f_inode = inode;
+    f->f_op    = inode->i_fop;
+}
++
+🎯 This is where struct file is born
++
+7️⃣ vfs_open() — connect file to inode
+int vfs_open(const struct path *path, struct file *file)
+{
+    file->f_path = *path;
+    file->f_inode = path->dentry->d_inode;
+    file->f_op = inode->i_fop;
++
+    return file->f_op->open(inode, file);
+}
++
+Important:
++
+file->f_op is set from inode
++
+Filesystem gets a chance to customize behavior
++
+Example:
++
+ext4_file_operations
+proc_file_operations
+socket_file_ops
++
+8️⃣ file->f_op->open() — filesystem-specific open
++
+Optional hook:
++
+int (*open)(struct inode *, struct file *);
++
+Examples:
++
+Regular file: often NULL
++
+procfs: important logic
++
+devices: critical initialization
++
+9️⃣ Allocate a file descriptor number
++
+Back in:
++
+do_sys_open()
++
+Kernel assigns an FD:
++
+fd = get_unused_fd_flags(flags);
++
+Then:
++
+fd_install(fd, file);
++
+Now the process FD table points to struct file.
++
+🔟 Return to userspace
++
+Final state:
++
+process fd table
+  └── fd = 3 ──► struct file
+                     ├── f_pos = 0
+                     ├── f_flags = O_RDONLY|O_CREAT
+                     ├── f_inode → inode
+                     └── f_op → file_operations
++
+open() returns:
++
+return 3;
++
+Full Call Flow (One Screen Summary)
++
+----
+open()
+ └── openat()
+      └── sys_openat()
+           └── do_sys_open()
+                └── do_filp_open()
+                     └── path_openat()
+                          └── vfs_open()
+                               ├── alloc_empty_file()
+                               ├── file->f_inode
+                               ├── file->f_op
+                               └── f_op->open()
+                └── fd_install()
+----
++
+Why this matters (real insights)
++
+struct file represents an open instance
++
+inode represents the file itself
++
+dup() → same struct file
++
+open() twice → two struct files
++
+/proc/PID/fdinfo exposes this structure
+
+include/fcntl.h:: include/fcntl.h
+
+sysdeps/unix/sysv/linux/open.c:: sysdeps/unix/sysv/linux/open.c
+=====
+======
+
+**Linux kernel source paths**
+
+* `fs/open.c`
+** `do_sys_openat2()`
+** `do_filp_open()`
+* `fs/namei.c`
+** `path_openat()`
+
+**VFS / inode / dentry mapping**
+
+* pathname → dentry → inode
+* Allocates `struct file`
+* Installs FD into `task_struct → files_struct`
+
+==== close
+The close() system call closes an open file descriptor, freeing it for subsequent reuse
+by the process. When a process terminates, all of its open file descriptors are auto-
+matically closed.
+
+Fi le I/O : The Uni versal I/O Model 81
+It is usually good practice to close unneeded file descriptors explicitly, since this
+makes our code more readable and reliable in the face of subsequent modifica-
+tions. Furthermore, file descriptors are a consumable resource, so failure to close a
+file descriptor could result in a process running out of descriptors. This is a partic-
+ularly important issue when writing long-lived programs that deal with multiple
+files, such as shells or network servers.
+
+Just like every other system call, a call to close() should be bracketed with error-
+checking code, such as the following:
+[source,C,attributes]
+----
+if (close(fd) == -1)
+errExit("close");
+----
+
+
+**What it does**
+
+* Closes an open file descriptor
+* Releases kernel references to the file object
+
+**Why it matters**
+
+* Prevents file descriptor leaks
+* Ensures timely resource release
+
+**Parameters**
+
+* `int fd`
+** File descriptor to close
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+
+* `fs/open.c`
+** `__close_fd()`
+** `filp_close()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/close.c`
+
+
+
+**VFS / inode / dentry mapping**
+
+* Decrements `struct file` reference count
+* Final close triggers filesystem `release()`
+
+**Example**
+[source,c]
+----
+close(fd);
+----
+
+==== read
+reads at most count bytes from the open file referred to by fd and stores them in buffer. The read() call returns the number of
+bytes actually read. If no further bytes could be read (i.e., end-of-file was encountered), read() returns 0.
+
+A call to read() may read less than the requested number of bytes. For a regular
+file, the probable reason for this is that we were close to the end of the file.
+
+When read() is applied to other types of files—such as pipes, FIFOs, sockets, or
+terminals—there are also various circumstances where it may read fewer bytes than
+requested. For example, by default, a read() from a terminal reads characters only
+up to the next newline (\n) character. 
+
+Using read() to input a series of characters from, say, a terminal, we might
+expect the following code to work:
+[source,C,attributes]
+----
+#define MAX_READ 20
+char buffer[MAX_READ];
+if (read(STDIN_FILENO, buffer, MAX_READ) == -1)
+errExit("read");
+printf("The input data was: %s\n", buffer);
+----
+The output from this piece of code is likely to be strange, since it will probably
+include characters in addition to the string actually entered. This is because read()
+doesn’t place a terminating null byte at the end of the string that printf() is being
+asked to print(as read() reads raw bytes and does NOT append '\0' , %s in printf Expects a null-terminated string).
+----
+text�`E�
+----
+A moment’s reflection leads us to realize that this must be so, since
+read() can be used to read any sequence of bytes from a file. In some cases, this
+input might be text, but in other cases, the input might be binary integers or C
+structures in binary form. There is no way for read() to tell the difference, and so it
+can’t attend to the C convention of null terminating character strings. If a terminating
+null byte is required at the end of the input buffer, we must put it there explicitly:
+[source,C,attributes]
+----
+char buffer[MAX_READ + 1];
+ssize_t numRead;
+numRead = read(STDIN_FILENO, buffer, MAX_READ);
+if (numRead == -1)
+errExit("read");
+buffer[numRead] = '\0';
+printf("The input data was: %s\n", buffer);
+----
+
+**What it does**
+
+* Reads bytes from a file into user-space memory
+
+**Why it matters**
+
+* Fundamental input mechanism
+* Used by files, pipes, sockets, and devices
+
+**Parameters**
+
+* `int fd`
+** File descriptor
+* `void *buf`
+** Destination buffer
+** The buffer argument supplies the address of the memory buffer into which the input data is to be placed. This buffer must be at least count bytes long.
+* `size_t count`
+** Maximum bytes to read
+** The count argument specifies the maximum number of bytes to read. (The size_t data type is an unsigned integer type.)
+
+**Return value**
+
+A successful call to read() returns the number of bytes actually read, or 0 if end-of-
+file is encountered. On error, the usual –1 is returned. The ssize_t data type is a
+signed integer type used to hold a byte count or a –1 error indication.
+
+* `ssize_t`
+** > 0: bytes read
+** `0`: end-of-file
+** `-1`: error
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+
+* `fs/read_write.c`
+** `ksys_read()`
+** `vfs_read()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/read.c`
+
+**VFS / inode / dentry mapping**
+
+* Calls `file->f_op->read_iter`
+* Reads inode-backed data
+
+**Example**
+[source,c]
+----
+read(fd, buffer, sizeof(buffer));
+----
+
+==== write
+writes up to count bytes from buffer to the
+open file referred to by fd. The write() call returns the number of bytes actually
+written, which may be less than count.
+
+The arguments to write() are similar to those for read(): buffer is the address of the
+data to be written; count is the number of bytes to write from buffer; and fd is a file
+descriptor referring to the file to which data is to be written.
+On success, write() returns the number of bytes actually written; this may be
+less than count. For a disk file, possible reasons for such a partial write are that the
+disk was filled or that the process resource limit on file sizes was reached. (The rele-
+vant limit is RLIMIT_FSIZE).
+
+When performing I/O on a disk file, a successful return from write() doesn’t
+guarantee that the data has been transferred to disk, because the kernel performs
+buffering of disk I/O in order to reduce disk activity and expedite write() calls.
+
+**What it does**
+
+* Writes bytes from user memory to a file
+
+**Why it matters**
+
+* Primary persistence mechanism
+* Updates file size and metadata
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+
+* `fs/read_write.c`
+** `ksys_write()`
+** `vfs_write()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/write.c`
+
+**Parameters**
+
+* `int fd`
+* `const void *buf`
+* `size_t count`
+
+**Return value**
+
+* `ssize_t`
+** ≥ 0: bytes written
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Uses `file->f_op->write_iter`
+* Updates inode size and timestamps
+
+**Example**
+[source,c]
+----
+write(fd, "hello\n", 6);
+----
+
+
+==== lseek
+For each open file, the kernel records a file offset, sometimes also called the read-
+write offset or pointer. This is the location in the file at which the next read() or write()
+will commence. The file offset is expressed as an ordinal byte position relative to
+the start of the file. The first byte of the file is at offset 0.
+
+The file offset is set to point to the start of the file when the file is opened and
+is automatically adjusted by each subsequent call to read() or write() so that it points
+to the next byte of the file after the byte(s) just read or written. Thus, successive
+read() and write() calls progress sequentially through a file.
+
+The lseek() system call adjusts the file offset of the open file referred to by the
+file descriptor fd, according to the values specified in offset and whence.
+
+Calling lseek() simply adjusts the kernel’s record of the file offset associated with a
+file descriptor. It does not cause any physical device access.
+
+We can’t apply lseek() to all types of files. Applying lseek() to a pipe, FIFO,
+socket, or terminal is not permitted; lseek() fails, with errno set to ESPIPE. On the
+other hand, it is possible to apply lseek() to devices where it is sensible to do so. For
+example, it is possible to seek to a specified location on a disk or tape device.
+
+[NOTE]
+====
+The l in the name lseek() derives from the fact that the offset argument and the
+return value were both originally typed as long. Early UNIX implementations
+provided a seek() system call, which typed these values as int.
+====
+
+===== File holes
+What happens if a program seeks past the end of a file, and then performs I/O? A
+call to read() will return 0, indicating end-of-file. Somewhat surprisingly, it is possible
+to write bytes at an arbitrary point past the end of the file.
+The space in between the previous end of the file and the newly written bytes is
+referred to as a file hole. From a programming point of view, the bytes in a hole
+exist, and reading from the hole returns a buffer of bytes containing 0 (null bytes).
+File holes don’t, however, take up any disk space. The file system doesn’t allo-
+cate any disk blocks for a hole until, at some later point, data is written into it. The
+main advantage of file holes is that a sparsely populated file consumes less disk
+space than would otherwise be required if the null bytes actually needed to be allo-
+cated in disk blocks. Core dump files (Section 22.1) are common examples of files
+that contain large holes.
+
+.From AI
+[%collapsible]
+======
+[tabs]
+=====
+ChatGPT::
++
+[tabs]
+====
+Concept:: 
+1️⃣ Seeking past the end of a file
++
+A file normally looks like a long line of bytes:
++
+----
+[ byte 0 ][ byte 1 ][ byte 2 ] ... [ last byte ]
+----
++
+When a program opens a file, it has a file offset (a pointer) that says where it will read or write next.
++
+What does “seek past the end” mean?
++
+Using lseek(), a program can move this pointer beyond the current end of the file, even if nothing is there yet.
++
+Example:
++
+----
+lseek(fd, 1000, SEEK_SET);
+----
++
+If the file was only 100 bytes long, the pointer is now at byte 1000, even though bytes 100–999 do not exist yet.
++
+👉 Important:
+lseek() does not change the file size by itself.
++
+2️⃣ What happens if you read there?
++
+If you now try to read:
++
+read(fd, buf, 100);
++
+Result:
++
+read() returns 0  → End Of File (EOF)
++
+Why?
++
+Because you are past the end of the file, and there is nothing to read.
++
+This is exactly the same as trying to read after the last page of a book 📖.
++
+3️⃣ Writing past the end of a file (this is the surprising part)
++
+Now the interesting behavior:
++
+----
+lseek(fd, 1000, SEEK_SET);
+write(fd, "ABC", 3);
+----
++
+What just happened?
++
+The file now looks logically like this:
++
+----
+[ real data ][ ???????? ][ 'A' ][ 'B' ][ 'C' ]
+----
++
+The old file ended earlier
++
+You wrote at position 1000
++
+The space in between was never written to
++
+That gap is called a file hole.
++
+4️⃣ What is a file hole?
++
+A file hole is:
++
+A region of a file that exists logically but has never been written to.
++
+Key properties of a hole
++
+From the program’s point of view:
++
+The hole exists
++
+Reading from it returns zeros (\0)
++
+From the disk’s point of view:
++
+The hole uses no disk space
++
+No blocks are allocated for it
++
+So the file pretends to be big, but the disk is not wasting space.
++
+5️⃣ Reading from a hole
++
+Suppose this file layout:
++
+Bytes 0–99     → real data
+Bytes 100–999  → hole
+Bytes 1000–1002 → "ABC"
++
+If you do:
++
+lseek(fd, 200, SEEK_SET);
+read(fd, buf, 10);
++
+You will get:
++
+00 00 00 00 00 00 00 00 00 00
++
+Ten zero bytes.
++
+⚠️ These zeros are not stored anywhere on disk.
+They are generated by the filesystem on the fly.
++
+6️⃣ Disk space vs file size (very important distinction)
++
+Let’s say:
++
+Logical file size: 1003 bytes
++
+Actual disk usage: maybe 2 blocks
++
+Why?
++
+Because:
++
+Only the regions with real data allocate disk blocks
++
+Holes allocate nothing
++
+This is why such files are called sparse files.
++
+7️⃣ Why is this useful?
+Example 1: Core dump files
++
+When a program crashes, the OS may dump its memory to a file.
++
+But:
++
+Huge parts of the virtual address space were never used
++
+Writing zeros everywhere would waste disk space
++
+Instead:
++
+Only memory pages that exist are written
++
+The gaps become holes
++
+Result:
++
+A very large file (logically)
++
+Much smaller disk usage (physically)
++
+Example 2: Databases or virtual disk images
++
+A database may reserve a 100 GB file but only use 2 GB initially.
++
+With holes:
++
+File looks like 100 GB
++
+Disk usage is only 2 GB
++
+8️⃣ Simple mental model (remember this)
++
+Think of a file like a notebook:
++
+Written pages → use paper
++
+Blank pages → still part of the notebook
++
+Blank pages don’t cost ink
++
+A file hole is like a blank page:
++
+It’s there
++
+Reading it gives “nothing” (zeros)
++
+It costs no ink (disk space)
++
+9️⃣ One-line summary
++
+A file hole is a gap created by writing past the end of a file; reading it gives zeros, but it consumes no disk space until real data is written.
+
+ASCII diagram: file blocks vs holes::
++
+Assume:
++
+* Block size = 4 KB
+* File logical size = 20 KB
+* Only blocks 0 and 4 actually contain data
++
+----
+Logical file view (what programs see)
+Byte offset →
+0                                                             20 KB
+|------------------------------------------------------------------|
+
+[ BLOCK 0 ] [ BLOCK 1 ] [ BLOCK 2 ] [ BLOCK 3 ] [ BLOCK 4 ]
+[  DATA   ] [  HOLE   ] [  HOLE   ] [  HOLE   ] [  DATA   ]
+----
++
+*Program’s point of view (read())*
++
+----
+BLOCK 0 → real bytes
+BLOCK 1 → 0x00 0x00 0x00 ...
+BLOCK 2 → 0x00 0x00 0x00 ...
+BLOCK 3 → 0x00 0x00 0x00 ...
+BLOCK 4 → real bytes
+----
++
+*Disk’s point of view (storage)*
++
+----
+Disk blocks actually allocated:
+
+[ BLOCK 0 ]                        [ BLOCK 4 ]
+
+(No disk blocks for holes)
+----
++
+So:
++
+|===
+|Aspect	|Value
+
+|Logical file size	|20 KB
+
+|Disk space used	|8 KB
+
+|Holes	|Yes (BLOCK 1–3)
+|===
+====
+=====
+
+Gemini::
+[tabs]
+=====
+ChatGPT::
++
+[tabs]
+====
+Concept:: Concept
+
+Concept:: Concept
+====
+
+=====
+======
+
+**What it does**
+
+* Repositions the file offset of an open file descriptor
+
+**Why it matters**
+
+* Enables random access I/O
+* Required for `read`/`write` at specific positions
+
+.Parameters And Return Value
+[%collapsible]
+======
+[tabs]
+=====
+Parameter(fd)::
+* `int fd`
+** File descriptor
+
+Parameter(off_t)::
+* `off_t offset`
+** Byte offset
+** The offset argument specifies a value in bytes. (The off_t data type is a signed integer
+type specified by SUSv3.)
+
+Parameter(whence)::
+* `int whence`
+** Reference point (`SEEK_SET`, `SEEK_CUR`, `SEEK_END`)
+** The whence argument indicates the base point from which
+offset is to be interpreted, and is one of the following values:
++
+*** *SEEK_SET*: The file offset is set offset bytes from the beginning of the file.
+*** *SEEK_CUR*: The file offset is adjusted by offset bytes relative to the current file offset.
+*** *SEEK_END*: The file offset is set to the size of the file plus offset. In other words, offset is
+interpreted with respect to the next byte after the last byte of the file.
++
+image::{figures}/file-system-dev-syscall-lseek-whence.png[Interpreting the whence argument of lseek()]
+* In earlier UNIX implementations, the integers 0, 1, and 2 were used, rather
+than the SEEK_* constants shown in the main text. Older versions of BSD used
+different names for these values: L_SET, L_INCR, and L_XTND
+** If whence is SEEK_CUR or SEEK_END, offset may be negative or positive; for SEEK_SET, offset
+must be nonnegative.
+
+Return Value::
+* `off_t`
+** New file offset
+** `-1`: error
+** The return value from a successful lseek() is the new file offset. The following
+call retrieves the current location of the file offset without changing it:
+----
+curr = lseek(fd, 0, SEEK_CUR);
+----
+=====
+======
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+
+* `fs/read_write.c`
+** `ksys_lseek()`
+** `vfs_llseek()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/lseek.c`
+[source,C]
+----
+include-code::{include-glibc}/sysdeps/unix/sysv/linux/lseek.c[]
+----
+
+**VFS / inode / dentry mapping**
+
+* Updates `file->f_pos`
+* No inode data modification unless filesystem-specific
+
+**Examples**
+[source,c]
+----
+lseek(fd, 100, SEEK_SET); /*  */
+lseek(fd, 0, SEEK_SET); /* Start of file */
+lseek(fd, 0, SEEK_END); /* Next byte after the end of the file */
+lseek(fd, -1, SEEK_END); /* Last byte of file */
+lseek(fd, -10, SEEK_CUR); /* Ten bytes prior to current location */
+lseek(fd, 10000, SEEK_END); /* 10001 bytes past last byte of file *
+----
+
+---
+
+.create a file with a hole
+[%collapsible]
+======
+[tabs]
+=====
+sparse.c::
+[source, C]
+----
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+
+int main(void) {
+    int fd = open("sparse_file", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd == -1) {
+        perror("open");
+        return 1;
+    }
+
+    /* Write at the beginning */
+    write(fd, "START\n", 6);
+
+    /* Jump 10 MB forward */
+    off_t offset = lseek(fd, 10 * 1024 * 1024, SEEK_SET);
+    if (offset == -1) {
+        perror("lseek");
+        return 1;
+    }
+
+    /* Write again */
+    write(fd, "END\n", 4);
+
+    close(fd);
+    return 0;
+}
+
+----
+
+Proving holes exist::
+Compile and run:
++
+----
+gcc sparse.c -o sparse
+./sparse
+----
+Now examine the file.
++
+*Logical size (what the file claims to be)*
+----
+ls -lh sparse_file
+----
+Example output:
+----
+-rw-r--r-- 1 user user 11M Jan 10 20:15 sparse_file
+----
+➡️ The file appears to be 11 MB
++
+*Actual disk usage (what disk blocks are allocated)*
+----
+du -h sparse_file
+----
+Example output:
+----
+8.0K    sparse_file
+----
+➡️ Only 8 KB of disk space is used!
++
+4️⃣ *Why the numbers look like this*
++
+Let’s map it back to the C code:
+----
+"START\n"  → ~1 block allocated
+10 MB hole → 0 blocks allocated
+"END\n"    → ~1 block allocated
+----
+Total disk usage ≈ *2 blocks*
++
+Total logical size ≈ *10 MB + data*
++
+5️⃣ *Visual summary (mental model)*
+----
+File size (ls -lh):      ████████████████████  (11 MB)
+Disk usage (du -h):      ██                    (8 KB)
+                         ↑↑
+                     only real data
+----
+6️⃣ *Key takeaways (exam / interview ready)*
++
+* lseek() can move beyond EOF without allocating space
+* Writing after a seek creates a hole
+* Reading from a hole returns zero bytes
+* ls -lh shows logical size
+* du -h shows actual disk usage
+* Sparse files save disk space
+
+how cp can destroy holes::
+1️⃣ *Start with a sparse file (has holes)*
++
+Reuse the file from before, or recreate it quickly:
++
+./sparse
++
+Verify it really has holes:
+----
+ls -lh sparse_file
+du -h sparse_file
+----
+Typical output:
+----
+$ ls -lh sparse_file
+-rw-r--r-- 1 user user 11M Jan 10 20:30 sparse_file
+
+$ du -h sparse_file
+8.0K    sparse_file
+----
+✅ Logical size is large
++
+✅ Disk usage is tiny → this file is sparse
++
+2️⃣ *Copy WITHOUT --sparse (holes destroyed*)
++
+Now copy it normally:
+----
+cp sparse_file copy_normal
+----
+Check sizes:
+----
+ls -lh copy_normal
+du -h copy_normal
+----
+Output will look like:
+----
+$ ls -lh copy_normal
+-rw-r--r-- 1 user user 11M Jan 10 20:31 copy_normal
+
+$ du -h copy_normal
+11M     copy_normal
+----
+What happened?
++
+cp did this internally (conceptually):
+----
+read() → gets real data + zero bytes from holes
+write() → writes ALL bytes, including zeros
+----
+Result:
+----
+Holes ❌ destroyed
+Zeros ❌ physically written to disk
+Disk space ❌ wasted
+----
+*ASCII view: normal cp*
+----
+Original sparse file:
+[ DATA ][ HOLE ][ HOLE ][ HOLE ][ DATA ]
+
+copy_normal:
+[ DATA ][ ZERO ][ ZERO ][ ZERO ][ DATA ]
+          ↑       ↑       ↑
+      real disk blocks allocated
+----
+3️⃣ *Copy WITH --sparse (holes preserved)*
++
+Now copy correctly:
+----
+cp --sparse=always sparse_file copy_sparse
+----
+Check again:
+----
+ls -lh copy_sparse
+du -h copy_sparse
+----
+Typical output:
+----
+$ ls -lh copy_sparse
+-rw-r--r-- 1 user user 11M Jan 10 20:32 copy_sparse
+
+$ du -h copy_sparse
+8.0K    copy_sparse
+----
+What --sparse does
++
+* Detects long runs of zero bytes
+* Uses lseek() instead of writing zeros
+* Recreates holes in the destination file
++
+Result:
++
+Holes ✅ preserved
++
+Disk space ✅ saved
++
+*ASCII view: cp --sparse*
+----
+Original sparse file:
+[ DATA ][ HOLE ][ HOLE ][ HOLE ][ DATA ]
+
+copy_sparse:
+[ DATA ][ HOLE ][ HOLE ][ HOLE ][ DATA ]
+----
+4️⃣ *Why cp behaves this way by default*
++
+Default cp behavior is safe and simple:
++
+* Works on all filesystems
+* Doesn’t assume holes are supported
+* Copies byte-for-byte exactly what read() returns
++
+Sparse awareness is opt-in.
++
+5️⃣ *Extra: --sparse=auto vs always*
+----
+cp --sparse=auto sparse_file copy_auto
+----
+* auto → creates holes only if beneficial
+* always → forces hole creation when possible
++
+For most cases:
++
+----
+--sparse=auto   ← good default
+--sparse=always ← when you KNOW the file is sparse
+----
+6️⃣ *One-command proof (side-by-side)*
+----
+ls -lh sparse_file copy_normal copy_sparse
+du -h  sparse_file copy_normal copy_sparse
+----
+Example:
+----
+-rw-r--r-- 1 user user 11M sparse_file
+-rw-r--r-- 1 user user 11M copy_normal
+-rw-r--r-- 1 user user 11M copy_sparse
+
+8.0K   sparse_file
+11M    copy_normal
+8.0K   copy_sparse
+----
+7️⃣ *Interview / exam takeaway*
+A sparse file can lose its holes if copied naively; tools must explicitly preserve sparsity using lseek() instead of writing zero bytes.
+
+how holes appear in strace::
+2️⃣ *strace a program that creates a hole*
++
+Run:
++
+----
+strace -e trace=open,lseek,write ./sparse
+----
+Typical output (simplified):
+----
+open("sparse_file", O_WRONLY|O_CREAT|O_TRUNC, 0644) = 3
+
+write(3, "START\n", 6)              = 6
+
+lseek(3, 10485760, SEEK_SET)        = 10485760
+
+write(3, "END\n", 4)                = 4
+
+close(3)                            = 0
+----
+What this tells you
+----
+write → real data
+lseek → jump forward (no writes)
+write → real data
+----
+ASCII interpretation:
+----
+[START] -----(10 MB hole)----- [END]
+----
+📌 That gap is the hole — no syscall ever wrote those bytes.
++
+3️⃣ *strace of cp WITHOUT --sparse (holes destroyed)*
++
+Now copy the sparse file normally:
+----
+strace -e trace=read,write cp sparse_file copy_normal
+----
+You’ll see something like:
+----
+read(3, "\0\0\0\0\0\0\0\0...", 65536) = 65536
+write(4, "\0\0\0\0\0\0\0\0...", 65536) = 65536
+
+read(3, "\0\0\0\0\0\0\0\0...", 65536) = 65536
+write(4, "\0\0\0\0\0\0\0\0...", 65536) = 65536
+----
+What happened?
++
+* read() returns zeros (from the hole)
+* cp blindly writes those zeros
+* Disk blocks are allocated
++
+ASCII:
+----
+read  → [0000000000]
+write → [0000000000]  ← real disk blocks
+----
+❌ Hole is destroyed
++
+4️⃣ *strace of cp --sparse=always (holes preserved)*
++
+Now the sparse-aware copy:
+----
+strace -e trace=read,write,lseek cp --sparse=always sparse_file copy_sparse
+----
+Key lines you’ll see:
+----
+read(3, "\0\0\0\0\0\0\0\0...", 65536) = 65536
+lseek(4, 65536, SEEK_CUR)            = 65536
+----
+Notice:
++
+❌ No write() for zeros
++
+✅ lseek() instead!
++
+Later:
+----
+write(4, "END\n", 4) = 4
+----
+Interpretation
+----
+zeros detected
+→ skip writing
+→ jump forward using lseek
+→ hole preserved
+----
+ASCII:
+----
+read  → [0000000000]
+lseek → skip disk allocation
+----
+✅ Hole survives
++
+5️⃣ *Side-by-side syscall comparison*
+----
+NORMAL cp:
+read  → zeros
+write → zeros  ❌ disk blocks allocated
+
+SPARSE cp:
+read  → zeros
+lseek → skip     ✅ hole preserved
+----
+6️⃣ *Minimal “spot the hole” checklist in strace*
++
+You are looking for:
++
+|===
+|Pattern	|Meaning
+
+|Large lseek() jumps	|Hole creation
+
+|Missing write() calls	|Hole exists
+
+|write() of many zeros	|Hole destroyed
+
+|lseek(SEEK_CUR) during copy	|Sparse-aware tool
+|===
+7️⃣ *One-line kernel truth*
++
+Holes don’t exist as data — they exist as the absence of writes. That’s why strace is perfect for understanding them.
+=====
+======
+
+==== stat
+
+**What it does**
+
+* Retrieves metadata about a file by pathname
+
+**Why it matters**
+
+* Provides file size, permissions, timestamps, and inode info
+* Used in `ls`, permission checks, backup utilities
+
+**True syscall vs libc wrapper**
+* libc wrapper
+** Uses `statx()` internally
+
+**Linux kernel source paths**
+
+* `fs/stat.c`
+** `vfs_statx()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/stat.c`
+
+**Parameters**
+
+* `const char *pathname`
+* `struct stat *statbuf`
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Resolves pathname to dentry → inode
+* Reads inode metadata only
+
+**Example**
+[source,c]
+----
+struct stat st;
+stat("file.txt", &st);
+----
+
+---
+
+==== fstat
+
+**What it does**
+
+* Retrieves metadata about a file by file descriptor
+
+**Why it matters**
+
+* Efficient for open files
+* Avoids repeated pathname lookups
+
+**True syscall vs libc wrapper**
+* libc wrapper
+** Uses `fstatat()` internally
+
+**Linux kernel source paths**
+
+* `fs/stat.c`
+** `ksys_fstat()`
+** `vfs_fstat()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/fstat.c`
+
+**Parameters**
+
+* `int fd`
+* `struct stat *statbuf`
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Retrieves inode via `file->f_path.dentry->d_inode`
+* No pathname lookup
+
+**Example**
+[source,c]
+----
+fstat(fd, &st);
+----
+
+---
+
+==== lstat
+
+**What it does**
+
+* Retrieves metadata about a file or symlink without following the link
+
+**Why it matters**
+
+* Required to inspect symlinks themselves
+* Useful for symbolic link management
+
+**True syscall vs libc wrapper**
+* libc wrapper
+** Uses `statx()` internally
+
+**Linux kernel source paths**
+
+* `fs/stat.c`
+** `vfs_lstat()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/lstat.c`
+
+**Parameters**
+
+* `const char *pathname`
+* `struct stat *statbuf`
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Resolves pathname to dentry → inode
+* Does **not** follow symlink
+
+**Example**
+[source,c]
+----
+lstat("linkfile", &st);
+----
+
+---
+
+==== mkdir
+
+**What it does**
+
+* Creates a new directory
+
+**Why it matters**
+
+* Enables hierarchical filesystem layout
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+
+* `fs/namei.c`
+** `do_mkdirat()`
+** `vfs_mkdir()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/mkdir.c`
+
+**Parameters**
+
+* `const char *pathname`
+* `mode_t mode`
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Allocates directory inode
+* Creates `.` and `..`
+* Links dentry into parent directory
+
+**Example**
+[source,c]
+----
+mkdir("logs", 0755);
+----
+
+==== rmdir
+
+**What it does**
+
+* Removes an empty directory
+
+**Why it matters**
+
+* Maintains filesystem consistency
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+
+* `fs/namei.c`
+** `do_rmdir()`
+** `vfs_rmdir()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/rmdir.c`
+
+**Parameters**
+
+* `const char *pathname`
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Removes directory dentry
+* Decrements inode link count
+
+**Example**
+[source,c]
+----
+rmdir("logs");
+----
+
+==== link
+link purpose is to allow the same file to appear
+under two or more names, often in different directories. A typical use is to allow
+several members of the same programming team to share a common file, with each
+of them having the file appear in his own directory, possibly under different names.
+Sharing a file is not the same as giving every team member a private copy; having
+a shared file means that changes that any member of the team makes are instantly
+visible to the other members—there is only one file. When copies are made of a
+file, subsequent changes made to one copy do not affect the others.
+
+To see how link works, consider the situation of Fig. Here are two
+users, ast and jim, each having his own directory with some files. If ast now
+executes a program containing the system call
+----
+link("/usr/jim/memo", "/usr/ast/note");
+----
+.Table: Directory entries before and after linking (single table with subtables)
+[cols="1,1,1,1", options=""]
+[frame=none]
+[grid=none]
+|===
+2+^| (a) Before link operation 2+^| (b) After link operation
+
+^a|
+`/usr/ast
+[cols="1,2", options=""]
+!===
+! 16 ! mail
+! 81 ! games
+! 40 ! test
+!===
+
+^a|
+`/usr/jim`
+[cols="1,2", options=""]
+!===
+! 31 ! bin
+! 70 ! memo
+! 59 ! f.c.
+! 38 ! prog1
+!===
+
+^a|
+`/usr/ast`
+[cols="1,2", options=""]
+!===
+! 16 ! mail
+! 81 ! games
+! 40 ! test
+! 70 ! note
+!===
+
+^a|
+`/usr/jim`
+[cols="1,2", options=""]
+!===
+! 31 ! bin
+! 70 ! memo
+! 59 ! f.c.
+! 38 ! prog1
+!===
+|===
+
+the file memo in jim’s directory is now entered into ast’s directory under the name
+note. Thereafter, /usr/jim/memo and /usr/ast/note refer to the same file. As an
+aside, whether user directories are kept in /usr, /user, /home, or somewhere else is
+simply a decision made by the local system administrator.
+
+Understanding how link works will probably make clearer what it does. Every
+file in UNIX has a unique number, its i-number, that identifies it. This i-number is
+an index into a table of i-nodes, one per file, telling who owns the file, where its
+disk blocks are, and so on†. A directory is simply a file containing a set of (i-num-
+ber, ASCII name) pairs. In the first versions of UNIX, each directory entry was 16 bytes—2 bytes for the i-number and 14 bytes for the name. Now a more complicat-
+ed structure is needed to support long file names, but conceptually a directory is
+still a set of (i-number, ASCII name) pairs. In Fig above, mail has i-number 16, and
+so on. What link does is simply create a brand new directory entry with a (possibly
+new) name, using the i-number of an existing file. In Fig(b), two entries have
+the same i-number (70) and thus refer to the same file. If either one is later
+removed, using the unlink system call, the other one remains. If both are removed,
+UNIX sees that no entries to the file exist (a field in the i-node keeps track of the
+number of directory entries pointing to the file), so the file is removed from the
+SSD or disk and its blocks are returned to the free block pool.
+
+**What it does**
+
+* Creates a new *hard link* (additional name) for an existing file
+* Both names refer to the same inode
+
+**Why it matters**
+
+* Enables multiple directory entries to reference the same data
+* Critical for Unix semantics (e.g., atomic updates, backups)
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+
+* `fs/namei.c`
+** `do_linkat()`
+** `vfs_link()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/link.c`
+
+**Parameters**
+
+* `const char *oldpath`
+** Existing file path
+* `const char *newpath`
+** New directory entry name
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Resolves `oldpath` to inode
+* Creates new dentry pointing to same inode
+* Increments inode link count (`i_nlink`)
+
+**Example**
+[source,c]
+----
+link("data.txt", "data.backup");
+----
+
+---
+
+==== symlink
+
+**What it does**
+
+* Creates a *symbolic link* (special file containing a path)
+
+**Why it matters**
+
+* Allows flexible references across filesystems
+* Does not require target to exist
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+
+* `fs/namei.c`
+** `do_symlinkat()`
+** `vfs_symlink()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/symlink.c`
+
+**Parameters**
+
+* `const char *target`
+** Path stored inside the symlink
+* `const char *linkpath`
+** Name of the symlink file
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Allocates new inode of type `S_IFLNK`
+* Stores target path in inode data
+* Dentry refers to symlink inode
+
+**Example**
+[source,c]
+----
+symlink("/var/log/app.log", "app.log");
+----
+
+---
+
+==== unlink
+
+**What it does**
+
+* Removes a directory entry
+* Deletes the file when link count reaches zero
+
+**Why it matters**
+
+* Allows deleting open files
+* Enables atomic file replacement
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+
+* `fs/namei.c`
+** `do_unlinkat()`
+** `vfs_unlink()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/unlink.c`
+
+**Parameters**
+
+* `const char *pathname`
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Removes dentry from directory
+* Data freed after last FD closes
+
+**Example**
+[source,c]
+----
+unlink("temp.txt");
+----
+
+==== rename
+
+**What it does**
+
+* Atomically renames or moves a file or directory
+* Can replace an existing destination
+
+**Why it matters**
+
+* Guarantees atomic updates
+* Foundation for safe file replacement patterns
+
+**True syscall vs libc wrapper**
+* libc wrapper
+** Uses `renameat2()` internally
+
+**Linux kernel source paths**
+
+* `fs/namei.c`
+** `do_renameat2()`
+** `vfs_rename()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/rename.c`
+
+**Parameters**
+
+* `const char *oldpath`
+** Existing pathname
+* `const char *newpath`
+** New pathname
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Removes old dentry
+* Creates new dentry
+* Inode remains unchanged
+* Operation is atomic within same filesystem
+
+**Example**
+[source,c]
+----
+rename("config.tmp", "config.cfg");
+----
+
+==== mount
+the mount system call allows two file systems to
+be merged into one. A common situation is to have the root file system, containing
+the binary (executable) versions of the common commands and other heavily used
+files, on an SSD / hard disk (sub)partition and user files on another (sub)partition.
+Further, the user can then insert a USB disk with files to be read.
+By executing the mount system call, the USB file system can be attached to the
+root file system, as shown in next Fig. A typical statement in C to mount is
+----
+mount("/dev/sdb0", "/mnt", 0);
+----
+where the first parameter is the name of a block special file for USB drive 0, the
+second parameter is the place in the tree where it is to be mounted, and the third
+parameter tells whether the file system is to be mounted read-write or read-only.
+
+After the mount call, a file on drive 0 can be accessed by just using its path
+from the root directory or the working directory, without regard to which drive it is
+on. In fact, second, third, and fourth drives can also be mounted anywhere in the
+tree. The mount call makes it possible to integrate removable media into a single
+integrated file hierarchy, without having to worry about which device a file is on.
+Although this example involves USB drives, portions of hard disks (often called
+partitions or minor devices) can also be mounted this way, as well as external
+hard disks and SSDs. When a file system is no longer needed, it can be unmounted
+with the umount system call. After that, it is no longer accessible
+
+**What it does**
+
+* Mounts a filesystem at a specified mount point
+* Connects a device or virtual filesystem to the VFS tree
+
+**Why it matters**
+
+* Provides access to storage devices and virtual filesystems
+* Fundamental for filesystem hierarchy and containers
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+
+* `fs/namespace.c`
+** `do_mount()`
+** `vfs_kern_mount()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/mount.c`
+
+**Parameters**
+
+* `const char *source`
+** Device or filesystem
+* `const char *target`
+** Mount point path
+* `const char *fstype`
+** Filesystem type (e.g., "ext4")
+* `unsigned long flags`
+** Mount options (e.g., `MS_RDONLY`)
+* `const void *data`
+** Filesystem-specific data
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Creates superblock
+* Links root dentry into mount namespace
+* Updates VFS mount table
+
+**Example**
+[source,c]
+----
+mount("/dev/sdb1", "/mnt/data", "ext4", 0, NULL);
+----
+
+---
+
+==== umount
+
+**What it does**
+
+* Unmounts a previously mounted filesystem
+* Detaches it from the VFS tree
+
+**Why it matters**
+
+* Ensures filesystem integrity
+* Cleans up resources (buffers, superblocks)
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+
+* `fs/super.c`
+** `do_umount()`
+** `do_umount2()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/umount.c`
+
+**Parameters**
+
+* `const char *target`
+** Mount point to unmount
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Removes mount point from namespace
+* Releases superblock and root dentry
+* Flushes inode and buffer caches
+
+**Example**
+[source,c]
+----
+umount("/mnt/data");
+----
+
+---
+
+==== chmod
+In UNIX every file has a mode used for protection. The mode includes the
+read-write-execute bits for the owner, group, and others. The chmod system call
+makes it possible to change the mode of a file. For example, to make a file read-
+only by everyone except the owner, one could execute
+----
+chmod("file", 0644)
+----
+
+**What it does**
+
+* Changes permission bits of a file
+
+**Why it matters**
+
+* Security and access control
+* Required for scripts, files, and directories
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+
+* `fs/attr.c`
+** `vfs_chmod()`
+* `fs/namei.c`
+** `do_chmod()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/chmod.c`
+
+**Parameters**
+
+* `const char *pathname`
+* `mode_t mode`
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Updates `i_mode` in inode
+* Triggers inode `i_ctime` update
+
+**Example**
+[source,c]
+----
+chmod("script.sh", 0755);
+----
+
+---
+
+==== chown
+
+**What it does**
+
+* Changes owner and group of a file
+
+**Why it matters**
+
+* Ownership management for security
+* Required for system administration
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+
+* `fs/attr.c`
+** `vfs_chown()`
+* `fs/namei.c`
+** `do_chown()`
+
+**glibc source paths**
+
+* `sysdeps/unix/sysv/linux/chown.c`
+
+**Parameters**
+
+* `const char *pathname`
+* `uid_t owner`
+* `gid_t group`
+
+**Return value**
+
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+
+* Updates inode `i_uid` and `i_gid`
+* Triggers inode `i_ctime` update
+
+**Example**
+[source,c]
+----
+chown("file.txt", 1001, 1001);
+----
+
+==== chdir
+The chdir call changes the current working directory. After the call
+----
+chdir("/usr/ast/test"); 
+----
+an open on the file xyz will open /usr/ast/test/xyz. The concept of a working direc-
+tory eliminates the need for typing (long) absolute path names all the time.
+
+**What it does**
+* Changes the current working directory of the calling process
+* Affects relative path resolution for all subsequent file operations
+
+**Why it matters**
+* Determines the base directory for relative paths
+* Essential for shell commands, scripts, and programs that rely on relative paths
+
+**True syscall vs libc wrapper**
+* True syscall
+
+**Linux kernel source paths**
+* `fs/namespace.c`
+** `do_chdir()`
+** `kern_path()`
+* `fs/namei.c`
+** `path_lookupat()`
+
+**glibc source paths**
+* `sysdeps/unix/sysv/linux/chdir.c`
+
+**Parameters**
+* `const char *dirname`
+** Path to the new working directory
+
+**Return value**
+* `int`
+** `0`: success
+** `-1`: error
+
+**VFS / inode / dentry mapping**
+* Resolves `dirname` to a dentry → inode
+* Updates `task_struct->fs->pwd` to new `struct path`
+* Does not change actual filesystem data, only process context
+
+**Example**
+[source,c]
+----
+chdir("/home/user/projects");
+----
+
+==== ioctl()
+[,c]
+----
+#include <sys/ioctl.h>
+int ioctl(int fd, int request, ... /* argp */);
+----
+The ioctl() system call is a general-purpose mechanism for performing file and
+device operations that fall outside the universal I/O model above.
+
+ioctl
+(short for input/output control) is a system call used in Unix-like and Windows operating systems to perform device-specific operations that standard system calls (like read, write, or seek) cannot handle. 
+
+It serves as a flexible "catch-all" interface allowing user-space applications to communicate directly with hardware device drivers for configuration and control tasks. 
+
+ioctl() is a device-control syscall, not a concurrency primitive. It bypasses abstraction layers intentionally.
+
+**What it does**
+
+* Performs device-specific control operations on a file descriptor.
+* Acts as a generic escape hatch for operations that do not fit read(), write(), or mmap().
+* The behavior depends entirely on the ioctl request code and the underlying driver.
+
+*Core Functions & Usage*
+
+* Device Configuration: Controlling hardware settings such as changing the baud rate on a serial port, ejecting a CD-ROM, or adjusting speaker volume.
+* Terminal I/O: Managing display sizes and terminal behavior (e.g., the TIOCSWINSZ command to set window size).
+* Networking: Configuring network interfaces, such as getting or setting the MTU (Maximum Transmission Unit) and IP addresses.
+* Storage Management: Discovering drive geometry or managing RAID volumes. 
+
+*Why it matters*
+
+* Enables fine-grained control of hardware and kernel subsystems: Terminals (TTY),Block devices,Network interfaces,GPUs,Input devices,filesystems.
+* Essential for: Device configuration, Querying kernel state, Driver-specific optimizations
+* Keeps the system call ABI small while allowing extensibility.
+
+*How it Works*
+
+* System Call: An application calls ioctl(), passing an open file descriptor, a command code, and optional data.
+* Device Driver: The operating system routes the ioctl call to the specific device driver handling that file descriptor.
+* Command Interpretation: The driver interprets the command code (e.g., EJECT, GET_STATUS) and performs the requested action, potentially using the provided data. 
+
+*Key Characteristics*
+
+* Device-Specific: Commands are unique to the device (e.g., a graphics card vs. a network interface).
+* Flexible: Extensible for new hardware features without changing kernel core.
+* Beyond Read/Write: Handles complex interactions like formatting disks, setting terminal modes, or managing network socket options. 
+
+*Limitations and Security*
+
+* Portability: Because ioctl commands are often specific to one driver, code using them is less portable between different systems.
+* Complexity: Large numbers of undocumented or complex ioctl commands can complicate system security and make auditing difficult.
+* Vulnerabilities: Improperly implemented ioctl handlers in drivers can lead to security vulnerabilities, such as privilege escalation (e.g., CVE-2025-68802)
+
+*When to Use ioctl*
+
+* ✔ Device configuration
+* ✔ Query kernel/device state
+* ✔ Legacy interfaces
+
+When NOT to Use ioctl
+
+* ✘ Generic IPC
+* ✘ Thread synchronization
+* ✘ Portable application logic
+
+*Function Prototype*
+[source,c]
+----
+int ioctl(int fd, unsigned long request, ...);
+----
+*Parameters*
+
+. fd: File descriptor referring to a device or special file
+. request: Encoded ioctl command number, Encodes:
+** Direction (read/write)
+** Command number
+** Data size
+** Magic number (subsystem ID)
+. argp (optional): Pointer to request-specific data
+** The value of the request argument
+enables ioctl() to determine what type of value to expect in argp. Typically, argp is a
+pointer to either an integer or a structure; in some cases, it is unused.
+** May be input, output, or both
+
+*Return Value*
+
+. 0: Success (most ioctls)
+. -1: Error
+** errno values
+*** ENOTTY – ioctl not supported
+*** EINVAL – invalid request
+*** EFAULT – bad user pointer
+*** EBADF – invalid fd
+
+*Examples*
+
+*Example 1: Get Terminal Window Size (TTY)*
+
+This is one of the most common and portable ioctl() uses.
+[,c]
+----
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+
+int main(void) {
+    struct winsize ws;
+
+    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) {
+        perror("ioctl");
+        return 1;
+    }
+
+    printf("Rows: %d\n", ws.ws_row);
+    printf("Cols: %d\n", ws.ws_col);
+    return 0;
+}
+----
+What This Does
+
+* Queries the terminal driver for: Number of rows, Number of columns
+* Works for: Real terminals, Pseudoterminals (ssh, xterm, tmux)
+
+Why It Matters
+
+Used by: bash, vim, top, less
+
+Enables programs to adapt output formatting dynamically
+
+Parameters Explained
+
+fd
+
+* STDIN_FILENO
+* Must refer to a TTY
+
+request
+
+* TIOCGWINSZ: “Terminal IOCTL Get Window Size”
+
+argp
+
+* Pointer to struct winsize: Filled by kernel
+
+Return Value
+
+* 0 → success
+* -1 → error
+* ENOTTY if fd is not a terminal
+
+Kernel Call Path
+----
+ioctl()
+ └── sys_ioctl()
+      └── vfs_ioctl()
+           └── tty_ioctl()
+                └── tiocgwinsz()
+----
+*Example: Block Device Size Query*
+
+[,c]
+----
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <linux/fs.h>
+
+int main(void) {
+    int fd = open("/dev/sda", O_RDONLY);
+    unsigned long long size;
+
+    ioctl(fd, BLKGETSIZE64, &size);
+    printf("Disk size: %llu bytes\n", size);
+
+    close(fd);
+    return 0;
+}
+----
+Kernel Source: Block ioctl handling:https://github.com/torvalds/linux/blob/master/block/ioctl.c#L67
+
+Block ioctl handling:
+
+Example 4: ioctl vs pthread (Conceptual Contrast)
+
+*How ioctl Commands Are Defined*
+
+Created using macros:
+[source,c]
+----
+_IO(type, nr)
+_IOR(type, nr, data_type)
+_IOW(type, nr, data_type)
+_IOWR(type, nr, data_type)
+----
+Example:
+[source,c]
+----
+#define TIOCGWINSZ _IOR('t', 104, struct winsize)
+----
+*glibc Implementation*
+
+Thin wrapper around the system call
+
+https://github.com/bminor/glibc/blob/master/sysdeps/unix/sysv/linux/ioctl.c
+
+Key point
+
+glibc does no interpretation of ioctl requests
+
+*Kernel Call Path*
+[source,text]
+----
+userspace
+└── ioctl()
+└── sys_ioctl()
+└── vfs_ioctl()
+└── file->f_op->unlocked_ioctl()
+└── driver-specific handler
+----
+*Linux Kernel Source References*
+
+* Syscall entry:
+** fs/ioctl.c: https://github.com/torvalds/linux/blob/master/fs/ioctl.c
+
+* VFS dispatch:
+** do_vfs_ioctl()
+
+* Driver implementation:
+** Example (TTY):
+*** drivers/tty/tty_ioctl.c
+*** https://github.com/torvalds/linux/blob/master/drivers/tty/tty_ioctl.c
+
+*Kernel Internals*
+
+* ioctl does not: Create threads, Schedule tasks, Block via futex
+* ioctl may block depending on driver implementation
+* Synchronization is driver-specific: mutex, spinlock, rwlock
+
+
+
+=== The stdio library
+To perform file I/O, C programs typically employ I/O functions contained in the
+standard C library. This set of functions, referred to as the stdio library, includes
+fopen(), fclose(), scanf(), printf(), fgets(), fputs(), and so on. The stdio functions are
+layered on top of the I/O system calls (open(), close(), read(), write(), and so on).

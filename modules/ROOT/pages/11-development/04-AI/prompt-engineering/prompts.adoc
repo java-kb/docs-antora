@@ -94,6 +94,8 @@ Prompt patterns
 === 3.1 AI for System Architecture
 Prompt patterns
 
+Please draft a comprehensive list of technical requirements for a mobile banking app, ensuring the writing is clear, well structured, and professional.
+
 “Propose a scalable architecture for this system.”
 
 “Compare monolith vs microservices for this context.”
@@ -191,6 +193,8 @@ Prompt patterns
 
 === 5.3 AI for Test Automation
 Prompt patterns
+
+You are a software developer in test that is experienced in writing Java. Create a unit test for the following method.
 
 “Generate unit tests for this function.”
 
@@ -306,6 +310,7 @@ Prompt patterns
 
 “Explain this system for onboarding developers.”
 
+Write a GitHub readme for my project named “Recipe Finder.” This project is developed using Vue.js and helps users find recipes based on the ingredients they have. Users need to input the ingredients they have, and the app will return a list of recipes they can cook with those ingredients. To kickstart, simply clone the repository, run npm install, insert your API key into the .env file, and execute npm start to launch the app.
 === 10.2 AI for User and Operational Docs
 Prompt patterns
 
@@ -442,6 +447,13 @@ If no email addresses with a .com email address exist, simply write "No .com ema
 
 == Business
 === Marketing
+What are techniques for brainstorming ideas for new products? Use the internet to research this question.
+
+How would you use Starbursting as a way to come up with a new idea for a software product?
+
+Could you create a survey focused on understanding what buyers look for in project management software? The survey should include questions that help identify key features, usability preferences, specific industry needs, and any particular chal‐ lenges buyers want to address with this type of software. Additionally, please include questions that gauge the importance of factors such as cost, support, scalability, and integration capabilities.
+
+“What are the different ways to estimate the size of the Total Addressable Market (TAM)? 
 === Sales
 === HR & Recruiting
 

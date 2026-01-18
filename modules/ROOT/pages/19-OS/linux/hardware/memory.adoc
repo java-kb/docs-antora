@@ -1,0 +1,155 @@
+= Memory
+:figures: 19-OS/linux/hardware
+
+Memory, as it is used with regard to computers, most commonly refers to semiconductor devices whose contents can be accessed (i.e., read and written to) at extremely high speeds but which are retained only temporarily (i.e., while in use or, at most, while the power supply remains on).
+
+This contrasts with storage, which (1) retains programs and data regardless of whether they are currently in use or not, (2) retains programs and data after the power supply has been disconnected, (3) has much slower access speeds and (4) has a much larger capacity (and a much lower cost). Examples of storage devices are hard disk drives (HDD), floppy disks, optical disks (e.g., CDROMS and DVDs) and magnetic tape.
+
+The term memory as used in a computer context originally referred to the magnetic core memory devices that were used beginning in the 1950s. It was subsequently applied to the semiconductor memory devices that replaced core memories in the 1970s.
+
+== Purpose of Memory
+Memory is used to hold portions of the operating system, application programs and data that are currently being used by the CPU (central processing unit) or that are likely to be used by it. This includes the kernel, which is the core of the operating system and the first part of it to be loaded into memory during booting (i.e., the process by which a computer starts and automatically loads the operating system into memory) and which remains there for the entire duration of a computer session.
+
+Thus, at any point in time the contents of memory include (1) the kernel, (2) machine code of the process currently progressing in the CPU, (3) machine code for various suspended processes along with the various data that constitute the intermediate results of those processes and (4) copies of open files. Machine code consists of program instructions that have been translated by a compiler from source code into a binary (i.e., only zeros and ones) format so that the CPU can use them directly, without further translation. A process is an executing (i.e., running) instance of a program. Source code is the version of a program as it is originally written by a human using a programming language (such as C, C++, Java or Perl).
+
+When a user opens an existing file (i.e., a file that has been saved on a disk or other storage device), the operating system actually makes a copy of that file and places it in memory. When a file is saved, it is copied from memory into storage and overwrites the older version there. When a new file is created, it is first created in memory and then written (i.e., copied) to the HDD or other designated storage device.
+
+Because the CPU has a much faster speed than the HDD and all other devices on a computer, memory serves as a high speed intermediary for it, providing it with enough data, including from the HDD, so that it does not have to waste time waiting.
+
+== The Memory Hierarchy
+Ideally, memory
+should be extremely fast (faster than executing an instruction so that the CPU is not
+held up by the memory), abundantly large, and dirt cheap No. current technology satisfies all of these goals, so a different approach is taken. The memory system is
+constructed as a hierarchy of layers, as shown in Fig. 1-9, which would be typical
+for a desktop computer or a server (notebooks use SSDs). The top layers have
+higher speed, smaller capacity, and greater cost per bit than the lower ones, often
+by factors of a billion or more.
+
+Memory and storage can be viewed as a hierarchy, with the fastest but scarcest and most expensive at the top and the slowest but most plentiful and least expensive at the bottom.
+
+image::{figures}/memory-hierarchy.png[A typical memory hierarchy. The numbers are very rough approximations.]
+
+. *registers*
++
+At the very top of this memory hierarchy are registers (also sometimes referred to as processor registers), which consist of an extremely small amount of very fast (i.e., much faster than the main memory) memory cells that are built directly into the CPU. 
++
+The top layer consists of the registers internal to the CPU. They are made of
+the same material as the CPU and are thus just as fast as the CPU. Consequently,
+there is no delay in accessing them. The storage capacity available in them is on
+the order of 32 × 32 bits on a 32-bit CPU and 64 × 64 bits on a 64-bit CPU. Less
+than 1 KB in both cases. Programs must manage the registers (i.e., decide what to
+keep in them) themselves, in software.
++
+Their purpose is to speed up the execution of the CPU, and thus of programs, by providing quick access to commonly used values, generally those in the midst of a calculation.
++
+Registers are usually implemented as an array of SRAM (i.e., static RAM) cells.
++
+SRAM is a type of RAM that is faster and more reliable than DRAM. The term static is used because the memory does not need to be refreshed as does DRAM, although it is still volatile (i.e., it needs to be connected to a power supply in order to retain its contents). SRAM has the disadvantages that it consumes more space than DRAM and is considerably more expensive.
+. *cache memory*
++
+Below the registers in the memory hierarchy is the cache memory which is mostly controlled by the hardware, whose purpose is to reduce the mismatch in speeds between the CPU and RAM. That is, modern processors have clock rates of several gigahertz (billions of cycles per second), whereas RAM chips have access times measured in megahertz (millions of cycles per second). The clock rate is the speed at which a CPU performs its most basic operations.
++
+cache memory, which is mostly controlled by the hardware.
+Main memory is divided up into cache lines, typically 64 bytes, with addresses 0
+to 63 in cache line 0, 64 to 127 in cache line 1, and so on. The most heavily used
+cache lines are kept in a high-speed cache located inside or very close to the CPU.
+When the program needs to read a memory word, the cache hardware checks to see
+if the line needed is in the cache. If it is, called a cache hit, the request is satisfied
+from the cache and no memory request is sent over the bus to the main memory
++
+Modern computers usually have two or three levels of cache memory, referred to as L1 (Level 1), L2 (Level 2) and L3 (Level 3). 
++
+.. L1 cache consists of high speed SRAM cells that are likewise built directly into the CPU. To conserve space and reduce cost, there is usually only a small amount of L1 cache on a processor, for example, only 20KB in the case of the Pentium 4. L1 cache can usually be accessed in just a few CPU cycles, in contrast to the typically several hundred CPU cycles to access the main memory.
++
+L1 cache is always inside the CPU and usually feeds decoded instructions into the CPU’s execution engine. 
+.. Most modern computers also come with a secondary cache memory, L2, which holds used instructions or other data that will possibly be used again in the very near future(recently used memory word). Initially, L2 resided on a separate chip that was connected to the CPU by a bus (i.e., a set of wires), but newer CPUs contain built-in L2 caches. L2 caches are likewise composed of SRAM cells, but they contain many more such cells than do L1 caches. For example, the Pentium 4 has 256KB of L2 cache.
++
+The difference between the L1 and L2 caches lies in
+the timing. Access to the L1 cache is done without any delay, whereas access to
+the L2 cache involves a delay of several clock cycles.
+.. When the CPU and the motherboard both have L2 caches, that on the latter is designated L3. It serves basically the same function as the L2 cache, but it has a lower potential for providing CPU performance gains because of the slower speed resulting from its being connected by a bus rather than being inside of the CPU. L3 is the least used of the cache levels.
+. *main memory*
++
+Below the several levels of cache memory in the memory hierarchy is the main memory. In contrast to the registers and cache memory, which have data holding capacities measured in bits and kilobytes, respectively, main memory on modern computers is usually measured in hundreds of megabytes. For example, main memory is typically 512MB or one gigabyte (i.e., approximately one billion bytes) in currently available personal computers, and it can be multiple gigabytes for workstations and other high performance systems. Main memory usually has an access time equal to several hundred CPU cycles.
+. *storage*
++
+At the bottom of the hierarchy is storage. It typically has an access time equivalent to hundreds of thousands of CPU cycles. This relatively slow speed is the result of using mechanical parts, particularly electric motors and moving magnetic heads. However, storage can have a capacity ranging from tens of gigabytes on small computers to many thousands of gigabytes on large systems. 
+
+=== Scarce Resource
+Memory is a scarce resource because it is expensive, at least relative to a comparable amount of hard disk space, and thus it must be carefully managed by the operating system in order to optimize system performance. The addition of multiple levels of high-speed cache memory is one way that this is accomplished.
+
+Another is to use virtual memory, i.e., the use of space on an HDD to simulate additional memory. In order to free up space in memory, the operating system transfers data which is not immediately needed from memory to the HDD, and when that data is needed again, it is copied back into memory. The disadvantage of virtual memory is that it is slower than main memory, although there is usually no noticeable effect on system performance unless virtual memory is being used intensively (e.g., when several very large programs are being run simultaneously).
+
+Linux additionally improves the efficiency of memory utilization through the division of the kernel into the main part, which is held constantly in memory, and modules, which can be loaded into memory only as needed and subsequently removed when no longer needed.
+
+=== Other Types of Memory
+The term memory generally refers to semiconductor devices whose contents are volatile, can be accessed randomly and can be written to and read at high speed, i.e., RAM. However, it can also be used in a broader sense to refer to several types of non-volatile semiconductor devices.
+
+. The most basic of them is read-only memory (ROM), whose contents are written in at the factory and thereafter cannot be erased or rewritten.
+. Programmable read-only memory (PROM) is a type of ROM into which a program or other data can be written once after it leaves the factory, usually by the manufacturer of the computer (or of any other product in which it is used). It cannot subsequently be erased and rewritten.
+. Erasable programmable read-only memory (EPROM) is a type of PROM whose contents can be erased by exposing the chip's upper surface to ultraviolet light. The contents can then be rewritten electronically.
+. Electrically erasable programmable read-only memory (EEPROM) is a type of PROM whose contents can be erased through the use of electronic signals. This is much more convenient than using ultraviolet light. Flash memory is a type of EEPROM that is used in USB flash drives (also called key drives), an increasingly popular kind of removable storage device.
+.  CMOS, which is volatile. Many computers use
+CMOS memory to hold the current time and date. The CMOS memory and the
+clock circuit that increments the time in it are powered by a small battery, so the
+time is correctly updated, even when the computer is unplugged. The CMOS mem-
+ory can also hold the configuration parameters, such as which drive to boot from.
+CMOS is used because it draws so little power that the original factory-installed
+battery often lasts for several years. However, when it begins to fail, the computer
+can appear to be losing its marbles, forgetting things that it has known for years,
+like how to boot.
+
+Computers almost always contain a small amount of some type of built-in ROM. It is used to hold the BIOS (basic input output system), which is used to boot up the system. It is also used to hold fixed logic for various hardware devices (e.g., disk drives) and peripherals.
+
+=== Register
+A register is a very small amount of very fast memory that is built into the CPU (central processing unit) in order to speed up its operations by providing quick access to commonly used values. 
+
+Registers are the top of the memory hierarchy and are the fastest way for the system to manipulate data. Below them are several levels of cache memory, at least some of which is also built into the CPU and some of which might be on other, dedicated chips. Cache memory is slower than registers but much more abundant. Below the various levels of cache is the main memory, which is even slower but vastly more abundant (e.g., hundreds of megabytes as compared with only 32 registers). But it, in turn, is still far faster and much less capacious than storage devices and media (e.g., hard disk drives and CDROMs). 
+
+Most registers are implemented as an array of SRAM (static random access memory) cells. SRAM is a type of RAM that is much faster and more reliable than the DRAM (dynamic random access memory), which is used for main memory because of its lower cost and smaller space consumption. The term static is employed because SRAM does not need to be electrically refreshed as does DRAM, although it is still volatile (i.e., it needs to be connected to a power supply in order to retain its contents). 
+
+Registers are normally measured by the number of bits they can hold, for example, an 8-bit register or a 32-bit register. The x86 (i.e., Intel-compatible) instruction set defines a set of eight 32-bit registers. However, CPUs that implement this instruction set generally contain many more registers than just these eight, including various specialized types. An instruction set is the aspects of a computer architecture visible to a programmer, including the native datatypes, instructions, registers, addressing modes, memory architecture, interrupt and exception handling and external input/output.
+
+Registers can also be classified into general purpose and special purpose types. The former serve as temporary holding places for data that is being manipulated by the CPU. That is, they hold the inputs to the arithmetic/logic circuitry and store the results produced by that circuitry.
+
+Special purpose registers store internal CPU data, such as the program counter (also termed instruction pointer), stack pointer and status register. Program counters contain the address of the next instruction to be executed. Instruction registers hold the instruction being executed by the CPU, address registers hold memory addresses and are used to access memory, and data registers are used to store integers. 
+=== RAM
+Computer memory today consists mainly of dynamic random access memory (DRAM) chips that have been built into multi-chip modules that are, in turn, plugged into slots on the motherboard (the main circuit board on personal computers and workstations). This DRAM is commonly referred to as RAM (random access memory), and it constitutes the main memory of a computer. All CPU requests that cannot be satisfied out of the cache go to main memory.
+
+The random in random access memory refers to the fact that any location in such memory can be addressed directly at any time. This contrasts with sequential access media, such as magnetic tape, which must be read partially in sequence regardless of the desired content
+
+The term random access memory (RAM) is commonly used as a synonym for the main memory (also called primary memory or just memory) of a computer. This is because such memory is generally composed entirely of RAM chips.
+
+The main memory is used to hold portions of the operating system, application programs and data that are currently being used or which are frequently used. This includes the kernel (i.e., the core of the operating system), which is the first part of the operating system to load into memory during booting and which remains there for the entire duration of a computer session. Booting is the process by which a computer starts and automatically loads the operating system into memory.
+
+Physically, RAM consists of a number of DRAM (dynamic RAM) chips, which are combined into modules that are plugged into slots on the motherboard (i.e., the main circuit board on a computer). DRAM is a type of RAM that features relatively low cost and small space consumption. Additional DRAM modules can be added (by even a minimally skilled user) to improve computer performance as long as slots are available on the motherboard.
+
+==== Characteristics of RAM
+RAM derives its name from the fact that its contents can be accessed (i.e., read from and written to) in any order. (Perhaps it should have more descriptively been named non-sequential memory, as it is not accessed in a random manner.) This is in contrast to sequential storage devices and media, such as hard disk drives (HDDs), floppy disks, CDROMs and magnetic tape, for which the data must be accessed to some extent in a fixed order. Thus, the times required to access any locations in RAM are virtually identical, in contrast to disks and tapes, which have delay times that vary according to the location on the media.
+
+RAM features much higher access speeds than storage devices. This is due to the fact that access is entirely electronic and thus there are no moving parts (e.g., magnetic heads and spindle motors) to slow things down. RAM access time is expressed in nanoseconds (millionths of a second), whereas HDD access time is expressed in milliseconds (thousandths of a second).
+
+Another characteristic of RAM is that it is volatile, in contrast to ROM (read-only memory) and storage devices and media. This means that any data stored in RAM is retained only as long as the RAM chips are connected to a power supply. In the case of DRAM chips, moreover, not only must they be connected to a power supply, but also they must be refreshed at frequent intervals (i.e., multiple times per second) by an electric current, hence the term dynamic in their name. The reason is that each bit of data is stored as a charge in a microscopic capacitor, and such charges quickly dissipate without refreshment. Thus, when the power supply is interrupted (e.g., the computer is turned off), the memory contents are lost. When a computer is turned on, the operating system and other files are once again loaded into RAM, usually from the HDD.
+
+SRAM (static RAM) is another type of RAM that is faster and more reliable than DRAM. The term static is derived from the fact that it does not need to be refreshed as does DRAM, although it is still volatile (i.e., it needs to be connected to a power supply in order to retain its contents). SRAM has the disadvantages that it holds less data (and thus consumes more space) than DRAM and that it is considerably more expensive. SRAM should not be confused with SDRAM (synchronous DRAM), which is a frequently used type of DRAM that is synchronized with the clock speed of the CPU (central processing unit) in order to boost processing speed.
+
+DRAM is the least expensive type of RAM, and it also has a relatively small space consumption. Because of the large amount of RAM that is required for modern computers and the desire for low cost, DRAM is generally the only type of RAM that is used for the main memory.
+
+==== Rapid Progress
+
+The main memory of the first electronic computers (e.g., ENIAC) consisted of a special type of vacuum tube (named the Williams tube after one of its inventors). However, these tubes were soon replaced by the much more reliable and considerably less bulky ferrite core memories, which were composed of small, ring-shaped pieces of an electromagnetic material that were connected by wires in a grid arrangement.
+
+The first single-transistor DRAM cell (which could hold a single bit of data) was developed in 1966 by Dr. Robert H. Dennard at IBM. In 1970, the newly formed Intel Corporation released the world's first commercially available DRAM chip, the 1103, which had a capacity of about a thousand bits. This best-selling product featured a much lower cost and smaller size than comparable core memories and immediately began replacing them.
+
+RAM technology subsequently improved at a swift pace as a result of the ability to produce ever finer circuit line widths and the consequent ability to cram more and more circuit elements into a single chip. These improvements include faster speeds, smaller chip sizes and lower power consumption. At the same time, RAM prices have continued to come down at a dramatic rate.
+
+As of mid-2006, the largest DRAM chips being mass produced contained more than one billion transistors and had a capacity of one gigabit (i.e., one billion bits). This vast capacity has been made possible through the development of techniques to reduce the average circuit line width to less than a tenth of a micron (a micron is one millionth of a meter or one thousandth of a millimeter). Moreover, 4G (four gigabit) DRAMs have been developed and large-scale production is expected to begin in the near future.
+
+==== More is Better
+
+Having more RAM in a computer can speed up its operation. This is because it reduces the number of times that the CPU has to access the HDD (i.e., read data from it and write data to it), an operation that takes much longer than reading data from or writing data to RAM.
+
+Although the amount of RAM on computers has continued to increase, so have the requirements for RAM from memory-hungry application programs. As of mid-2006, most personal computers being sold contained between 512MB (megabytes) and 2GB (gigabytes) of RAM. While this is huge in comparison to what was common just a few years ago, it is still sometimes insufficient to simultaneously operate all of the programs that users attempt to run. The reason is that the size of many programs has continued to increase along with the growth in memory sizes and hard disk capacities, largely in order to add more features (including fancier graphics).
+
+When all of the RAM is being used (e.g., if there are many programs open simultaneously or if one very large program is in use), a computer can employ virtual memory to effectively increase the system's total memory. Virtual memory is the utilization of space on a HDD to free up space in the RAM and thus simulate additional main memory. The operating system accomplishes this by transferring data that is not immediately needed from the RAM to swap space on the HDD, and when that data is required again, by copying it back into memory.
+ 

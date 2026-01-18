@@ -1,0 +1,924 @@
+= Linux Memory
+:figures: 19-OS/linux
+
+== User space and kernel space
+The contents of memory, which consists of dedicated RAM (random access memory) VLSI (very large scale integrated circuit) semiconductor chips, can be accessed (i.e., read and written to) at extremely high speeds but are retained only temporarily (i.e., while in use or, at most, while the power supply remains on). Its purpose is to hold programs and data that are currently in use and thereby serve as a high speed intermediary between the CPU (central processing unit) and the much slower storage, which most commonly consists of one or more hard disk drives (HDDs). This contrasts with storage (e.g., disk drives), which has much slower access speeds but whose contents are retained after the power is turned off and which usually has a far greater capacity. 
+
+A modern computer operating system usually uses virtual memory to provide separate address spaces or regions of a single address space, called user space and kernel space. This separation primarily provides memory protection and hardware protection from malicious or errant software behaviour.
+
+System memory in Linux can be divided into two distinct regions: kernel space and user space. Kernel space is where the kernel (i.e., the core of the operating system) executes (i.e., runs) and provides its services. 
+
+User space is that portion of system memory in which user processes run. This contrasts with kernel space, which is that portion of memory in which the kernel executes and provides its services. 
+
+Kernel space is strictly reserved for running a privileged operating system kernel, kernel extensions, and most device drivers. 
+
+Kernel space can be accessed by user processes only through the use of system calls. System calls are requests in a Unix-like operating system by an active process for a service performed by the kernel, such as input/output (I/O) or process creation. An active process is a process that is currently progressing in the CPU, as contrasted with a process that is waiting for its next turn in the CPU. I/O is any program, operation or device that transfers data to or from a CPU and to or from a peripheral device (such as disk drives, keyboards, mice and printers). 
+
+In contrast, user space is the memory area where application software, daemons, and some drivers execute, typically with one address space per process. 
+
+User space is that set of memory locations in which user processes (i.e., everything other than the kernel) run. A process is an executing instance of a program. One of the roles of the kernel is to manage individual user processes within this space and to prevent them from interfering with each other.
+
+The term user space (or userland) refers to all code that runs outside the operating system's kernel.[2] User space usually refers to the various programs and libraries that the operating system uses to interact with the kernel: software that performs input/output, manipulates file system objects, application software, etc.
+
+A process is an executing (i.e., running) instance of a program. User processes are instances of all programs other than the kernel (i.e., utility and application programs). When a program is to be run, it is copied from storage into user space so that it can be accessed at high speed by the CPU (central processing unit). 
+
+Each user space process usually runs in its own virtual memory space, and, unless explicitly allowed, cannot access the memory of other processes. This is the basis for memory protection in today's mainstream operating systems, and a building block for privilege separation. A separate user mode can also be used to build efficient virtual machines – see Popek and Goldberg's virtualization requirements. With enough privileges, processes can request the kernel to map part of another process's memory space to their own, as is the case for debuggers. Programs can also request shared memory regions with other processes, although other techniques are also available to allow inter-process communication. 
+
+image::{figures}/linux-user-space-kernelspace.png[Various layers within Linux, also showing separation between the userland and kernel space]
+
+=== User space vs Kernel space (memory layout)
+These are virtual memory regions.
+
+Space is about memory visibility and access
+
+User space
+
+* Memory region where user programs live
+* Each process has its own private user space
+* Cannot see or touch another process’s memory
+* Cannot access kernel memory
+
+Example layout:
+----
+0x00000000 ──────────► User space
+...
+0x7fffffffffff
+----
+Kernel space
+
+* Memory region reserved for the kernel
+* Shared by all processes
+* Mapped into every process’s address space
+* Protected from user access
+
+Example:
+----
+0xffff800000000000 ─► Kernel space
+----
+
+=== relation between User space,Kernel space and Kernel mode,User mode
+Concept	Question it answers
+User mode	What can the CPU do right now?
+Kernel mode	What can the CPU do right now?
+User space	Which memory addresses are accessible?
+Kernel space	Which memory addresses are accessible?
+
+Term	Meaning
+User mode	Restricted CPU execution
+Kernel mode	Privileged CPU execution
+User space	Memory for applications
+Kernel space	Memory for kernel
+
+System calls is where everything meets as A system call is the bridge.
+
+Example: read(fd, buf, size)
+
+. Your program runs in:
+.. User mode
+.. User space
+. You call read()
+. CPU switches to:
+.. Kernel mode
+. Kernel executes code in:
+.. Kernel space
+. Kernel returns to:
+.. User mode
+.. User space
+
+Visual flow
+----
+User program
+ (user mode, user space)
+        |
+     syscall
+        v
+Kernel
+ (kernel mode, kernel space)
+        |
+     return
+        v
+User program
+----
+
+=== Implementation
+The most common way of implementing a user mode separate from kernel mode involves operating system protection rings. Protection rings, in turn, are implemented using CPU modes. Typically, kernel space programs run in kernel mode, also called supervisor mode; standard applications in user space run in user mode.
+
+Some operating systems are single address space operating systems—with a single address space for all user-mode code. (The kernel-mode code may be in the same address space, or it may be in a second address space). Other operating systems have per-process address spaces, with a separate address space for each user-mode process. 
+[tabs]
+======
+ChatGPT::
+*1. Big picture: what "memory" means to Linux*
++
+Linux manages memory using virtual memory. Every process sees a virtual address space, which the kernel maps to physical RAM (or swap, or files) using:
++
+* MMU (hardware)
+* Page tables (software + hardware)
+* Memory mappings (VMAs)
++
+There are two separate address spaces:
++
+* User space
+* Kernel space
++
+. Address spaces
++
+**2.1 User virtual address space (per process)**
++
+Each process has its own mm_struct:
++
+[source,c]
+----
+struct mm_struct {
+    struct vm_area_struct *mmap;
+    struct rb_root mm_rb;
+    pgd_t *pgd;
+    ...
+};
+----
++
+Layout (x86-64, simplified):
++
+----
+0x0000000000000000 ── NULL
+   ↓
+   Code (text)
+   Data / BSS
+   Heap (brk)
+   mmap area
+   Stack
+0x00007fffffffffff ── User space limit
+----
++
+**2.2 Kernel virtual address space (global)**
++
+Kernel memory is shared by all processes.
++
+----
+0xffff800000000000 ── Direct map (phys → virt)
+   Kernel text
+   Kernel data
+   vmalloc area
+   Fixmap
+0xffffffffffffffff
+----
++
+Key idea: Kernel addresses are the same in every process, user addresses are not.
++
+. Physical memory model
++
+Linux divides physical memory into pages (usually 4 KB).
++
+[source,c]
+----
+struct page {
+    unsigned long flags;
+    atomic_t _refcount;
+    struct address_space *mapping;
+    ...
+};
+----
++
+Each physical page frame has one struct page.
++
+. Page tables (hardware view)
++
+On x86-64 (4-level paging):
++
+----
+Virtual Address
+ └── PGD
+     └── PUD
+         └── PMD
+             └── PTE → Physical Page
+----
++
+Linux maintains page tables per process:
++
+* Stored in mm_struct->pgd
+* Loaded into CR3 on context switch
++
+. What is a memory mapping?
++
+A memory mapping is: A rule that says: "virtual address range X maps to backing Y with permissions Z"
++
+In Linux, mappings are represented by:
++
+[source,c]
+----
+struct vm_area_struct (VMA)
+----
++
+. VMAs (Virtual Memory Areas)
++
+A VMA describes a continuous virtual address range with identical properties.
++
+[source,c]
+----
+struct vm_area_struct {
+    unsigned long vm_start;
+    unsigned long vm_end;
+    unsigned long vm_flags;
+    struct file *vm_file;
+    const struct vm_operations_struct *vm_ops;
+};
+----
++
+Examples of VMAs:
++
+* Code segment (RX)
+* Heap (RW)
+* Stack (RW)
+* mmap() region
+* Shared libraries
+* Memory-mapped files
++
+Each process has:
++
+* Linked list of VMAs (mm->mmap)
+* RB-tree for fast lookup (mm->mm_rb)
++
+*7. Types of memory mappings*
++
+**7.1 Anonymous mapping (no file)**
++
+[source,c]
+----
+mmap(NULL, size, PROT_READ|PROT_WRITE,
+     MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+----
++
+* Backed by RAM / swap
+* No file
+* Used by: Heap extensions, Stack, Large malloc() allocations
++
+Kernel: `vma->vm_file = NULL;`
++
+**7.2 File-backed mapping**
++
+[source,c]
+----
+mmap(fd, ...)
+----
++
+* Backed by a file
+* Pages loaded from disk on demand
+* Shared or private
++
+Kernel: `vma->vm_file = file;` and `vma->vm_ops = &file_vm_ops;`
++
+**7.3 Shared vs private**
++
+[cols="1,1"]
+|===
+|Flag |Behavior
+|MAP_SHARED |Writes go to file / shared memory
+|MAP_PRIVATE |Copy-on-write
+|===
++
+COW is implemented using:
++
+* Read-only PTEs
+* Page fault duplication
++
+. Demand paging & page faults
++
+**8.1 No memory allocated at mmap()**
++
+Important: mmap() does not allocate physical memory. Only VMA is created.
++
+**8.2 First access → page fault**
++
+----
+CPU loads virtual address
+ → PTE not present
+ → Page fault (#PF)
+----
++
+Kernel path (simplified):
++
+----
+page_fault
+ → do_page_fault
+   → handle_mm_fault
+     → vma->vm_ops->fault
+----
++
+For file mappings: `filemap_fault` → read page from disk → map page
++
+For anonymous memory: `do_anonymous_page` → `alloc_page()` → zero page
++
+. Kernel memory allocation mechanisms
++
+**9.1 kmalloc (physically contiguous)**
++
+* Uses slab allocator
+* Small, fast
+* Physically contiguous
++
+[source,c]
+----
+ptr = kmalloc(128, GFP_KERNEL);
+----
++
+Used for: Kernel objects, Structs, Buffers for devices
++
+**9.2 vmalloc (virtually contiguous)**
++
+* Physically scattered
+* Mapped into kernel virtual space
++
+[source,c]
+----
+ptr = vmalloc(10 * MB);
+----
++
+Used for: Large kernel buffers, Modules, Debugging
++
+**9.3 Direct map**
++
+[source,c]
+----
+virt = phys + PAGE_OFFSET
+----
++
+Kernel can directly access RAM using the direct mapping.
++
+**10. Special kernel mappings**
++
+**10.1 Fixmap**
++
+* Fixed virtual addresses
+* Used early boot
+* Used for: APIC, IO memory
++
+**10.2 High memory (32-bit)**
++
+* Not permanently mapped
+* Temporarily mapped with kmap()
+* (Does not exist on x86-64)
++
+. Memory limits & accounting
++
+Linux enforces limits via:
++
+* RLIMIT_AS
+* RLIMIT_DATA
+* cgroups memory controller
+* OOM killer
++
+Mappings count toward:
++
+* Virtual memory
+* RSS
+* File cache
++
+. mmap call path (real kernel flow)
++
+----
+user mmap()
+ → sys_mmap
+   → do_mmap
+     → mmap_region
+       → vma_merge
+       → insert_vm_struct
+----
++
+Unmapping:
++
+----
+munmap()
+ → do_munmap
+   → unmap_region
+----
++
+. How everything connects (mental model)
++
+----
+Process
+ └── mm_struct
+     ├── VMAs (memory mappings)
+     ├── Page tables
+     └── RSS accounting
+
+VMA
+ ├── Virtual range
+ ├── Permissions
+ ├── Backing store (file / anon)
+ └── Fault handler
+
+Page fault
+ ├── Find VMA
+ ├── Check permissions
+ ├── Allocate or load page
+ └── Update page tables
+----
++
+. One-paragraph summary
++
+Linux kernel memory management is built around virtual memory, where VMAs describe memory mappings, page tables connect virtual to physical memory, and page faults allocate or load pages on demand. Kernel memory uses separate allocators (kmalloc, vmalloc) and a global kernel address space, while user memory is isolated per process through mm_struct.
+
+Gemini::
+[tabs]
+====
+tab1::
+
+tab2::
+====
+======
+
+== Memory Mappings
+The mmap() system call creates a new memory mapping in the calling process’s virtual
+address space.
+
+Mappings fall into two categories:
+
+* A file mapping maps a region of a file into the calling process’s virtual memory.
+Once mapped, the file’s contents can be accessed by operations on the bytes in
+the corresponding memory region. The pages of the mapping are automati-
+cally loaded from the file as required.
+* By contrast, an anonymous mapping doesn’t have a corresponding file. Instead,
+the pages of the mapping are initialized to 0.
+
+The memory in one process’s mapping may be shared with mappings in other pro-
+cesses. This can occur either because two processes map the same region of a file
+or because a child process created by fork() inherits a mapping from its parent.
+When two or more processes share the same pages, each process may see the
+changes made by other processes to the contents of the pages, depending on
+whether the mapping is created as private or shared. When a mapping is private,
+modifications to the contents of the mapping are not visible to other processes and
+are not carried through to the underlying file. When a mapping is shared, modifica-
+tions to the contents of the mapping are visible to other processes sharing the same
+mapping and are carried through to the underlying file.
+
+Memory mappings serve a variety of purposes, 
+
+* including initialization of a
+process’s text segment from the corresponding segment of an executable file,
+* allocation of new (zero-filled) memory, file I/O (memory-mapped I/O), 
+* and inter-
+process communication (via a shared mapping).
+
+## AI
+
+[tabs]
+======
+ChatGPT::
+In Linux, mmap is a system call that lets a process map files or devices into its virtual memory, or allocate memory directly from the kernel, so the process can access it as if it were normal RAM.
++
+At a high level:
++
+mmap maps a range of virtual addresses in a process to a file or to anonymous memory.
++
+*Why mmap exists (intuition)*
++
+Instead of:
++
+reading data from a file into a buffer (read)
++
+writing data back with (write)
++
+you can:
++
+map the file into memory
++
+access it using normal pointers
++
+the kernel transparently loads pages and writes them back
++
+This gives:
++
+Zero-copy I/O
++
+Lazy loading (pages loaded only when accessed)
++
+Efficient sharing between processes
++
+Fine-grained control over memory
++
+Basic definition
++
+[source,c]
+----
+void *mmap(void *addr, size_t length,
+           int prot, int flags,
+           int fd, off_t offset);
+----
++
+If successful, it returns a virtual address.
++
+Common uses of mmap
++
+1. File-backed memory (file mapping)
++
+[source,c]
+----
+int fd = open("data.bin", O_RDONLY);
+
+void *p = mmap(NULL, 4096, PROT_READ, MAP_PRIVATE, fd, 0);
+----
++
+File contents appear in memory
++
+Kernel loads pages from disk on demand
++
+Changes:
++
+MAP_PRIVATE → copy-on-write
++
+MAP_SHARED → written back to file
++
+📌 Used by:
++
+Databases
++
+File caches
++
+Loaders (ld.so)
++
+Large file processing
++
+2. Anonymous memory (heap alternative)
++
+[source,c]
+----
+void *p = mmap(NULL, 1<<20,
+               PROT_READ | PROT_WRITE,
+               MAP_PRIVATE | MAP_ANONYMOUS,
+               -1, 0);
+----
++
+No file involved
++
+Pages backed by RAM / swap
++
+Used for large allocations
++
+📌 malloc() internally uses mmap() for large allocations
++
+3. Shared memory between processes
++
+[source,c]
+----
+mmap(..., MAP_SHARED, fd, ...)
+----
++
+Multiple processes map the same pages
++
+Writes are visible to all
++
+Foundation of:
++
+POSIX shared memory
++
+System V shared memory
++
+4. Memory-mapped devices
++
+[source,c]
+----
+mmap()
+----
++
+device memory (e.g. /dev/mem)
++
+Used in:
++
+Device drivers
++
+User-space drivers (UIO, DPDK)
++
+What actually happens in the kernel
++
+Step-by-step (file-backed)
++
+Process calls mmap
++
+Kernel:
++
+Creates a VMA (Virtual Memory Area)
++
+Updates the process page tables
++
+No physical memory is allocated yet
++
+First access → page fault
++
+Kernel:
++
+Reads page from disk
++
+Maps it into RAM
++
+CPU retries instruction
++
+This is called demand paging.
++
+*mmap vs malloc*
++
+[cols="1,1,1"]
+|===
+|Feature |malloc |mmap
+|Backing |heap |file or anonymous
+|Page fault handling |yes |yes
+|Large allocations |uses mmap internally |direct
+|Freeing memory |may stay in heap |munmap returns to kernel
+|File mapping |❌ |✅
+|===
++
+*Relation to virtual memory*
++
+Each process has its own:
++
+Virtual Address Space
++
+├── Code (text)
++
+├── Heap
++
+├── mmap regions
++
+├── Stack
++
+mmap creates entries in the mmap region.
++
+*Example: memory layout*
++
+0x400000  ── Program text
++
+0x600000  ── Heap (brk)
++
+0x7fxxxx  ── mmap regions
++
+0x7fffff  ── Stack
++
+*Key flags you should know*
++
+*Protection flags*
++
+PROT_READ
++
+PROT_WRITE
++
+PROT_EXEC
++
+PROT_NONE
++
+*Mapping flags*
++
+MAP_PRIVATE
++
+MAP_SHARED
++
+MAP_ANONYMOUS
++
+MAP_FIXED ⚠️ dangerous
++
+*Errors to watch for*
++
+MAP_FAILED
++
+ENOMEM → RLIMIT_AS / address space exhausted
++
+EACCES → wrong protections
++
+*Real kernel path (simplified)*
++
+user mmap()
++
+ → sys_mmap
++
+   → do_mmap
++
+     → mmap_region
++
+       → vma_merge / insert_vm_struct
++
+Page fault path:
++
+access memory
++
+ → page fault
++
+   → handle_mm_fault
++
+     → filemap_fault
++
+*One-line summary*
++
+mmap is the Linux mechanism that turns files and kernel-managed memory into normal-looking memory via virtual memory and page faults.
+
+Gemini::
+[tabs]
+====
+tab1::
+
+tab2::
+====
+======
+
+== Virtual Memory
+Incidentally, many computers today support a scheme known as virtual memory. It makes it possible to run
+programs larger than physical memory by placing them on nonvolatile storage
+(SSD or disk) and using main memory as a kind of cache for the most heavily
+executed parts. From time to time, the program will need data that are currently not in memory. It frees up some memory (e.g., by writing some data that have not
+been used recently back to SSD or disk) and then loads the new data at this loca-
+tion. Because the physical address for the data and code is now no longer fixed, the
+scheme remaps memory addresses on the fly to convert the address the program
+generated to the physical address in RAM where the data are currently located.
+This mapping is done by a part of the CPU called the MMU (Memory Management Unit)
+
+Virtual memory is the use of space on a hard disk drive (HDD) to simulate additional main memory. 
+
+In order to free up space in memory, an operating system with a virtual memory capability transfers data that is not immediately needed from memory to the HDD; when that data is needed again, it is copied back into memory. That is, when all of the RAM is being used (e.g., if there are many programs open simultaneously or if one very large program is in use), a computer with virtual memory enabled will swap data to the HDD and back to memory as needed, thus, in effect, increasing the total system memory.
+
+Virtual memory permits software to run in a memory space (i.e., a logical memory) whose size is greater than the computer's RAM. Most personal computers sold today contain from 256MB to 1024MB of RAM. While this is huge in comparison to what was common just a few years ago, it is still often insufficient to simultaneously run all of the programs that users attempt to run. The reason is that the size of many programs has continued to increase accompanying the growth in memory sizes and HDD capacities, largely in order to add more features (including fancier graphics).
+
+Application programs cannot distinguish between primary memory and virtual memory, and thus they run as if all the data is in primary memory. Virtual memory is likewise usually invisible to the user. However, its existence can become apparent in the form of degraded performance if it is used too heavily, because the CPU (central processing unit) will spend more of its time copying data back and forth to the HDD and less of its time doing useful work. This is termed thrashing. The reduced efficiency is also a result of the facts that HDDs are far slower than RAM and that they are not designed for accessing small pieces of data (e.g., single bytes) one at a time.
+
+Virtual memory has become a standard feature of most operating systems on desktop and notebook computers. This is because it provides a large benefit to users at a very low cost. That is, the cost of hard disk space is only a small fraction of that of an equal amount of RAM, and thus it pays to install, and use, more of the former and less of the latter.
+
+The space on a HDD that is used to store the overflow from memory is called swap space. On Linux it is a separate partition (i.e., a logically independent section of a HDD) that is set up during installation of the operating system and which is referred to as the swap partition. It is generally recommended that the size of the swap partition be about twice the amount of system RAM.
+
+The swap space is divided into segments called pages, each of which is associated with a specific address in memory. When an address is referenced, the page is swapped into memory. It is returned to the disk when no longer needed and other pages are called. This management of virtual memory is performed by a type of hardware circuitry called a memory management unit (MMU).
+
+The MMU can have a major impact on performance as every memory access
+by the program must be remapped using special data structures that are also in
+memory. In a multiprogramming system, when switching from one program to
+another, sometimes called a context switch, these data structures must change as
+the mappings differ from process to process. Both the on-the-fly address transla-
+tion and the context switch can be expensive operations.
+
+Most CPUs now include built-in MMU circuitry, which improves performance as compared with separate MMU chips. In order to facilitate this switching, CPUs also maintain a table of recently used main-to-virtual memory translations, called a translation lookaside buffer (TLB)
+
+Virtual memory is so important that its acronym, i.e., vm, was incorporated into the name of the Linux kernel as it is used on most systems, i.e., vmlinux for the non-compressed version and vmlinuz for the compressed, bootable (i.e., runnable) version. 
+
+== Virtual Memory vs Swap
+Virtual memory is an addressing and protection mechanism, while swap is a storage-backed extension used by virtual memory when RAM is insufficient.
+
+They are related — but not the same thing.
+
+*Virtual Memory (VM) — the core concept*
+
+Virtual memory is about addresses, not disks.
+
+Every process (and the kernel) sees virtual addresses, which are translated to physical RAM by the MMU using page tables.
+
+What virtual memory provides
+
+* Each process gets its own private address space
+* Memory protection (no process can touch another)
+* Kernel memory is protected from user memory
+* Allows memory to be mapped, shared, or lazy-loaded
+* Makes programs think they have contiguous memory
+
+Virtual memory works even if swap is completely disabled
+
+*Virtual Memory in User Space*
+
+What it is
+
+User programs see virtual addresses. They never see physical memory. The kernel controls all mappings.
+
+Characteristics
+
+* Cannot access kernel memory
+* Page faults handled by kernel
+* Uses system calls like:
+** malloc() → brk() / mmap()
+** mmap() (files, anonymous memory, shared memory)
+
+Example
+
+Process A:
+Virtual address 0x400000 → Physical frame #123
+
+Process B:
+Virtual address 0x400000 → Physical frame #987
+
+Same virtual address, different physical memory.
+
+*Virtual Memory in Kernel Space*
+
+What it is
+
+The kernel also uses virtual memory, but with full privileges.
+
+Why the kernel uses VM
+
+* Hardware abstraction
+* Protection from buggy drivers
+* Easier memory management
+* Direct mapping of physical RAM
+
+Kernel VM properties
+
+* One shared kernel address space
+* Mapped into every process (but inaccessible in user mode)
+* Includes:
+** Kernel code/data
+** Kernel stacks
+** Device memory (MMIO)
+** Slab caches
+
+Key difference from user space
+
+[cols="1,1"]
+|===
+| User Space | Kernel Space
+
+| Per-process | Global
+| Restricted | Full access
+| Can be swapped | Mostly not swappable
+|===
+
+*Swap — not virtual memory itself*
+
+What swap really is
+
+Swap is disk storage used to hold memory pages that are not currently in RAM.
+
+Swap is a backing store, not an addressing mechanism.
+
+What gets swapped
+
+* Anonymous user pages (malloc, heap, stack)
+* Inactive memory pages
+
+What does not get swapped
+
+* Kernel code
+* Kernel stacks
+* Most kernel data structures
+* Device memory
+
+*How virtual memory and swap work together*
+
+Without swap
+
+Virtual memory → Physical RAM only
+
+* Page fault happens → page must be in RAM
+* If RAM is full → OOM killer
+
+With swap
+
+Virtual memory → RAM ↔ Swap (disk)
+
+* Cold pages moved to disk
+* RAM freed for active pages
+* Page fault → page read back from disk
+
+*Key misconception (important!)*
+
+❌ Wrong:
+
+Virtual memory means using disk as memory
+
+✅ Correct:
+
+Virtual memory means using virtual addresses.
+Swap is an optional optimization that uses disk.
+
+*Simple analogy*
+
+Virtual Memory
+
+* 📬 A mailbox system
+** You write to mailbox numbers (virtual addresses)
+** Post office (MMU + kernel) decides where letters actually go
+
+Swap
+
+* 📦 A storage warehouse
+** Letters not needed now are stored in the warehouse
+** Retrieved later if needed
+
+The mailbox system works with or without the warehouse.
+
+*Summary table*
+
+[cols="1,1,1"]
+|===
+| Concept | What it is | Required | Uses disk
+
+| Virtual Memory | Address translation & protection | Always | ❌
+| User-space VM | Per-process virtual address space | Always | ❌
+| Kernel-space VM | Kernel's own virtual mappings | Always | ❌
+| Swap | Disk-backed storage for cold pages | Optional | ✅
+|===
+
+Linux-specific note (ties to your earlier questions)
+
+* malloc() → mmap() / brk()
+* Pages are not allocated immediately
+* Physical RAM assigned on page fault
+* Swap may be used later if memory pressure occurs
+
+This is why:
+
+[source,c]
+----
+malloc(100GB); // succeeds
+----
+
+…but touching it causes a crash.

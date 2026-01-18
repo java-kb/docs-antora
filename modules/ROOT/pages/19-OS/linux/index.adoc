@@ -1,0 +1,745 @@
+= Linux
+:figures: 19-OS/linux
+
+A modern computer consists of one or more processors, some amount of main
+memory, hard disks or Flash drives, printers, a keyboard, a mouse, a display, net-
+work interfaces, and various other input/output device
+
+computers are equipped with a layer of software called the operating system,
+whose job is to provide user programs with a better, simpler, cleaner, model of the
+computer and to handle managing all the resources just mentioned
+
+The program that users interact with, usually called the shell when it is text based
+and the GUI (Graphical User Interface) (which is pronounced ‘‘gooey’’) when it
+uses icons, is actually not part of the operating system, although it uses the operat-
+ing system to get its work done.
+
+A simple overview of the main components under discussion here is given in
+Fig. 1-1
+
+image::{figures}/computer-structure.png[Where the operating system fits in]
+
+The hardware consists of chips,
+boards, Flash drives, disks, a keyboard, a monitor, and similar physical objects. 
+
+On top of the hardware is the software. 
+
+The placement of the operating system is shown in Fig. 1-1. It runs on the
+bare hardware and provides the base for all the other software
+
+== Storage
+Storage in a computer context refers to devices or media that can retain data for relatively long periods of time, for example, years or even decades.
+
+This contrasts with memory, whose contents can be accessed (i.e., read and written to) at extremely high speeds but which are retained only temporarily (i.e., while in use or as long as connected to a power supply). The function of memory is to serve as a high speed intermediary, providing enough data for the CPU (central processing unit) to use at any given time without making it wait for the much slower storage and thereby slow down the entire system. Memory is constructed from semiconductor chips (which are, in turn, incorporated into multi-chip modules) called random access memory (RAM).
+
+As compared with memory, storage not only (1) has much slower access speeds, but also (2) has a much larger capacity (and a much lower cost), (3) retains programs and data regardless of whether it is currently in use or not and (4) is non-volatile (i.e., retains its contents regardless of whether or not it is connected to power supply).
+
+Examples of storage devices include hard disk drives (HDDs), floppy disks, optical disks (e.g., CDROMs and DVDs) and magnetic tape.
+
+Flash memory, a type of electrically erasable programmable read-only memory (EEPROM), has characteristics of both memory and storage. That is, access speeds and access techniques are similar to those of RAM, but data can be retained for long periods (at least ten years) without any need for a power supply. This unique combination has made flash memory increasingly popular, particularly for use in USB (universal serial bus) key drives (also called flash memory drives) and for image storage cards for digital cameras.
+
+There is a close relationship between storage and memory. This is because data frequently moves back and forth between the two at high speed when a computer is in operation. The relationship is particularly intimate in the case of virtual memory, which is the use of space on a HDD to simulate additional RAM by transferring data that is not immediately needed to the HDD and then copying it back into memory when it is needed again. 
+
+== Operating System
+operating systems perform two essentially unrelated functions: pro-
+viding application programmers (and application programs, naturally) a clean ab-
+stract set of resources instead of the messy hardware ones and managing these
+hardware resources
+
+
+=== The Operating System as an Extended Machine
+The architecture (instruction set, memory organization, I/O, and bus struc-
+ture) of most computers at the machine-language level is primitive and awkward to
+program, especially for input/output
+
+consider
+modern SATA (Serial ATA) hard disks,no programmer would want to deal with this disk at the
+hardware level. Instead, a piece of software, called a disk driver, deals with the
+hardware and provides an interface to read and write disk blocks, without getting
+into the details. Then operating systems provide yet another layer of abstraction for using disks: files.
+Using this abstraction, programs can create, write, and read files, without having to
+deal with the messy details of how the hardware actually works.
+
+This abstraction is the key to managing all this complexity. Good abstractions
+turn a nearly impossible task into two manageable ones. The first is defining and
+implementing the abstractions. The second is using these abstractions to solve the problem at hand. One abstraction that almost every computer user understands is
+the file, as mentioned above. It is a useful piece of information, such as a digital
+photo, saved email message, song, or Web page. It is much easier to deal with pho-
+tos, emails, songs, and Web pages than with the details of SATA (or other) disks.
+The job of the operating system is to create good abstractions and then implement
+and manage the abstract objects thus created. In this book, we will talk a lot about
+abstractions. They are one of the keys to understanding operating systems
+
+One of the major tasks of the oper-
+ating system is to hide the hardware and present programs (and their programmers)
+with nice, clean, elegant, consistent, abstractions to work with instead. Operating
+systems turn the awful into the beautifu
+
+=== The Operating System as a Resource Manager
+The concept of an operating system as primarily providing abstractions to
+application programs is a top-down view. An alternative, bottom-up, view holds
+that the operating system is there to manage all the pieces of a complex system.
+Modern computers consist of processors, memories, timers, disks, mice, network
+interfaces, printers, touch screens, touch pad, and a wide variety of other devices.
+In the bottom-up view, the job of the operating system is to provide for an orderly
+and controlled allocation of the processors, memories, and I/O devices among the
+various programs wanting them.
+
+Modern operating systems allow multiple programs to be in memory and run
+at the same time. Imagine what would happen if three programs running on some
+computer all tried to print their output simultaneously on the same printer. The first
+few lines of printout might be from program 1, the next few from program 2, then
+some from program 3, and so forth. The result would be utter chaos. The operating
+system can bring order to the potential chaos by buffering all the output destined
+for the printer on the disk or Flash drive. When one program is finished, the operat-
+ing system can then copy its output from the disk file where it has been stored for
+the printer, while at the same time the other program can continue generating more
+output, oblivious to the fact that the output is not really going to the printer (yet).
+
+When a computer (or network) has more than one user, managing and protect-
+ing the memory, I/O devices, and other resources is even more important since the
+users might otherwise interfere with one another. In addition, users often need to
+share not only hardware, but information (files, databases, etc.) as well. In short,
+
+this view of the operating system holds that its primary task is to keep track of
+which programs are using which resource, to grant resource requests, to account
+for usage, and to mediate conflicting requests from different programs and users
+
+Resource management includes multiplexing (sharing) resources in two dif-
+ferent ways: in time and in space. 
+
+When a resource is time multiplexed, different
+programs or users take turns using it. First one of them gets to use the resource,
+then another, and so on. For example, with only one CPU and multiple programs
+that want to run on it, the operating system first allocates the CPU to one program,
+then, after it has run long enough, another program gets to use the CPU, then another, and then eventually the first one again. Determining how the resource is
+time multiplexed—who goes next and for how long—is the task of the operating
+system. Another example of time multiplexing is sharing the printer. When multi-
+ple print jobs are queued up for printing on a single printer, a decision has to be
+made about which one is to be printed next.
+
+The other kind of multiplexing is space multiplexing. Instead of the customers
+taking turns, each one gets part of the resource. For example, 
+
+* main memory is nor-
+mally divided up among several running programs, so each one can be resident at
+the same time (for example, in order to take turns using the CPU). Assuming there
+is enough memory to hold multiple programs, it is more efficient to hold several
+programs in memory at once rather than give one of them the entire mem, especial-
+ly if it only needs a small fraction of the total. Of course, this raises issues of fair-
+ness, protection, and so forth, and it is up to the operating system to solve them.
+* Other resource that are space multiplexed are disks and Flash drives. In many sys-
+tems, a single disk can hold files from many users at the same time. Allocating disk
+space and keeping track of who is using which disk blocks is a typical operating
+system task. 
+
+
+=== Standards
+Because the source
+code of Unix was widely available, various organizations developed their own (incompati-
+ble) versions, which led to chaos. Two major versions developed, System V, from
+AT&T, and BSD (Berkeley Software Distribution) from the University of Cali-
+fornia at Berkeley. These had minor variants as well. To make it possible to write
+programs that could run on any UNIX system, IEEE developed a standard for
+UNIX, called POSIX, that most versions of UNIX now support. POSIX defines a
+minimal system-call interface that conformant UNIX systems must support. In
+fact, some other operating systems now also support the POSIX interface.
+==== POSIX
+The term POSIX (an abbreviation of Portable Operating System Interface) refers to a
+group of standards developed under the auspices of the Institute of Electrical and
+Electronic Engineers (IEEE), specifically its Portable Application Standards Com-
+mittee (PASC, http://www.pasc.org/). The goal of the PASC standards is to promote
+application portability at the source code level.
+
+POSIX.1 documents an API for a set of services that should be made available to a
+program by a conforming operating system. An operating system that does this can
+be certified as POSIX.1 conformant.
+
+POSIX.1 is based on the UNIX system call and the C library function API, but
+it doesn’t require any particular implementation to be associated with this inter-
+face. This means that the interface can be implemented by any operating system,
+not specifically a UNIX operating system. 
+
+A related standard, POSIX.2 (1992, ISO/IEC 9945-2:1993), standardized the
+shell and various UNIX utilities, including the command-line interface of the C
+compiler.
+
+The Single UNIX Specification Version 3(SUSv3) is a standard for computer operating systems,[1][2] compliance with which is required to qualify for using the "UNIX" trademark. The standard specifies programming interfaces for the C language, a command-line shell, and user commands.
+
+POSIX 1003.1-2001 replaces SUSv2, POSIX.1, POSIX.2, and a raft of other earlier POSIX standards. This standard is also known as the Single UNIX Specification
+Version 3(SUSv3)
+
+The SUSv3 base specifications consists of around 3700 pages, divided into the
+following four parts:
+
+* Base Definitions (XBD): This part contains definitions, terms, concepts, and
+specifications of the contents of header files. A total of 84 header file specifica-
+tions are provided.
+* System Interfaces (XSH): This part begins with various useful background infor-
+mation. Its bulk consists of the specification of various functions (which are
+implemented as either system calls or library functions on specific UNIX imple-
+mentations). A total of 1123 system interfaces are included in this part.
+* Shell and Utilities (XCU): This specifies the operation of the shell and various
+UNIX commands. A total of 160 utilities are specified in this part.
+* Rationale (XRAT): This part includes informative text and justifications relat-
+ing to the earlier parts.
+
+In addition, SUSv3 includes the X/Open CURSES Issue 4 Version 2 (XCURSES) spec-
+ification, which specifies 372 functions and 3 header files for the curses screen-
+handling API.
+
+In all, 1742 interfaces are specified in SUSv3. By contrast, POSIX.1-1990 (with
+FIPS 151-2) specified 199 interfaces, and POSIX.2-1992 specified 130 utilities.
+
+UNIX implementations certified against SUSv3 can call themselves UNIX 03..
+
+XSI (X/Open System Interfaces) conformance refers to
+an operating system or implementation meeting specific, extended requirements from the standards (like IEEE Std 1003.1), adding more utilities and functions beyond the base POSIX standard for greater portability and UNIX compatibility, including support for locale creation, specific C development tools (like cflow, ctags), and certain shell features, all detailed within specifications (SUSv3/SUSv4). 
+
+POSIX 1003.1-2001 document(which
+is both an IEEE standard and an Open Group Technical Standard (i.e., as noted
+already, it is a consolidation of earlier POSIX and SUS standards)) defines two levels of conformance:
+
+* POSIX conformance: This defines a baseline of interfaces that a conforming
+implementation must provide. It permits the implementation to provide other
+optional interfaces.
+* X/Open System Interface (XSI) conformance: To be XSI conformant, an implemen-
+tation must meet all of the requirements of POSIX conformance and also must
+provide a number of interfaces and behaviors that are only optionally required
+for POSIX conformance. An implementation must reach this level of conform-
+ance in order to obtain the UNIX 03 branding from The Open Group.
+
+The additional interfaces and behaviors required for XSI conformance are collec-
+tively known as the XSI extension. They include support for features such as threads,
+mmap() and munmap(), the dlopen API, resource limits, pseudoterminals, System V
+IPC, the syslog API, poll(), and login accounting.
+
+SUSv4 hanges are as follows:
+
+* SUSv4 adds new specifications for a range of functions. Among the newly spec-
+ified functions that we mention in this book are dirfd(), fdopendir(), fexecve(),
+futimens(), mkdtemp(), psignal(), strsignal(), and utimensat(). Another range of
+new file-related functions (e.g., openat(), are ana-
+logs of existing functions (e.g., open()), but differ in that they interpret relative
+pathnames with respect to the directory referred to by an open file descriptor,
+rather than relative to the process’s current working directory
+ Some functions specified as options in SUSv3 become a mandatory part of the
+base standard in SUSv4. For example, a number of functions that were part of
+the XSI extension in SUSv3 become part of the base standard in SUSv4.
+Among the functions that become mandatory in SUSv4 are those in the dlopen
+API, the realtime signals API, the POSIX sema-
+phore API, and the POSIX timers API.
+* Some functions in SUSv3 are marked as obsolete in SUSv4. These include
+asctime(), ctime(), ftw(), gettimeofday(), getitimer(), setitimer(), and siginterrupt().
+* Specifications of some functions that were marked as obsolete in SUSv3 are
+removed in SUSv4. These functions include gethostbyname(), gethostbyaddr(), and
+vfork().
+* Various details of existing specifications in SUSv3 are changed in SUSv4. For
+example, various functions are added to the list of functions that are required
+to be async-signal-safe.
+
+The following Figure summarizes the relationships between the various standards described
+in the preceding sections, and places the standards in chronological order. In this
+diagram, the solid lines indicate direct descent between standards, and the dashed
+arrows indicate cases where one standard influenced another standard, was incor-
+porated as part of another standard, or simply deferred to another standard.
+
+image::{figures}/Relationships-between-various-UNIX-and-C-standards.png
+
+==== Unspecified and weakly specified and LEGACY
+we refer to an interface as being “unspecified” or “weakly specified”
+within SUSv3.
+
+By an unspecified interface, we mean one that is not defined at all in the formal
+standard, although in a few cases there are background notes or rationale text that
+mention the interface.
+
+Saying that an interface is weakly specified is shorthand for saying that, while the
+interface is included in the standard, important details are left unspecified (com-
+monly because the committee members could not reach an agreement due to dif-
+ferences in existing implementations).
+
+When using interfaces that are unspecified or weakly specified, we have few
+guarantees when porting applications to other UNIX implementations. 
+
+SUSv3 marks a specified feature as LEGACY. This term
+denotes a feature that is retained for compatibility with older applications, but
+whose limitations mean that its use should be avoided in new applications. In many
+cases, some other API exists that provides equivalent functionality.
+
+==== Linux, Standards, and the Linux Standard Base
+As a general goal, Linux (i.e., kernel, glibc, and tool) development aims to conform
+to the various UNIX standards, especially POSIX and the Single UNIX Specifica-
+tion. 
+
+The Linux Standard Base (LSB) is an effort to ensure com-
+patibility among the various Linux distributions. To do this, the LSB (http://
+www.linux-foundation.org/en/LSB) develops and promotes a set of standards for
+Linux systems with the aim of ensuring that binary applications (i.e., compiled pro-
+grams) can run on any LSB-conformant system.
+
+=== Linux Kernal
+The term operating system is commonly used with two different meanings:
+
+* To denote the entire package consisting of the central software managing a
+computer’s resources and all of the accompanying standard software tools,
+such as command-line interpreters, graphical user interfaces, file utilities, and
+editors.
+* More narrowly, to refer to the central software that manages and allocates
+computer resources (i.e., the CPU, RAM, and devices).
+
+The term kernel is often used as a synonym for the second meaning,
+Although it is possible to run programs on a computer without a kernel, the
+presence of a kernel greatly simplifies the writing and use of other programs, and
+increases the power and flexibility available to programmers. The kernel does this
+by providing a software layer to manage the limited resources of a computer
+
+A kernel is a program that constitutes the central core of a computer operating system. It is the first thing that is loaded into memory (which physically consists of RAM chips) when a computer is booted up (i.e., started), and it remains in memory for the entire time that the computer is in operation. An executable, also called an executable file, is a file that can be run as a program. 
+
+A kernel is a computer program at the core of a computer's operating system that always has complete control over everything in the system. The kernel is also responsible for preventing and mitigating conflicts between different processes.[1] It is the portion of the operating system code that is always resident in memory[2] and facilitates interactions between hardware and software components.
+
+A kernel can be contrasted with a shell (such as bash, csh or ksh in Unix-like operating systems), which is the outermost part of an operating system and a program that interacts with user commands. The kernel itself does not interact directly with the user, but rather interacts with the shell and other programs as well as with the hardware devices on the system, including the processor (also called the central processing unit or CPU), memory and disk drives. 
+
+image::{figures}/Kernel_Layout.png
+
+The kernel should not be confused with the BIOS (Basic Input/Output System). The BIOS is an independent program stored in a chip on the motherboard (the main circuit board of a computer) that is used during the booting process for such tasks as initializing the hardware and loading the kernel into memory. Whereas the BIOS always remains in the computer and is specific to its particular hardware, the kernel can be easily replaced or upgraded by changing or upgrading the operating system or, in the case of Linux, by adding a newer kernel or modifying an existing kernel. 
+
+A full kernel controls all hardware resources (e.g. I/O, memory, cryptography) via device drivers, arbitrates conflicts between processes concerning such resources, and optimizes the use of common resources, such as CPU, cache, file systems, and network sockets. 
+ 
+On most systems, the kernel is one of the first programs loaded on startup (after the bootloader). It handles the rest of startup as well as memory, peripherals, and input/output (I/O) requests from software, translating them into data-processing instructions for the central processing unit.
+
+The critical code of the kernel is usually loaded into a separate area of memory, which is protected from access by application software or other less critical parts of the operating system. The kernel performs its tasks, such as scheduling processes, managing hardware devices such as the hard disk, and handling interrupts, in this protected kernel space. In contrast, application programs such as browsers, word processors, or audio or video players use a separate area of memory, user space. This prevents user data and kernel data from interfering with each other and causing instability and slowness,[1] as well as preventing malfunctioning applications from affecting other applications or crashing the entire operating system. Even in systems where the kernel is included in application address spaces, memory protection is used to prevent unauthorized applications from modifying the kernel. 
+
+The contents of a kernel vary considerably according to the operating system, but they typically include (1) a scheduler, which determines how the various processes share the kernel's processing time (including in what order), (2) a supervisor, which grants use of the computer to each process when it is scheduled, (3) an interrupt handler, which handles all requests from the various hardware devices (such as disk drives and the keyboard) that compete for the kernel's services and (4) a memory manager, which allocates the system's address spaces (i.e., locations in memory) among all users of the kernel's services. 
+
+There are different kernel architecture designs. Monolithic kernels run entirely in a single address space with the CPU executing in supervisor mode, mainly for speed. Microkernels run most but not all of their services in user space,[3] like user processes do, mainly for resilience and modularity.[4] MINIX 3 is a notable example of microkernel design. Some kernels, such as the Linux kernel, are both monolithic and modular, since they can insert and remove loadable kernel modules at runtime.
+
+This central component of a computer system is responsible for executing programs. The kernel takes responsibility for deciding at any time which of the many running programs should be allocated to the processor or processors. 
+
+
+The Linux kernel executable typically resides at the pathname /boot/vmlinuz,
+or something similar. The derivation of this filename is historical. On early
+UNIX implementations, the kernel was called unix. Later UNIX implementations, which implemented virtual memory, renamed the kernel as vmunix. On
+Linux, the filename mirrors the system name, with the * replacing the final x to
+signify that the kernel is a compressed executable.
+
+==== Tasks performed by the kernel
+The kernel provides basic services for all other parts of the operating system, typically including memory management, process management, file management and I/O (input/output) management (i.e., accessing the peripheral devices). These services are requested by other parts of the operating system or by application programs through a specified set of program interfaces referred to as system calls. 
+===== Process scheduling
+A computer has one or more central processing units
+(CPUs), which execute the instructions of programs. Like other UNIX systems,
+Linux is a preemptive multitasking operating system, Multitasking means that
+multiple processes (i.e., running programs) can simultaneously reside in mem-
+ory and each may receive use of the CPU(s). Preemptive means that the rules
+governing which processes receive use of the CPU and for how long are deter-
+mined by the kernel process scheduler (rather than by the processes them-
+selves).
+
+===== Creation and termination of processes
+The kernel can load a new program into
+memory, providing it with the resources (e.g., CPU, memory, and access to
+files) that it needs in order to run. Such an instance of a running program is
+termed a process. Once a process has completed execution, the kernel ensures
+that the resources it uses are freed for subsequent reuse by later programs.
+
+===== Memory management
+Random-access memory (RAM) is used to store both program instructions and data.[a] Typically, both need to be present in memory for a program to execute. Often, multiple programs will want memory access, frequently demanding more memory than the computer has available. The kernel is responsible for deciding which memory each process can use, and determining what to do when insufficient memory is available. 
+
+While computer memories are enormous by the standards of a decade or two ago, the size of software has also correspondingly
+grown, so that physical memory (RAM) remains a limited resource that the kernel must share among processes in an equitable and efficient fashion. Like most modern operating systems, Linux employs virtual memory management, a technique that confers two main advantages:
+
+** Processes are isolated from one another and from the kernel, so that one
+process can’t read or modify the memory of another process or the kernel.
+** Only part of a process needs to be kept in memory, thereby lowering the
+memory requirements of each process and allowing more processes to be
+held in RAM simultaneously. This leads to better CPU utilization, since it
+increases the likelihood that, at any moment in time, there is at least one
+process that the CPU(s) can execute.
+
+The kernel has full access to the system's memory and must allow processes to safely access this memory as they require it. Often the first step in doing this is virtual addressing, usually achieved by paging and/or segmentation. Virtual addressing allows the kernel to make a given physical address appear to be another address, the virtual address. Virtual address spaces may be different for different processes; the memory that one process accesses at a particular (virtual) address may be different memory from what another process accesses at the same address. This allows every program to behave as if it is the only one (apart from the kernel) running and thus prevents applications from crashing each other.[6]
+
+On many systems, a program's virtual address may refer to data which is not currently in memory. The layer of indirection provided by virtual addressing allows the operating system to use other data stores, like a hard drive, to store what would otherwise have to remain in main memory (RAM). As a result, operating systems can allow programs to use more memory than the system has physically available. When a program needs data which is not currently in RAM, the CPU signals to the kernel that this has happened, and the kernel responds by writing the contents of an inactive memory block to disk (if necessary) and replacing it with the data requested by the program. The program can then be resumed from the point where it was stopped. This scheme is generally known as demand paging.
+
+Virtual addressing also allows creation of virtual partitions of memory in two disjoint areas, one being reserved for the kernel (kernel space) and the other for the applications (user space). The applications are not permitted by the processor to address kernel memory, thus preventing an application from damaging the running kernel. This fundamental partition of memory space has contributed much to the current designs of actual general-purpose kernels and is almost universal in such systems, although some research kernels (e.g., Singularity) take other approaches. 
+
+===== Resource management
+Key aspects necessary in resource management are defining the execution domain (address space) and the protection mechanism used to mediate access to the resources within a domain.[5] Kernels also provide methods for synchronization and inter-process communication (IPC). These implementations may be located within the kernel itself or the kernel can also rely on other processes it is running. Although the kernel must provide IPC in order to provide access to the facilities provided by each other, kernels must also provide running programs with a method to make requests to access these facilities. The kernel is also responsible for context switching between processes or threads. 
+
+===== Provision of a file system
+The kernel provides a file system on disk, allowing files to be created, retrieved, updated, deleted, and so on.
+
+===== Access to devices(Input/output devices)
+I/O devices include, but are not limited to, peripherals such as keyboards, mice, disk drives, printers, USB devices, network adapters, and display devices. The kernel provides convenient methods for applications to use these devices which are typically abstracted by the kernel so that applications do not need to know their implementation details. 
+
+The devices (mice, monitors, keyboards, disk and tape drives,
+and so on) attached to a computer allow communication of information
+between the computer and the outside world, permitting input, output, or
+both. The kernel provides programs with an interface that standardizes and
+simplifies access to devices, while at the same time arbitrating access by multiple
+processes to each device.
+
+To perform useful functions, processes need access to the peripherals connected to the computer, which are controlled by the kernel through device drivers. A device driver is a computer program encapsulating, monitoring and controlling a hardware device (via its hardware/software interface (HSI)) on behalf of the OS. It provides the operating system with an API, procedures and information about how to control and communicate with a certain piece of hardware. Device drivers are an important and vital dependency for all OS and their applications. The design goal of a driver is abstraction; the function of the driver is to translate the OS-mandated abstract function calls (programming calls) into device-specific calls. In theory, a device should work correctly with a suitable driver. Device drivers are used for e.g. host adapters, video cards, sound cards, printers, scanners, modems, and network interface controllers. 
+
+At the hardware level, common abstractions of device drivers include:
+
+    Interfacing directly
+    Using a high-level interface (Video BIOS)
+    Using a lower-level device driver (file drivers using disk drivers)
+    Simulating work with hardware, while doing something entirely different
+
+And at the software level, device driver abstractions include:
+
+    Allowing the operating system direct access to hardware resources
+    Only implementing primitives
+    Implementing an interface for non-driver software such as TWAIN
+    Implementing a language (often a high-level language such as PostScript)
+
+For example, to show the user something on the screen, an application would make a request to the kernel, which would forward the request to its display driver, which is then responsible for actually plotting the character/pixel.
+
+A kernel must maintain a list of available devices. This list may be known in advance (e.g., on an embedded system where the kernel will be rewritten if the available hardware changes), configured by the user (typical on older PCs and on systems that are not designed for personal use) or detected by the operating system at run time (normally called plug and play). In plug-and-play systems, a device manager first performs a scan on different peripheral buses, such as Peripheral Component Interconnect (PCI) or Universal Serial Bus (USB), to detect installed devices, then searches for the appropriate drivers. 
+
+As device management is a very OS-specific topic, these drivers are handled differently by each kind of kernel design, but in every case, the kernel has to provide the I/O to allow drivers to physically access their devices through some port or memory location. Important decisions have to be made when designing the device management system, as in some designs accesses may involve context switches, making the operation very CPU-intensive and easily causing a significant performance overhead.[c
+
+===== Networking
+The kernel transmits and receives network messages (packets) on
+behalf of user processes. This task includes routing of network packets to the
+target system.
+
+===== Provision of a system call application programming interface (API)
+Processes can
+request the kernel to perform various tasks using kernel entry points known as
+system calls. 
+
+In computing, a system call is how a process requests a service from an operating system's kernel that it does not normally have permission to run. System calls provide the interface between a process and the operating system. Most operations interacting with the system require permissions not available to a user-level process, e.g., I/O performed with a device present on the system, or any form of communication with other processes requires the use of system calls. 
+
+In addition to the above features, multiuser operating systems such as Linux gener-
+ally provide users with the abstraction of a virtual private computer; that is, each user
+can log on to the system and operate largely independently of other users. For
+example, each user has their own disk storage space (home directory). In addition,
+users can run programs, each of which gets a share of the CPU and operates in its
+own virtual address space, and these programs can independently access devices
+and transfer information over the network. The kernel resolves potential conflicts
+in accessing hardware resources, so users and processes are generally unaware of
+the conflicts.
+
+
+====  Categories of Kernels
+
+Kernels can be classified into four broad categories: monolithic kernels, microkernels, hybrid kernels and exokernels. Each has its own advocates and detractors.
+
+Monolithic kernels, which have traditionally been used by Unix-like operating systems, contain all the operating system core functions and the device drivers (small programs that allow the operating system to interact with hardware devices, such as disk drives, video cards and printers). Modern monolithic kernels, such as those of Linux and FreeBSD, both of which fall into the category of Unix-like operating systems, feature the ability to load modules at runtime, thereby allowing easy extension of the kernel's capabilities as required, while helping to minimize the amount of code running in kernel space.
+
+A microkernel usually provides only minimal services, such as defining memory address spaces, interprocess communication (IPC) and process management. All other functions, such as hardware management, are implemented as processes running independently of the kernel. Examples of microkernel operating systems are AIX, BeOS, Hurd, Mach, Mac OS X, MINIX and QNX.
+
+Hybrid kernels are similar to microkernels, except that they include additional code in kernel space so that such code can run more swiftly than it would were it in user space. These kernels represent a compromise that was implemented by some developers before it was demonstrated that pure microkernels can provide high performance. Hybrid kernels should not be confused with monolithic kernels that can load modules after booting (such as Linux).
+
+Most modern operating systems use hybrid kernels, including Microsoft Windows NT, 2000 and XP. DragonFly BSD, a recent fork (i.e., variant) of FreeBSD, is the first non-Mach based BSD operating system to employ a hybrid kernel architecture.
+
+Exokernels are a still experimental approach to operating system design. They differ from the other types of kernels in that their functionality is limited to the protection and multiplexing of the raw hardware, and they provide no hardware abstractions on top of which applications can be constructed. This separation of hardware protection from hardware management enables application developers to determine how to make the most efficient use of the available hardware for each specific program.
+
+Exokernels in themselves they are extremely small. However, they are accompanied by library operating systems, which provide application developers with the conventional functionalities of a complete operating system. A major advantage of exokernel-based systems is that they can incorporate multiple library operating systems, each exporting a different API (application programming interface), such as one for Linux and one for Microsoft Windows, thus making it possible to simultaneously run both Linux and Windows applications. 
+==== vmlinuz
+vmlinuz is the name of the Linux kernel executable. 
+
+A kernel is a program that constitutes the central core of a computer operating system. It is the first thing that is loaded into memory (which physically consists of RAM chips) when a computer is booted up (i.e., started), and it remains in memory for the entire time that the computer is in operation. An executable, also called an executable file, is a file that can be run as a program.
+
+vmlinuz is a compressed Linux kernel, and it is bootable. Bootable means that it is capable of loading the operating system into memory so that the computer becomes usable and application programs can be run.
+
+vmlinuz should not be confused with vmlinux, which is the kernel in a non-compressed and non-bootable form. vmlinux is generally just an intermediate step to producing vmlinuz.
+
+vmlinuz is located in the /boot directory, which is the directory that contains the files needed to begin booting the system. The file named vmlinuz might be the actual kernel executable itself, or it could be a link to the kernel executable, which might bear a name such as /boot/vmlinuz-2.4.18-19.8.0 (i.e., the name of the specific version of the kernel). This can be easily determined by using the ls command (whose purpose is to list the contents of a specified directory) with its -l option (which tells ls to provide detailed information about each object in the specified directory) as follows:
+
+    ls -l /boot
+
+If vmlinuz is an ordinary file (including an executable), the information about it in the first column will begin with a hyphen. If it is a link, it will begin with the letter l.
+
+The Linux kernel is compiled by issuing the following command:
+
+    make bzImage
+
+This results in the creation of a file named bzImage in a directory such as /usr/src/linux/arch/i386/linux/boot/.
+
+Compilation is the conversion the kernel's source code (i.e., the original form in which the kernel is written by a human) into object code (which is understandable directly by a computer's processor). It is performed by a specialized program called a compiler, usually one in the GCC (GNU Compiler Collection).
+
+bzImage is then copied using the cp (i.e., copy) command to the /boot directory and simultaneously renamed vmlinuz with a command such as
+
+    cp /usr/src/linux/arch/i386/linux/boot/bzImage /boot/vmlinuz
+
+vmlinuz is not merely a compressed image. It also has gzip decompressor code built into it. gzip is one of the most popular compression utilities on Unix-like operating systems. 
+
+The name vmlinuz is largely an accident of history. The kernel binary on the original UNIX as developed at Bell Labs was called unix. When a new kernel containing support for virtual memory was subsequently written at the University of California at Berkeley (UCB), the kernel binary was renamed vmunix.
+
+Thus, it was a natural progression for the Linux kernel to be called vmlinux. And because the Linux kernel executable was made into a compressed file and compressed files typically have a z or gz extension on Unix-like systems, the name of the compressed kernel executable became vmlinuz. 
+
+
+=== Users and Groups
+Each user on the system is uniquely identified, and users may belong to groups.
+==== Users
+Every user of the system has a unique login name (username) and a corresponding
+numeric user ID (UID). For each user, these are defined by a line in the system
+password file, /etc/passwd, which includes the following additional information:
+
+* Group ID: the numeric group ID of the first of the groups of which the user is a
+member.
+* Home directory: the initial directory into which the user is placed after logging in.
+* Login shell: the name of the program to be executed to interpret user commands.
+The password record may also include the user’s password, in encrypted form.
+
+However, for security reasons, the password is often stored in the separate shadow
+password file, which is readable only by privileged users.
+
+==== Groups
+For administrative purposes—in particular, for controlling access to files and other
+system resources—it is useful to organize users into groups. For example, the people
+in a team working on a single project, and thus sharing a common set of files,
+might all be made members of the same group. In early UNIX implementations, a
+user could be a member of only one group. BSD allowed a user to simultaneously
+belong to multiple groups, an idea that was taken up by other UNIX implementa-
+tions and the POSIX.1-1990 standard. Each group is identified by a single line in
+the system group file, /etc/group, which includes the following information:
+
+* Group name: the (unique) name of the group.
+* Group ID (GID): the numeric ID associated with this group.
+* User list: a comma-separated list of login names of users who are members of
+this group (and who are not otherwise identified as members of the group by
+virtue of the group ID field of their password file record).
+
+==== Superuser
+One user, known as the superuser, has special privileges within the system. The
+superuser account has user ID 0, and normally has the login name root. On typical
+UNIX systems, the superuser bypasses all permission checks in the system. Thus,
+for example, the superuser can access any file in the system, regardless of the per-
+missions on that file, and can send signals to any user process in the system. The
+system administrator uses the superuser account to perform various administrative
+tasks on the system.
+
+=== Directories, Links, and Files
+The kernel maintains a single hierarchical directory structure to organize all files in
+the system. (This contrasts with operating systems such as Microsoft Windows,
+where each disk device has its own directory hierarchy.) At the base of this hier-
+archy is the root directory, named / (slash). All files and directories are children or
+further removed descendants of the root directory. 
+
+==== File types
+Within the file system, each file is marked with a type, indicating what kind of file it
+is. One of these file types denotes ordinary data files, which are usually called
+regular or plain files to distinguish them from other file types. These other file types
+include devices, pipes, sockets, directories, and symbolic links.
+The term file is commonly used to denote a file of any type, not just a regular file.
+
+==== Directories and links
+A directory is a special file whose contents take the form of a table of filenames coupled
+with references to the corresponding files. This filename-plus-reference association
+is called a link, and files may have multiple links, and thus multiple names, in the
+same or in different directories.
+
+Directories may contain links both to files and to other directories. The links
+between directories establish the directory hierarchy shown in Figure 2-1.
+Every directory contains at least two entries: . (dot), which is a link to the direc-
+tory itself, and .. (dot-dot), which is a link to its parent directory, the directory above
+it in the hierarchy. Every directory, except the root directory, has a parent. For the
+root directory, the dot-dot entry is a link to the root directory itself (thus, /..
+equates to /)
+
+==== Symbolic links
+Like a normal link, a symbolic link provides an alternative name for a file. But
+whereas a normal link is a filename-plus-pointer entry in a directory list, a symbolic
+link is a specially marked file containing the name of another file. (In other words,
+a symbolic link has a filename-plus-pointer entry in a directory, and the file referred
+to by the pointer contains a string that names another file.) This latter file is often
+called the target of the symbolic link, and it is common to say that the symbolic link
+“points” or “refers” to the target file. 
+
+When a pathname is specified in a system call,
+in most circumstances, the kernel automatically dereferences (or synonymously,
+follows) each symbolic link in the pathname, replacing it with the filename to which
+it points. This process may happen recursively if the target of a symbolic link is
+itself a symbolic link. (The kernel imposes limits on the number of dereferences to
+handle the possibility of circular chains of symbolic links.) 
+
+If a symbolic link refers
+to a file that doesn’t exist, it is said to be a dangling link.
+
+Often hard link and soft link are used as alternative terms for normal and sym-
+bolic links. 
+
+==== Filenames
+On most Linux file systems, filenames can be up to 255 characters long. 
+
+Filenames
+may contain any characters except slashes (/) and null characters (\0). However, it is
+advisable to employ only letters and digits, and the . (period), _ (underscore), and
+- (hyphen) characters. This 65-character set, [-._a-zA-Z0-9], is referred to in SUSv3
+as the portable filename character set.
+
+We should avoid the use of characters in filenames that are not in the portable
+filename character set because those characters may have special meanings within
+the shell, within regular expressions, or in other contexts. If a filename containing
+characters with special meanings appears in such contexts, then these characters
+must be escaped; that is, specially marked—typically with a preceding backslash (\)—
+to indicate that they should not be interpreted with those special meanings. 
+
+In con-
+texts where no escape mechanism is available, the filename is not usable.
+
+We should also avoid filenames beginning with a hyphen (-), since such file-
+names may be mistaken for options when specified in a shell command.
+
+==== Pathnames
+A pathname is a string consisting of an optional initial slash (/) followed by a series
+of filenames separated by slashes. 
+
+All but the last of these component filenames
+identifies a directory (or a symbolic link that resolves to a directory). 
+
+The last component of a pathname may identify any type of file, including a directory. 
+
+The
+series of component filenames preceding the final slash is sometimes referred to as
+the directory part of a pathname, while the name following the final slash is some-
+times referred to as the file or base part of the pathname.
+
+A pathname is read from left to right; each filename resides in the directory
+specified by the preceding part of the pathname. The string .. can be used any-
+where in a pathname to refer to the parent of the location so far specified in the
+pathname.
+
+A pathname describes the location of a file within the single directory hierarchy, and is either absolute or relative:
+
+* An absolute pathname begins with a slash (/) and specifies the location of a file
+with respect to the root directory. Examples of absolute pathnames for files in are /home/mtk/.bashrc, /usr/include, and / (the pathname of the root
+directory).
+* A relative pathname specifies the location of a file relative to a process’s current
+working directory (see below), and is distinguished from an absolute pathname
+by the absence of an initial slash. For example, from the directory usr, the file
+types.h could be referenced using the relative pathname include/sys/types.h,
+while from the directory avr, the file .bashrc could be accessed using the rela-
+tive pathname ../mtk/.bashrc.
+
+==== Current working directory
+Each process has a current working directory (sometimes just referred to as the pro-
+cess’s working directory or current directory). This is the process’s “current location”
+within the single directory hierarchy, and it is from this directory that relative path-
+names are interpreted for the process.
+
+A process inherits its current working directory from its parent process. A
+login shell has its initial current working directory set to the location named in the
+home directory field of the user’s password file entry. The shell’s current working
+directory can be changed with the cd command.
+
+==== File ownership and permissions
+Each file has an associated user ID and group ID that define the owner of the file
+and the group to which it belongs. The ownership of a file is used to determine the
+access rights available to users of the file.
+
+For the purpose of accessing a file, the system divides users into three catego-
+ries: 
+
+* the owner of the file (sometimes termed the user of the file), 
+* users who are
+members of the group matching the file’s group ID ( group), 
+* and the rest of the
+world (other). 
+
+Three permission bits may be set for each of these categories of user
+(making a total of nine permission bits): 
+
+* read permission allows the contents of the
+file to be read; 
+* write permission allows modification of the contents of the file; 
+* and
+execute permission allows execution of the file, which is either a program or a script
+to be processed by some interpreter (usually, but not always, one of the shells).
+
+These permissions may also be set on directories, although their meanings are
+slightly different: 
+
+* read permission allows the contents of (i.e., the filenames in) the
+directory to be listed; 
+* write permission allows the contents of the directory to be
+changed (i.e., filenames can be added, removed, and changed); 
+* and execute (some-
+times called search) permission allows access to files within the directory (subject to
+the permissions on the files themselves).
+
+=== Booting
+To boot a computer is to start the computer.
+
+A boot sequence, also called a boot process, boot routine or bootstrap routine, is the set of operations a computer begins performing when the electric power is switched on and continues until it is ready to use. The main thing that occurs is the copying the operating system from a storage device, typically the hard disk drive (HDD), into main memory (which is composed of random access memory chips, or RAM) so that it can be directly accessed by the central processing unit (CPU).
+
+Bootable means that a computer can be started and attain a state sufficient that any desired application programs can be run on it. The term is also used to refer to any removable storage device or any software that contains sufficient components of an operating system and other necessary utilities (e.g., for file decompression) such that it can be loaded into a computer's main memory and allow the computer to start up.
+
+A boot sector is a region of a HDD, floppy disk or other storage device (usually the first sector) that is loaded into memory and executed as a part of the boot sequence. It usually contains a very small program (a few hundred bytes) that loads the operating system into memory and then transfers control to it. A sector is is a segment of a track (i.e., a concentric circle around a disk) that constitutes the smallest unit of storage that can be accessed on a HDD or floppy disk by the disk drive mechanism.
+
+A multibooting system is one which can be started with either of two or more operating systems. The operating systems can be stored on different partitions on the same HDD or on separate HDDs. A partition is a logically independent section of a HDD. Multibooting can offer several advantages, including the convenience of having several operating systems on a single computer and the ability to boot into an alternative operating system should one system unbootable (due to file corruption, damage to the magnetic media, etc.). 
+
+To reboot means to restart a computer. A cold reboot is restarting computer by turning the power off and then back on. A warm reboot is restarting a computer that is already on by just reloading the memory and without turning the power off. 
+
+The word boot, when used in a computer context, is short for the word bootstrap, which is a strap that was attached to the top of a boot to help pull the boot on. Bootstrap utilities are small programs that help the computer get started and load the operating system. 
+
+Very briefly, the boot process is as follows. Every PC contains a motherboard,
+which contains the CPU, slots for memory chips, and sockets for PCIe (or other)
+plug-in cards. 
+
+. On the motherboard a small amount of flash holds a program called
+the system firmware, which we commonly still refer to as the BIOS (Basic Input
+Output System) Intel proposed what
+would become UEFI (Unified Extensible Firmware Interface) as a replacement, 
+
+. After we press the power button, the motherboard waits for the signal that the
+power supply has stabilized. When the CPU starts executing, it fetches code from
+a hard-coded physical address (known as the reset vector) that is mapped to the
+flash memory. In other words, it executes code from the BIOS which detects and
+initializes various resources, such as RAM, the Platform Controller Hub  and interrupt controllers. In addition, it scans the PCI and/or PCIe buses
+to detect and initialize all devices attached to them. If the devices present are dif-
+ferent from when the system was last booted, it also configures the new devices.
+Finally, it sets up the runtime firmware which offers critical services (including
+low-level I/O) that can be used by the system after booting
+. Next, it is time to move to the next stage of the booting process. 
+.. In systems
+using the old-style BIOS, this was all very straightforward. 
+... The BIOS would deter-
+mine the boot device by trying a list of devices stored in the CMOS memory. The
+user can change this list by entering a BIOS configuration program just after boot-
+ing. For instance, you may ask the system to attempt to boot from a USB drive, if
+one is present. If that fails, the system boots from the hard disk or SSD. 
+... The first
+sector from the boot device is read into memory and executed. This sector, known
+as the MBR (Master Boot Record), contains a program that normally examines
+the partition table at the end of the boot sector to determine which partition is
+active. A partition is a distinct region on the storage device that may for instance
+contain its own file systems. 
+... Then a secondary boot loader is read in from that par-
+tition. This loader reads in the operating system from the active partition and starts
+it. 
+.. With UEFI
+... First, it no longer relies on a Master Boot
+Record residing in the first sector of the boot device, but it looks for the location of
+the partition table in the second sector of the device. This GPT (GUID Partition
+Table) contains information about the location of the various partitions on the SSD
+or disk. 
+... Second, the BIOS itself has enough functionality to read file systems of
+specific types. According to the UEFI standard, it should support at least the
+FAT-12, FAT-16, and FAT-32 types. One such file system is placed in a special par-
+tition, known as the EFI system partition (ESP). Rather than a single magic boot
+sector, the boot process can now use a proper file system containing programs,
+configuration files, and anything else that may be useful during boot.
+... Moreover,
+UEFI expects the firmware to be able to execute programs in a specific format,
+called PE (Portable Executable). As you can see, the BIOS under UEFI very
+much looks like a little operating system itself which understands partitions, file
+systems, executables, etc. It even has a shell with some standard commands.
+... The boot code still needs to pick one of the bootloader programs to load Linux
+or Windows, or whatever operating system, but there may be many partitions with
+operating systems and given so much choice, which one should it pick? This is
+decided by the UEFI boot manager, which you can think of as a boot menu with
+different entries and a configurable order in which to try the different boot options.
+Changing the menu and the default bootloader is very easy and can be done from
+within the currently executing operating system. As before, the bootloader will
+continue loading the operating system of choice
+. The operating system then queries the BIOS to get the configuration infor-
+mation. For each device, it checks to see if it has the device driver. If not, it asks
+the user to install it, for instance by downloading it from the Internet. Once it has
+all the device drivers, the operating system loads them into the kernel. Then it ini-
+tializes its tables, creates whatever background processes are needed, and starts up
+a login program or GUI.

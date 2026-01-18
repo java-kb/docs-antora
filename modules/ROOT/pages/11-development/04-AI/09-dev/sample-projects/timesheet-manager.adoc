@@ -134,8 +134,7 @@ out as raising points I hadn’t considered
 Many more questions could be asked and addressed, but what this process demonstrates is that, by generating different questions, I am required to think about various aspects of this feature’s design. Some I can choose to rule out, or shelve for later conversation, and some help me to improve the quality of my feature by raising my awareness to validation and date–time formatting.
 
 == Loop 1: Save a timesheet entry
-With the questions from the previous prompt in my mind, I start my first loop by cre-
-ating an empty maven project within my IDE before heading to the pom.xml to add 
+With the questions from the previous prompt in my mind, I start my first loop by creating an empty maven project within my IDE before heading to the pom.xml to add 
 my required dependencies. I require JUnit 5 to build my unit checks, so I entered the comment
 MW <!-- Junit jupiter engine-->
 
@@ -147,3 +146,248 @@ MW <!-- Junit jupiter engine-->
 <version>5.8.2</version>
 <scope>test</scope>
 </dependency>
+
+Prompt: create  create an empty maven project  with JUnit 5 dependency at the root of this folder write down the command used to generate this project
+
+mvn -B archetype:generate -DgroupId=com.example -DartifactId=generative-ai-and-testing-2024 -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false
+
+
+Prompet: create TimesheetTest test class
+Test that when a timesheet is submitted with a project name and hours it returns true
+
+[tabs]
+====
+src/main/java/com/example/timesheet/Timesheet.java::
++
+[source, java]
+----
+package com.example.timesheet;
+
+public class Timesheet {
+
+    /**
+     * Submit a timesheet entry.
+     * Returns true when the project name is non-empty and hours > 0.
+     * Valid submissions are stored and can be retrieved via {@link #getEntries()}.
+     */
+    public boolean submit(String projectName, double hours) {
+        if (projectName == null) return false;
+
+        String trimmed = projectName.trim();
+        if (trimmed.isEmpty()) return false;
+
+        if (hours <= 0) return false;
+
+        entries.add(new Entry(trimmed, hours));
+        
+        return true;
+    }
+}
+
+----
+
+src/test/java/com/example/timesheet/TimesheetTest.java::
++
+[source, java]
+----
+package com.example.timesheet;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class TimesheetTest {
+
+    @Test
+    public void testSubmitReturnsTrueWhenProjectAndHoursProvided() {
+        Timesheet timesheet = new Timesheet();
+        boolean result = timesheet.submit("Project X", 8.0);
+        assertTrue(result, "Timesheet.submit should return true when project and hours are provided");
+    }
+}
+
+----
+====
+
+== Loop 2: Retrieve a timesheet entry
+Prompt: Test that when timesheets are added they can be retrieved as a list
+[tabs]
+====
+src/main/java/com/example/timesheet/Timesheet.java::
++
+[source, java]
+----
+package com.example.timesheet;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class Timesheet {
+
+    private final List<Entry> entries = new ArrayList<>();
+
+    /**
+     * Submit a timesheet entry.
+     * Returns true when the project name is non-empty and hours > 0.
+     * Valid submissions are stored and can be retrieved via {@link #getEntries()}.
+     */
+    public boolean submit(String projectName, double hours) {
+        if (projectName == null) return false;
+
+        String trimmed = projectName.trim();
+        if (trimmed.isEmpty()) return false;
+
+        if (hours <= 0) return false;
+
+        entries.add(new Entry(trimmed, hours));
+        
+        return true;
+    }
+
+    /**
+     * Returns an immutable copy of submitted entries.
+     */
+    public List<Entry> getEntries() {
+        return Collections.unmodifiableList(new ArrayList<>(entries));
+    }
+
+    public static final class Entry {
+        private final String projectName;
+        private final double hours;
+
+        public Entry(String projectName, double hours) {
+            this.projectName = projectName;
+            this.hours = hours;
+        }
+
+        public String getProjectName() {
+            return projectName;
+        }
+
+        public double getHours() {
+            return hours;
+        }
+    }
+}
+
+----
+
+src/test/java/com/example/timesheet/TimesheetTest.java::
++
+[source, java]
+----
+package com.example.timesheet;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class TimesheetTest {
+
+    @Test
+    public void testSubmitReturnsTrueWhenProjectAndHoursProvided() {
+        Timesheet timesheet = new Timesheet();
+        boolean result = timesheet.submit("Project X", 8.0);
+        assertTrue(result, "Timesheet.submit should return true when project and hours are provided");
+    }
+
+    @Test
+    public void testAddedTimesheetsAreRetrievableAsList() {
+        Timesheet timesheet = new Timesheet();
+        timesheet.submit("Alpha", 4.5);
+        timesheet.submit("Beta", 3.0);
+
+        List<Timesheet.Entry> entries = timesheet.getEntries();
+        assertEquals(2, entries.size(), "There should be two submitted entries");
+        assertEquals("Alpha", entries.get(0).getProjectName());
+        assertEquals(4.5, entries.get(0).getHours());
+        assertEquals("Beta", entries.get(1).getProjectName());
+        assertEquals(3.0, entries.get(1).getHours());
+    }
+}
+
+----
+====
+
+== Loop 3: Calculating times for a project
+Prompt: Test that the total hours worked can be calculated from a list of timesheets from one project
+
+We need to update submitTimesheet to handle duplicate projects, which I do by dropping the following comment into submitTimesheet, just after the initial if statement:
+
+MW // Check to see if project already exists
+[tabs]
+====
+src/main/java/com/example/timesheet/Timesheet.java::
++
+[source, java]
+----
+package com.example.timesheet;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class Timesheet {
+
+    private final List<Entry> entries = new ArrayList<>();
+
+    /**
+     * Returns the total hours recorded for the given project name.
+     * If the projectName is null or not present, returns 0.0.
+     */
+    public double totalHoursForProject(String projectName) {
+        if (projectName == null) return 0.0;
+        double sum = 0.0;
+        for (Entry e : entries) {
+            if (projectName.equals(e.getProjectName())) {
+                sum += e.getHours();
+            }
+        }
+        return sum;
+    }
+}
+----
+
+src/test/java/com/example/timesheet/TimesheetTest.java::
++
+[source, java]
+----
+package com.example.timesheet;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class TimesheetTest {
+
+    @Test
+    public void testTotalHoursForSingleProject() {
+        Timesheet timesheet = new Timesheet();
+        timesheet.submit("Alpha", 4.5);
+        timesheet.submit("Alpha", 2.0);
+        timesheet.submit("Beta", 3.0);
+
+        double total = timesheet.totalHoursForProject("Alpha");
+        assertEquals(6.5, total, 1e-9, "Total hours for Alpha should be 6.5");
+    }
+}
+----
+====
+
+== Refactoring code
+Prompt:
+
+You are a software testing expert. Analyze the Java code and identify risks that might impact the code. If no code is provided, respond with “No risks could be found”
+* Risks must be related to the quality characteristics: Accuracy and Consistency
+* Multiple risks can be identified for each quality characteristic
+* Output identified risks in the format of Risk - Quality Characteristic - Explanation
+Example:
+Overflow - Security - Adding in large integers as parameters might cause the method
+to trigger a buffer overflow.

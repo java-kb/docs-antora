@@ -1,0 +1,1212 @@
+= processor
+
+A central processing unit (CPU) is a type of processor that serves as the main logic and control unit of a computer.
+
+A processor, also referred to as a microprocessor in the case of a highly integrated semiconductor device, is a device or system that performs logic operations. These terms and CPU are often used interchangeably.
+
+A modern CPU consists of a single, tiny chip of specially produced silicon (usually a square centimeter or less) on the top surface of which are formed millions of transistors and other circuit elements using a sub-micron fabrication process. Each chip is housed in a high precision ceramic or plastic package and mounted on the motherboard (i.e., the main circuit board on a computer). This chip is also commonly referred to as a processor or as a microprocessor.
+
+Computers also contain other microprocessors, such as those in disk drives and other peripheral devices. These have much less power and are much lower in cost than CPUs, and they have the important role of relieving the CPU of the burden of having to deal with peripheral functions. 
+
+A CPU contains three main sections: (1) an arithmetic/logic unit, (2) a control unit and (3) registers. The arithmetic/logic unit contains circuitry that performs data manipulation. The control unit consists of circuitry for coordinating the machine's activities. The registers are high speed memory cells that are used for holding instructions for data that is currently being processed. 
+
+The CPU reads data from the main memory, which consists of RAM (random access memory) chips, by suppling the addresses of the appropriate memory cells along with a read signal. Likewise, it writes data to memory by providing the addresses of the destination cells together with a write signal. 
+
+The first electronic CPUs were formed from arrays of vacuum tubes. They were subsequently replaced by circuit boards containing large numbers of discrete (i.e., separate) transistors and other electronic components, and these, in turn, were later replaced by circuit boards containing large numbers of integrated circuits (ICs). 
+
+The ‘‘brain’’ of the computer is the CPU. It fetches instructions from memory
+and executes them. The basic cycle of every CPU is to fetch the first instruction
+from memory, decode it to determine its type and operands, execute it, and then
+fetch, decode, and execute subsequent instructions. The cycle is repeated until the
+program finishes. In this way, programs are carried out.
+
+Each CPU has a specific set of instructions that it can execute. Thus an x86
+processor cannot execute ARM programs and an ARM processor cannot execute
+x86 programs
+
+== Multithreaded 
+
+== Multicore Chips
+== registers
+Because accessing memory to get an instruction or data word takes much long-
+er than executing an instruction, all CPUs contain registers inside to hold key vari-
+ables and temporary results. Instruction sets often contains instructions to load a
+word from memory into a register, and store a word from a register into memory.
+Other instructions combine two operands from registers and/or memory, into a
+result, such as adding two words and storing the result in a register or in memory.
+
+In addition to the general registers used to hold variables and temporary
+results, most computers have several special registers that are visible to the pro-
+grammer. 
+
+Register	Purpose
+General registers	Store data
+Program Counter (PC)	Next instruction
+PSW	Status + control
+Stack Pointer (SP)	Stack top
+
+The operating system must be fully aware of all the registers. When time multiplexing the CPU(Time multiplexing the CPU means rapidly switching between multiple tasks or processes, giving each a small slice of CPU time (a "time slice") to execute, making them appear to run concurrently on a single core), the operating system will often stop the running program to
+(re)start another one. Every time it stops a running program, the operating system
+must save all the registers so they can be restored when the program runs later
+
+=== program counter
+which contains the memory
+address of the next instruction to be fetched. After that instruction has been
+fetched, the program counter is updated to point to its successor.
+
+=== stack pointer
+which points to the top of the current
+stack in memory. The stack contains one frame for each procedure that has been
+entered but not yet exited. A procedure’s stack frame holds those input parameters,
+local variables, and temporary variables that are not kept in registers.
+
+=== PSW (Program Status Word)
+PSW is a special CPU register that tells the processor: how the last instruction went, and how the next instructions are allowed to run .Think of it as the CPU’s status + control dashboard.
+
+PSW is the CPU’s control and status register that decides how instructions behave and whether the program is allowed to do certain things.
+
+This register con-
+tains the condition code bits, which are set by comparison instructions, the CPU
+priority, the mode (user or kernel), and various other control bits. User programs
+may normally read the entire PSW but typically may write only some of its fields.
+The PSW plays an important role in system calls and I/O.
+
+PSW is just a collection of bits, each bit has meaning.
+
+* Condition flags (results of last operation)
++
+These bits tell what happened after an instruction:
++
+Flag	Meaning
+Z (Zero)	Result was zero
+C (Carry)	Carry or borrow occurred
+S / N	Result was negative
+V / O	Overflow happened
++
+Example:
++
+cmp a, b
++
+(compares two operands (a and b), setting status flags or providing output based on their relationship (equal, greater, less than) without altering the original values of a or b, much like a subtraction but discarding the result.)
++
+The CPU sets flags in PSW → next instruction checks them
+* Execution mode (who is running): A bit that says:
++
+** 0 → User mode
+** 1 → Kernel / Supervisor mode
++
+This controls what instructions are allowed.
++
+User mode cannot:
++
+** Access device registers
+** Change page tables
+** Disable interrupts
++
+Kernel mode can.
+* Interrupt control: PSW decides:
++
+** Are interrupts enabled?
+** Which interrupt level is allowed?
++
+Example:
++
+Interrupts disabled → CPU will ignore external events
+* CPU state / control bits
++
+Depending on architecture:
++
+** Instruction set mode (x86 real/protected, ARM Thumb)
+** Priority level
+** Tracing / debugging flags
+
+PSW doesn’t hold data — it holds rules and results.
+
+PSW is critical for an OS. Without PSW:
+
+* No protection between user and kernel
+* No safe interrupts
+* No context switching
+* No conditional branches
+
+PSW makes multitasking and protection possible.
+
+PSW has Different names on different CPUs
+
+Architecture	Name
+x86	EFLAGS / RFLAGS
+ARM	CPSR / PSTATE
+MIPS	Status Register
+IBM	PSW (original name)
+
+==== How PSW works (step-by-step)
+*Normal execution*
+
+. CPU executes instruction
+. Result is produced
+. PSW flags updated automatically
+. Next instruction may check PSW
+
+Example:
+----
+SUB R1, R2 (1)
+BEQ label   ; Branch if Zero flag in PSW is set (2)
+----
+(1). SUB R1, R2 is an assembly language instruction that subtracts the value in Register 2 (R2) from Register 1 (R1) and stores the result back into Register 1, meaning R1 = R1 - R2, without affecting the original content of R2
+(2). Branch if Equal (BEQ) instruction in assembly language, to jump to a specific code location (the label) if two registers hold the same value, controlling program flow
+
+*When a system call happens*
+
+. User program executes syscall
+. CPU:
+.. Saves PC + PSW
+.. Switches PSW mode bit → kernel mode
+. Kernel runs safely
+. On return:
+.. Restores old PSW
+.. Switches back to user mode
+
+*When an interrupt happens*
+
+. Hardware interrupt arrives
+. CPU:
+.. Saves current PSW
+.. Updates PSW (disable interrupts, kernel mode)
+. Interrupt handler runs
+. Old PSW restored → program continues
+
+*PSW during context switching*
+
+Switching the CPU from running process A to process B. To do that, the kernel must save everything that defines “where A was”.
+
+What must be saved?
+
+* General-purpose registers
+* Stack pointer
+* Program counter
+* PSW (status & mode bits)
+
+Without saving PSW:
+
+* Flags would be wrong
+* CPU mode could be wrong
+* Interrupt state could be wrong
+
+Step-by-step (simplified)
+
+Process A is running (user mode)
+----
+PC → instruction
+PSW → user mode, interrupts enabled
+----
+Timer interrupt occurs
+
+. CPU automatically:
+.. Saves PC
+.. Saves PSW
+.. Switches to kernel mode
+. Kernel interrupt handler runs
+. Scheduler decides to run process B
+. Kernel:
+.. Saves remaining registers of A
+.. Loads registers of B
+.. Restores PSW of B
+.. return-from-interrupt
+
+CPU resumes B exactly where it left off. PSW restore is what puts CPU back into user mode safely
+
+=== Privileges
+The architecture of most modern processors, with the exception of some embedded systems, involves a security model. For example, the rings model specifies multiple privilege levels under which software may be executed: a program is usually limited to its own address space so that it cannot access or modify other running programs or the operating system itself, and is usually prevented from directly manipulating hardware devices (e.g. the frame buffer or network devices). 
+=== kernel mode and user mode
+Modern processor architectures typically allow the CPU to operate in at least two
+different modes: user mode and kernel mode (sometimes also referred to as supervisor
+mode). Hardware instructions allow switching from one mode to the other. Corre-
+spondingly, areas of virtual memory can be marked as being part of user space or
+kernel space. When running in user mode, the CPU can access only memory that is
+marked as being in user space; attempts to access memory in kernel space result in
+a hardware exception. When running in kernel mode, the CPU can access both
+user and kernel memory space.
+
+Certain operations can be performed only while the processor is operating in
+kernel mode. Examples include executing the halt instruction to stop the system,
+accessing the memory-management hardware, and initiating device I/O opera-
+tions. By taking advantage of this hardware design to place the operating system in
+kernel space, operating system implementers can ensure that user processes are
+not able to access the instructions and data structures of the kernel, or to perform
+operations that would adversely affect the operation of the system
+
+Most computers have two modes of operation:
+kernel mode and user mode. 
+
+The operating system, the most fundamental piece of
+software, runs in kernel mode (also called supervisor mode) for at least some of
+its functionality. In this mode, it has complete access to all the hardware and can
+execute any instruction the machine is capable of executing. 
+
+The rest of the soft-
+ware runs in user mode, in which only a subset of the machine instructions is
+available. In particular, those instructions that affect control of the machine, deter-
+mine the security boundaries, or do I/O (Input/Output) are forbidden to user-
+mode programs.
+
+The user interface program, shell or GUI, is the lowest level of user-mode soft-
+ware, and allows the user to start other programs, such as a Web browser, email
+reader, or music player. These programs, too, make heavy use of the operating sys-
+tem.
+
+An important distinction between the operating system and normal (user-
+mode) software is that if a user does not like a particular email reader, she is free to
+get a different one or write her own if she so chooses; she is typically not free to
+write her own clock interrupt handler, which is part of the operating system and is protected by hardware against attempts by users to modify it. This distinction,
+however, is sometimes blurred, for instance in embedded systems (which may not
+have kernel mode) or interpreted systems (such as Java-based systems that use
+interpretation, not hardware, to separate the components)
+
+Also, in many systems there are programs that run in user mode but help the
+operating system or perform privileged functions. For example, there is often a
+program that allows users to change their passwords. It is not part of the operating
+system and does not run in kernel mode, but it clearly carries out a sensitive func-
+tion and has to be protected in a special way. In some systems, this idea is carried
+to an extreme, and pieces of what is traditionally considered to be the operating
+system (such as the file system) run in user mode. In such systems, it is difficult to
+draw a clear boundary. Everything running in kernel mode is clearly part of the
+operating system, but some programs running outside it are arguably also part of it,
+or at least closely associated with it.
+
+=== Kernel mode vs User mode (CPU privilege levels)
+These are CPU execution modes.
+
+User mode
+
+* Used by applications (bash, Python, Firefox, your C program)
+* Restricted privileges
+* Cannot:
+** Access hardware directly
+** Execute privileged CPU instructions
+** Access kernel memory
+* If it tries → CPU raises a fault
+
+Example:
+----
+printf("Hello");   // runs in user mode
+----
+
+Kernel mode
+
+* Used by the OS kernel
+* Full privileges
+* Can:
+** Access all memory
+** Control hardware
+** Execute privileged instructions (e.g., hlt, cli, lgdt)
+* A bug here can crash the whole system
+
+Example:
+----
+sys_read()   // kernel function
+----
+
+=== Interrupts
+In next Fig we see a three-step process for I/O. 
+
+image::{figures}/interrupt-io-device-example.png[(a) The steps in starting an I/O device and getting an interrupt. (b) Interrupt processing involves taking the interrupt, running the interrupt handler,and returning to the user program.]
+
+. In step 1, the
+driver tells the controller what to do by writing into its device registers. The con-
+troller then starts the device. 
+. When the controller has finished reading or writing the number of bytes it has been instructed to transfer, it signals the interrupt con-
+troller chip using certain bus lines in step 2. 
+. If the interrupt controller is ready to
+accept the interrupt (which it may not be if it is busy handling a higher-priority
+interrupt), it asserts a pin on the CPU chip telling it, in step 3. 
+. In step 4, the inter-
+rupt controller puts the number of the device on the bus so the CPU can read it and
+know which device has just finished (many devices may be running at the same
+time).
+
+Once the CPU has decided to take the interrupt, the program counter and PSW
+are typically then pushed onto the current stack and the CPU switched into kernel
+mode. The device number may be used as an index into part of memory to find the
+address of the interrupt handler for this device. This part of memory is called the
+interrupt vector table. Once the interrupt handler (part of the driver for the inter-
+rupting device) has started, it saves the stacked program counter, PSW, and other
+registers (typically in the process table). Then it queries the device to learn its stat-
+us. When the handler is all finished, it restores the context and returns to the previ-
+ously running user program to the first instruction that was not yet executed. These
+steps are shown in above Fig.
+
+== Multiprogramming
+=== CPU utilization
+==== probability model
+Sup-
+pose that a process spends a fraction p of its time waiting for I/O to complete. With
+n processes in memory at once, the probability that all n processes are waiting for
+I/O (in which case the CPU will be idle) is p n. The CPU utilization is then given
+by the formula
+----
+CPU utilization = 1 < p n
+----
+Figure 2-6 shows, for different values of p (or ‘‘I/O wait’’), the CPU utilization as a
+function of n, which is called the degree of multiprogramming.
+
+From the figure it is clear that if processes spend 80% of their time waiting for
+I/O, at least 10 processes must be in memory at once to get the CPU waste below
+10%. When you realize that an interactive process waiting for a user to type some-
+thing at a terminal (or click on an icon) is in I/O wait state, it should be clear that
+I/O wait times of 80% and more are not unusual. But even on servers, processes
+doing a lot of disk I/O will often have this percentage or more.
+
+For the sake of accuracy, it should be pointed out that the probabilistic model
+just described is only an approximation. It implicitly assumes that all n processes
+are independent, meaning that it is quite acceptable for a system with five proc-
+esses in memory to have three running and two waiting. But with a single CPU, we
+cannot have three processes running at once, so a process becoming ready while
+the CPU is busy will have to wait. Thus, the processes are not independent. A more
+accurate model can be constructed using queueing theory, but the point we are
+making—multiprogramming lets processes use the CPU when it would otherwise
+become idle—is, of course, still valid, even if the true curves of Fig. 2-6 are slight-
+ly different from those shown in the figure.
+
+.From AI
+[%collapsible]
+======
+[tabs]
+=====
+ChatGPT::
++
+Let’s unpack this step by step, in plain language, and then make it concrete with examples you can picture.
++
+1. What problem is this section trying to explain?
++
+The book is answering a simple question:
++
+Why does having multiple processes in memory keep the CPU busy?
++
+Instead of tracking every instruction, it uses a probability model—a “big picture” way to reason about CPU usage.
++
+2. Key ideas (in simple words)
+🔹 Process waiting for I/O
++
+A process does two kinds of things:
++
+Uses the CPU (calculations, instructions)
++
+Waits for I/O (disk, network, keyboard, etc.)
++
+If a process is waiting for I/O, it cannot use the CPU.
++
+🔹 The meaning of p
++
+p is:
++
+The fraction of time a process is waiting for I/O
++
+Examples:
++
+p = 0.2 → process waits for I/O 20% of the time
++
+p = 0.8 → process waits for I/O 80% of the time (very I/O-heavy)
++
+So:
++
+Low p → CPU-bound process
++
+High p → I/O-bound process
++
+🔹 The meaning of n
++
+n is:
++
+The number of processes loaded in memory at the same time
++
+This is called the degree of multiprogramming.
++
+n = 1 → only one process
++
+n = 5 → five processes
++
+n = 50 → fifty processes
++
+3. When is the CPU idle?
++
+The CPU is idle only if:
++
+ALL processes are waiting for I/O at the same time
++
+If even one process is ready to run, the OS schedules it and the CPU stays busy.
++
+4. Why is the probability pⁿ?
++
+If:
++
+Each process waits for I/O with probability p
++
+And processes are independent
++
+Then:
++
+Probability that all n processes are waiting = p × p × ... × p (n times)
++
+That equals pⁿ
++
+This is the chance that the CPU has nothing to do.
++
+5. CPU utilization formula
+
+The book gives:
+
+CPU utilization = 1 − pⁿ
+
+
+Meaning:
+
+pⁿ = probability CPU is idle
+
+1 − pⁿ = probability CPU is busy
+
+So:
+
+CPU utilization = how often the CPU is doing useful work
+
+6. Simple real-world analogy 🧠
+Think of:
+
+CPU = a cashier
+
+Processes = customers
+
+I/O wait = customer goes to get their wallet
+
+If all customers are away getting their wallets → cashier is idle
+If at least one customer is ready → cashier is busy
+
+Adding more customers reduces the chance that everyone is away at the same time.
+
+7. Concrete numerical examples
+Example 1: One process (n = 1)
+
+Let:
+
+p = 0.5 (process waits half the time)
+
+Idle probability:
+
+p¹ = 0.5
+
+
+CPU utilization:
+
+1 − 0.5 = 0.5 → 50%
+
+
+👉 Half the time, CPU is doing nothing.
+
+Example 2: Three processes (n = 3)
+
+Same p = 0.5
+
+Idle probability:
+
+p³ = 0.5³ = 0.125
+
+
+CPU utilization:
+
+1 − 0.125 = 0.875 → 87.5%
+
+
+👉 Just by adding processes, CPU stays busy most of the time.
+
+Example 3: I/O-heavy processes
+
+Let:
+
+p = 0.9 (process waits 90% of the time)
+
+n = 1
+
+CPU utilization:
+
+1 − 0.9 = 10%
+
+
+Very poor.
+
+Now increase n to 10:
+
+p¹⁰ = 0.9¹⁰ ≈ 0.35
+CPU utilization ≈ 65%
+
+
+👉 Even very I/O-heavy workloads benefit from multiprogramming.
+
+8. Why this matters in Operating Systems
+
+This explains:
+
+Why multiprogramming exists
+
+Why OSes try to keep many processes ready
+
+Why increasing n improves CPU usage (up to a point)
+
+It also connects directly to:
+
+Scheduling
+
+Context switching
+
+Throughput optimization
+
+9. One important limitation (intuition only)
+
+This model assumes:
+
+Infinite memory
+
+No context switch cost
+
+Independent processes
+
+In reality:
+
+Too many processes cause thrashing
+
+Context switching costs CPU time
+
+So this is a conceptual model, not a perfect prediction.
+
+10. One-line summary
+
+The more processes you keep in memory, the less likely it is that all of them are waiting for I/O at the same time—so the CPU stays busy.
+=====
+
+Gemini::
+[tabs]
+=====
+ChatGPT::
++
+[tabs]
+====
+Concept:: Concept
+
+Concept:: Concept
+====
+
+=====
+======
+
+==== economic reasoning with an OS model,
+Even though the model of Fig. 2-6 is fairly simple-minded, it can nevertheless
+be used to make specific, although approximate, predictions about CPU per-
+formance. Suppose, for example, that a computer has 8 GB of memory, with the
+operating system and its tables taking up 2 GB and each user program also taking
+up 2 GB. These sizes allow three user programs to be in memory at once. With an
+80% average I/O wait, we have a CPU utilization (ignoring operating system over-
+head) of 1 < 0. 83 or about 49%. Adding another 8 GB of memory allows the sys-
+tem to go from three-way multiprogramming to seven-way multiprogramming,
+thus raising the CPU utilization to 79%. In other words, the additional 8 GB will
+raise the throughput by 30%.
+
+Adding yet another 8 GB would increase CPU utilization only from 79% to
+91%, thus raising the throughput by only another 12%. Using this model, the com-
+puter’s owner might decide that the first addition was a good investment but that
+the second was not.
+
+.From AI
+[%collapsible]
+======
+[tabs]
+=====
+ChatGPT::
++
+Let’s walk through this slowly and simply, because this paragraph is doing economic reasoning with an OS model, not just math.
++
+1. What is the author trying to show?
++
+The authors are showing that:
++
+Even a very simple CPU-utilization model can help you decide whether adding more RAM is worth the money.
++
+This is about performance vs cost, not exact accuracy.
++
+2. The setup (the imaginary computer)
+🔹 Total RAM
++
+Computer has 8 GB RAM
++
+🔹 Memory usage
++
+Operating system + kernel data: 2 GB
++
+Each user program: 2 GB
++
+So memory looks like this:
++
+8 GB total
+−2 GB OS
+=6 GB for user programs
++
+Since each program needs 2 GB:
++
+6 GB / 2 GB = 3 programs
++
+👉 Three user programs can be in memory at once
+This is called:
++
+3-way multiprogramming
++
+3. I/O behavior (p = 0.8)
++
+The book assumes:
++
+Each program waits for I/O 80% of the time
++
+So:
++
+p = 0.8
++
+Processes are mostly waiting (disk, network, etc.)
++
+4. CPU utilization with 3 programs
++
+The formula:
++
+CPU utilization = 1 − pⁿ
++
+Substitute:
++
+1 − 0.8³
+1 − 0.512
+≈ 0.49 → 49%
++
+What this means in plain words:
++
+About half the time, all three programs are waiting
++
+CPU sits idle ~51% of the time
++
+👉 CPU is badly underused
++
+5. Add 8 GB more RAM (first upgrade)
++
+Now total RAM = 16 GB
++
+Memory usage:
++
+16 GB total
+−2 GB OS
+=14 GB for programs
++
+Each program = 2 GB:
++
+14 / 2 = 7 programs
++
+👉 Now we have 7-way multiprogramming
++
+6. CPU utilization with 7 programs
+CPU utilization = 1 − 0.8⁷
+≈ 1 − 0.21
+≈ 79%
++
+Interpretation:
++
+CPU is now busy most of the time
++
+Idle time drops sharply
++
+7. What does “throughput” mean here?
++
+Throughput =
++
+How much useful work the system completes per unit time
++
+If CPU utilization goes from:
++
+49% → 79%
++
+That’s an increase of about 30 percentage points
++
+👉 The system gets ~30% more work done
++
+So:
++
+The extra 8 GB RAM was a very good investment
++
+8. Add yet another 8 GB (second upgrade)
++
+Now RAM = 24 GB
++
+Programs in memory:
++
+24 − 2 = 22 GB
+22 / 2 = 11 programs
++
+CPU utilization:
++
+1 − 0.8¹¹ ≈ 91%
++
+9. Diminishing returns (very important idea)
++
+Compare the upgrades:
++
+Upgrade	CPU Utilization Gain
+8 GB → 16 GB	+30%
+16 GB → 24 GB	+12%
+Key insight:
++
+Each additional memory upgrade helps less than the previous one
++
+This is called diminishing returns.
++
+10. Why does this happen?
++
+Because:
++
+Once the CPU is already busy most of the time
++
+Adding more processes mostly helps when the CPU was idle
++
+You can’t exceed 100% utilization
++
+So improvements naturally slow down.
++
+11. Why the model is still useful (even if “simple-minded”)
++
+The authors admit:
++
+Real systems have overhead
++
+Context switches cost time
++
+Memory access is not free
++
+But the model still helps answer:
++
+Is this upgrade worth the money?
++
+Where is the bottleneck: CPU or memory?
++
+12. Real-world analogy 💡
+Imagine a restaurant:
++
+Kitchen = CPU
++
+Waiters = programs
++
+Customers ordering = I/O
++
+If:
++
+Kitchen often waits because no waiter is ready
++
+Hiring more waiters helps a lot
++
+But once the kitchen is busy all the time:
++
+Hiring even more waiters barely helps
++
+13. One-sentence summary
++
+Adding RAM lets more programs stay in memory, which keeps the CPU busy—but after a point, each upgrade helps less and less, so not every upgrade is worth the cost.
+
+=====
+
+Gemini::
+[tabs]
+=====
+ChatGPT::
++
+[tabs]
+====
+Concept:: Concept
+
+Concept:: Concept
+====
+
+=====
+======
+
+== architecture and the micro-architecture(how CPUs and operating systems relate)
+The architecture consists of everything that is visible to the software such as the
+instructions and the registers. The micro-architecture comprises the imple-
+mentation of the architecture. Here we find data and instruction caches, translation
+lookaside buffers, branch predictors, the pipelined datapath, and many other ele-
+ments that should not normally be visible to the operating system or any other soft-
+ware.
+
+Architecture defines what a CPU does and exposes to software, while micro-architecture defines how the CPU internally implements those features to achieve performance. Think of architecture as the contract between hardware and software. It defines what software is allowed to see and use.
+
+Architecture = what the CPU promises to software
+
+Micro-architecture = how the CPU keeps that promise internally
+
+=== Architecture
+*Architecture includes:*
+
+Things that programmers, compilers, and OS kernels rely on:
+
+* Instruction set: e.g. ADD, MOV, JMP, SYSCALL
+* Registers: e.g. RAX, RBX, PC, SP
+* Addressing modes: immediate, register, memory
+* Privilege levels: user mode vs kernel mode
+* Exceptions and interrupts
+* Memory model: how loads/stores behave
+
+Example (x86-64 architecture), From software’s point of view:
+----
+MOV RAX, 5
+ADD RAX, 3
+----
+Software assumes:
+
+* RAX exists
+* ADD behaves correctly
+* Instructions execute in program order (logically)
+
+The OS kernel also depends on:
+
+* page tables
+* privileged instructions
+* system call instructions
+
+If two CPUs implement the same architecture, the same OS and programs can run on both.
+
+=== micro-architecture(internal CPU machinery)
+Micro-architecture is how the CPU actually executes those instructions internally. It is:
+
+* invisible to normal software
+* free to change between CPU generations
+* designed for performance, power, and efficiency
+
+*Micro-architecture includes:*
+
+* Instruction cache
+* Data cache
+* TLB (Translation Lookaside Buffer)
+* Branch predictor
+* Pipeline
+* Out-of-order execution units
+* Reorder buffer
+* Speculative execution
+
+These are implementation tricks, not promises.
+----
+| Concept          | Linux kernel depends on | Linux kernel ignores |
+| ---------------- | ----------------------- | -------------------- |
+| Registers        | ✔ Yes                   | —                    |
+| Instructions     | ✔ Yes                   | —                    |
+| Page tables      | ✔ Yes                   | —                    |
+| Privilege levels | ✔ Yes                   | —                    |
+| Cache size       | ⚠ Sometimes             | Cache design         |
+| Pipeline         | ❌ No                    | ✔                    |
+| Branch predictor | ❌ No                    | ✔                    |
+| Speculation      | ❌ (except mitigations)  | ✔                    |
+----
+
+=== Simple analogy: Car vs Engine
+Architecture = driving controls
+
+* Steering wheel
+* Gas pedal
+* Brake
+* Speedometer
+
+Every car has these, and they work the same way.
+
+Micro-architecture = engine internals
+
+* V4 vs V8
+* Turbocharger
+* Hybrid system
+* Fuel injection details
+
+Different engines, same driving experience. You drive the car (software), not the pistons (micro-architecture).
+
+=== Why micro-architecture is “not visible” to software
+From software’s perspective:
+----
+ADD RAX, RBX
+----
+The CPU may internally:
+
+* split it into micro-ops
+* execute it out of order
+* speculatively execute future instructions
+* use cached data
+* roll back if prediction was wrong
+
+But software must see:
+
+* the correct final result
+* the illusion that instructions executed in order
+
+That illusion is part of the architecture guarantee.
+
+=== Concrete example: Same architecture, different micro-architectures
+x86 CPUs: Intel Skylake, Intel Alder Lake, AMD Zen, AMD Zen 4, All:support the x86-64 architecture, run Linux, Windows, same binaries. But internally:
+
+* different pipeline depths
+* different cache sizes
+* d* different execution units
+
+OS doesn’t care how the CPU does it, as long as it obeys the architectural rules.
+
+=== Why the OS usually ignores micro-architecture
+
+The OS:
+
+* schedules processes
+* handles page faults
+* s* manages virtual memory
+
+It relies on:
+
+* egisters
+* page tables
+* interrupts
+* privilege levels
+
+It does not rely on:
+
+* how many pipeline stages exist
+* whether the CPU is out-of-order
+* how branch prediction works
+
+That’s why Tanenbaum says:
+
+“should not normally be visible to the operating system”
+
+=== Important exception (modern reality)
+
+Although conceptually hidden, micro-architecture sometimes leaks,Linux mostly ignores micro-architecture — but sometimes it must work around it.
+
+* Timing differences (cache hits vs misses)
+* Side channels (Spectre, Meltdown)
+* Performance tuning (NUMA, cache locality)
+
+Still: these are side effects, not part of the architectural contract
+
+A. Cache awareness (performance, not correctness)
+
+📂 arch/x86/kernel/cpu/cacheinfo.c
+----
+detect_cache_attributes(cpu);
+----
+
+Used for:
+
+* NUMA decisions
+* scheduling heuristics
+* memory locality
+
+👉 The kernel queries cache sizes but never depends on their design.
+
+B. TLB handling (architecture-visible effect)
+
+TLB is micro-architectural, but its invalidation is architectural.
+
+📂 arch/x86/include/asm/tlbflush.h
+----
+static inline void flush_tlb_mm(struct mm_struct *mm)
+{
+    write_cr3(mm->pgd);
+}
+-----
+
+Kernel view:
+
+* “Writing CR3 flushes TLB”
+
+It does not know:
+
+* how many TLB entries exist
+* replacement algorithm
+* whether it’s split or unified
+
+C. Spectre/Meltdown (micro-architecture leaks)
+
+📂 arch/x86/kernel/cpu/bugs.c
+----
+if (boot_cpu_has(X86_BUG_SPECTRE_V2))
+    spectre_v2_select_mitigation();
+----* 
+
+This is huge:
+
+Speculative execution (micro-architecture)
+
+* Broke architectural isolation guarantees
+
+* Forced OS involvement
+
+=== Architecture in Linux kernel code (software-visible contract)
+Linux never says:
+
+* “This CPU has a 14-stage pipeline”
+* “Branch predictor is two-level adaptive”
+* “L1 cache is 48 KB”
+
+Why? Because micro-architecture:
+
+* changes between CPU models
+* must not break software
+* is not part of the ISA contract
+
+Example:
+----
+schedule();
+----
+
+The kernel:
+
+* switches tasks
+* saves registers
+* restores registers
+
+It does not:
+
+* flush pipelines
+* reset predictors
+* reorder execution
+
+Those are hardware responsibilities.
+
+==== Linux kernel code structure
+The Linux kernel is organized by architecture, not by micro-architecture.
+----
+arch/
+ ├── x86/
+ │   ├── entry/
+ │   ├── kernel/
+ │   ├── mm/
+ │   └── include/
+ ├── arm64/
+ ├── riscv/
+----
+Each directory corresponds to an ISA(Instruction Set Architecture defines the CPU's basic commands, allowing software to communicate with the processor (e.g., "add numbers," "move data").) (architecture).
+
+==== Instructions & registers (architecture)
+Example: system call entry (x86-64)
+
+📂 arch/x86/entry/entry_64.S
+----
+SYM_CODE_START(entry_SYSCALL_64) (1)
+    swapgs (2)
+    movq %rsp, %rdi (3)
+    call do_syscall_64 (4)
+----
+(1) SYM_CODE_START is a Linux kernel assembly macro used to mark the beginning of special functions (like interrupt handlers or entry points) that have non-standard C calling conventions, signaling to tools like debuggers and linkers that this code block needs special handling (e.g., different stack management), and it must be paired with SYM_CODE_END. It's part of a set of assembler annotations (SYM_FUNC_START, SYM_DATA_START) designed for architecture-specific assembly code within the kernel, ensuring correct symbol and debug info generation
+(2) The swapgs instruction is used to exchange the contents of the GS register with a hidden kernel-space base address. This ensures that subsequent memory accesses use kernel data structures, specifically accessing the per-CPU area to find the top of the kernel stack.
+(3) movq %rsp, %rdi: This instruction moves the current value of the user-space stack pointer (%rsp) into the %rdi register. In the Linux x86-64 system call convention, the first argument to a function is passed in %rdi. Here, the user's stack pointer is saved as the first argument for the subsequent function call.
+(4) call do_syscall_64: This jumps to the do_syscall_64 function within the kernel. This function is responsible for:
+
+
+What this depends on:
+
+* %rsp, %rdi registers
+* SYSCALL instruction
+* privilege level switch
+* defined calling convention
+
+All architectural, No cache, pipeline, or branch predictor knowledge
+
+==== Page tables & virtual memory (architecture)
+📂 arch/x86/mm/
+----
+#define PGDIR_SHIFT 39
+#define PUD_SHIFT   30
+#define PMD_SHIFT   21
+#define PAGE_SHIFT  12
+----
+
+These match x86 page table architecture:
+
+* 4-level page tables
+* page sizes
+* permission bits
+
+The kernel assumes:
+
+* page faults work
+* TLB exists (conceptually)
+* CR3 switches address spaces
+
+This is Architecture, not micro-architecture
+
+==== Privileged instructions
+
+📂 arch/x86/kernel/cpu/common.c
+----
+native_write_cr3(new_cr3);
+---
+
+This relies on:
+
+* existence of CR3
+* privilege checks
+* defined semantics
+
+It does not care:
+
+* whether TLB is fully associative
+* how many cycles CR3 write takes
+
+==== Full mapping: instruction → kernel → hardware
+
+Let’s trace one instruction:
+
+User program:
+----
+write(1, "hi", 2); (1)
+----
+(1) write(1, "hi", 2); is a low-level system call in C used for writing data directly to a file descriptor. 
+
+Step 1: Architecture-defined syscall
+----
+mov $1, %rax       ; syscall number (1)
+syscall (2)
+----
+(1) The assembly instruction mov $1, %rax followed by syscall is the standard convention for initiating the write() system call in 64-bit Linux using AT&T syntax.  mov $1, %rax: This instruction moves the value 1 into the rax register. In the Linux x86-64 system call convention, the rax register is used to specify the system call number. The number 1 corresponds to the sys_write (write) system call.
+(2) syscall: This instruction triggers a CPU interrupt, which transfers control from user space to the operating system kernel. The kernel then inspects the value in rax to determine which specific system call function to execute
+
+✔ Defined by x86-64 architecture
+
+Step 2: Kernel entry
+
+📂 arch/x86/entry/entry_64.S
+----
+entry_SYSCALL_64:
+    swapgs
+    call do_syscall_64
+----
+
+✔ Uses architectural registers and privilege change
+
+Step 3: Kernel C code
+
+📂 kernel/sys.c
+----
+SYSCALL_DEFINE3(write, unsigned int, fd,
+                const char __user *, buf,
+                size_t, count)
+
+----
+✔ Pure software logic
+
+Step 4: Return to user space
+
+Registers restored, SYSRET executed.
+
+✔ Architectural state restored
+
+What happened invisibly (micro-architecture)
+
+Instructions decoded into micro-ops
+
+* Pipeline filled
+* Cache lines fetched
+* Branch predictor used
+* Out-of-order execution
+
+Kernel never sees or controls this

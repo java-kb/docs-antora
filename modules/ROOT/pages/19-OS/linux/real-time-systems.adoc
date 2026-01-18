@@ -1,0 +1,27 @@
+= realtime
+
+Realtime applications are those that need to respond in a timely fashion to input.
+Frequently, such input comes from an external sensor or a specialized input device,
+and output takes the form of controlling some external hardware. Examples of
+applications with realtime response requirements include automated assembly
+lines, bank ATMs, and aircraft navigation systems.
+
+Although many realtime applications require rapid responses to input, the
+defining factor is that the response is guaranteed to be delivered within a certain
+deadline time after the triggering event.
+
+The provision of realtime responsiveness, especially where short response
+times are demanded, requires support from the underlying operating system. Most
+operating systems don’t natively provide such support because the requirements of
+realtime responsiveness can conflict with the requirements of multiuser time-
+sharing operating systems. Traditional UNIX implementations are not realtime
+operating systems, although realtime variants have been devised. Realtime variants
+of Linux have also been created, and recent Linux kernels are moving toward full
+native support for realtime applications.
+
+POSIX.1b defined a number of extensions to POSIX.1 for the support of real-
+time applications. These include asynchronous I/O, shared memory, memory-
+mapped files, memory locking, realtime clocks and timers, alternative scheduling
+policies, realtime signals, message queues, and semaphores. Even though they 
+don’t strictly qualify as realtime, most UNIX implementations now support some
+or all of these extensions.

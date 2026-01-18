@@ -1,2 +1,4 @@
 = Data structures
 :figures: 11-development/00-software-development/data-structures-and-algorithms/data-structures
+
+A data structure is a way of organizing data so that it can be accessed and/or modified efficiently.

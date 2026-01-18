@@ -1,5 +1,11 @@
 =  GitHub Copilot
 
+Much like other LLMs, Copilot is triggered by prompts. But unlike a chat-based 
+LLM (such as ChatGPT), Copilot is tuned to process code-based rather than text-based 
+prompts. This distinction is important because it highlights both the benefits of differ-
+ent types of fine-tuned LLMs for different activities, as well as the need to write prompts 
+that work for different prompt types.
+
 == shortcuts
 === @workspace command
 which refers to the files open in your workspace. 

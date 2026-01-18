@@ -1,0 +1,841 @@
+= Computer Science
+:figures: 18-computer-science
+:stem:
+
+== Ideas
+== Externalize Thinking
+Human working memory is limited and easily overloaded during complex tasks.
+
+Writing things down preserves details and frees mental capacity for reasoning.
+
+Use external representations to organize thought, design solutions, and reason more effectively about computational problems.
+
+Purpose of Writing Things Down
+
+* Capture facts, ideas, and intermediate thoughts reliably.
+* Reduce cognitive load and prevent loss of important information.
+* Support clearer analysis and better problem-solving.
+
+=== Flowcharts
+Visual representations of processes. Help clarify control flow and decision points.
+
+computer code is essentially a pro-
+cess. Programmers often use flowcharts for writing down comput-
+ing processes. When doing so, you should follow these guidelines1
+for others to understand your flowcharts:
+
+• Write states and instruction steps inside rectangles.
+• Write decision steps, where the process may go different
+ways, inside diamonds.
+• Never mix an instruction step with a decision step.
+• Connect sequential steps with arrows.
+• Mark the start and end of the process.
+
+Examle: Finding the biggest of three numbers
+
+image::{figures}/flowchart-finding-the-biggest-of-three-numbers.png[Finding the maximum value between three variables]
+
+=== Pseudocode
+Pseudocode is Structured, programmable descriptions of processes. Bridge the gap between human reasoning and actual code.
+
+pseudocode expresses computational processes.
+Pseudocode is human-friendly code that cannot be understood by
+a machine
+[pseudocode]
+----
+function maximum(A, B, C)
+    if A > B
+        if A > C
+            max ← A
+        else
+            max ← C
+    else
+        if B > C
+            max ← B
+        else
+            max ← C
+print max
+----
+← is the assignment operator: x ←͠ reads x is set to 1.
+
+
+=== Mathematical Modeling
+A model is a set of concepts that represents a problem and its char-
+acteristics. It allows us to better reason and operate with the prob-
+lem. It provides an abstraction that makes the problem easier to understand, analyze, and manipulate.
+
+Mathematical Modeling is atechnique used to express problems using formal mathematical representations. Enable precise reasoning and validation of solutions.
+
+Models allow us to reason systematically about a problem rather than dealing with raw complexity.
+
+Much of mathematics education focuses on:
+
+* Translating real-world problems into numbers and equations
+* Applying formal tools to derive solutions
+
+Advantages of Mathematical Models
+
+* Mathematical descriptions are precise and unambiguous.
+* They can be directly adapted for computers, enabling algorithmic solutions.
+* Well-established mathematical techniques can be applied once the model is defined.
+
+Effective problem solving starts with building the right model; once the model is correct, the appropriate mathematical and computational tools naturally follow
+
+Choosing the Right Mathematical Tools
+
+* Graph-based models → apply graph theory
+* Equation-based models → apply algebra
+
+The structure of the model determines which mathematical methods are most effective.
+
+The hard part is not coding — it’s choosing the right model. Once the model is correct:
+
+* The math becomes obvious
+* The algorithm becomes standard
+* The code becomes straightforward
+
+*Examples*
+
+*Example: maximize the area A*
+
+Your farm has two types of livestock.
+You have 100 units of barbed wire to make a rectangular
+fence for the animals, with a straight division for separating
+them. How do you frame the fence in order to maximize
+the pasture’s area?
+
+Starting with what’s to be determined, w and l are the pasture’s
+dimensions; w × l, the area. Maximizing it means using all the
+barbed wire, so we relate w and l with 100:
+----
+A = w × l,
+100 = 2w + 3l.
+----
+Pick w and l that maximize the area A.
+
+Plugging l from the second equation (l = 100−2/3w ) into the first,
+
+stem:A = 100/3 w − 2/3 w^2
+
+Now the problem is purely mathematical: Find the maximum of a quadratic function.
+
+Take the derivative
+A′(w)=100/3  − 4/3 w
+
+Set derivative to zero
+
+100/3  − 4/3 w=0 w=25
+
+l=50/3
+
+Optimal fence dimensions
+
+* Length: 25 units
+* Width: 50/3≈16.673 ≈16.67 units
+* Divider length: 50/3 units
+
+Maximum area
+
+A=25×50/3=1250/3≈416.67 ≈416.67
+
+Why This Is a Perfect Example of Mathematical Modeling
+|===
+|Step	|What You Did
+|Abstract	I|gnored animals, kept geometry
+|Model	|Converted wire → equations
+|Choose math	|Algebra + calculus
+|Solve	|Optimization
+|Interpret	|Fence dimensions
+|===
+
+*Example 1: Finding the Biggest of Three Numbers*
+
+**Real Problem**: Given three numbers, determine the largest one.
+
+*Mathematical Model*
+
+* Variables:A,B,C∈R
+* Objective: Find  max⁡(A,B,C)
+
+*Applied Math / Technique*
+
+* Algebra: comparisons and inequalities
+
+*Computational Form*
+
+* Conditional logic (if, else)
+* Flowchart or pseudocode
+
+*Example 2: Shortest Path Between Cities*
+
+*Real Problem*: Find the shortest route from Cairo to Alexandria.
+
+*Mathematical Model*
+
+* Cities → vertices (nodes)
+* Roads → edges
+* Distance → edge weights
+
+*Applied Math / Technique*
+
+* Graph theory
+* Shortest-path algorithms (e.g., Dijkstra)
+
+*Computational Form*
+
+* Adjacency list / matrix
+* Priority queue–based algorithm
+
+*Example 3: Scheduling Tasks on a CPU*
+
+*Real Problem*: Decide which process runs next to minimize waiting time.
+
+*Mathematical Model*
+
+* Tasks → jobs with:
+** arrival time
+** execution time
+* Objective: Minimize average waiting or turnaround time
+
+*Applied Math / Technique*
+
+* Optimization
+* Queueing theory (simplified models)
+
+*Computational Form*
+
+* Priority queues
+* Scheduling algorithms (SJF, Round Robin)
+
+*Example 4: Social Network Friend Suggestions*
+
+*Real Problem*: Suggest friends a user might know.
+
+*Mathematical Model*
+
+* Users → nodes
+* Friendships → edges
+* Mutual friends → graph connectivity
+
+*Applied Math / Technique*
+
+* Graph theory
+* Similarity metrics
+
+*Computational Form*
+
+* Graph traversal
+* Set intersection
+
+*Example 5: Budget Planning*
+
+*Real Problem*: Maximize savings while covering expenses.
+
+*Mathematical Model*
+
+* Income: I
+* Expenses: E1,E2,…,En
+* Constraint:∑Ei≤I
+
+*Applied Math / Technique*
+
+* Algebra
+* Linear constraints
+
+*Computational Form*
+
+* Constraint checking
+* Optimization routines
+
+*Example 6: Image as Data (Computer Vision)*
+
+*Real Problem*: Detect edges in an image.
+
+*Mathematical Model*
+
+* Image → matrix of pixel values
+* Edge → large gradient change
+
+*Applied Math / Technique*
+
+* Linear algebra
+* Calculus (gradients)
+
+*Computational Form*
+
+* Matrix convolution
+* Numeric computation
+
+*Pattern You Should Notice*
+[cols="1,2,2,2", options="header"]
+|===
+| Problem Type | Mathematical Model | Math Used | Code Structure
+
+| Comparison
+| Variables + inequalities
+| Algebra
+| Conditionals
+
+| Routing
+| Nodes + edges
+| Graph theory
+| Graph algorithms
+
+| Scheduling
+| Jobs + constraints
+| Optimization
+| Queues / priority scheduling
+
+| Images
+| Matrices
+| Linear algebra
+| Matrix operations
+|===
+
+=== Logic
+By learning formal logic, we can deliberately use it to solve problems.
+
+A coder might say:“If this function works, the bug must be somewhere else.”. That’s logical reasoning, but it’s informal and sometimes wrong. Without formal logic, you may:
+
+* Miss edge cases(rare, unusual, or extreme scenarios in software, systems, or design that fall outside typical user behavior or expected conditions)
+* Make invalid assumptions
+* Confuse correlation with causation
+
+Formal logic means:
+
+* Using explicit rules to reason
+* Making assumptions clear
+* Ensuring conclusions actually follow from premises
+
+Instead of “it feels right,” you ask:
+
+* What exactly is true?
+* What follows from what?
+
+Formal logic prevents bugs by:
+
+* Making assumptions explicit
+* Avoiding missing conditions
+* Avoiding wrong operator precedence
+* Avoiding wrong inference (like confusing D4 → E with E → D4)
+
+Debugging becomes systematic: You can trace which condition caused a failure instead of guessing.
+
+Basic building blocks:
+
+* Statements: things that are true or false
+** “The list is empty”
+* Operators: AND, OR, NOT
+* Implication: IF A, THEN B
+* Contradiction: two statements can’t both be true
+
+When you understand logic explicitly, you can:
+
+* Break problems into precise statements
+* Avoid incorrect reasoning
+* Debug more systematically
+* Design better algorithms
+
+You stop guessing and start proving.
+
+Programmers already use logic every day, but learning formal logic lets them use it consciously, correctly, and reliably instead of by habit or guesswork.
+
+for programmers Learning logic helps you:
+
+* Write correct conditions (if, while, assert)
+* Design correct algorithms
+* Reason about edge cases
+* Prove that code works, not just hope it does
+* Understand why some “obvious” solutions fail
+
+*Example: Bug hunting*
+
+Without formal logic (intuition only): This bug happens after login, so login must be broken.”
+
+This might be wrong.
+
+With formal logic:
+
+* Premise 1: If login fails, user is not authenticated
+* Premise 2: The user is authenticated
+
+Conclusion: Login did not fail
+
+Now you rule out login and search elsewhere. This is logical elimination, not intuition.
+
+*Example: Problem solving*
+
+Problem: “If a number is divisible by 4, it’s even. This number is even. Is it divisible by 4?”
+
+Intuition mistake: “Yes, probably.”
+
+Formal logic:
+
+* If A → B does not mean B → A
+* Many even numbers are not divisible by 4
+
+So the correct answer is: You can’t conclude that.
+
+Formal logic protects you from false conclusions.
+
+==== Operators
+In common math, variables and operators (+, ×, −,…) are used
+to model numerical problems. In mathematical logic, variables and
+operators represent the validity of things. They don’t express num-
+bers, but True/False values. 
+
+For instance, the validity of the ex-
+pression “if the pool is warm, I’ll swim” is based on the validity of
+two things, which can be mapped to logical variables A and B:
+----
+A : The pool is warm.
+B : I swim.
+----
+They’re either True or False. 
+. A = True means a warm pool;
+. B = False means no swimming. B can’t be half-true, because I can’t half swim. 
+
+In formal logic, statements are either True (1) or False (0).
+We use Boolean operators, which are exactly what we use in code:
+|===
+| Boolean Operator | Symbol | Code Example | Meaning                           
+
+| AND              | ∧      | `a and b`    | True if **both** are True         
+| OR               | ∨      | `a or b`     | True if **at least one** is True  
+| NOT              | ¬      | `not a`      | True if a is False                
+| IMPLIES          | →      | `if a: ...`  | If a is True, then b must be True 
+| EQUIVALENT       | ↔      | `a == b`     | True if a and b are equal         
+|===
+Below is truth table covering the 4 possible values of A and B and the most important logical operations used in mathematics and programming.
+[cols="^1,^1,^1,^1,^1,^1,^1,^1,^1,^1,^1", options="header"]
+|===
+| A | B | ¬A | ¬B | A ∧ B | A ∨ B | A → B | A ← B | A ↔ B | A XOR B | Notes
+
+| 0 | 0 | 1 | 1 | 0 | 0 | 1 | 1 | 1 | 0 | Both false
+| 0 | 1 | 1 | 0 | 0 | 1 | 1 | 0 | 0 | 1 | A false, B true
+| 1 | 0 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | A true, B false
+| 1 | 1 | 0 | 0 | 1 | 1 | 1 | 1 | 1 | 0 | Both true
+|===
+Symbol legend (quick reference)
+
+* ¬A : NOT A
+* A ∧ B : AND
+* A ∨ B : OR
+* A → B : IF A THEN B
+* A ← B : IF B THEN A
+* A ↔ B : A equivalent to B
+* A XOR B : Exactly one is true
+
+// TODO 
+// create asciidoc table for logical operations for the 4 possible values of A and B
+// Extend this to three variables (A, B, C) for real-world logic
+this table is important for programmers as
+
+* Every if, while, assert, and permission check reduces to one row of this table
+* it Helps avoid logical fallacies (wrong implications, wrong OR vs XOR)
+* its being Used directly in:
+** Compiler optimizations
+** Digital circuits
+** OS condition checks
+** Formal verification
+
+===== conditional operator
+Dependency between variables is expressed
+with →, the conditional operator. A → B is the idea that
+A = True implies B = True:
+----
+A → B : If the pool is warm, then I’ll swim.
+----
+
+===== the negation operator
+
+To negate
+ideas, we use !, the negation operator. !A is the opposite of A:
+----
+!A : The pool is cold.
+!B : I don’t swim.
+----
+
+===== contrapositive
+Given A → B and I didn’t swim, what can be
+said about the pool? A warm pool forces the swimming, so without
+swimming, it’s impossible for the pool to be warm. Every condi-
+tional expression has a contrapositive equivalent:
+----
+for any two variables A and B,
+A → B is the same as !B → !A.
+----
+
+===== biconditional
+saying “if the pool is warm, I’ll swim”
+doesn’t mean I’ll only swim in warm water. The statement promises
+nothing about cold pools. In other words, A → B doesn’t mean
+B → A. To express both conditionals, use the biconditional:
+----
+A ↔ B : I’ll swim if and only if the pool is warm.
+----
+Here, the pool being warm is equivalent to me swimming: knowing
+about the pool means knowing if I’ll swim and vice-versa. 
+
+===== inverse error
+never presume B → A follows from A → B.
+
+===== AND, OR, XOR 
+These logical operators are the most famous,
+as they’re often explicitly coded. 
+
+. AND expresses all ideas are True;
+. OR expresses any idea is True; 
+. XOR expresses ideas are of opposing truths. 
+
+Imagine a party serving vodka and wine:
+
+. A : You drank wine.
+. B : You drank vodka.
+. A OR B : You drank.
+. A AND B : You drank mixing drinks.
+. A XOR B : You drank without mixing
+
+A → B is equivalent to !A OR B, and A XOR B is equivalent to !(A ↔ B).
+
+A → B mean “If A is true, then B must be true.”
+
+it does not say:
+
+* A is true
+* B happens only because of A
+
+It only forbids one case: A = true and B = false, Everything else is allowed.
+[cols="^1,^1,^1,^1,^1,^1,^1,^1,^1", options="header"]
+|===
+| A | B | ¬A | A → B | ¬A ∨ B | A ↔ B | ¬(A ↔ B) | A XOR B | Notes
+
+| 0 | 0 | 1 | 1 | 1 | 1 | 0 | 0 | Implication holds, values equal
+| 0 | 1 | 1 | 1 | 1 | 0 | 1 | 1 | XOR true (different values)
+| 1 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | Only case where A → B fails
+| 1 | 1 | 0 | 1 | 1 | 1 | 0 | 0 | Both true, implication holds
+|===
+A → B and ¬A ∨ B columns are identical, ¬(A ↔ B) and A XOR B columns are identical
+
+==== Boolean Algebra
+As elementary algebra simplifies numerical expressions, boolean algebra simplifies logical expressions.
+
+Boolean algebra maps directly to if/and/or/not code.
+
+===== associativity
+Parentheses are irrelevant for sequences of AND or
+OR operations. As sequences of sums or multiplications in elemen-
+tary algebra, they can be calculated in any order.
+----
+A AND (B AND C) = (A AND B) AND C.
+A OR (B OR C) = (A OR B) OR C.
+----
+===== distributivity 
+In elementary algebra we factor multiplicative
+terms from sums: a × (b + c) = (a × b) + (a × c). Likewise
+in logic, ANDing after an OR is equivalent to ORing results of ANDs,
+and vice versa:
+----
+A AND (B OR C) = (A AND B) OR (A AND C).
+A OR (B AND C) = (A OR B) AND (A OR C).
+----
+===== De Morgan Law
+ANDs can be transformed into ORs and vice versa
+----
+!(A AND B) = !A OR !B
+!A AND !B = !(A OR B)
+----
+Analogy: It can’t be summer and winter at once, so it’s ei-
+ther not summer or not winter. 
+
+And it’s not summer and not winter if and only if it’s not the case it’s either summer or winter.
+
+These rules transform logical models, reveal properties, and simplify expressions
+
+*Example*
+
+A server crashes if it’s overheating while
+the air conditioning is off. It also crashes if it’s overheating
+and its chassis cooler fails. In which conditions does the
+server work?
+
+Modeling it in logical variables, the conditions for the server to
+crash can be stated in a single expression:
+
+* A : Server overheats.
+* B : Air conditioning off.
+* C : Chassis cooler fails.
+* D : Server crashes.
+----
+(A AND B) OR (A AND C) → D
+----
+Using distributivity, we factorize the expression:
+
+(A AND B) OR (A AND C) = A AND (B OR C) → D
+
+The server works when (!D). The contrapositive reads:
+
+!D → !(A AND (B OR C)).
+
+We use DeMorgan’s Law to remove parentheses:
+
+!D → !A OR !(B OR C).
+
+Applying DeMorgan’s Law again,
+
+!D → !A OR (!B AND !C)
+
+This expression tells us that whenever the server works, either !A
+(it’s not overheating), or !B AND !C (both air conditioning and
+chassis cooler are working).
+
+==== truth table
+Another way to analyze logical models is checking what happens
+in all possible configurations of its variables. A truth table has a
+column for each variable. Rows represent possible combinations
+of variable states.
+
+One variable requires two rows: in one the variable is set True,
+in the other False. To add a variable, we duplicate the rows. We
+set the new variable True in the original rows, and False in the
+duplicated rows (fig. 1.5). The truth table size doubles for each
+added variable, so it can only be constructed for a few variables
+
+image::{figures}/logic-truth-table.png[ables listing the configurations of ǔ–ǘ logical variables]
+
+*Example*: We have to create a database system
+with the following requirements:
+
+. If the database is locked, we can save data.
+. A database lock on a full write queue cannot happen.
+. Either the write queue is full, or the cache is loaded.
+. If the cache is loaded, the database cannot be locked.
+
+Is this possible? Under which conditions will it work?
+
+*Solution*
+
+First we transform each requirement into a logical expression. This
+database system can be modeled using four variables:
+[%noheader,,cols="1,1",frame=none, grid=none]
+|===
+|Variable definitions|Translate the requirements into logic
+a|
+A : Database is locked.
+
+B : Able to save data.
+
+C : Write queue is full.
+
+D : Cache is loaded.
+
+a|
+I : A → B.
+
+II() : !(A AND C).
+
+III : C OR D.
+
+IV : D → !A.
+|===
+
+We then create a truth table with all possible configurations. Extra
+columns are added to check the requirements
+[cols="^1,^1,^1,^1,^1,^1,^1,^1,^1", options="header"]
+|===
+| A | B | C | D | I: A→B | II: ¬(A∧C) | III: C∨D | IV: D→¬A | ALL OK?
+
+| 0 | 0 | 0 | 0 | 1 | 1 | 0 | 1 | ❌
+| 0 | 0 | 0 | 1 | 1 | 1 | 1 | 1 | ✅
+| 0 | 0 | 1 | 0 | 1 | 1 | 1 | 1 | ✅
+| 0 | 0 | 1 | 1 | 1 | 1 | 1 | 1 | ✅
+| 0 | 1 | 0 | 0 | 1 | 1 | 0 | 1 | ❌
+| 0 | 1 | 0 | 1 | 1 | 1 | 1 | 1 | ✅
+| 0 | 1 | 1 | 0 | 1 | 1 | 1 | 1 | ✅
+| 0 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | ✅
+| 1 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | ❌
+| 1 | 0 | 0 | 1 | 0 | 1 | 1 | 0 | ❌
+| 1 | 0 | 1 | 0 | 0 | 0 | 1 | 1 | ❌
+| 1 | 0 | 1 | 1 | 0 | 0 | 1 | 0 | ❌
+| 1 | 1 | 0 | 0 | 1 | 1 | 0 | 1 | ❌
+| 1 | 1 | 0 | 1 | 1 | 1 | 1 | 0 | ❌
+| 1 | 1 | 1 | 0 | 1 | 0 | 1 | 1 | ❌
+| 1 | 1 | 1 | 1 | 1 | 0 | 1 | 0 | ❌
+|===
+
+the system is logically possible, There are several rows where ALL OK
+
+Under which conditions does it work?
+
+From every valid row, we can extract the necessary conditions.
+
+. The database must NOT be locked: In all valid cases:
++
+A=0
++
+So: The database cannot be locked in any valid configuration.
+. Either the queue is full or the cache is loaded
++
+From Requirement III: C∨D=1
++
+Saving data is unconstrained when unlocked
++
+Requirement I (A → B) only restricts behavior when A = 1, which never happens in valid states.
++
+So: B may be true or false
++
+The logic does not enforce saving success
+
+Logical insight (why locking is impossible)
+
+* If C = 1 → locking forbidden (Requirement II)
+* If D = 1 → locking forbidden (Requirement IV)
+
+Requirement III forces C or D to be true
+
+Therefore:
+
+(C∨D)∧[¬(A∧C)]∧(D→¬A)⇒¬A
+
+the constraints collectively eliminate every valid state where the database is locked.
+The system can operate only when the database remains unlocked and either the write queue is full or the cache is loaded.
+
+*Solving the Zebra Puzzle with Boolean Algebra*
+
+https://code.energy/solving-zebra-puzzle/
+
+==== Logic in Computing
+Groups of logical variables can represent numbers in binary form.9
+Logic operations on binary digits can be combined to perform gen-
+eral calculations. Logic gates perform logic operations on electric
+current. They are used in electrical circuits that can perform calcu-
+lations at very high speeds.
+
+A logic gate receives values through input wires, performs its
+operation, and places the result on its output wire. There are AND
+gates, OR gates, XOR gates, and more. True and False are repre-
+sented by electric currents with high or low voltage. Using gates,
+complex logical expressions can be computed near instantly
+
+image::{figures}/logic-gates-adding-numbers.png[A circuit to sum 2-bit numbers given by pairs of logical variables (A1A0 and B1B0) into a 3-bit number (S2S1S0)]
+
+Calculating 2 + 3 = 5(in binary,10+11=101)
+
+image::{figures}/logic-gates-adding-2-and-3.png[]
+
+To take advantage of this fast form of computing, we transform
+numerical problems to their binary/logical form. Truth tables help
+model and test circuits. Boolean algebra simplifies expressions and
+thus simplifies circuits
+
+==== how formal logic prevents real-world bugs
+*Example: Conditional Logic in Code*
+
+* *Problem: A user can log in only if*:
+* The username is correct
+* The password is correct
+* Two-factor authentication is passed
+
+*Boolean Algebra:* Let’s define:
+
+* U = username correct
+* P = password correct
+* T = 2FA passed
+
+The login condition:
+----
+Login=U∧P∧T
+----
+*Code*:
+----
+if username_correct and password_correct and two_factor_passed:
+    allow_login()
+else:
+    deny_login()
+----
+*Bug prevention*:
+
+If you forget T:
+----
+if username_correct and password_correct:
+    allow_login()
+----
+Problem: Users can bypass 2FA.
+
+Using formal logic, you can systematically write out all conditions as a Boolean expression, so missing T is obvious.
+
+*Example: Edge Case Checking*
+
+Problem: We want a number divisible by 4 to trigger a message.
+
+Boolean algebra:
+
+*D4 = number divisible by 4
+* E = number is even
+
+We know: D4→E (If divisible by 4, then even)
+
+But the converse is not true: E↛D4
+
+Bug if you ignore formal logic:
+----
+if number % 2 == 0:
+    print("Divisible by 4")  # WRONG
+----
+Correct with formal logic:
+----
+if number % 4 == 0:
+    print("Divisible by 4")  # Correct
+----
+Lesson: Formal logic prevents wrong assumptions.
+
+*Example: Nested Conditions*
+
+Problem: A shopping app gives a discount if:
+
+* User is VIP or purchases more than $100
+* And promo code is valid
+
+Boolean algebra:
+
+Discount=(VIP∨Purchase>100)∧PromoValid
+
+Code:
+----
+if (is_vip or purchase_total > 100) and promo_code_valid:
+    apply_discount()
+----
+Bug prevention:
+
+If you write:
+----
+if is_vip or purchase_total > 100 and promo_code_valid:
+    apply_discount()
+----
+
+Python’s operator precedence causes a bug:
+
+* Original logic: (VIP OR Purchase>100) AND PromoValid
+* Wrong logic: VIP OR (Purchase>100 AND PromoValid)
+
+Formal logic (Boolean algebra) forces you to parenthesize, avoiding this subtle bug.
+
+*Example: Debugging with Logic*
+
+Imagine a bug: login fails even when credentials are correct.
+
+We define:
+----
+Login = U ∧ P ∧ T
+----
+
+Observed: Login = False, U = True, P = True, T = ?
+
+Using formal logic:
+
+        Login=U∧P∧T=0
+        T=?
+
+Conclusion: 2FA is failing.
+
+Instead of guessing, formal logic lets you trace exactly which condition caused failure.

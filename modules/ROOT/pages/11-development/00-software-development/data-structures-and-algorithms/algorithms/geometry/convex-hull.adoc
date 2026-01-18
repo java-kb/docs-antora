@@ -1,0 +1,654 @@
+= Convex Hull construction
+
+Given a set of points, P, in a two-dimensional plane, such as shown in Figure 1-1,
+picture a rubberband that has been stretched around the points and released. The
+resulting shape is known as the convex hull (i.e., the smallest convex shape that fully
+encloses all points in P). Your task is to write an algorithm to compute the convex
+hull from a set of two-dimensional points.
+
+Given a convex hull for P, any line segment drawn between any two points in P lies
+totally within the hull. Let’s assume we order the points in the hull clockwise. Thus,
+the hull is formed by a clockwise ordering of h points L0, L1, … ,Lh-1 as shown in
+Figure 1-2. Each sequence of three hull points Li, Li+1, Li+2 creates a right turn.
+
+With just this information, you can probably draw the convex hull for any set of
+points, but could you come up with an algorithm (i.e., a step-by-step sequence of
+instructions that will efficiently compute the convex hull for any set of points)?
+[figure]
+====
+image::./images/convex-hull-1.png[]
+Figure 1-1. A set of points in a two-dimensional plane
+====
+
+What we find interesting about the convex hull problem is that it doesn’t seem to be
+easily classified into existing algorithmic domains. There doesn’t seem to be any lin‐
+ear sorting of the points from left to right, although the points are ordered in clock‐
+wise fashion around the hull. Similarly, there is no obvious search being performed,
+although you can identify a line segment on the hull because the remaining n – 2
+points are “to the right” of that line segment in the plane.
+
+.From AI
+[%collapsible]
+======
+[tabs]
+=====
+ChatGPT::
+First: what is the convex hull (quick reminder)
++
+Imagine you have n nails hammered into a board.
+Now stretch a rubber band around all of them and let it snap tight.
++
+The shape the rubber band forms is the convex hull.
++
+The nails touching the rubber band → points on the hull
++
+Nails inside → not on the hull
++
+1️⃣ “It doesn’t seem to be easily classified into existing algorithmic domains”
++
+Most algorithms clearly fall into a category:
++
+Sorting → arrange items in order
++
+Searching → look for something specific
++
+Graph algorithms → nodes and edges
++
+Dynamic programming → overlapping subproblems
++
+The author is saying:
++
+Convex hull doesn’t cleanly fit into any of these boxes.
++
+It uses ideas from geometry, ordering, and decision-making, but it’s not just one of them.
++
+2️⃣ “There doesn’t seem to be any linear sorting of the points from left to right”
++
+In many problems, we:
++
+Sort numbers smallest → largest
++
+Sort strings alphabetically
++
+Sort points by x-coordinate (left → right)
++
+But for convex hull:
++
+Sorting left to right alone doesn’t solve the problem
++
+A point can be far left but still inside the hull
++
+Another point might be more right but on the hull
++
+Example
++
+Points:
++
+A (0,0)
+B (1,2)
+C (2,1)
+D (3,3)
+E (1,1)   ← inside
++
++
+If you sort by x-coordinate:
++
+A → B → E → C → D
++
++
+That order does not tell you which points form the outer boundary.
++
+So traditional “linear sorting” isn’t enough.
++
+3️⃣ “Although the points are ordered in clockwise fashion around the hull”
++
+This sounds contradictory at first.
++
+What it means:
++
+Once you know the hull, its points are ordered
++
+They go around the boundary in clockwise (or counter-clockwise) order
++
+Think of walking around the rubber band:
++
+You naturally move around the shape in a circle
++
+That’s a circular order, not a left-to-right order
++
+Example
++
+Hull points might be:
++
+A → B → D → C → A
++
++
+This is:
++
+Circular
++
+Clockwise
++
+Not linear
++
+So ordering exists, but only after the hull is known.
++
+4️⃣ “Similarly, there is no obvious search being performed”
++
+In searching algorithms:
++
+You look for a specific value
++
+You test candidates one by one
++
+But in convex hull:
++
+You’re not searching for one point
++
+You’re discovering a set of boundary points
++
+No single “target” exists
++
+So it doesn’t feel like binary search, DFS, BFS, etc.
++
+5️⃣ “You can identify a line segment on the hull because the remaining n−2 points are ‘to the right’ of that line segment”
++
+This is the key geometric insight.
++
+What does “to the right” mean?
++
+Take two points A → B and draw a directed line from A to B.
++
+For any third point P:
++
+If P is on the right side of the line → good
++
+If P is on the left side → the edge AB cannot be on the hull
++
+This uses the orientation / cross-product test.
++
+Example (very important)
++
+Suppose you test edge A → B.
++
+If all other points lie on the same side (say, right side)
++
+Then A–B is an edge of the convex hull
++
+If even one point is on the wrong side:
++
+That edge is inside the shape
++
+It cannot be part of the outer boundary
++
+This is why many hull algorithms are based on:
++
+Orientation tests
++
+Half-planes
++
+“Is everything on one side?”
++
+Big Picture Summary
++
+In simple terms, the paragraph is saying:
++
+Convex hull is not a simple sorting problem
++
+It’s not a classic search problem
++
+The ordering is circular, not linear
++
+The key test is geometric:
++
+“Are all other points on one side of this edge?”
++
+That’s why convex hull algorithms feel special and a bit strange—they live at the intersection of geometry, ordering, and decision-making, rather than fitting neatly into one algorithmic category.
+=====
+
+Gemini::
+[tabs]
+=====
+ChatGPT::
++
+[tabs]
+====
+Concept:: Concept
+
+Concept:: Concept
+====
+
+=====
+======
+
+== Naïve Solution
+Clearly a convex hull exists for any collection of three or more points. But how do
+you construct one? Consider the following idea. Select any three points from the
+original collection and form a triangle. If any of the remaining n – 3 points are con‐
+tained within this triangle, then they cannot be part of the convex hull(Any point that lies inside some triangle formed by three other points cannot be on the convex hull.).
+
+the algorithm tries all possible triangles, marks points that are inside them as internal, and keeps the rest.
+
+What this means in simple terms:
+
+* Pick three different points: p0, p1, p2
+* These three points form a triangle
+* Pick a fourth point p3
+* Check whether p3 is inside that triangle
+
+the key geometric test If a point lies inside or on the boundary of a triangle, Then that point cannot be on the convex hull ,because A convex hull point must lie on the outer boundary, A point inside any triangle is blocked by other points, If you can surround a point with three other points, it’s trapped inside → not on the hull.
+
+[.pseudocode]
+.pseudocode
+[listing]
+----
+slowHull (P)
+    foreach p0 in P do
+        foreach p1 in {P-p0} do
+            foreach p2 in {P-p0-p1} do <1>
+                foreach p3 in {P-p0-p1-p2} do
+                    if p3 is contained within Triangle(p0,p1,p2) then
+                        mark p3 as internal <2> 
+
+create array A with all non-internal points in P
+determine leftmost point, left, in A
+sort A by angle formed with vertical line through left <3>
+
+return A
+----
+<1> Points p0, p1, p2 form a triangle.
+<2> Points not marked as internal are on convex hull.
+<3> These angles (in degrees) range from –90 to 90.
+
+Suppose we have points:
+----
+A(0,0)   B(4,0)   C(2,3)
+D(2,1)   E(5,2)
+----
+* Pick triangle A, B, C
+* Test point D
+** D is inside triangle ABC → D is internal
+* Test point E
+** E is outside triangle ABC → don’t mark it
+
+This is repeated for every possible triangle and every other point.
+
+After all triangle tests:
+
+* Internal points → discarded
+* Remaining points → must lie on the convex hull
+
+These are your candidate hull points.
+
+* Up to now, we know which points are on the hull, but not in what order.
+* We need to Determine leftmost point, left, in A”
+** Choose the point with the smallest x-coordinate, This point is guaranteed to be on the hull, This point is used as a reference for sorting.
+* “Sort A by angle formed with vertical line through left”,This is how the algorithm orders hull points around the boundary.
+** Draw a vertical line upward from the leftmost point
+** For every other hull point:
+*** Measure the angle between: that vertical line the line from left to the point
+** Sort points by this angle,using vertical becuase it gives a consistent reference direction, angles go from –90° to +90°
+
+this algorithm is slow
+
+* 4 nested loops → O(n⁴)
+* Very expensive even for moderate n
+
+But it’s valuable because as It uses pure geometry and It clearly shows why internal points are excluded
+
+Assumptions 
+
+* Point has x and y
+* containsTriangle(p0,p1,p2,p3) checks if p3 is inside triangle (p0,p1,p2)
+* Internal points are marked with a boolean flag
+* Angle sorting is done relative to a vertical line through the leftmost point
+
+[tabs]
+======
+C::
++
+[source,c]
+----
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <stdbool.h>
+
+#define GRID_W 40
+#define GRID_H 20
+
+typedef struct
+{
+    double x, y;
+    bool internal;
+    double angle;
+} Point;
+
+/* ---------- Geometry helpers ---------- */
+
+bool pointInTriangle(Point a, Point b, Point c, Point p)
+{
+    double d1 = (p.x - b.x) * (a.y - b.y) - (a.x - b.x) * (p.y - b.y);
+    double d2 = (p.x - c.x) * (b.y - c.y) - (b.x - c.x) * (p.y - c.y);
+    double d3 = (p.x - a.x) * (c.y - a.y) - (c.x - a.x) * (p.y - a.y);
+
+    return (d1 >= 0 && d2 >= 0 && d3 >= 0) ||
+           (d1 <= 0 && d2 <= 0 && d3 <= 0);
+}
+
+int cmpAngle(const void *a, const void *b)
+{
+    const Point *p = a;
+    const Point *q = b;
+    return (p->angle > q->angle) - (p->angle < q->angle);
+}
+
+/* ---------- Convex Hull ---------- */
+
+void slowHull(Point P[], int n, Point A[], int *m)
+{
+    for (int i = 0; i < n; i++)
+        P[i].internal = false;
+
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            if (j != i)
+                for (int k = 0; k < n; k++)
+                    if (k != i && k != j)
+                        for (int l = 0; l < n; l++)
+                            if (l != i && l != j && l != k)
+                                if (pointInTriangle(P[i], P[j], P[k], P[l]))
+                                    P[l].internal = true;
+
+    int count = 0;
+    for (int i = 0; i < n; i++)
+        if (!P[i].internal)
+            A[count++] = P[i];
+
+    int left = 0;
+    for (int i = 1; i < count; i++)
+        if (A[i].x < A[left].x)
+            left = i;
+
+    Point L = A[left];
+
+    for (int i = 0; i < count; i++)
+        A[i].angle = atan2(A[i].x - L.x, A[i].y - L.y);
+
+    qsort(A, count, sizeof(Point), cmpAngle);
+    *m = count;
+}
+
+/* ---------- ASCII plotting ---------- */
+
+void plot(Point P[], int n, Point hull[], int m)
+{
+    char grid[GRID_H][GRID_W];
+
+    for (int y = 0; y < GRID_H; y++)
+        for (int x = 0; x < GRID_W; x++)
+            grid[y][x] = '.';
+
+    /* scale coordinates to grid */
+    double maxx = 0, maxy = 0;
+    for (int i = 0; i < n; i++)
+    {
+        if (P[i].x > maxx)
+            maxx = P[i].x;
+        if (P[i].y > maxy)
+            maxy = P[i].y;
+    }
+
+    /* plot all points */
+    for (int i = 0; i < n; i++)
+    {
+        int gx = (int)(P[i].x / maxx * (GRID_W - 1));
+        int gy = (int)(P[i].y / maxy * (GRID_H - 1));
+
+        if (P[i].internal)
+            grid[gy][gx] = 'o';
+        else
+            grid[gy][gx] = 'X';
+    }
+
+    /* draw hull edges (Bresenham-like) */
+    for (int i = 0; i < m; i++)
+    {
+        Point a = hull[i];
+        Point b = hull[(i + 1) % m];
+
+        int x0 = (int)(a.x / maxx * (GRID_W - 1));
+        int y0 = (int)(a.y / maxy * (GRID_H - 1));
+        int x1 = (int)(b.x / maxx * (GRID_W - 1));
+        int y1 = (int)(b.y / maxy * (GRID_H - 1));
+
+        int dx = abs(x1 - x0), dy = abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx - dy;
+
+        while (true)
+        {
+            if (grid[y0][x0] == '.')
+                grid[y0][x0] = '#';
+            if (x0 == x1 && y0 == y1)
+                break;
+            int e2 = 2 * err;
+            if (e2 > -dy)
+            {
+                err -= dy;
+                x0 += sx;
+            }
+            if (e2 < dx)
+            {
+                err += dx;
+                y0 += sy;
+            }
+        }
+    }
+
+    /* print grid (invert Y for Cartesian look) */
+    printf("\nASCII plot:\n\n");
+    for (int y = GRID_H - 1; y >= 0; y--)
+    {
+        printf("%2d | ", y);
+        for (int x = 0; x < GRID_W; x++)
+            putchar(grid[y][x]);
+        putchar('\n');
+    }
+    printf("    ");
+    for (int x = 0; x < GRID_W; x++)
+        putchar('-');
+    printf("\n      x-axis\n\n");
+
+    printf("Legend: X = hull point, o = internal point, # = hull edge\n\n");
+}
+
+/* ---------- main ---------- */
+
+int main(void)
+{
+    Point P[] = {
+        {0, 0, false, 0},
+        {2, 1, false, 0},
+        {3, 2, false, 0},
+        {1, 2, false, 0},
+        {2, 4, false, 0},
+        {4, 5, false, 0},
+        {6, 3, false, 0},
+        {5, 0, false, 0}};
+
+    int n = sizeof(P) / sizeof(P[0]);
+
+    Point hull[20];
+    int m = 0;
+
+    slowHull(P, n, hull, &m);
+
+    printf("Convex Hull (ordered):\n");
+    for (int i = 0; i < m; i++)
+        printf("(%4.1f, %4.1f)\n", hull[i].x, hull[i].y);
+
+    plot(P, n, hull, m);
+
+    return 0;
+}
+----
+
+C++::
++
+[source,cpp]
+----
+#include <vector>
+#include <cmath>
+#include <algorithm>
+
+struct Point {
+    double x, y;
+    bool internal = false;
+    double angle;
+};
+
+bool pointInTriangle(Point a, Point b, Point c, Point p) {
+    auto cross = [](Point u, Point v, Point w) {
+        return (w.x - v.x)*(u.y - v.y) - (u.x - v.x)*(w.y - v.y);
+    };
+    double d1 = cross(a, b, p);
+    double d2 = cross(b, c, p);
+    double d3 = cross(c, a, p);
+    return (d1 >= 0 && d2 >= 0 && d3 >= 0) ||
+           (d1 <= 0 && d2 <= 0 && d3 <= 0);
+}
+
+std::vector<Point> slowHull(std::vector<Point>& P) {
+    int n = P.size();
+
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            if (j != i)
+                for (int k = 0; k < n; k++)
+                    if (k != i && k != j)
+                        for (int l = 0; l < n; l++)
+                            if (l != i && l != j && l != k)
+                                if (pointInTriangle(P[i], P[j], P[k], P[l]))
+                                    P[l].internal = true;
+
+    std::vector<Point> A;
+    for (auto& p : P)
+        if (!p.internal)
+            A.push_back(p);
+
+    Point left = *std::min_element(A.begin(), A.end(),
+        [](Point a, Point b){ return a.x < b.x; });
+
+    for (auto& p : A)
+        p.angle = atan2(p.x - left.x, p.y - left.y);
+
+    std::sort(A.begin(), A.end(),
+        [](Point a, Point b){ return a.angle < b.angle; });
+
+    return A;
+}
+----
+
+Java::
++
+[source,java]
+----
+import java.util.*;
+
+class Point {
+    double x, y;
+    boolean internal = false;
+    double angle;
+}
+
+public class SlowHull {
+
+    static boolean pointInTriangle(Point a, Point b, Point c, Point p) {
+        double d1 = (p.x - b.x)*(a.y - b.y) - (a.x - b.x)*(p.y - b.y);
+        double d2 = (p.x - c.x)*(b.y - c.y) - (b.x - c.x)*(p.y - c.y);
+        double d3 = (p.x - a.x)*(c.y - a.y) - (c.x - a.x)*(p.y - a.y);
+        return (d1 >= 0 && d2 >= 0 && d3 >= 0) ||
+               (d1 <= 0 && d2 <= 0 && d3 <= 0);
+    }
+
+    static List<Point> slowHull(List<Point> P) {
+        int n = P.size();
+
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                if (j != i)
+                    for (int k = 0; k < n; k++)
+                        if (k != i && k != j)
+                            for (int l = 0; l < n; l++)
+                                if (l != i && l != j && l != k)
+                                    if (pointInTriangle(P.get(i), P.get(j),
+                                                       P.get(k), P.get(l)))
+                                        P.get(l).internal = true;
+
+        List<Point> A = new ArrayList<>();
+        for (Point p : P)
+            if (!p.internal)
+                A.add(p);
+
+        Point left = Collections.min(A, Comparator.comparingDouble(p -> p.x));
+
+        for (Point p : A)
+            p.angle = Math.atan2(p.x - left.x, p.y - left.y);
+
+        A.sort(Comparator.comparingDouble(p -> p.angle));
+        return A;
+    }
+}
+----
+
+Python::
++
+[source,python]
+----
+import math
+
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.internal = False
+        self.angle = 0.0
+
+def point_in_triangle(a, b, c, p):
+    def cross(u, v, w):
+        return (w.x - v.x)*(u.y - v.y) - (u.x - v.x)*(w.y - v.y)
+
+    d1 = cross(a, b, p)
+    d2 = cross(b, c, p)
+    d3 = cross(c, a, p)
+
+    return (d1 >= 0 and d2 >= 0 and d3 >= 0) or \
+           (d1 <= 0 and d2 <= 0 and d3 <= 0)
+
+def slow_hull(P):
+    n = len(P)
+
+    for i in range(n):
+        for j in range(n):
+            if j != i:
+                for k in range(n):
+                    if k != i and k != j:
+                        for l in range(n):
+                            if l != i and l != j and l != k:
+                                if point_in_triangle(P[i], P[j], P[k], P[l]):
+                                    P[l].internal = True
+
+    A = [p for p in P if not p.internal]
+
+    left = min(A, key=lambda p: p.x)
+
+    for p in A:
+        p.angle = math.atan2(p.x - left.x, p.y - left.y)
+
+    A.sort(key=lambda p: p.angle)
+    return A
+----
+======
+

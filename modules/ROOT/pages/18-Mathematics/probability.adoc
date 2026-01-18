@@ -1,0 +1,1201 @@
+= Probability
+:stem:
+
+== Fundamentals
+
+=== Basic Concepts
+
+==== Sample Space and Events
+
+===== Definition of Sample Space
+
+===== Event Classification
+
+==== Outcome and Experiment
+
+*Example*: A die roll has six possible outcomes:1,2 , 3, 4,5 and 6. The
+chances of getting are thus 1/6. How about getting an odd num-
+ber? It can happen in three ways ( 1,3 or 5), so the chances are
+3/6 = 1/2
+
+*Example* There are 23 candidates who
+want to join your team. For each candidate, you toss a coin
+and only hire if it shows heads. What are the chances of
+hiring nobody?
+
+**Answer**
+
+Each candidate is hired only if the coin shows heads.
+
+* Probability a single candidate is not hired (tails) = 1/2
+* There are 23 independent candidates
+
+The probability that nobody is hired means all 23 coins show tails.
+
+stem:[P("no one hired")=(1/2)^23=1/(18,388,608)≈1.19×10−7]
+
+So the chance of hiring nobody is extremely small—about 0.0000119%.
+
+
+===== Types of Experiments
+
+===== Deterministic vs Stochastic
+
+==== Event Operations
+
+===== Union of Events
+If you toss a coin and roll a die, the chance of getting heads and 6
+is 1/2 × 1/6 = 1/12 ≈ 0.08, or 8%. When the outcome
+of an event does not influence the outcome of another event, they
+are independent. The probability that two independent events will
+happen is the product of their individual probabilities.
+
+*Example*: You need to store data for a year. One
+disk has a probability of failing of one in a billion. Another
+disk costs 20% the price but has a probability of failing of
+one in two thousand. What should you buy?
+
+*Answer*
+
+//TODO consider using AI to solve this example
+if you use three cheap disks, you only lose the data if all three
+disks fail. The probability of that happening is (1/2, 000)3 =
+1/8, 000, 000, 000. This redundancy achieves a lower risk of data
+loss than the expensive disk, while costing only 60% the price.
+
+
+===== Intersection of Events
+When two events cannot happen simultaneously, they are mu-
+tually exclusive. If you need any of the mutually exclusive events
+to happen, just sum their individual probabilities.
+
+A die roll cannot simultaneously yield and an odd number. The
+probability to get either or an odd number is thus 1/6 + 1/2 = 2/3.
+
+*Example*: Your website offers three plans:
+free, basic, or pro. You know a random new customer has
+a probability of 70% of choosing the free plan, 20% for the
+basic, and 10% for the pro. What are the chances a new
+user will sign up for a paying plan?
+
+*Answer*
+
+The events are mutually exclusive: a user can’t choose both the
+basic and pro plans at the same time. The probability the user will
+pay is
+
+P(paying)=P(basic)+P(pro)= 0.2 + 0.1 = 0.3.
+
+So, there is a 30% chance that a new user will sign up for a paying plan.
+
+===== Complement of Events
+When two mutually exclusive events cover all possible outcomes,
+they are complementary. The sum of individual probabilities of
+complementary events is thus 100%.
+
+*Example*:  A die roll cannot simultaneously yield a multiple of three (3 ,6 )
+and a number not divisible by three, but it must yield one of them.
+The probability to get a multiple of three is 2/6 = 1/3, so the
+probability to get a number not divisible by three is 1 − 1/3 = 2/3.
+
+*Example*: Your castle is defended by five
+towers. Each tower has a 20% probability of disabling an
+invader before he reaches the gate. What are the chances
+of stopping him?
+
+*Answer*
+
+There’s 0.2 + 0.2 + 0.2 + 0.2 + 0.2 = 1, or a 100% chance of
+hitting the enemy, right? Wrong! Never sum the probabilities of
+independent events, that’s a common mistake. 
+
+Each tower independently has a 20% chance of stopping the invader.
+
+The invader is stopped if at least one tower disables him.
+
+Use complementary
+events twice:
+
+* The 20% chance of hitting is complementary to the
+80% chance of missing. The probability that all towers
+miss is: 0.85 ≈ 0.33.
+* The event “all towers miss” is complementary to “at
+least one tower hits”. The probability of stopping the
+enemy is: 1 − 0.33 = 0.67.
+
+OR
+
+. Step 1: Probability a single tower fails
++
+stem:[P("tower fails")=1−0.20=0.80]
+. Step 2: Probability all five towers fail
++
+stem:[P("invader not stopped")=0.80^5 =0.32768]
+. Step 3: Probability the invader is stopped
++
+stem:[P("stopped")==1−0.32768=0.67232]
+
+So the castle has about a 67% chance of stopping the invader before he reaches the gate.
+
+==== Axioms of Probability
+
+===== First Axiom: Non-negativity
+
+===== Second Axiom: Certainty
+
+===== Third Axiom: Additivity
+
+=== Probability Rules
+
+==== Classical Probability
+
+===== Equally Likely Outcomes
+
+===== Counting Methods
+
+==== Empirical Probability
+
+===== Frequency Approach
+
+===== Relative Frequency
+
+==== Subjective Probability
+
+===== Expert Opinion
+
+===== Belief Assignment
+
+==== Fundamental Rules
+
+===== Addition Rule
+
+====== For Mutually Exclusive Events
+
+====== For Non-Mutually Exclusive Events
+
+===== Multiplication Rule
+
+====== For Independent Events
+
+====== For Dependent Events
+
+===== Complement Rule
+
+== Conditional Probability
+
+=== Conditional Probability and Independence
+
+==== Definition and Notation
+
+===== Conditional Probability Formula
+
+===== Notation Conventions
+
+==== Bayes' Theorem
+
+===== Statement and Proof
+
+===== Components: Prior, Likelihood, Posterior
+
+==== Law of Total Probability
+
+===== Partition of Sample Space
+
+===== Calculation Methods
+
+==== Independent Events
+
+===== Definition
+
+===== Properties of Independence
+If you flip a normal coin ten times, and you get ten heads, then
+on the 11th flip, are you more likely to get a tail? Or, by playing
+the lottery with the numbers 1 to 6, are you less likely to win than
+playing with more evenly spaced numbers?
+
+Don’t be a victim of the gambler’s fallacy. Past events never
+affect the outcome of an independent event. Never. Ever. In a
+truly random lottery drawing, the chances of any specific numbers
+being chosen is the same as any other. There’s no “hidden law”
+that forces numbers that weren’t frequently chosen in the past to
+be chosen more often in the future.
+==== Dependent Events
+
+===== Correlation
+
+===== Conditional Dependency
+
+==== Conditional Independence
+
+===== Pairwise Independence
+
+===== Mutual Independence
+
+=== Bayes' Rule Applications
+
+==== Prior and Posterior Probability
+
+===== Prior Distribution
+
+===== Posterior Distribution
+
+===== Updating Beliefs
+
+==== Likelihood Ratios
+
+===== Ratio Definition
+
+===== Interpretation
+
+==== Real-World Applications
+
+===== Medical Diagnosis
+
+===== Spam Detection
+
+===== Risk Assessment
+
+== Discrete Probability Distributions
+
+=== Binomial Distribution
+
+==== Definition and Parameters
+
+===== Number of Trials (n)
+
+===== Probability of Success (p)
+
+==== Bernoulli Trials
+
+===== Properties
+
+===== Sequences
+
+==== Probability Functions
+
+===== Probability Mass Function (PMF)
+
+===== Binomial Coefficients
+
+==== Measures
+
+===== Mean (Expected Value)
+
+===== Variance and Standard Deviation
+
+==== Approximations
+
+===== Normal Approximation to Binomial
+
+*Example*: There are 23 candidates who want to join your team. For each candidate,
+you toss a coin and only hire if it shows heads. What are
+the chances of hiring seven people or less?
+
+
+===== Conditions for Approximation
+
+=== Poisson Distribution
+
+==== Definition and Parameters
+
+===== Rate Parameter (λ)
+
+===== Relationship to Time/Space
+
+==== Probability Functions
+
+===== Probability Mass Function
+
+===== Properties
+
+==== Characteristics
+
+===== Definition and Properties
+
+===== Memoryless Property
+
+==== Relationships
+
+===== Poisson Probability Function
+
+===== Mean and Variance
+
+===== Relationship to Binomial Distribution
+
+==== Applications
+
+===== Rare Events
+
+===== Arrival Processes
+
+=== Hypergeometric Distribution
+
+==== Sampling Scenarios
+
+===== Sampling Without Replacement
+
+===== Population Composition
+
+==== Probability Functions
+
+===== Probability Mass Function
+
+===== Parameters (N, K, n)
+
+==== Applications
+
+===== Quality Control
+
+===== Population Studies
+
+=== Other Discrete Distributions
+
+==== Geometric Distribution
+
+===== Waiting Time to First Success
+
+===== Memoryless Property
+
+==== Negative Binomial Distribution
+
+===== Multiple Successes
+
+===== Generalization of Geometric
+
+==== Uniform Distribution (Discrete)
+
+===== Equal Probability Outcomes
+
+===== Applications
+
+== Continuous Probability Distributions
+
+=== Normal Distribution
+
+==== Properties and Characteristics
+
+===== Bell Curve Shape
+
+===== Symmetry
+
+===== Inflection Points
+
+==== Standard Normal Distribution
+
+===== Z-scores
+
+===== Standardization Process
+
+===== Standard Normal Table
+
+==== Probability Calculations
+
+===== Cumulative Distribution Function
+
+===== Normal Probability Problems
+
+===== Area Under the Curve
+
+=== Exponential Distribution
+
+==== Definition and Properties
+
+===== Rate Parameter (λ)
+
+===== Decay Rate
+
+==== Key Characteristics
+
+===== Memoryless Property
+
+===== Memory-less Processes
+
+===== Waiting Times
+
+==== Applications in Reliability
+
+===== Failure Rates
+
+===== Equipment Lifetime
+
+===== Service Times
+
+=== Uniform Distribution (Continuous)
+
+==== Definition and Properties
+
+===== Constant Probability Density
+
+===== Interval Bounds
+
+==== Probability Density Function
+
+===== PDF Formula
+
+===== Graphical Representation
+
+=== Other Continuous Distributions
+
+==== Student's t-Distribution
+
+===== Degrees of Freedom
+
+===== Heavy Tails
+
+===== Comparison with Normal
+
+==== Chi-Square Distribution
+
+===== Relationship to Normal
+
+===== Degrees of Freedom
+
+===== Non-central Chi-Square
+
+==== F-Distribution
+
+===== Ratio of Chi-Squares
+
+===== Applications in Variance Testing
+
+==== Beta Distribution
+
+===== Parameters α and β
+
+===== Flexible Shape
+
+===== Applications
+
+==== Gamma Distribution
+
+===== Shape and Rate Parameters
+
+===== Generalization of Exponential
+
+===== Connection to Poisson
+
+== Probability Density and Distribution Functions
+
+=== Probability Density Function (PDF)
+
+==== Definition and Properties
+
+===== Non-negative Function
+
+===== Area Under Curve = 1
+
+==== Characteristics
+
+===== Probability for Intervals
+
+===== Point Probability = 0
+
+==== Relationships
+
+===== Relationship to CDF
+
+===== Derivative of CDF
+
+=== Cumulative Distribution Function (CDF)
+
+==== Definition and Properties
+
+===== Non-decreasing Function
+
+===== Limits at Infinity
+
+===== Continuity
+
+==== Calculations
+
+===== Properties of CDF
+
+===== Using CDF for Calculations
+
+===== Percentiles and Quantiles
+
+=== Expected Value and Variance
+
+==== Expected Value (Mean)
+
+===== Definition
+
+===== Discrete Case
+
+===== Continuous Case
+
+===== Interpretation
+
+==== Variance and Standard Deviation
+
+===== Definition
+
+===== Calculation Methods
+
+===== Interpretation
+
+===== Coefficient of Variation
+
+==== Moments
+
+===== k-th Moments
+
+===== Central Moments
+
+==== Relationships
+
+===== Covariance Definition
+
+===== Covariance Calculation
+
+===== Correlation Coefficient
+
+===== Interpretation of Correlation
+
+==== Properties
+
+===== Properties of Expected Value
+
+===== Properties of Variance
+
+===== Linearity of Expectation
+
+== Joint and Marginal Distributions
+
+=== Bivariate Distributions
+
+==== Joint Distributions
+
+===== Joint Probability Distributions
+
+===== Joint PMF (Discrete)
+
+===== Joint PDF (Continuous)
+
+==== Marginal Distributions
+
+===== Marginal PMF
+
+===== Marginal PDF
+
+===== Calculation from Joint
+
+==== Conditional Distributions
+
+===== Conditional PMF
+
+===== Conditional PDF
+
+===== Conditional Expectation
+
+==== Independence
+
+===== Definition
+
+===== Testing for Independence
+
+===== Properties
+
+=== Multivariate Distributions
+
+==== Joint Probability Functions
+
+===== Joint Probability Mass Function
+
+===== Joint Probability Density Function
+
+===== Higher Dimensions
+
+==== Marginal and Conditional Densities
+
+===== Marginal from Joint
+
+===== Conditional from Joint
+
+===== Iterated Conditioning
+
+=== Correlation and Covariance
+
+==== Covariance
+
+===== Definition and Calculation
+
+===== Properties
+
+===== Interpretation
+
+==== Correlation
+
+===== Pearson Correlation Coefficient
+
+===== Properties of Correlation
+
+===== Interpretation (-1 to 1)
+
+==== Multivariate Analysis
+
+===== Correlation Matrix
+
+===== Covariance Matrix
+
+===== Relationship to Independence
+
+== Law of Large Numbers and Central Limit Theorem
+
+=== Law of Large Numbers
+
+==== Weak Law of Large Numbers
+
+===== Statement
+
+===== Convergence in Probability
+
+===== Interpretation
+
+==== Strong Law of Large Numbers
+
+===== Statement
+
+===== Almost Sure Convergence
+
+===== Practical Implications
+
+==== Convergence
+
+===== Convergence in Probability
+
+===== Almost Sure Convergence
+
+===== Difference Between Weak and Strong
+
+=== Central Limit Theorem
+
+==== Theorem Statement
+
+===== Conditions
+
+===== Convergence to Normality
+
+===== Asymptotic Distribution
+
+==== Applications
+
+===== Practical Use
+
+===== Conditions for Validity
+
+===== Sample Size Considerations
+
+==== Related Concepts
+
+===== Sampling Distribution
+
+===== Standard Error
+
+===== Finite Population Correction
+
+== Probability Generating Functions and Moment Generating Functions
+
+=== Probability Generating Function
+
+==== Definition
+
+===== Mathematical Form
+
+===== Domain
+
+==== Applications to Discrete Distributions
+
+===== Bernoulli
+
+===== Poisson
+
+==== Properties
+
+===== Uniqueness
+
+===== Moment Extraction
+
+=== Moment Generating Function
+
+==== Definition
+
+===== Mathematical Form
+
+===== Moment Extraction
+
+==== Properties
+
+===== Uniqueness Theorem
+
+===== Properties of MGF
+
+==== Applications
+
+===== Distribution Identification
+
+===== Convolution of Distributions
+
+=== Characteristic Function
+
+==== Definition
+
+===== Complex-valued Function
+
+===== Advantages Over MGF
+
+==== Inversion Formulas
+
+===== Fourier Inversion
+
+===== Recovery of Density
+
+== Limit Theorems
+
+=== Convergence Concepts
+
+==== Types of Convergence
+
+===== Convergence in Distribution
+
+====== Definition
+
+====== Continuous Mapping Theorem
+
+===== Convergence in Probability
+
+====== Definition
+
+====== Consistency
+
+===== Convergence Almost Surely
+
+====== Definition
+
+====== Relationship to Other Types
+
+===== Convergence in Mean
+
+====== r-th Mean Convergence
+
+====== L² Convergence
+
+==== Relationships Between Modes
+
+===== Hierarchical Relationships
+
+===== Implications
+
+=== Inequalities and Bounds
+
+==== Markov's Inequality
+
+===== Statement and Proof
+
+===== Applications
+
+==== Chebyshev's Inequality
+
+===== Definition
+
+===== Bounds on Tail Probability
+
+===== Generalization
+
+==== Chernoff Bound
+
+===== Exponential Bounds
+
+===== Applications
+
+===== Tightness
+
+==== Hoeffding's Inequality
+
+===== Bounded Random Variables
+
+===== Concentration Bounds
+
+===== Machine Learning Applications
+
+== Stochastic Processes
+
+=== Markov Chains
+
+==== Fundamentals
+
+===== Definition and Properties
+
+===== Memoryless Property
+
+===== Markov Property
+
+==== Structure
+
+===== Transition Matrices
+
+===== State Space
+
+===== Transition Probabilities
+
+==== Characteristics
+
+===== Stationary Distribution
+
+===== Limiting Distribution
+
+===== Convergence
+
+==== State Classification
+
+===== Transient States
+
+===== Recurrent States
+
+===== Absorption and Absorbing States
+
+===== Periodicity
+
+==== Applications
+
+===== Random Processes
+
+===== Population Dynamics
+
+===== Queueing Systems
+
+=== Random Walks
+
+==== Simple Random Walk
+
+===== Definition
+
+===== One-dimensional Walk
+
+===== Multi-dimensional Walk
+
+===== Symmetry Properties
+
+==== Gambler's Ruin
+
+===== Problem Statement
+
+===== Probability of Ruin
+
+===== Expected Duration
+
+==== Brownian Motion
+
+===== Definition
+
+===== Properties
+
+===== Wiener Process
+
+===== Applications
+
+=== Other Stochastic Processes
+
+==== Poisson Process
+
+===== Definition and Characteristics
+
+===== Counting Process
+
+===== Interarrival Times
+
+===== Memoryless Property
+
+==== Birth-Death Process
+
+===== Definition
+
+===== Applications
+
+===== Equilibrium Distribution
+
+==== Branching Process
+
+===== Offspring Distribution
+
+===== Extinction Probability
+
+===== Population Growth
+
+== Statistical Inference
+
+=== Sampling Distributions
+
+==== Sample Mean Distribution
+
+===== Sampling Distribution of Mean
+
+===== Central Limit Theorem Application
+
+===== Standard Error
+
+==== Proportion Distribution
+
+===== Sampling Distribution of Proportion
+
+===== Normal Approximation
+
+===== Standard Error for Proportion
+
+==== Variance Distribution
+
+===== Sampling Distribution of Variance
+
+===== Chi-Square Distribution
+
+===== Degrees of Freedom
+
+=== Point Estimation
+
+==== Estimation Methods
+
+===== Maximum Likelihood Estimation
+
+====== Definition
+
+====== Properties
+
+====== Examples
+
+===== Method of Moments
+
+====== Principle
+
+====== Examples
+
+==== Properties of Estimators
+
+===== Unbiasedness
+
+===== Efficiency
+
+===== Consistency
+
+===== Sufficiency
+
+==== Bias and MSE
+
+===== Bias Definition
+
+===== Mean Squared Error
+
+===== Trade-offs
+
+=== Confidence Intervals
+
+==== Construction Methods
+
+===== Pivotal Method
+
+===== Inversion of Tests
+
+===== Bootstrap Methods
+
+==== Interval Types
+
+===== Confidence Level Interpretation
+
+===== Coverage Probability
+
+===== Margin of Error
+
+==== Common Intervals
+
+===== Intervals for Mean
+
+====== Known Variance
+
+====== Unknown Variance
+
+===== Intervals for Proportion
+
+===== Intervals for Variance
+
+== Hypothesis Testing
+
+=== Hypothesis Test Fundamentals
+
+==== Test Setup
+
+===== Null and Alternative Hypotheses
+
+===== Simple vs Composite Hypotheses
+
+==== Error and Decisions
+
+===== Type I Error (False Positive)
+
+===== Type II Error (False Negative)
+
+===== Power of Test
+
+==== Test Statistics
+
+===== Test Statistic Definition
+
+===== Test Statistic Distribution
+
+===== Critical Region
+
+===== p-Value
+
+===== Significance Level
+
+=== Common Hypothesis Tests
+
+==== Tests for Mean
+
+===== One Sample t-test
+
+===== Two Sample t-test
+
+===== Paired t-test
+
+==== Tests for Proportion
+
+===== Binomial Test
+
+===== Two Proportion Test
+
+===== Z-test for Proportion
+
+==== Tests for Variance
+
+===== Chi-Square Test
+
+===== F-test for Equality of Variances
+
+==== Goodness-of-Fit Tests
+
+===== Chi-Square Goodness of Fit
+
+===== Kolmogorov-Smirnov Test
+
+===== Anderson-Darling Test
+
+== Practical Applications
+
+=== Risk and Insurance
+
+==== Risk Assessment
+
+===== Risk Models
+
+===== Quantification
+
+==== Insurance Models
+
+===== Premium Calculation
+
+===== Claim Modeling
+
+==== Actuarial Calculations
+
+===== Life Tables
+
+===== Annuities
+
+=== Quality and Manufacturing
+
+==== Quality Control
+
+===== Control Charts
+
+===== Process Capability
+
+==== Acceptance Sampling
+
+===== Sampling Plans
+
+===== Operating Characteristic Curve
+
+==== Process Monitoring
+
+===== Real-time Monitoring
+
+===== Defect Detection
+
+=== Reliability and Maintenance
+
+==== Reliability Engineering
+
+===== Reliability Function
+
+===== Failure Rate
+
+==== Failure Analysis
+
+===== Failure Modes
+
+===== Root Cause Analysis
+
+==== Preventive Maintenance
+
+===== Maintenance Scheduling
+
+===== Spare Parts Management
+
+=== Finance and Economics
+
+==== Financial Modeling
+
+===== Stock Price Models
+
+===== Portfolio Analysis
+
+==== Risk Management
+
+===== Value at Risk
+
+===== Stress Testing
+
+==== Derivatives Pricing
+
+===== Option Pricing
+
+===== Risk-neutral Pricing
+
+=== Professional Fields
+
+==== Actuarial Science
+
+===== Life Insurance
+
+===== Pension Plans
+
+==== Forecasting
+
+===== Time Series
+
+===== Prediction Models
+
+==== Decision Making
+
+===== Decision Trees
+
+===== Utility Theory
+
+=== Machine Learning and AI
+
+==== Classification
+
+===== Logistic Regression
+
+===== Naive Bayes
+
+==== Probabilistic Models
+
+===== Gaussian Mixture Models
+
+===== Hidden Markov Models
+
+==== Bayesian Inference
+
+===== Bayesian Networks
+
+===== Posterior Inference

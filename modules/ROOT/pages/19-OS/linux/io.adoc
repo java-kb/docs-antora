@@ -1,0 +1,544 @@
+= /O Devices
+
+Besides disks
+there many other I/O devices that interact heavily with the operating system.  
+
+Many kinds of input
+and output devices exist, including keyboards, monitors, printers, and so on. It is
+up to the operating system to manage these devices.
+Consequently, every operating system has an I/O subsystem for managing its
+I/O devices. Some of the I/O software is device independent, that is, it applies to
+many or all I/O devices equally well. Other parts of it, such as device drivers, are
+specific to particular I/O devices
+
+I/O devices generally consist of two parts: a controller and the
+device itself. The controller is a chip (or a set of chips) that physically controls the
+device. It accepts commands from the operating system, for example, to read data
+from the device, and carries them out.
+
+In many cases, the actual control of the device is complicated and detailed, so
+it is the job of the controller to present a simpler (but still very complex) interface
+to the operating system. For example, a hard disk controller might accept a com-
+mand to read sector 11,206 from disk 2. The controller then has to convert this lin-
+ear sector number to a cylinder, sector, and head. This conversion may be compli-
+cated by the fact that outer cylinders have more sectors than inner ones and that
+some bad sectors have been remapped onto other ones. Then the controller has to
+determine which cylinder the disk arm is on and give it a command to move in or
+out the requisite number of cylinders. It has to wait until the proper sector has
+rotated under the head and then start reading and storing the bits as they come off
+the drive, removing the preamble and computing the checksum. Finally, it has to
+assemble the incoming bits into words and store them in memory. To do all this
+work, controllers often contain small embedded computers that are programmed to
+do their work.
+
+The other piece is the actual device itself. Devices have fairly simple inter-
+faces, both because they cannot do much and to make them standard. The latter is
+needed so that any SATA disk controller can handle any SATA disk.
+
+SATA is currently the standard type of hard disk on many computers. Since the
+actual device interface is hidden behind the controller, all that the operating system
+sees is the interface to the controller, which may be quite different from the inter-
+face to the device.
+
+Because each type of controller is different, different software is needed to
+control each one. The software that talks to a controller, giving it commands and
+accepting responses, is called a device driver. Each controller manufacturer has to
+supply a driver for each operating system it supports. Thus a scanner may come
+with drivers for macOS, Windows 11, and Linux, for example.
+
+To be used, the driver has to be put into the operating system so it can run in
+kernel mode. Drivers can actually run outside the kernel, and operating systems
+like Linux and Windows nowadays do offer some support for doing so, but the vast
+majority of the drivers still run below the kernel boundary. Only very few current
+systems, such as MINIX 3 run all drivers in user space. Drivers in user space must
+be allowed to access the device in a controlled way, which is not straightforward
+without some hardware support.
+
+There are three ways the driver can be put into the kernel. 
+
+. The first way is to
+relink the kernel with the new driver and then reboot the system. Many older UNIX
+systems work like this. 
+. The second way is to make an entry in an operating system
+file telling it that it needs the driver and then reboot the system. At boot time, the
+operating system goes and finds the drivers it needs and loads them. Older versions
+of Windows work this way. 
+. The third way is for the operating system to be able to
+accept new drivers while running and install them on the fly without the need to
+reboot. This way used to be rare but is becoming much more common now. Hot-
+pluggable devices, such as USB and Thunderbolt devices (discussed below),
+always need dynamically loaded drivers.
+
+Every controller has a small number of registers that are used to communicate
+with it. For example, a minimal disk controller might have registers for specifying
+the disk address, memory address, sector count, and direction (read or write). To
+activate the controller, the driver gets a command from the operating system, then
+translates it into the appropriate values to write into the device registers. The col-
+lection of all the device registers forms the I/O port space
+
+On some computers, the device registers are mapped into the operating sys-
+tem’s address space (the addresses it can use), so they can be read and written like
+ordinary memory words. On such computers, no special I/O instructions are
+required and user programs can be kept away from the hardware by not putting
+these memory addresses within their reach (e.g., by using base and limit registers).
+On other computers, the device registers are put in a special I/O port space, with
+each register having a port address. On these machines, special IN and OUT
+instructions are available in kernel mode to allow drivers to read and write the reg-
+isters. The former scheme eliminates the need for special I/O instructions but uses
+up some of the address space. The latter uses no address space but requires special
+instructions. Both systems are widely used.
+
+Input and output can be done in three different ways. 
+
+. In the simplest method, a
+user program issues a system call, which the kernel then translates into a procedure
+call to the appropriate driver. The driver then starts the I/O and sits in a tight loop
+continuously polling the device to see if it is done (usually there is some bit that
+indicates that the device is still busy). When the I/O has completed, the driver puts
+the data (if any) where they are needed and returns. The operating system then
+returns control to the caller. This method is called busy waiting and has the
+disadvantage of tying up the CPU polling the device until it is finished.
+. The second method is for the driver to start the device and ask it to give an
+interrupt when it is finished. At that point, the driver returns. The operating sys-
+tem then blocks the caller if need be and looks for other work to do. When the con-
+troller detects the end of the transfer, it generates an interrupt to signal comple-
+tion.
+. The third method for doing I/O makes use of special hardware: a DMA
+(Direct Memory Access) chip that can control the flow of bits between memory
+and some controller without constant CPU intervention. The CPU sets up the
+DMA chip, telling it how many bytes to transfer, the device and memory addresses
+involved, and the direction, and lets it go. When the DMA chip is done, it causes
+an interrupt, which is handled as described above
+
+Another important concept in UNIX is the special file. Special files are pro-
+vided in order to make I/O devices look like files. That way, they can be read and
+written using the same system calls as are used for reading and writing files. Two
+kinds of special files exist: block special files and character special files. Block
+special files are used to model devices that consist of a collection of randomly
+addressable blocks, such as SSDs and disks. By opening a block special file and
+reading, say, block 4, a program can directly access the fourth block on the device,
+without regard to the structure of the file system contained on it. Similarly, charac-
+ter special files are used to model printers, keyboards, mice, and other devices that
+accept or output a character stream. By convention, the special files are kept in the
+/dev directory. For example, /dev/lp might be the printer (once called the line print-
+er).
+
+== Universality of I/O
+One of the distinguishing features of the UNIX I/O model is the concept of
+universality of I/O. This means that the same four system calls—open(), read(), write(),
+and close()—are used to perform I/O on all types of files, including devices such as
+terminals. Consequently, if we write a program using only these system calls, that
+program will work on any type of file. For example, the following are all valid uses
+of a program called copy that copy file from source to destination:
+----
+$ ./copy test test.old Copy a regular file
+$ ./copy a.txt /dev/tty Copy a regular file to this terminal
+$ ./copy /dev/tty b.txt Copy input from this terminal to a regular file
+$ ./copy /dev/pts/16 /dev/tty Copy input from another terminal
+----
+Universality of I/O is achieved by ensuring that each file system and device driver
+implements the same set of I/O system calls. Because details specific to the file sys-
+tem or device are handled within the kernel, we can generally ignore device-specific
+factors when writing application programs. When access to specific features of a
+file system or device is required, a program can use the catchall ioctl() system call, which provides an interface to features that fall outside the universal I/O model
+
+In order to perform I/O on a regular file, we must first obtain a file descriptor
+using open(). I/O is then performed using read() and write(). After performing all
+I/O, we should free the file descriptor and its associated resources using close().
+These system calls can be used to perform I/O on all types of files.
+
+The fact that all file types and device drivers implement the same I/O interface
+allows for universality of I/O, meaning that a program can typically be used with
+any type of file without requiring code that is specific to the file type.
+
+== Examples
+
+=== Tee like program
+
+*Overview*
+
+The tee command reads data from standard input until end-of-file (EOF) and writes a copy of that data to:
+
+Standard output
+
+One or more files
+
+This document describes an implementation of tee using low-level UNIX I/O system calls, rather than standard I/O (stdio).
+
+*Functional Requirements*
+
+The implemented program supports the following behavior:
+
+Read input from stdin
+
+Write input to stdout
+
+Write input to a specified file
+
+Default mode: overwrite the output file
+
+-a option: append to the output file if it already exists
+
+*Command Syntax*
+
+[source,text]
+tee file
+tee -a file
+
+[cols="1,3"]
+|===
+| Option | Description
+
+| file
+| Output file name
+
+| -a
+| Append output to the end of the file instead of overwriting
+|===
+
+*High-Level Design*
+
+The program operates in the following steps:
+
+. Parse command-line arguments
+. Open the output file using appropriate flags
+. Repeatedly read data from standard input
+. Write the data to:
+
+Standard output
+
+The output file
+. Stop processing at EOF
+. Close the output file and exit
+
+*System Calls Used*
+
+[cols="1,2,3"]
+|===
+| System Call | Header | Purpose
+
+| read()
+| <unistd.h>
+| Read bytes from standard input
+
+| write()
+| <unistd.h>
+| Write bytes to standard output and file
+
+| open()
+| <fcntl.h>
+| Open or create the output file
+
+| close()
+| <unistd.h>
+| Close the file descriptor
+|===
+
+*File Opening Modes*
+
+The output file is opened using different flags depending on the selected mode.
+
+=*Overwrite Mode (default)
+
+[source,c]
+O_WRONLY | O_CREAT | O_TRUNC
+
+Creates the file if it does not exist
+
+Truncates the file to zero length if it exists
+
+=*Append Mode (-a)
+
+[source,c]
+O_WRONLY | O_CREAT | O_APPEND
+
+Creates the file if it does not exist
+
+Appends all writes atomically to the end of the file
+
+*Implementation*
+
+[source,c]
+----
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#define BUF_SIZE 4096
+
+int main(int argc, char *argv[])
+{
+int fd;
+int flags;
+ssize_t num_read;
+char buf[BUF_SIZE];
+
+if (argc *2) {
+    flags == O_WRONLY | O_CREAT | O_TRUNC;
+    fd == open(argv[1], flags, 0644);
+}
+else if (argc *3 && strcmp(argv[1], "-a") *0) {
+    flags == O_WRONLY | O_CREAT | O_APPEND;
+    fd == open(argv[2], flags, 0644);
+}
+else {
+    fprintf(stderr, "Usage: %s [-a] file\n", argv[0]);
+    exit(EXIT_FAILURE);
+}
+
+if (fd *-1) {
+    perror("open");
+    exit(EXIT_FAILURE);
+}
+
+while ((num_read == read(STDIN_FILENO, buf, BUF_SIZE)) > 0) {
+    write(STDOUT_FILENO, buf, num_read);
+    write(fd, buf, num_read);
+}
+
+close(fd);
+return EXIT_SUCCESS;
+
+}
+----
+*Error Handling*
+
+The implementation checks for:
+
+Invalid command-line arguments
+
+Failure to open the output file
+
+Read errors from standard input
+
+Write errors to output destinations
+
+Errors are reported using perror() and cause program termination.
+
+*Example Usage*
+
+=*Overwrite File
+
+[source,shell]
+echo "Hello" | tee output.txt
+
+=*Append to File
+
+[source,shell]
+echo "World" | tee -a output.txt
+
+=*Interactive Input
+
+[source,shell]
+tee file.txt
+<type input>
+Ctrl+D
+
+*Notes on Atomicity*
+
+Using O_APPEND ensures that each write() operation appends data atomically to the end of the file. This is important when multiple processes write to the same file concurrently.
+
+*Limitations*
+
+Supports only a single output file
+
+Does not implement GNU tee options such as:
+
+-i (ignore interrupts)
+
+Multiple output files
+
+Does not handle partial writes explicitly
+
+*Conclusion*
+
+This implementation demonstrates how the tee utility can be built using low-level UNIX system calls. It illustrates core concepts of UNIX I/O, file descriptors, and command-line option handling.
+
+=== Sparse-Aware cp Implementation Using POSIX I/O
+
+*Overview*
+
+This program implements a simplified version of the `cp` command that correctly
+copies regular files containing holes. A hole is a sequence of null bytes that
+logically occupies file space but does not consume physical disk blocks.
+
+The goal is to preserve these holes in the destination file instead of writing
+explicit zero bytes.
+
+*Problem Statement*
+
+Standard file copying programs that blindly write all bytes will convert holes
+into real allocated blocks filled with zeros. This program avoids that behavior
+by detecting sequences of zero bytes and recreating holes in the destination
+file.
+
+*Concept of Sparse Files*
+
+Sparse files contain regions that read as zero bytes but do not have disk blocks
+allocated for those regions. Filesystems represent these regions as holes.
+
+Holes are created by moving the file offset forward without writing data.
+
+*Design Approach*
+
+The program reads the source file in fixed-size blocks and examines each block.
+If a block contains only null bytes, the destination file offset is advanced
+using `lseek` without writing data. If the block contains any non-zero data, the
+block is written normally.
+
+This strategy ensures that holes in the source file are reproduced as holes in
+the destination file.
+
+*System Calls Used*
+
+[cols="1,2",options="header"]
+|===
+| System Call | Purpose
+
+| read
+| Read data from the source file
+
+| write
+| Write non-zero data to the destination file
+
+| lseek
+| Skip over zero-filled regions to create holes
+
+| open
+| Open source and destination files
+
+| close
+| Release file descriptors
+|===
+
+*File Creation and Permissions*
+
+The destination file is created using write-only access. If it already exists,
+it is truncated. File permissions are set to allow read and write access for the
+owner and read access for group and others.
+
+*Algorithm*
+
+. Open the source file for reading
+. Open or create the destination file
+. Read a block of data from the source file
+. Check whether the block contains only zero bytes
+. If the block is all zeros, advance the destination offset using `lseek`
+. Otherwise, write the block to the destination file
+. Repeat until end-of-file is reached
+. Close both files
+
+*Implementation*
+
+[source,c]
+----
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#define BUF_SIZE 4096
+
+static int is_all_zero(const char *buf, ssize_t len)
+{
+    for (ssize_t i = 0; i < len; i++) {
+        if (buf[i] != '\0')
+            return 0;
+    }
+    return 1;
+}
+
+int main(int argc, char *argv[])
+{
+    int src_fd, dst_fd;
+    ssize_t num_read;
+    char buf[BUF_SIZE];
+
+    if (argc != 3) {
+        write(STDERR_FILENO,
+              "Usage: sparse_cp source target\n",
+              31);
+        exit(EXIT_FAILURE);
+    }
+
+    src_fd = open(argv[1], O_RDONLY);
+    if (src_fd == -1) {
+        perror("open source");
+        exit(EXIT_FAILURE);
+    }
+
+    dst_fd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (dst_fd == -1) {
+        perror("open target");
+        exit(EXIT_FAILURE);
+    }
+
+    while ((num_read = read(src_fd, buf, BUF_SIZE)) > 0) {
+        if (is_all_zero(buf, num_read)) {
+            if (lseek(dst_fd, num_read, SEEK_CUR) == -1) {
+                perror("lseek");
+                exit(EXIT_FAILURE);
+            }
+        } else {
+            if (write(dst_fd, buf, num_read) != num_read) {
+                perror("write");
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
+
+    if (num_read == -1) {
+        perror("read");
+        exit(EXIT_FAILURE);
+    }
+
+    close(src_fd);
+    close(dst_fd);
+    return EXIT_SUCCESS;
+}
+----
+
+*Usage Examples*
+
+Copy a sparse file while preserving holes:
+
+----
+./sparse_cp source_file target_file
+----
+
+Create a sparse test file:
+
+----
+dd if=/dev/zero of=src bs=1 count=0 seek=10M
+echo DATA | dd of=src bs=1 seek=5M conv=notrunc
+----
+
+Verify sparsity:
+
+----
+ls -lh src target_file
+du -h src target_file
+----
+
+*Correctness Notes*
+
+Advancing the file offset with `lseek` without writing data creates holes in the
+destination file. The filesystem does not allocate disk blocks for these regions.
+
+Writing only non-zero data ensures that logical file size is preserved while
+physical disk usage remains minimal.
+
+*Limitations*
+
+This implementation detects holes by scanning user-space buffers and may be less
+efficient for very large files. It supports only one source and one destination
+file and does not preserve metadata such as ownership, timestamps, or permissions.
+
+*Conclusion*
+
+This program demonstrates how sparse files can be preserved using POSIX system
+calls. It illustrates key filesystem concepts such as holes, file offsets, and
+disk block allocation, and mirrors the core behavior of sparse-aware file copying
+utilities.

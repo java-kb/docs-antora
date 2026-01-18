@@ -1,0 +1,1603 @@
+= Digital Logic Design
+:figures: 18-computer-science/Digital-Logic-Design
+:stem:
+
+== Foundations of Digital Systems
+Digital logic design studies how digital hardware systems are built using binary signals and logic elements.
+
+The term digital is derived from the way operations
+are performed, by counting digits
+
+Over the years digital
+technology has progressed from vacuum-tube circuits to discrete transistors to complex integrated circuits,
+many of which contain millions of transistors, and
+many of which are programmable.
+
+The electronics inside a modern computer are digital. Digital electronics operate
+with only two voltage levels of interest: a high voltage and a low voltage. All other
+voltage values are temporary and occur while transitioning between the values.
+
+The fact that computers are digital
+is also a key reason they use binary numbers, since a binary system matches the
+underlying abstraction inherent in the electronics
+
+=== Role of Digital Logic in Computer Engineering
+Explains how digital logic forms the foundation of computers, embedded systems, and digital devices.
+
+=== Analog vs Digital Systems
+Compares continuous-value systems with discrete-value systems and explains why digital systems are preferred.
+
+Electronic circuits can be divided into two broad categories, digital and analog. Digital
+electronics involves quantities with discrete values, and analog electronics involves quan-
+tities with continuous values. many applications require
+both; and interfacing between analog and digital is important.
+
+=== Information Representation
+Introduces how real-world information is represented using binary signals.
+
+Digital electronics involves circuits and systems in which there are only two possible
+states. These states are represented by two different voltage levels: A HIGH and a LOW. This is called positive logic and will be used throughout the book.
+HIGH = 1 and LOW = 0. Another system in which a 1 is represented by a LOW and a 0 is represented by a HIGH is
+called negative logic
+
+In digital systems such as computers, combinations of the two states, called codes, are
+used to represent numbers, symbols, alphabetic characters, and other types of information.
+The two-state number system is called binary, and its two digits are 0 and 1. A binary digit
+is called a bit.
+
+In various logic families, the
+values and relationships between the two voltage values differ. Thus, rather than
+refer to the voltage levels, we talk about signals that are 
+
+. (logically) true, or 1, or are asserted(asserted signal A signal that is (logically) true,or 1.); 
+. or signals that are (logically) false, or 0, or are deasserted(deasserted signal
+A signal that is (logically)
+false, or 0.). 
+
+The values 0
+and 1 are called complements or inverses of one another.
+
+Groups of bits (combinations of 1s and 0s), called codes, are used to represent numbers,
+letters, symbols, instructions, and anything else required in a given application.
+==== Discrete Signals
+Signals that take on a finite set of values, typically binary 0 and 1.
+
+A digital quantity is one having a discrete set of values. 
+
+Rather than graphing the temperature on a continuous basis, suppose you just take a
+temperature reading every hour. Now you have sampled values representing the temperature
+at discrete points in time (every hour) over a 24-hour period. You have effectively converted an analog quantity to a form that can now be digitized by
+representing each sampled value by a digital code.
+
+==== Continuous Signals
+Signals that vary smoothly over a range of values, common in analog systems..
+
+An analog quantity is one having continuous values.
+
+examples of analog quantities are air temperature, time, pressure, distance, and sound.
+
+For example, the air temperature changes over a continuous range of values.
+During a given day, the temperature does not go from, say, 70! to 71! instantaneously; it
+takes on all the infinite values in between. If you graphed the temperature on a typical sum-
+mer day, you would have a smooth, continuous curve similar
+
+==== Analog Systems
+A public address system, used to amplify sound so that it can be heard by a large audience, is
+one simple example of an application of analog electronics. The basic diagram in Figure 1–3
+illustrates that sound waves, which are analog in nature, are picked up by a microphone and
+converted to a small analog voltage called the audio signal. This voltage varies continuously as
+the volume and frequency of the sound changes and is applied to the input of a linear amplifier.
+The output of the amplifier, which is an increased reproduction of input voltage, goes to the
+speaker(s). The speaker changes the amplified audio signal back to sound waves that have a
+much greater volume than the original sound waves picked up by the microphone
+
+image::{figures}/analog-audio-public address-system.png[A basic audio public address system.]
+
+==== Digital and Analog Examples
+The compact disk (CD) player is an example of a system in which both digital and analog
+circuits are used. The simplified block diagram in Figure 1–4 illustrates the basic principle.
+Music in digital form is stored on the compact disk. A laser diode optical system picks up
+the digital data from the rotating disk and transfers it to the digital-to-analog converter
+(DAC). The DAC changes the digital data into an analog signal that is an electrical repro-
+duction of the original music. This signal is amplified and sent to the speaker for you to
+enjoy. When the music was originally recorded on the CD, a process, essentially the reverse
+of the one described here, using an analog-to-digital converter (ADC) was used.
+image::{figures}/digital-analog-cd-player.png[Basic block diagram of a CD player. Only one channel is shown]
+
+==== Physical Meaning of Logic Levels
+Explains how voltage levels represent logical 0 and 1 in hardware.
+
+The voltages used to represent a 1 and a 0 are called logic levels. 
+
+one voltage level
+represents a HIGH and another voltage level represents a LOW. 
+
+In a practical digital circuit, 
+
+* a HIGH can be any voltage between a specified minimum value and a specified
+maximum value. 
+** The
+variable VH(max) represents the maximum HIGH voltage value, and VH(min) represents the
+minimum HIGH voltage value
+*  a LOW can be any voltage between a specified minimum and a
+specified maximum. 
+** The maximum LOW voltage value is represented by VL(max),
+and the minimum LOW voltage value is represented by VL(min).
+* There can be no overlap between the accepted range of HIGH levels
+and the accepted range of LOW levels.
+* The voltage values between
+VL(max) and VH(min) are unacceptable for proper operation. 
+* A voltage in the unacceptable
+range can appear as either a HIGH or a LOW to a given circuit. 
+
+For example, for a certain type of digital circuit technology called CMOS 
+
+* the HIGH
+input values may range from
+2 V to 3.3 V 
+* and the LOW input values may range from 0 V to 0.8 V. 
+* If a voltage of 2.5 V
+is applied, the circuit will accept it as a HIGH or binary 1. 
+* If a voltage of 0.5 V is applied,
+the circuit will accept it as a LOW or binary 0. 
+* For this type of circuit, voltages between
+0.8 V and 2 V are unacceptable
+
+=== Digital Waveforms
+Digital waveforms consist of voltage levels that are changing back and forth between the
+HIGH and LOW levels or states. a single positive-going pulse
+is generated when the voltage (or current) goes from its normally LOW level to its HIGH
+level and then back to its LOW level. The negative-going pulse is gener-
+ated when the voltage goes from its normally HIGH level to its LOW level and back to its
+HIGH level. A digital waveform is made up of a series of pulses
+
+A periodic
+pulse waveform is one that repeats itself at a fixed interval, called a period (T ). The
+frequency ( f ) is the rate at which it repeats itself and is measured in hertz (Hz)
+
+a pulse has two edges: a leading edge that occurs first at time t0
+and a trailing edge that occurs last at time t1 . For a positive-going pulse, the leading edge
+is a rising edge, and the trailing edge is a falling edge. 
+
+A Digital Waveform Carries Binary Information, Binary information that is handled by digital systems appears as waveforms that represent
+sequences of bits. When the waveform is HIGH, a binary 1 is present; when the waveform
+is LOW, a binary 0 is present. Each bit in a sequence occupies a defined time interval called
+a bit time.
+
+=== The Clock
+In digital systems, all waveforms are synchronized with a basic timing waveform called the
+clock. The clock is a periodic waveform in which each interval between pulses (the period)
+equals the time for one bit. 
+
+A clock is a repeating electrical signal that goes:
+----
+LOW → HIGH → LOW → HIGH → ...
+----
+at a regular rate.
+
+Think of it like:
+
+* the tick–tock of a metronome 🎵
+* or the drumbeat that tells everyone when to move
+
+A clock is a regular timing signal that tells digital circuits exactly when data is allowed to change, and during each clock period, a signal represents one binary bit (HIGH or LOW).
+
+In a digital circuit, nothing important happens randomly. Everything happens in step with the clock.
+
+All waveforms are synchronized with the clock means Digital signals are allowed to change only at specific moments defined by the clock.
+During one clock period, the system handles one bit.
+
+So instead of changing anytime:
+
+* signals wait
+* then change together, when the clock says so
+
+This makes the system predictable and reliable.
+
+The period of the clock is: the time from one clock pulse to the next(Clock period = time for one bit).
+----
+Clock:   ___|‾‾‾|___|‾‾‾|___|‾‾‾|___
+            ↑       ↑       ↑
+         rising   rising   rising
+          edge     edge     edge
+----
+Each full cycle = one clock period = one bit time
+
+A clock has edges
+----
+leading edge↑     ↓trailing edge
+          __|‾‾‾‾‾|__
+            t0       t1
+----
+* Leading edge (rising edge): LOW → HIGH
+* Trailing edge (falling edge): HIGH → LOW
+
+Changes in waveform A occur at the leading edge(or in other systems, at the trailing edge),This means:
+
+* the system decides exactly which edge causes changes
+* this avoids confusion
+
+For example A flip-flop might say: “I only listen at the rising edge of the clock.” So whatever the input is at that instant is what gets stored.
+
+Data waveform synchronized to the clock
+----
+Clock:   ___|‾‾‾|___|‾‾‾|___|‾‾‾|___
+            ↑       ↑       ↑
+Data A:   ___‾‾‾‾‾‾‾_________‾‾‾‾‾‾‾‾
+                1       0       1
+----
+Key observations:
+
+* Data changes only at clock edges
+* Between edges, data is stable
+* Each clock period holds one bit
+
+So the binary sequence here is: 101
+
+An example of a clock waveform is shown in next Figure. Notice that, in this case, each
+change in level of waveform A occurs at the leading edge of the clock waveform. In other
+cases, level changes occur at the trailing edge of the clock. During each bit time of the
+clock, waveform A is either HIGH or LOW. These HIGHs and LOWs represent a sequence of bits as indicated. A group of several bits can contain binary information, such as a num-
+ber or a letter. The clock waveform itself does not carry information.
+
+image::{figures}/clock-waveform-synchronized-with-a-waveform-representation-of-a-sequence-of-bits.png[Example of a clock waveform synchronized with a waveform representation of a sequence of bits]
+
+Waveform A is a data signal. While the clock keeps ticking:
+
+* waveform A carries information
+* but it is only allowed to change at clock edges
+
+During each clock period: waveform A is either: HIGH (1) or LOW (0).
+
+HIGHs and LOWs represent a sequence of bits,This is how binary data is represented.
+
+This means the data sequence is: 10100110010
+
+Each bit: stays stable for one clock period and is read at a clock edge.
+
+Imagine a classroom exam:
+
+* The clock is the teacher clapping: Clap! → write next answer
+* Students (signals) are not allowed to write anytime, They write only when the teacher claps
+
+This keeps:
+
+* everyone synchronized
+* no cheating
+* no confusion
+
+Clocks allow:
+
+* CPUs to work correctly
+* memory to store data safely
+* data buses to avoid collisions
+* billions of transistors to act as one system
+
+Without a clock:
+
+* signals would change at random times
+* systems would fail constantly
+
+What happens if data changes randomly? (BAD DESIGN)
+----
+Clock:   ___|‾‾‾|___|‾‾‾|___
+            ↑       ↑
+Data A:   __‾__‾‾__‾____‾_
+----
+Now:
+
+* The circuit doesn’t know when to read
+* Data might be changing while being read
+* This causes wrong values or glitches
+
+*Why edge-triggering is necessary*
+
+Problem: Level-sensitive systems are unreliable, If a circuit reacts whenever the clock is HIGH, then:
+----
+Clock:   ___|‾‾‾‾‾‾‾|___
+Data:    ___‾__‾‾__‾____
+----
+During the HIGH level:
+
+* Data may change multiple times
+* Circuit might capture:
+** the wrong value
+** multiple values
+** or become unstable (race conditions)
+
+Solution: Edge-triggering
+
+Edge-triggered circuits react at one instant only.
+----
+Clock edge:   ↑
+Read data:    ●   (single moment in time)
+----
+
+This gives:
+
+* one clean sample
+* no ambiguity
+* predictable behavior
+
+*Edge-triggered register (concept)*
+----
+At the rising edge:
+    Register ← Data
+----
+
+After that:
+
+* changes on Data do not matter
+* value is locked in until next edge
+
+*Why CPUs must use edge-triggering*
+
+CPUs have:
+
+* billions of signals
+* different propagation delays
+* long buses
+
+Edge-triggering ensures:
+
+** everyone agrees on when data is valid
+** no signal is read too early or too late
+
+*Example: CPU registers*
+
+A register: stores one word (e.g., 32 or 64 bits), is made of many edge-triggered flip-flops
+----
+Clock:     ___|‾‾‾|___|‾‾‾|___
+              ↑       ↑
+Data Bus:   =======10101010=======
+Register:        [captures here]
+----
+At the rising edge:
+
+* the register copies the data bus
+* then ignores the bus until next edge
+
+*Example: CPU buses*
+
+Multiple units share one bus:
+----
+        Register A
+            │
+        Register B
+            │
+Bus ───────────────────▶ Register C
+            │
+            ALU
+----
+
+If timing is sloppy:
+
+* two units may drive the bus at once
+* register may read garbage
+----
+Clock:     ___|‾‾‾|___
+              ↑
+Bus Data:  =====VALID=====
+Register:      captures
+----
+Process:
+
+* Control unit enables one source
+* Source drives bus
+* Data stabilizes
+* Clock edge occurs
+* Destination register captures data
+
+This is exactly how CPUs move data internally. Inside a CPU register (say 8-bit):
+----
+Bit 7  Bit 6  Bit 5  Bit 4  Bit 3  Bit 2  Bit 1  Bit 0
+  1      0      1      1      0      0      1      0
+----
+At one clock edge:
+
+* all 8 bit-times are sampled in parallel
+* each wire’s voltage → one bit
+
+So:
+
+voltage pattern → binary number
+*Real CPU example (instruction execution)*
+
+Instruction:
+[,assembly]
+----
+ADD R1, R2, R3
+----
+Clocked steps:
+
+* Cycle 1: R2, R3 placed on buses
+* Cycle 2: ALU computes sum
+* Cycle 3: Result placed on bus
+* Clock edge: R1 captures result
+
+Every step:
+
+* synchronized by the clock
+* stored by edge-triggered registers
+
+Final takeaway
+
+* Clock defines when things may happen
+* Edge-triggering defines exactly when data is captured
+* Registers & buses rely on this to move data safely inside a CPU
+
+=== Data Transfer
+
+Data refers to groups of bits that convey some type of information. Binary data, which
+are represented by digital waveforms, must be transferred from one device to another
+within a digital system or from one system to another in order to accomplish a given
+purpose. For example, numbers stored in binary form in the memory of a computer must
+be transferred to the computer’s central processing unit in order to be added. The sum of
+the addition must then be transferred to a monitor for display and/or transferred back to
+the memory.
+
+binary data are transferred in two ways: 
+
+. *serial*
+** When bits are transferred in serial form from one point to another, they are sent one bit
+at a time along a single line. 
+** During the time interval from
+t0 to t1 , the first bit is transferred. During the time interval from t1 to t2 , the second bit is transferred, and so on.
+** To transfer eight bits in series, it takes eight time intervals.
+. *parallel*
+** When bits are transferred in parallel form, all the bits in a group are sent out on separate
+lines at the same time. There is one line for each bit.
+** for the
+example of eight bits being transferred. To transfer eight bits in parallel, it takes one time
+interval compared to eight time intervals for the serial transfer.
++
+
+* an advantage of serial transfer of binary data is that a minimum of only
+one line is required. In parallel transfer, a number of lines equal to the number of bits to be
+transferred at one time is required. 
+* A disadvantage of serial transfer is that it takes longer to
+transfer a given number of bits than with parallel transfer at the same clock frequency. For
+example, if one bit can be transferred in 1 ms, then it takes 8 ms to serially transfer eight
+bits but only 1 ms to parallel transfer eight bits. A disadvantage of parallel transfer is that it
+takes more lines than serial transfer.
+
+=== Design Abstraction Levels
+Describes how complex systems are designed using layered levels of abstraction.
+
+==== Device Level
+Focuses on transistors and electronic components.
+
+==== Gate Level
+Describes circuits using logic gates such as AND, OR, and NOT.
+
+==== Register Transfer Level
+Models systems in terms of registers and data transfers between them.
+
+==== System Level
+Represents complete digital systems and their interactions.
+
+== Number Systems and Data Representation
+Covers how numbers and symbols are represented in digital systems.
+
+=== Positional Number Systems
+Introduces number systems where digit position determines value.
+
+==== Decimal Number System
+The base-10 number system used in everyday arithmetic.
+
+==== Binary Number System
+The base-2 number system used by digital hardware.
+
+==== Octal Number System
+A base-8 number system used as a shorthand for binary.
+
+==== Hexadecimal Number System
+A base-16 number system commonly used in digital design and debugging.
+
+=== Number System Conversions
+Explains how to convert values between different number systems.
+
+==== Decimal to Binary
+Method for converting base-10 numbers to base-2.
+
+==== Binary to Decimal
+Method for converting base-2 numbers to base-10.
+
+==== Binary to Octal and Hexadecimal
+Groups binary digits to form octal or hexadecimal values.
+
+==== Octal and Hexadecimal to Binary
+Expands octal or hexadecimal digits into binary form.
+
+=== Signed Number Representations
+Describes how negative numbers are represented in binary.
+
+==== Sign-Magnitude Representation
+Uses the most significant bit to represent the sign.
+
+==== One’s Complement Representation
+Represents negative numbers by inverting all bits.
+
+==== Two’s Complement Representation
+The standard method for representing signed binary numbers.
+
+==== Range and Overflow
+Explains numerical limits and overflow conditions.
+
+=== Binary Arithmetic
+Covers arithmetic operations performed on binary numbers.
+
+==== Binary Addition
+Rules and circuits for adding binary numbers.
+
+==== Binary Subtraction
+Methods for subtracting binary values.
+
+==== Binary Multiplication
+Binary multiplication using shifting and addition.
+
+==== Binary Division
+Binary division using repeated subtraction and shifting.
+
+=== Fixed-Point and Floating-Point Concepts
+Introduces number formats for representing real values.
+
+==== Fixed-Point Representation
+Represents numbers with a fixed number of fractional bits.
+
+==== Floating-Point Representation (Conceptual)
+Represents numbers using scientific notation in binary.
+
+=== Codes for Data Representation
+Describes special binary codes for numeric and symbolic data.
+
+==== Binary Coded Decimal (BCD)
+Encodes decimal digits using binary values.
+
+==== Excess-3 Code
+A shifted binary code used for arithmetic simplicity.
+
+==== Gray Code
+A code where adjacent values differ by one bit.
+
+==== Alphanumeric Codes
+Binary codes for representing characters.
+
+===== ASCII
+A standard code for English letters and symbols.
+
+===== Unicode (Conceptual)
+A universal character encoding standard.
+
+== Boolean Algebra and Logic
+Introduces the mathematical foundation of digital logic.
+
+=== Boolean Variables and Logic Levels
+Defines binary variables and their possible values.
+
+=== Basic Logic Operations(Functions)
+Introduces fundamental Boolean operations.
+
+The term logic is applied to digital circuits used to implement logic functions (NOT, AND, and OR) a. Several
+kinds of digital logic circuits are the basic elements that form the building blocks for such
+complex digital systems as the computer.
+
+A circuit that per-
+forms a specified logic function (AND, OR) is called a logic gate. AND and OR gates can
+have any number of input
+
+image::{figures}/digital-logic-gates.png[The basic logic functions and symbols]
+
+==== AND Operation
+Outputs true when all inputs are true.
+
+The AND function produces a HIGH output only when all the inputs are HIGH, as indi-
+cated in Figure 1–18 for the case of two inputs. When one input is HIGH and the other
+input is HIGH, the output is HIGH. When any or all inputs are LOW, the output is LOW.
+The AND function is implemented by a logic circuit known as an AND gate
+
+image::{figures}/digital-logic-gates-and1.png[The AND function]
+
+==== OR Operation
+Outputs true when at least one input is true.
+
+The OR function produces a HIGH output when one or more inputs are HIGH, as indicated
+in Figure 1–19 for the case of two inputs. When one input is HIGH or the other input is
+HIGH or both inputs are HIGH, the output is HIGH. When both inputs are LOW, the output
+is LOW. The OR function is implemented by a logic circuit known as an OR gate.
+
+image::{figures}/digital-logic-gates-or1.png[The OR function]
+
+==== NOT Operation
+Inverts the input logic value.
+
+The NOT function changes one logic level to the opposite logic level, as indicated in
+Figure 1–17. When the input is HIGH (1), the output is LOW (0). When the input is LOW,
+the output is HIGH. In either case, the output is not the same as the input. The NOT func-
+tion is implemented by a logic circuit known as an inverter.
+
+image::{figures}/digital-logic-gates-not1.png[The NOT function]
+
+=== Derived Logic Operations
+Logic operations formed from basic gates.
+
+==== NAND Operation
+Outputs false only when all inputs are true.
+
+==== NOR Operation
+Outputs true only when all inputs are false.
+
+==== XOR Operation
+Outputs true when inputs differ.
+
+==== XNOR Operation
+Outputs true when inputs are equal.
+
+=== Boolean Expressions
+Represents logic behavior using algebraic formulas.
+
+==== Algebraic Representation
+Uses Boolean algebra symbols and rules.
+
+==== Truth Table Representation
+Lists outputs for all input combinations.
+
+Because a combinational logic block contains no memory, it can be completely
+specified by defining the values of the outputs for each possible set of input values.
+Such a description is normally given as a truth table. 
+
+For a logic block with n
+inputs, there are 2^n entries in the truth table, since there are that many possible
+combinations of input values. Each entry specifies the value of all the outputs for
+that particular input combination.
+
+*EXAMPLE*: Consider a logic function with three inputs, A, B, and C, and three outputs, D,
+E, and F. The function is defined as follows: D is true if at least one input is true,
+E is true if exactly two inputs are true, and F is true only if all three inputs are
+true. Show the truth table for this function.
+
+*ANSWER*:
+
+The truth table will contain 2^3 = 8 entries. Here it is:
+[cols="6*^", options="header"]
+|===
+3+| *Inputs* 3+| *Outputs*
+| *A* | *B* | *C* | *D* | *E* | *F*
+
+| 0 | 0 | 0 | 0 | 0 | 0
+| 0 | 0 | 1 | 1 | 0 | 0
+| 0 | 1 | 0 | 1 | 0 | 0
+| 0 | 1 | 1 | 1 | 1 | 0
+| 1 | 0 | 0 | 1 | 0 | 0
+| 1 | 0 | 1 | 1 | 1 | 0
+| 1 | 1 | 0 | 1 | 1 | 0
+| 1 | 1 | 1 | 1 | 0 | 1
+|===
+
+==== Logic Diagram Representation
+Graphical representation using logic gates.
+
+=== Boolean Algebra Laws
+Rules for manipulating Boolean expressions.
+
+Another approach is to express the logic function with logic equations. 
+
+In Boolean algebra, all the variables have the values 0 or 1 and, in
+typical formulations, there are three operators:
+
+. *The OR operator* 
+** is written as +, as in A + B. 
+** The result of an OR operator is
+1 if either of the variables is 1. 
+** The OR operation is also called a logical sum,
+since its result is 1 if either operand is 1.
+. *The AND operator* 
+** is written as · , as in A · B. The result of an AND operator
+is 1 only if both inputs are 1. The AND operator is also called logical product,
+since its result is 1 only if both operands are 1.
+. *The unary operator NOT* 
+** is written as A. 
+** The result of a NOT operator is 1 only if
+the input is 0. 
+** Applying the operator NOT to a logical value results in an inversion
+or negation of the value (i.e., if the input is 0 the output is 1, and vice versa)
+* Identity law: A + 0 = A and A · 1 = A
+* Zero and One laws: A + 1 = 1 and A · 0 = 0
+* Inverse laws: A+A=1 and A.A⋅= 0
+* Commutative laws: A + B = B + A and A · B = B · A
+* Associative laws: A + (B + C) = (A + B) + C and A · (B · C) = (A · B) · C
+* Distributive laws: A · (B + C) = (A · B) + (A · C) and
+A + (B · C) = (A + B) · (A + C)
+
+
+
+[cols="1,2,2", options="header"]
+|===
+| Law Name | AND Form | OR Form
+
+| *Identity Law*
+| stem:[1 \cdot A = A]
+| stem:[0 + A = A]
+
+| *Null (Annulment) Law*
+| stem:[0 \cdot A = 0]
+| stem:[1 + A = 1]
+
+| *Idempotent Law*
+| stem:[A \cdot A = A]
+| stem:[A + A = A]
+
+| *Inverse (Complement) Law*
+| stem:[A \cdot \overline{A} = 0]
+| stem:[A + \overline{A} = 1]
+
+| *Commutative Law*
+| stem:[A \cdot B = B \cdot A]
+| stem:[A + B = B + A]
+
+| *Associative Law*
+| stem:[(A \cdot B) \cdot C = A \cdot (B \cdot C)]
+| stem:[(A + B) + C = A + (B + C)]
+
+| *Distributive Law*
+| stem:[A \cdot (B + C) = (A \cdot B) + (A \cdot C)]
+| stem:[A + (B \cdot C) = (A + B) \cdot (A + C)]
+
+| *Absorption Law*
+| stem:[A \cdot (A + B) = A]
+| stem:[A + (A \cdot B) = A]
+
+| *De Morgan's Law*
+| stem:[\overline{A \cdot B} = \overline{A} + \overline{B}]
+| stem:[\overline{A + B} = \overline{A} \cdot \overline{B}]
+
+| *Double Complement*
+2+| stem:[\overline{\overline{A}} = A]
+|===
+
+==== Commutative Laws
+Order of operands does not affect the result.
+
+==== Associative Laws
+Grouping of operands does not affect the result.
+
+==== Distributive Laws
+Describes distribution of operations over others.
+
+==== Identity and Null Laws
+Defines neutral and dominant elements.
+
+==== Idempotent Laws
+Repeating a variable does not change its value.
+
+==== Complement Laws
+Defines behavior of variables and their complements.
+
+==== Involution Law
+Double negation returns the original value.
+
+=== De Morgan’s Theorems
+Rules for transforming complemented expressions.
+
+==== Algebraic Interpretation
+Expresses the theorems symbolically.
+
+==== Gate-Level Interpretation
+Applies the theorems to logic gate implementations.
+
+=== Duality Principle
+Shows how Boolean expressions have dual forms.
+
+=== Functional Completeness
+Explains how certain gates can implement any logic.
+
+Any set of logic functions can be written as a series of equations with an output
+on the left-hand side of each equation and a formula consisting of variables and the
+three operators above on the right-hand side.
+
+this means that no matter how complex a digital decision or computer circuit is, you can describe it entirely using a mathematical equation built from only three basic building blocks: AND, OR, and NOT.
+
+the equation breaks down into three parts:
+
+. The Output (Left-hand side): 
+** This is simply the name of the result (e.g., Y = ... or F = ...).
+. The Variables: 
+** These are your inputs (e.g., A, B, C).
+. The Three Operators:
+.. AND (stem:[\cdot]): Both inputs must be TRUE.
+.. OR (+): At least one input must be TRUE.
+.. NOT (stem:[\overline{A}]): Inverts the input (TRUE becomes FALSE).
+
+The reason we know any logic function can be written this way is due to a technique called Sum of Products.
+
+If you have a Truth Table, you can blindly convert it into an equation using this algorithm:
+
+. Identify the "1"s: 
+** Look at every row in the truth table where the Output is 1. Ignore the rows where the output is 0.
+. Create "Product" (AND) terms: 
+** For each of those rows, write an AND expression that describes the inputs.
+*** If input A is 1, write A.
+*** If input A is 0, write stem:[\overline{A}] (NOT A).
+. Sum (OR) them together: Combine all those groups with OR symbols.
+
+We don't need magic to build computers. Even the most complex processor is just a massive collection of AND, OR, and NOT operations strung together in a specific series of equations.
+
+*EXAMPLE*: XOR (Exclusive OR) function
+
+*ANSWER*
+
+A XOR B : Exactly one is true
+
+This is a logic function that isn't one of the "basic three," but we can express it using them. The Truth Table: 
+----
+| Row | A | B | Output (Y) | 
+| ----| - |-- | ---------- | 
+| 1   | 0 | 0 |  0         | 
+| 2   | 0 | 1 | *1*        | 
+| 3   | 1 | 0 | *1*        | 
+| 4   | 1 | 1 |  0         |
+----
+Applying the Logic:
+
+. Row 2 has an output of 1.
+** $A$ is 0, $B$ is 1.
+** We write the term: stem:[\overline{A} \cdot B]
+. Row 3 has an output of 1.
+** $A$ is 1, $B$ is 0.
+** We write the term: stem:[A \cdot \overline{B}]
+. The Final Equation:We OR them together to get the final formula:
+** stem:[Y = (\overline{A} \cdot B) + (A \cdot \overline{B})]
+
+*EXAMPLE*: Consider a logic function with three inputs, A, B, and C, and three outputs, D, E, and F. The function is defined as follows: D is true if at least one input is true,
+E is true if exactly two inputs are true, and F is true only if all three inputs are
+true. Show the logic equations for the logic functions, D, E, and F.
+
+*ANSWER*:
+
+The truth table will contain 2^3 = 8 entries. Here it is:
+[cols="6*^", options="header"]
+|===
+3+| *Inputs* 3+| *Outputs*
+| *A* | *B* | *C* | *D* | *E* | *F*
+| 0   | 0   | 0   | 0   | 0   | 0
+| 0   | 0   | 1   | 1   | 0   | 0
+| 0   | 1   | 0   | 1   | 0   | 0
+| 0   | 1   | 1   | 1   | 1   | 0
+| 1   | 0   | 0   | 1   | 0   | 0
+| 1   | 0   | 1   | 1   | 1   | 0
+| 1   | 1   | 0   | 1   | 1   | 0
+| 1   | 1   | 1   | 1   | 0   | 1
+|===
+*Output D (The OR Function)*
+
+Looking at column D, the output is 1 for almost every row. It is only 0 when all inputs are 0.
+
+While we could write out all 7 terms for the 1s, it is much faster to define it by what it is not (using De Morgan's Law):
+
+    D is NOT 0.
+
+    The only case where D=0 is when A=0 AND B=0 AND C=0.
+
+Therefore, D is true if any of the inputs are true.
+
+Here’s the equation for D: stem:[D=A+B+C]
+
+*Output F (The AND Function)*
+
+F is equally simple: Looking at column F, there is only a single 1 in the entire column (the very last row).Row 7: Inputs are $A=1, B=1, C=1$.
+
+stem:[F=A.B.C]
+
+*Output E (Exactly Two Inputs)*
+
+Looking at column E, there are three rows where the output is 1.
+
+. Row 3 (0,1,1): Input A is 0, so we use A.
+** Term: stem:[(\overline{A}  \cdot  B \cdot C)]
+. Row 5 (1,0,1): Input B is 0, so we use B.
+** Term: stem:[(A  \cdot  \overline{B} \cdot C)]
+. Row 6 (1,1,0): Input C is 0, so we use C.
+** Term: stem:[(A  \cdot  \overline{B} \cdot \overline{C})]
+
+Equation:
+stem:[E=(\overline{A}  \cdot  B \cdot C) + (A  \cdot  \overline{B} \cdot C) + (A  \cdot  B \cdot \overline{C})]
+
+you can Think of it in two parts: 
+
+. what must be true for E to be true
+(two of the three inputs must be true), 
+. and what cannot be true (all three
+cannot be true). 
+
+Thus we can write E as
+
+stem:[E =((A \cdot B)+ (A \cdot C) +(B \cdot C)) \cdot ( \overline{A \cdot B \cdot C})]
+
+We can also derive E by realizing that E is true only if exactly two of the inputs
+are true. Then we can write E as an OR of the three possible terms that have
+two true inputs and one false input:
+
+stem:[E= (A \cdot B \cdot \overline{C}) + (A \cdot C \cdot \overline{B}) + (B \cdot C \cdot \overline{A})]
+
+Result
+[stem]
+++++
+F = A \cdot B \cdot C
+++++
+
+[stem]
+++++
+D = A + B + C
+++++
+
+[stem]
+++++
+E = (\overline{A} \cdot B \cdot C) + (A \cdot \overline{B} \cdot C) + (A \cdot B \cdot \overline{C})
+++++
+logic circuit for that complex "E" equation
+
+image::{figures}/digital-logic-example1.png[]
+
+==== NAND as Universal Gate
+Shows NAND gates can build all logic functions.
+
+==== NOR as Universal Gate
+Shows NOR gates can build all logic functions.
+
+== Logic Gates and Digital Integrated Circuits
+Covers physical realization of logic functions.
+
+Logic blocks are built from gates that implement basic logic functions. For example:
+
+. an AND gate implements the AND function,.
+. an OR gate implements the OR function. 
+
+Since both AND and OR are commutative and associative, an AND or an
+OR gate can have multiple inputs, with the output equal to the AND or OR of all
+the inputs. 
+
+The logical function NOT is implemented with an inverter that always
+has a single input. 
+
+The standard representation of these three logic building blocks
+is shown in Figure A.2.1.
+
+image::{figures}/digital-logic-gates.png[Standard drawing for an AND gate, OR gate, and an inverter, shown from left to right. The signals to the left of each symbol are the inputs, while the output appears on the right. The AND and OR gates both have two inputs. Inverters have a single input]
+
+[cols="1,2,2", options="header"]
+|===
+| Gate | Symbol | Truth Table
+
+| *AND*
+a| image::{figures}/digital-logic-gates-and.png[Standard AND Gate Symbol, 150, 100]
+a|
+[cols="3*^", options="header", width="80%"]
+!===
+! A ! B ! Out
+! 0 ! 0 ! 0
+! 0 ! 1 ! 0
+! 1 ! 0 ! 0
+! 1 ! 1 ! 1
+!===
+
+| *OR*
+a| image::{figures}/digital-logic-gates-or.png[Standard OR Gate Symbol, 150, 100]
+a|
+[cols="3*^", options="header", width="80%"]
+!===
+! A ! B ! Out
+! 0 ! 0 ! 0
+! 0 ! 1 ! 1
+! 1 ! 0 ! 1
+! 1 ! 1 ! 1
+!===
+
+| *NOT*
+a| image::{figures}/digital-logic-gates-not.png[Standard NOT Gate Symbol, 150, 100]
+a|
+[cols="2*^", options="header", width="60%"]
+!===
+! A ! Out
+! 0 ! 1
+! 1 ! 0
+!===
+
+| *XOR*
+a| image::{figures}/digital-logic-gates-xor.png[Standard XOR Gate Symbol, 150, 100]
+a|
+[cols="3*^", options="header", width="80%"]
+!===
+! A ! B ! Out
+! 0 ! 0 ! 0
+! 0 ! 1 ! 1
+! 1 ! 0 ! 1
+! 1 ! 1 ! 0
+!===
+|===
+
+Rather than draw inverters explicitly, a common practice is to add “bubbles”
+to the inputs or outputs of a gate to cause the logic value on that input line or
+output line to be inverted. For example, Figure A.2.2 shows the logic diagram for
+the function stem:[\overline{(\overline{A} \cdot B)}] , using explicit inverters on the left and bubbled inputs and
+outputs on the right.
+
+image::{figures}/digital-logic-bubbles.png[Logic gate implementation of A B+ using explicit inverts on the left and bubbled inputs and outputs on the right. This logic function can be simplified to stem:[\overline{(\overline{A} \cdot B)}] or in Verilog,A & ~ B.]
+
+all logic functions can be constructed with only a single gate type, if that
+gate is inverting. The two common inverting gates are called NOR and NAND and
+correspond to inverted OR and AND gates, respectively. NOR and NAND gates are
+called universal, since any logic function can be built using this one gate type.
+
+* NAND (Not AND): The output is 0 only if both inputs are 1. It is the exact opposite of an AND gate.
+* NOR (Not OR): The output is 1 only if both inputs are 0. It is the exact opposite of an OR gate.
+[cols="1,2,2", options="header"]
+|===
+| Gate | Symbol | Truth Table
+
+| *NAND*
+a| image::{figures}/digital-logic-gates-nand.png[Standard NAND Gate Symbol, 150, 100]
+a|
+[cols="3*^", options="header", width="80%"]
+!===
+! A ! B ! Out
+! 0 ! 0 ! 1
+! 0 ! 1 ! 1
+! 1 ! 0 ! 1
+! 1 ! 1 ! 0
+!===
+
+| *NOR*
+a| image::{figures}/digital-logic-gates-nor.png[Standard NOR Gate Symbol, 150, 100]
+a|
+[cols="3*^", options="header", width="80%"]
+!===
+! A ! B ! Out
+! 0 ! 0 ! 1
+! 0 ! 1 ! 0
+! 1 ! 0 ! 0
+! 1 ! 1 ! 0
+!===
+|===
+
+=== Logic Gate Symbols and Behavior
+Introduces standard symbols and gate functions.
+
+==== AND Gate
+==== OR Gate
+==== NOT Gate
+==== NAND Gate
+==== NOR Gate
+==== XOR Gate
+==== XNOR Gate
+
+==== Standard Gate Symbols
+Defines graphical symbols for logic gates.
+
+==== Bubble Notation
+Uses circles to indicate inversion.
+
+=== Logic Gate Characteristics
+Describes electrical properties of logic gates.
+
+==== Propagation Delay
+Time taken for output to respond to input changes.
+
+==== Power Dissipation
+Amount of power consumed by a gate.
+
+==== Fan-In
+Number of inputs a gate can accept.
+
+==== Fan-Out
+Number of outputs a gate can drive.
+
+==== Noise Margin
+Tolerance to noise without logic errors.
+
+=== Logic Families
+Different technologies for implementing logic gates.
+
+==== TTL Logic Family
+Transistor-Transistor Logic characteristics.
+
+==== CMOS Logic Family
+Complementary MOS technology characteristics.
+
+==== Comparison of Logic Families
+Compares speed, power, and voltage levels.
+
+=== Voltage Levels in Digital Circuits
+Defines acceptable voltage ranges for logic values.
+
+==== Logic HIGH and Logic LOW
+Voltage ranges representing 1 and 0.
+
+==== Noise and Signal Integrity
+Effects of interference on digital signals.
+
+== Combinational Logic Circuits
+Covers circuits whose outputs depend only on inputs.
+
+The three basic logic functions AND, OR, and NOT can be combined to form various other
+types of more complex logic functions, such as comparison, arithmetic, code conversion,
+encoding, decoding, data selection, counting, and storage. A digital system is an arrange-
+ment of the individual logic functions connected to perform a specified operation or pro-
+duce a defined output.
+
+Logic blocks are categorized as one of two types, depending on whether they
+contain memory. 
+
+. Blocks without memory are called combinational; the output of
+a combinational block depends only on the current input. 
+** *combinational logic*
+A logic system whose
+blocks do not contain
+memory and hence
+compute the same output
+given the same input
+. In blocks with memory,
+the outputs can depend on both the inputs and the value stored in memory, which
+is called the state of the logic block.
+** *sequential logic*
+A group of logic elements
+that contain memory
+and hence whose value
+depends on the inputs
+as well as the current
+contents of the memory.
+
+=== Characteristics of Combinational Circuits
+Defines behavior without memory elements.
+
+=== Design Procedure for Combinational Logic
+Step-by-step method for circuit design.
+
+==== Problem Specification
+Defines required inputs and outputs.
+
+==== Truth Table Construction
+Lists output behavior for all inputs.
+
+
+
+==== Boolean Expression Derivation
+Derives equations from the truth table.
+
+==== Logic Simplification
+Reduces circuit complexity.
+
+==== Logic Diagram Implementation
+Builds the circuit using gates.
+
+=== Combinational Logic Functions
+==== Arithmetic Functions
+===== Addition
+Addition is performed by a logic circuit called an adder. 
+An adder
+adds two binary numbers (on inputs A and B with a carry input C in) and generates a sum
+(") and a carry output (C out), as shown in Figure 1–21(a). 
+
+image::{figures}/Combinational-Logic-Functions-Adder.png[The addition function.]
+
+Figure 1–21(b) illustrates the
+addition of 3 and 9. You know that the sum is 12; the adder indicates this result by pro-
+ducing 2 on the sum output and 1 on the carry output. Assume that the carry input in this
+example is 0.
+
+===== Subtraction
+Subtraction is also performed by a logic circuit. 
+
+A subtracter requires three inputs: the
+two numbers that are to be subtracted and a borrow input. The two outputs are the differ-
+ence and the borrow output. 
+
+When, for instance, 5 is subtracted from 8 with no borrow
+input, the difference is 3 with no borrow output. 
+
+subtrac-
+tion can actually be performed by an adder because subtraction is simply a special case
+of addition.
+
+===== Multiplication
+Multiplication is performed by a logic circuit called a multiplier. 
+
+Numbers are always mul-
+tiplied two at a time, so two inputs are required. The output of the multiplier is the product.
+
+Because multiplication is simply a series of additions with shifts in the positions of the
+partial products, it can be performed by using an adder in conjunction with other circuits
+
+===== Division
+Division can be performed with a series of subtractions, comparisons, and shifts, and thus it
+can also be done using an adder in conjunction with other circuits. Two inputs to the divider
+are required, and the outputs generated are the quotient and the remainder.
+
+==== Comparison Functions
+===== Magnitude Comparator
+Magnitude comparison is performed by a logic circuit called a comparator. 
+
+A comparator compares two quantities and indicates whether or not they are
+equal. For example, suppose you have two numbers and wish to know if they are equal
+or not equal and, if not equal, which is greater. 
+
+One number in binary  form (represented by logic levels) is applied to input A, and
+the other number in binary form (represented by logic levels) is applied to input B. The
+outputs indicate the relationship of the two numbers by producing a HIGH level on the
+proper output line. 
+
+image::{figures}/Combinational-Logic-Functions-Magnitude.png[The comparison function.]
+
+The wide arrows represent a group of parallel lines on which the bits are
+transferred.
+
+Suppose that a binary representation of the number 2 is applied to input
+A and a binary representation of the number 5 is applied to input B. A HIGH level will appear on
+the A 6 B (A is less than B) output, indicating the relationship between the two numbers
+(2 is less than 5). 
+
+
+
+==== Data Selection Functions
+===== Multiplexers and Demultiplexers
+Two types of circuits that select data are the multiplexer and the demultiplexer. 
+
+Both multiplexers and demultiplexers are combinational logic circuits used to control data flow in digital systems.
+
+The multi-
+plexer, or mux for short, is a logic circuit that switches digital data from several input lines
+onto a single output line in a specified time sequence. Functionally, a multiplexer can be
+represented by an electronic switch operation that sequentially connects each of the input
+lines to the output line. 
+
+The demultiplexer (demux) is a logic circuit that switches digital
+data from one input line to several output lines in a specified time sequence. Essentially,
+the demux is a mux in reverse.
+
+Multiplexing and demultiplexing are used when data from several sources are to be
+transmitted over one line to a distant location and redistributed to several destinations. Fig-
+ure 1–24 illustrates this type of application where digital data from three sources are sent
+out along a single line to three terminals at another location.
+
+iamge::{figures}/Combinational-Logic-Functions-Multiplexer.png[llustration of a basic multiplexing/demultiplexing application.]
+
+In Figure 1–24, data from input A are connected to the output line during time interval #t1
+and transmitted to the demultiplexer that connects them to output D. Then, during interval
+#t2, the multiplexer switches to input B and the demultiplexer switches to output E. During
+interval #t3, the multiplexer switches to input C and the demultiplexer switches to output F.
+
+during the first time interval, input A data go to output D. During the
+second time interval, input B data go to output E. During the third time interval, input C
+data go to output F. After this, the sequence repeats. Because the time is divided up among
+several sources and destinations where each has its turn to send and receive data, this pro-
+cess is called time division multiplexing (TDM)
+
+==== Encoding Functions
+The encoding function is performed by a logic circuit called an encoder. 
+
+The encoder converts information, such as a decimal number or an alphabetic char-
+acter, into some coded form. 
+
+For example, one certain type of encoder converts each of the
+decimal digits, 0 through 9, to a binary code. A HIGH level on the input corresponding to
+a specific decimal digit produces logic levels that represent the proper binary code on the
+output lines.
+Figure 1–22 is a simple illustration of an encoder used to convert (encode) a calculator
+keystroke into a binary code that can be processed by the calculator circuits.
+
+image::{figures}/Combinational-Logic-Functions-Encoder.png[An encoder used to encode a calculator keystroke into a binary code for storage or for calculation.]
+
+===== Decoding Functions
+The decoding function is performed by a logic circuit called a decoder, covered in Chapter 6.
+The decoder converts coded information, such as a binary number, into a noncoded form,
+such as a decimal form. For example, one particular type of decoder converts a 4-bit binary
+code into the appropriate decimal digit.
+
+Figure 1–23 is a simple illustration of one type of decoder that is used to activate a
+7-segment display. Each of the seven segments of the display is connected to an output
+line from the decoder. When a particular binary code appears on the decoder inputs, the
+appropriate output lines are activated and light the proper segments to display the decimal
+digit corresponding to the binary code.
+
+image::{figures}/Combinational-Logic-Functions-Edcoder.png[A decoder used to convert a special binary code into a 7-segment decimal readout.]
+
+==== Code Conversion Functions
+A code is a set of bits arranged in a unique pattern and used to represent specified informa-
+tion. A code converter changes one form of coded information into another coded form.
+Examples are conversion between binary and other codes such as the binary coded decimal
+(BCD) and the Gray code. 
+
+=== Arithmetic Circuits
+Circuits that perform arithmetic operations.
+
+==== Half Adder
+Adds two single-bit numbers.
+
+==== Full Adder
+Adds three single-bit values.
+
+==== Ripple Carry Adder
+Chains full adders for multi-bit addition.
+
+==== Carry Look-Ahead Adder
+Improves speed by reducing carry delay.
+
+==== Binary Subtractor
+Performs binary subtraction.
+
+==== Adder-Subtractor Circuits
+Performs both addition and subtraction.
+
+=== Data Routing Circuits
+Direct data flow between components.
+
+==== Multiplexers
+Select one input from many.
+
+===== 2-to-1 Multiplexer
+Selects between two inputs.
+
+===== 4-to-1 Multiplexer
+Selects between four inputs.
+
+===== Multiplexer-Based Logic Implementation
+Implements logic functions using multiplexers.
+
+==== Demultiplexers
+Routes one input to multiple outputs.
+
+=== Encoding and Decoding Circuits
+Translate between binary representations.
+
+==== Decoders
+Activate one output for each input code.
+
+===== Binary Decoder
+Decodes binary inputs.
+
+===== BCD Decoder
+Decodes BCD values.
+
+===== Decoder with Enable
+Allows controlled activation.
+
+==== Encoders
+Convert active inputs to binary codes.
+
+===== Priority Encoders
+Resolve multiple active inputs.
+
+=== Comparison Circuits
+Compare binary values.
+
+==== Magnitude Comparator
+Determines greater, equal, or less conditions.
+
+=== Code Conversion Circuits
+Convert between different binary codes.
+
+==== Binary to Gray Code Converter
+Converts binary to Gray code.
+
+==== Gray to Binary Code Converter
+Converts Gray code to binary.
+
+== Logic Minimization Techniques
+Reduces logic complexity and hardware cost.
+
+=== Motivation for Logic Minimization
+Explains benefits of simplified logic.
+
+=== Algebraic Simplification
+Uses Boolean algebra laws.
+
+=== Karnaugh Maps
+Graphical method for simplification.
+
+==== Two-Variable Karnaugh Maps
+Simplifies expressions with two variables.
+
+==== Three-Variable Karnaugh Maps
+Simplifies expressions with three variables.
+
+==== Four-Variable Karnaugh Maps
+Simplifies expressions with four variables.
+
+==== Don’t-Care Conditions
+Allows flexibility in optimization.
+
+==== Prime Implicants and Essential Prime Implicants
+Identifies key logic groupings.
+
+=== Quine–McCluskey Method (Conceptual)
+Algorithmic logic minimization method.
+
+=== Hazards in Combinational Circuits
+Unwanted output glitches.
+
+==== Static Hazards
+Momentary incorrect outputs.
+
+==== Dynamic Hazards
+Multiple glitches during transitions.
+
+==== Hazard Elimination Techniques
+Methods to prevent hazards.
+
+== Sequential Logic Fundamentals
+Introduces circuits with memory.
+
+=== Concept of Memory in Digital Systems
+Explains state retention.
+
+=== Difference Between Combinational and Sequential Logic
+Compares memoryless and memory-based circuits.
+
+=== Clocked and Unclocked Sequential Circuits
+Explains timing control methods.
+
+==== Storage Functions
+Storage is a function that is required in most digital systems, and its purpose is to retain binary
+data for a period of time. Some storage devices are used for short-term storage and some are used for long-term storage. A storage device can “memorize” a bit or a group of bits and
+retain the information as long as necessary. Common types of storage devices are flip-flops,
+registers, semiconductor memories, magnetic disks, magnetic tape, and optical disks (CDs).
+
+===== Latches
+===== Flip-Flops
+A flip-flop is a bistable (two stable states) logic circuit that can store only one bit at a time,
+either a 1 or a 0. The output of a flip-flop indicates which bit it is storing. A HIGH output
+indicates that a 1 is stored and a LOW output indicates that a 0 is stored. Flip-flops are
+implemented with logic gates.
+
+===== Registers
+A register is formed by combining several flip-flops so that groups of bits can be stored.
+For example, an 8-bit register is constructed from eight flip-flops. In addition to storing
+bits, registers can be used to shift the bits from one position to another within the register
+or out of the register to another circuit; therefore, these devices are known as shift registers.
+
+The two basic types of shift registers are serial and parallel. The bits are stored in a serial shift
+register one at a time, as illustrated in Figure 1–25. A good analogy to the serial shift register
+is loading passengers onto a bus single file through the door. They also exit the bus single file
+
+image::{figures}/Sequential-Logic-Funcions-Serial-Registers.png[Example of the operation of a 4-bit serial shift register. Each block represents one storage “cell” or flip-flop.]
+
+The bits are stored in a parallel register simultaneously from parallel lines, as shown in
+Figure 1–26. For this case, a good analogy is loading and unloading passengers on a roller
+coaster where they enter all of the cars in parallel and exit in parallel
+
+image::{figures}/Sequential-Logic-Funcions-Parallel-Registers.png[Example of the operation of a 4-bit parallel shift register.]
+
+==== Counting Functions
+The counting function is important in digital systems. There are many types of digital
+counters, but their basic purpose is to count events represented by changing levels or
+pulses. To count, the counter must “remember” the present number so that it can go to
+the next proper number in sequence. Therefore, storage capability is an important charac-
+teristic of all counters, and flip-flops are generally used to implement them. Figure 1–27
+illustrates the basic idea of counter operation.
+
+image::{figures}/Sequential-Logic-Funcions-Counting.png[Illustration of basic counter operation]
+
+=== Timing Concepts
+Defines timing constraints.
+
+==== Clock Signal
+Periodic timing reference.
+
+==== Clock Period and Frequency
+Defines speed of operation.
+
+==== Setup Time
+Minimum time before clock edge.
+
+==== Hold Time
+Minimum time after clock edge.
+
+==== Propagation Delay
+Time for signals to propagate.
+
+=== Synchronous vs Asynchronous Systems
+Compares clocked and unclocked designs.
+
+== Memory and Storage Elements
+
+=== Role of Memory in Digital Systems
+
+=== Memory Classification
+==== Volatile vs Non-Volatile Memory
+==== Read-Only vs Read-Write Memory
+==== Access Methods
+===== Random Access
+===== Sequential Access
+===== Direct Access
+
+=== Semiconductor Memories
+Semiconductor memories are devices typically used for storing large numbers of bits. In
+one type of memory, called the read-only memory or ROM, the binary data are perma-
+nently or semipermanently stored and cannot be readily changed. In the random-access
+memory or RAM, the binary data are temporarily stored and can be easily changed.
+
+==== ROM Technologies
+===== Mask ROM
+===== PROM
+===== EPROM
+===== EEPROM / Flash
+==== RAM Technologies
+===== SRAM
+===== DRAM
+==== Memory Cells
+===== SRAM Cell
+===== DRAM Cell
+==== Memory Organization
+===== Word Organization
+===== Bit Organization
+===== Address Decoding
+===== Memory Expansion
+
+=== Magnetic Memories
+Magnetic disk memories are used for mass storage of binary data. An example is a com-
+puter’s internal hard disk. Magnetic tape is still used to some extent in memory applications
+and for backing up data from other storage devices
+
+==== Magnetic Disks
+==== Magnetic Tapes
+==== Storage Characteristics
+
+=== Optical Memories
+CDs, DVDs, and Blu-ray Discs are storage devices based on laser technology. Data are
+represented by pits and lands on concentric tracks. A laser beam is used to store the data on
+the disc and to read the data from the disc
+==== CD
+==== DVD
+==== Blu-ray
+==== Storage Characteristics
+
+== Applications and Systems
+
+=== Process Control Systems
+==== bottling vitamin tablets
+This example system shows how the various logic functions can be used together to form a total system.
+
+To begin, the tablets are fed into a large funnel-type
+hopper. The narrow neck of the hopper creates a serial flow of tablets into a bottle on
+the conveyor belt below. Only one tablet at a time passes the sensor, so the tablets can
+be counted. The system controls the number of tablets into each bottle and displays a
+continually updated readout of the total number of tablets bottled.
+
+image::{figures}/applications-tablet-bottling-system.png[Block diagram of a tablet-bottling system.]
+
+. The maximum number of tablets per bottle is entered from the keypad.
+. changed to a code
+by the Encoder, 
+. and stored in Register A. 
+. Decoder A changes the code stored in the register
+to a form appropriate for turning on the display. 
+. Code converter A changes the code to a
+binary number and applies it to the A input of the Comparator (Comp).
+. An optical sensor in the neck of the hopper detects each tablet that passes and produces
+a pulse. 
+. This pulse goes to the Counter and advances it by one count; thus, any time during
+the filling of a bottle, the binary state of the counter represents the number of tablets in the
+bottle. 
+. The binary count is transferred from the counter to the B input of the comparator
+(Comp)
+** The A input of the comparator is the binary number for the maximum tablets per
+bottle. Now, let’s say that the present number of tablets per bottle is 50. 
+** When the binary
+** number in the counter reaches 50, the A = B output of the comparator goes HIGH, indicat-
+ing that the bottle is full.
+. The HIGH output of the comparator causes the valve in the neck of the hopper to close and
+stop the flow of tablets. 
+** At the same time, the HIGH output of the comparator activates the
+conveyor, which moves the next empty bottle into place under the hopper. 
+** When the bottle is in
+place, the conveyor control issues a pulse that resets the counter to zero. 
+** As a result, the output
+of the comparator goes back LOW and causes the hopper valve to restart the flow of tablets
+. For each bottle filled, the maximum binary number in the counter is transferred to the
+A input of the Adder. The B input of the adder comes from Register B that stores the total
+number of tablets bottled up through the last bottle filled. The adder produces a new cumu-
+lative sum that is then stored in register B, replacing the previous sum. This keeps a running
+total of the tablets bottled during a given run.
+. The cumulative sum stored in register B goes to Decoder B, which detects when Regis-
+ter B has reached its maximum capacity and enables the MUX, which converts the binary
+from parallel to serial form for transmission to the remote DEMUX. The DEMUX converts
+the data back to parallel form for storage.

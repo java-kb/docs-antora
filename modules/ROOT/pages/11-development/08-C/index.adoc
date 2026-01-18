@@ -1,0 +1,169 @@
+= C Langauge
+
+== Major C Standard Versions
+* K&R C (1978): The original informal standard defined by Brian Kernighan and Dennis Ritchie's book, The C Programming Language.
+* C89 / C90 (ANSI C / ISO C): The first official standardization. C89 was the American (ANSI) standard, and C90 was the identical international (ISO) version.
+** Key Features: Introduced function prototypes, void pointers, const and volatile qualifiers, and the first official standard library.
+* C99 (1999): A major update that significantly expanded the language.
+** Key Features: Inline functions, variable-length arrays (VLAs), the long long int type, _Bool type, designated initializers, and // single-line comments.
+* C11 (2011): Focused on modernizing the language for multi-core processors.
+** Key Features: Multi-threading support (<threads.h>), atomic operations (_Atomic), static assertions (static_assert), and type-generic macros (_Generic).
+* C17 / C18 (2018): A minor maintenance release intended to fix bugs in the C11 specification rather than introducing new features.
+* C23 (2024): The newest major revision, published in late 2024.
+** Key Features: Adoption of many features from C++, including bool, true, false, and nullptr as keywords, static_assert without a message, the typeof operator, and "contracts" for runtime safety.
+* C2y (In Development): The informal name for the next version following C23, currently under active discussion for future release. 
+
+=== The Linux Kernel Context (2026)
+The Linux kernel traditionally used C89 (gnu89) for over 30 years to maintain maximum compatibility. In 2022, starting with Linux 5.18, the kernel officially moved to C11 (gnu11) to leverage modern compiler features and improve code structure. While there is ongoing interest in C23, the kernel remains primarily on C11 as of early 2026 to ensure support for slightly older compiler versions. 
+
+== Feature test macros
+Feature test macros are
+preprocessor definitions used in C and C++ to determine at compile-time whether a compiler or standard library supports specific language features or standards. They are critical for writing portable code that can adapt to different compiler versions and environment capabilities. 
+
+In the C programming language, feature test macros serve two primary roles: identifying which version of the C standard a compiler supports and controlling which system-specific functions (like those from POSIX or Linux) are visible in your code
+. 
+=== Standard C Version Macros
+These macros are predefined by the compiler to indicate compliance with specific versions of the ISO C standard. 
+
+* *\__STDC_VERSION__*: The most important macro for versioning. It expands to a long integer in the format yyyymmL.
+** C90: Usually undefined (or defined as 1).
+** C99: 199901L.
+** C11: 201112L.
+** C17: 201710L.
+** C23: 202311L (published October 2024; some early implementations use 202000L).
+* *\__STDC__*: Defined as 1 if the compiler conforms to the ISO C standard. 
+
+=== C23 Feature-Specific Macros
+Starting with the C23 standard, C has adopted more granular feature test macros similar to C++ to help with modern feature adoption. 
+
+* *__has_include(<header>)*: Checks if a header file exists before attempting to include it.
+* __has_c_attribute(attribute): Checks if the compiler supports a specific C23 attribute (e.g., `\[[deprecated]]` or `\[[nodiscard]]`).
+* Header Version Macros: C23 requires standard headers to provide macros in the form `\__STDC_VERSION_NAME_H__` (e.g., `\__STDC_VERSION_STDIO_H__`) set to 202311L to confirm the header is fully C23-compliant. 
+
+=== POSIX and System-Specific Macros
+These macros are not predefined by the compiler. You must define them before any #include directives to "unlock" extra functionality from the system library. 
+
+* _POSIX_C_SOURCE: Exposes functions defined by various POSIX standards. Common values include 200112L or 200809L.
+* _XOPEN_SOURCE: Exposes Single UNIX Specification (SUS) features.
+* _GNU_SOURCE: A "catch-all" macro for Linux/glibc systems. It enables everything: C standards, POSIX, and GNU-specific extensions.
+* _DEFAULT_SOURCE: Used in modern glibc (replaces older _BSD_SOURCE and _SVID_SOURCE) to get default definitions without strictly adhering to one standard. 
+
+=== Usage Example
+[,C]
+----
+// MUST come before includes
+#define _POSIX_C_SOURCE 200809L 
+
+#include <stdio.h>
+
+int main() {
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
+    printf("Using C23 features\n");
+#elif __STDC_VERSION__ >= 201112L
+    printf("Using C11 features\n");
+#endif
+    return 0;
+}
+----
+
+=== Benefits and Usage
+* Enhanced Portability: Allows developers to provide "fallback" implementations for older compilers while utilizing new features on modern ones.
+* Safe Compilation: Prevents compilation errors by checking for feature existence before usage rather than assuming support based on a compiler version.
+* Implementation: Typically used within #if, #ifdef, or #elif directives to conditionally compile blocks of code. 
+
+== typedef
+typedef keyword in C is used to create an alias (an alternative name) for an existing data type. It does not create a new type, but rather provides a convenient, shorter, or more meaningful name for existing types, especially those with verbose declarations like structures or function pointers. 
+Syntax
+The general syntax is:
+[,C]
+----
+typedef existing_type new_name;
+----
+For example:
+[,C]
+----
+typedef unsigned int U_INT;
+----
+Here, U_INT becomes a synonym for unsigned int, and can be used to declare variables:
+[,C]
+----
+U_INT count = 10; // Equivalent to: unsigned int count = 10;
+----
+=== Common Uses and Examples
+typedef is used to enhance code readability, maintainability, and portability across different platforms. 
+
+* *For Built-in Types*: To give basic types more descriptive names or to abstract away size differences between systems.
++
+[,C]
+----
+typedef int KmPerHour;
+KmPerHour current_speed; // Clearer intent than just 'int current_speed;'
+----
+* *For Structures (struct) and Unions (union)*: This is one of the most common uses, as it removes the need to use the struct or union keyword every time a variable is declared.
++
+[,C]
+----
+// Without typedef
+struct Point {
+    int x;
+    int y;
+};
+struct Point p1;
+
+// With typedef
+typedef struct {
+    int x;
+    int y;
+} Point2D;
+Point2D p2; // No need for the 'struct' keyword
+----
+* *For Pointers*: To simplify pointer declarations. Be cautious, as it can be slightly confusing with multiple declarations in one line.
++
+[,C]
+----
+typedef int* IntPtr;
+IntPtr ptr1, ptr2; // Both ptr1 and ptr2 are of type int*
+----
+* *For Function Pointers*: To simplify the declaration of complex function pointer types.
+[,C]
+----
+typedef int (*CompareFunc)(const void*, const void*);
+CompareFunc compare = &my_comparison_function;
+----
+* *Portability*: It allows you to define platform-independent types. For example, if a program requires exactly 32 bits for an integer, you can define an alias and change it in one place if you move to a system with different word sizes.
++
+[,C]
+----
+// Portability header (e.g., arch_types.h)
+#ifdef PLATFORM_A
+    // On Platform A, a 'short' is 16 bits
+    typedef short int16; 
+#elif defined(PLATFORM_B)
+    // On Platform B, an 'int' is 16 bits
+    typedef int int16;   
+#endif
+
+// Main application code
+int16 sensor_value; // Always 16 bits, no matter the platform
+----
++
+The C standard library uses this exact method for its own portable types:
++
+** size_t: An alias for an unsigned integer large enough to hold the size of any object on the current system. On a 32-bit system, it might be a typedef for unsigned int, while on a 64-bit system, it is often unsigned long long.
+** uint32_t: Defined in <stdint.h>, this is a typedef that guarantees a 32-bit unsigned integer regardless of whether the compiler’s native int is 16 or 32 bits
+* *Clarity*: It can describe the intent of a variable (e.g., using typedef int Distance; instead of just int).
+=== typedef vs. #define
+While #define can also create aliases, typedef is generally preferred for types because it is handled by the compiler and is type-safe, unlike #define, which is a preprocessor directive that performs simple text substitution
+
+Feature 
+	typedef	#define
+Processed by	Compiler	Preprocessor (text substitution)
+Scope	Respects scope rules (block or global)	Global (unless undefined)
+Type Safety	Type-safe; checked by compiler	No type checking
+Semicolon	Required at the end	Not required
+
+=== Key Rules
+
+* *Scope*: Like variables, a typedef defined inside a function is only available within that function.
+* *Multiple Names*: You can define multiple aliases on a single line (e.g., typedef int width, height;).
+* *Standard Naming*: Many standard C types end in _t (like size_t or uint8_t), which signals to programmers that the name is a typedef. However, POSIX reserves the _t suffix for its own types, so some style guides advise against using it for custom types. 

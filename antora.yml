@@ -5,5 +5,7 @@ nav:
 - modules/ROOT/nav.adoc
 asciidoc:
   attributes:
+    allow-uri-read: ''
     icondir: icons
+    include-glibc: 'https://github.com/bminor/glibc/blob/master'
     #imagesdir: modules/ROOT/images

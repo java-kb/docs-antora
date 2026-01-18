@@ -1,0 +1,978 @@
+= Discrete mathematics
+:stem:
+
+== Mathematical Logic
+
+=== Propositional Logic
+==== Propositions and Truth Values
+==== Logical Operators
+==== Truth Tables
+==== Logical Equivalence
+==== Tautologies and Contradictions
+==== De Morgan’s Laws
+==== Normal Forms (CNF, DNF)
+
+=== Predicate Logic
+==== Predicates and Quantifiers
+==== Free and Bound Variables
+==== Translating English Statements
+==== Nested Quantifiers
+==== Negation of Quantified Statements
+
+=== Rules of Inference
+==== Modus Ponens
+==== Modus Tollens
+==== Hypothetical Syllogism
+==== Universal Instantiation
+==== Universal Generalization
+==== Valid and Invalid Arguments
+
+=== Proof Techniques
+==== Direct Proof
+==== Proof by Contrapositive
+==== Proof by Contradiction
+==== Proof by Cases
+==== Existence and Uniqueness Proofs
+
+== Set Theory
+
+=== Basic Concepts
+==== Sets and Elements
+==== Subsets
+==== Power Sets
+==== Set Representations
+==== Venn Diagrams
+
+=== Set Operations
+==== Union
+==== Intersection
+==== Difference
+==== Complement
+==== Cartesian Product
+
+=== Properties of Sets
+==== Set Identities
+==== Algebra of Sets
+==== Generalized Unions and Intersections
+
+== Relations
+
+=== Binary Relations
+==== Definition of Relations
+==== Representations of Relations
+==== Domain and Range
+
+=== Properties of Relations
+==== Reflexive Relations
+==== Symmetric Relations
+==== Antisymmetric Relations
+==== Transitive Relations
+
+=== Equivalence Relations
+==== Definition of Equivalence Relations
+==== Equivalence Classes
+==== Partitions of a Set
+
+=== Partial Orders
+==== Posets
+==== Hasse Diagrams
+==== Total Orders
+
+== Functions
+
+=== Basic Definitions
+==== Functions as Relations
+==== Domain, Codomain, and Range
+
+=== Types of Functions
+==== Injective Functions
+==== Surjective Functions
+==== Bijective Functions
+
+=== Function Composition and Inverses
+==== Composition of Functions
+==== Inverse Functions
+
+=== Special Functions
+==== Identity Functions
+==== Floor and Ceiling Functions
+
+== Number Theory
+
+=== Integers and Divisibility
+==== Divisibility Rules
+==== Prime and Composite Numbers
+
+=== Greatest Common Divisor
+==== Euclidean Algorithm
+==== Extended Euclidean Algorithm
+
+=== Modular Arithmetic
+==== Congruences
+==== Modular Addition and Multiplication
+==== Modular Exponentiation
+
+=== Applications of Number Theory
+==== Cryptography Basics
+==== Hashing and Checksums
+
+== Mathematical Induction and Recursion
+
+=== Mathematical Induction
+==== Weak Induction
+==== Strong Induction
+
+=== Recursive Definitions
+==== Recursive Sequences
+==== Recursively Defined Functions
+
+=== Structural Induction
+==== Induction on Trees
+==== Induction on Strings
+
+== Counting Techniques (Combinatorics)
+
+=== Basic Counting Principles
+==== Sum Rule
+Sequential sums are expressed using the capital-sigma (Σ) notation. It
+indicates how an expression will be summed for each value of i:
+
+stem:[sum_("start i")^("finish i") i]
+
+Summing the first n natural numbers is thus:
+
+stem:[sum_(i=1)^(n) i= 1 + 2 + · · · + (n − 1) + n=((n)(n+1))/2]
+
+*Example*: You need to fly to New York City any-
+time in the next 30 days. Air ticket prices change unpre-
+dictably according to the departure and return dates. How
+many pairs of days must be checked to find the cheapest
+tickets for flying to NYC and back within the next 30 days?
+
+
+*Answer*: 
+
+* Model the situation
+* You have 30 distinct days.
+* You must choose:
+* one departure day
+* one return day
+* The return day must be at or after the departure day.
+
+So we are counting all pairs of days (ddepart,dreturn) such that:
+
+stem:[1≤ddepart≤dreturn≤30]
+
+*Using Summing*
+
+Any pair of days between today (day 1) and the last day (day 30)
+is valid, as long as the return is the same day of later than the de-
+parture. Hence, 30 pairs begin with day 1, 29 pairs begin with
+day 2, 28 with day 3, and so on. There’s only one pair that be-
+gins on day 30. So 30+29+…+2+1 is the total number of pairs
+that needs to be considered. 
+
+stem:[sum_(i=)^(30) i= ((30)(30+1))/2="465 pairs"]
+
+*using combinations*
+
+From the 30 days avail-
+able, pick two. The order doesn’t matter: the earlier day is the
+departure, the later day is the return. This gives 
+
+stem:[((30),(2))= "435 pairs"]
+
+We must count the cases where arrival and departure are the
+same date. There are 30 such cases, thus 435+ 30 = 465.
+
+this count corresponds to combinations with repetition:
+
+stem:[((30+1),(2))=((31),(2))= "465 pairs"]
+
+This is exactly what a double loop would check:
+----
+for departure = 1 to 30:
+    for return = departure to 30:
+        check price
+----
+Which runs 465 iterations
+
+*Algorithmic Insight*
+
+* This is a quadratic search space: O(n2)
+* Even with unpredictable pricing, checking 435 possibilities is trivial for a computer
+* Contrast this with factorial or exponential problems (like TSP), which explode much faster
+
+*Visualizing the day pairs*
+
+* Think of:
+** Rows = departure day
+** Columns = return day
+* Days are 1…30.
+* A pair (i,j) is valid if: j≥i (return is on the same day or later).
+
+*Small example (5 days instead of 30)*
+
+This keeps the picture readable.
+----
+Return →
+      1    2   3   4    5
+Dep ↓
+1     ✔   ✔   ✔   ✔    ✔
+2         ✔   ✔   ✔    ✔
+3             ✔   ✔    ✔
+4                 ✔    ✔
+5                      ✔
+----
+. ✔ = valid (return ≥ departure)
+. Blank = invalid (return < departure)
+
+*What shape is this?*
+
+* A right triangle
+* Including the diagonal
+* Each row is shorter than the previous by 1
+
+Row counts: 5,4,3,2,1
+
+Total: stem:[5+4+3+2+1=15=((6),(2))]
+
+Scaling to 30 days
+
+Row lengths become: 30,29,28,…,1
+
+So the summation is:stem:[sum_(i=)^(30)(31-i)="465 pairs"]
+
+*Matrix interpretation (important insight)*
+
+If you imagine a 30 × 30 matrix:
+
+* Full matrix = 30*30=900 pairs
+* Invalid region = strict lower triangle (return < departure)
+* Valid region = upper triangle + diagonal
+
+Exactly half the matrix plus the diagonal.
+
+==== Product Rule
+*Idea* If a task consists of multiple steps, and: Step 1 can be done in m ways, Step 2 can be done in n ways, Then the entire task can be done in: m×n ways
+
+If an event happens in n different ways, and a another event hap-
+pens in m different ways, the number of different ways both events
+can happen is n × m
+
+*Formal Statement*: For a process with k steps: stem:[n1×n2×⋯×nk]
+
+*Example*: A PIN code is composed of two
+digits and a letter. It takes one second to try a PIN. In the
+worst case, how much time do we need to crack a PIN?
+
+*Answer*: 
+
+Two digits can be chosen in 100 ways (00-99) 
+
+and a letter in 26
+ways (A-Z). 
+
+Therefore, there are 100 × 26 = 2, 600 possible PINs.
+
+In the worst case, we have to try every single PIN until we find the
+right one. After 2,600 seconds (43 minutes), we’ll have cracked it.
+
+*Example*: There are 23 candidates who want
+to join your team. For each candidate, you toss a coin and
+only hire if it shows heads. How many team configurations
+are possible?
+
+*Answer*: 
+
+Before hiring, the only possible team configuration is you alone.
+Each coin toss then doubles the number of possible configurations.
+
+Each candidate has two independent outcomes: Heads → hired, Tails → not hired
+
+So for each of the 23 candidates, there are 2 choices.
+
+Each possible subset of the 23 candidates is a valid team configuration,This includes:
+
+* Hiring no one
+* Hiring everyone
+* Hiring any combination in between
+
+
+Using the product rule: stem:[2×2×⋯×2  (23 times)=22^3=8,388,608 team configurations.]
+
+Note that one of these configurations is still you alone.
+
+This is a classic example of counting subsets of a set, where a set with n elements has 2^n subsets.
+
+*Connection to Bit Vectors*
+
+A bit vector is a sequence of bits (0s and 1s) used to represent choices.
+
+Mapping the problem: You have 23 candidates, For each candidate:
+
+. 1 → hired (coin = heads)
+. 0 → not hired (coin = tails)
+
+So every team configuration corresponds to a 23-bit vector.
+
+Example (with 5 candidates for simplicity)
+----
+Candidate	1	2	3	4	5
+Bit	        1	0	1	1	0
+----
+This bit vector 10110 means: Candidates 1, 3, 4 → hired, Candidates 2, 5 → not hired
+
+Counting via bit vectors
+
+* Each bit has 2 choices
+* Number of distinct bit vectors of length 23:stem:[2^23]
+
+This is exactly the number of possible teams.
+
+=== Permutations
+Permutations are about arrangements where order matters. They answer the question: In how many different ways can we arrange or order objects?
+
+This concept is fundamental in algorithms, data structures, cryptography, and complexity analysis.
+
+*Basic Idea (Order Matters)*
+
+Consider three distinct objects: {A,B,C}, Possible permutations: ABC,ACB,BAC,BCA,CAB,CBA
+
+Total = 6 permutations
+
+Notice: ABC ≠ CBA → order matters.
+
+*Permutations of n Distinct Objects*
+
+Definition: The number of permutations of n distinct objects is:
+
+stem:[(n!)=n×(n−1)×(n−2)×⋯×1]
+
+So, If we have n items, we can order them in n factorial (n!) different
+ways. The factorial is explosive, it gets to enormous numbers for
+small values of n.
+
+Example: Arrange 5 books on a shelf: stem:[5!=5×4×3×2×1=120]
+
+*Example*: Your truck company delivers to
+15 cities. You want to know in what order to serve these
+cities to minimize gas consumption. If it takes a microsec-
+ond to calculate the length of one route, how long does it
+take to compute the length of all possible routes?
+
+*Answer*: 
+
+This is a permutations (order matters) problem — essentially the Traveling Salesman Problem (TSP).
+
+Step 1: Count all possible routes
+
+You have 15 distinct cities, and you want to visit all of them in some order. Number of possible routes:
+
+stem:[(15!)=15×14×13×⋯×1=1,307,674,368,000≈1.3×10^12]
+
+Step 1: Total computation time
+
+stem:[15! microseconds=1.307674368×10^12 microseconds=1.307674368×10^12/(10^6*24×60×60)≈15.1 days]
+
+Key Insight (Why this is important)
+
+* The number of routes grows as n! (factorial growth),if instead you had 20 cities, it would take 77 thousand years
+* Factorial growth is much faster than exponential growth
+* Even for just 15 cities, brute-force search is already impractical
+
+This is why in practice:
+
+* We use heuristics (nearest neighbor, greedy)
+* Dynamic programming (Held–Karp)
+* Approximation algorithms
+* Metaheuristics (genetic algorithms, simulated annealing)
+
+==== Permutations of r Objects Chosen from n
+*Definition*: If you choose r objects from n and arrange them, the number of permutations is:
+
+stem:[P(n,r)=n!/(n−r)!]
+
+*Example*: Choose and order 3 students out of 10:
+
+stem:[P(10,3)=(10!)/(7!)=10×9×8=720]
+
+*Example*: A musician is studying a scale
+with 13 different notes. She wants you to render all possi-
+ble melodies that use six notes only. Each note should play
+once per melody, and each six-note melody should play for
+one second. How much audio runtime is she asking for?
+
+*Answer*: This is a permutations problem because:
+
+* Order matters (a melody depends on note order)
+* No repetition (each note plays once)
+* You choose 6 notes out of 13
+
+We want to count permutations of six out of the 13 notes. To ignore
+permutations of unused notes, we must stop developing the factorial after the sixth factor. Formally, n!/(n − m)! is the number of
+possible permutations of m out of n possible items
+
+*Step 1: Count the number of melodies*
+
+Number of permutations of 6 notes chosen from 13:
+
+stem:[P(13,6)=13!(13−6)!=13/!7!=3×12×11×10×9×8=1,235,520]
+
+So there are 1,235,520 distinct melodies.
+
+*Step 2: Convert melodies to time*
+
+Each melody plays for 1 second
+
+Total time = 1,235,520 seconds= 1,235,520/3600 =343.2 hours=343.224/24≈14.3 days
+
+About 1,235,520 seconds ≈343 hours ≈14.3 days of continuous audio
+
+This shows how fast permutations explode:
+
+* Just 13 notes
+* Just 6-note melodies
+* Already over two weeks of nonstop sound
+
+This is the same combinatorial explosion seen in:
+
+* Route planning (TSP)
+* Password generation
+* Brute-force search algorithm
+
+==== Permutations without Repetition
+==== Permutations with Repetition
+Definition
+
+If repetition is allowed, and:There are n choices You form a sequence of length r, Then:
+
+stem:[n^r]
+
+Example: 4-digit PIN code:
+
+* Digits: 0–9 (10 choices)
+* Repetition allowed
+
+then stem;[10^4=10,000]
+
+==== Permutations with identical Items(Repeated Objects)
+Some objects are identical, so swapping them does not create a new arrangement.
+
+The factorial n! overcounts the number of ways to order n items
+if some are identical. Identical items swapping their positions
+shouldn’t count as a different permutation
+
+In a sequence of n items of which r are identical, there are r!
+ways to reorder identical items. Thus, n! counts each distinct per-
+mutation r! times. To get the number of distinct permutations, we
+need to divide n! by this overcount factor.
+
+*Formula*
+
+If: 
+
+* Total objects = n
+* One object repeats n1 times
+* Another repeats n2 times, etc.
+
+then
+
+stem:[n!/n1! n2! ⋯ nk!]
+
+*Example*: the numberof distinct permutations of the letters “CODE ENERGY” is 10!/3!.
+
+*Example*: Arrange letters of BALLOON:
+
+* Total letters = 7
+* L appears 2 times
+* O appears 2 times
+
+then:
+
+stem:[7!/2!×2!=1260]
+
+*Example*: A biologist is studying a DNA seg-
+ment related to a genetic disease. The segment is made
+of 23 base pairs, where 9 must be A-T, 14 must be G-C.
+She wants to run a simulation task on every possible DNA
+segment having these numbers of base pairs. How many
+simulation tasks is she looking at?
+	​
+*Answer*: This is a combinations problem.
+
+* The DNA segment has 23 positions
+* Exactly 9 positions must be A–T
+* The remaining 14 positions must be G–C
+* The order matters by position, but:
+** All A–T base pairs are considered identical
+** All G–C base pairs are considered identical
+
+So the only choice is: Which 9 of the 23 positions are A–T (the rest are automatically G–C).
+
+First we calculate all possible permutations of the 23 base pairs.
+Then we divide the result to account for the 9 repeated A-T and
+the 14 repeated G-C base pairs:
+23!/(9! × 14!) = 817, 190 base pair permutations
+
+But the problem isn’t over. Considering orientation of base pairs:
+----
+--------------       isn’t the same as --------------
+- A - *G* -T -                         - A - *C* -T -
+- T - *C* -A -                         - T - *G* -A -
+--------------                         --------------
+----
+For each sequence of 23 base pairs, there are 223 distinct orienta-
+tion configurations. Therefore, the total is:817,190 × 22^3 ≈ 7 trillion sequences.
+
+*Interpretation (Why this makes sense)*
+
+Each valid DNA segment corresponds to a binary pattern of length 23:
+
+* 1 = A–T
+* 0 = G–C
+
+With exactly 9 ones and 14 zeros. Counting such patterns is exactly a binomial coefficient.
+stem:[((23),(9))=(23!)/(9! × 14!)].
+
+This appears in:
+
+* Bit strings with fixed Hamming weight
+* Combinatorial search spaces
+* Genomics simulations
+* Feature selection problems
+
+==== Circular Permutations
+Arrangements in a circle, where rotations are considered the same.
+
+Formula
+
+For n distinct objects in a circle: (n−1)!
+
+Example
+
+Seat 6 people around a round table: (6−1)!=5!=120
+
+==== Summary
+
+* Permutations = arrangements
+* Order matters
+* Factorials are fundamental
+* Variants:
+** Without repetition
+** With repetition
+** With identical objects
+** Circular permutations
+
+==== Computer Science Connections
+// TODO link to  Algorithms and Data Structures documents
+* Algorithms
+** Ordering tasks
+** Generating all permutations (backtracking)
+
+* Data Structures
+** Heap permutations
+** Tree traversal orders
+
+* Cryptography
+** Key arrangements
+** Password generation
+
+* Complexity
+** Permutation algorithms often have factorial time complexity: O(n!)
+
+=== Combinations
+
+==== Binomial Coefficients
+The binomial stem:[((n),(m))] is the number of ways to select m items out of a set of n items, regardless of order:
+stem:[((n),(m))= (n!)/(m!(n − m)!)] .
+
+The binomial is read “n choose m”.
+
+*Example*: You have an empty chessboard and 8
+queens, which can be placed anywhere on the board. In
+how many different ways can the queens be placed?
+
+*Answer*: This is a combinations problem because:
+
+* The chessboard has 64 squares 
+* You want to choose 8 squares to place queens
+* The order of choosing squares does not matter
+* You are simply selecting a group of 8 squares from 64
+
+The chessboard has 64 squares in an 8×8 grid. The number of ways
+to choose 8 squares out of the available 64 is stem:[((64),(8))] ≈ 4.4 billion.13
+
+
+==== Pascal’s Identity
+
+==== When to Use Permutations vs Combinations
+|===
+|Question	|Use
+|Does order matter?	|Permutations
+|Does order not matter?	|Combinations
+|Are objects arranged or ranked?	|Permutations
+|===
+
+===== Compare Permutations vs Combinations
+*The Core Intuition*
+
+* Permutations care about order(Permutations → order matters).
+* Combinations care only about selection(Combinations → order does not matter).
+
+Mathematically:
+
+* Permutations count arrangements
+* Combinations count selections
+
+A good mental model:
+
+* Permutations → arrangements / sequences / rankings
+* Combinations → groups / selections / sets
+
+*Formula*
+
+*Permutations*
+
+Permutations of r elements chosen from n: stem:[P(n,r)=n!/(n−r)!]
+	
+Special case: all elements used: P(n,n)=n!
+
+*Combinations*
+
+Combinations of r elements chosen from n: stem:[((n),(r))=(n!)/(r! × (n-r)!)]​
+
+|===
+||Permutations | Combinations
+
+|Intuition
+a|You are arranging objects in a sequence.
+Changing the order creates a new outcome
+a|You are choosing a group.
+Order does not change the result.
+
+|Example
+a|Arrange 3 notes out of 5:
+stem:[P(5,3)=(5!)/(2!)=5×4×3=60]
+a|Choose 3 notes out of 5:
+
+stem:[((5),(3))=(5!)/(3!2!)=10]
+
+|Examples
+a|
+* Routes between cities
+* Melodies
+* Rankings (1st, 2nd, 3rd)
+a|
+* Choosing team members
+* Selecting DNA positions
+* Picking lottery numbers
+|===
+*Everyday Analogy: Books on a Shelf vs Books in a Box*
+|===
+|Permutations (Order matters) |Combinations (Order does not matter)
+
+a|You put 3 books on a shelf.
+
+* ABC ≠ CBA
+* The position of each book matters
+
+You are asking: “In how many different orders can I arrange these books?”
+
+That’s a permutation problem.
+
+a|You put 3 books into a box.
+
+* {A, B, C} = {C, B, A}
+* The order inside the box doesn’t matter
+
+You are asking: “Which books did I choose?”
+
+That’s a combination problem.
+|===
+*Visual Mental Model*
+
+Permutations
+
+Think paths:
+----
+Start → A → B → C
+Start → C → B → A
+----
+Different paths → different outcomes
+
+Combinations
+
+Think regions:
+----
+{A, B, C}
+----
+One region regardless of order
+
+*Counting Perspective (Why Permutations Are Bigger)*
+Relationship
+
+Every combination of r elements has: r! permutations
+So:
+
+Permutations=Combinations×r!
+
+stem:[P(n,r)=((n),(r))*(r!)]
+	
+Intuition
+
+* First you choose the elements (combination),Choose which elements → combinations
+* Then you arrange them (permutation),Arrange their order → permutations
+
+*Decision Checklist (Very Useful)*
+
+Ask yourself:
+
+. Do different orders produce different outcomes?
+** Yes → *Permutation*
+** No → *Combination*
+
+. Am I ranking, sequencing, or ordering?
+** Yes → Permutation
+
+. Am I just selecting a group?
+** Yes → Combination
+
+*Computer Science Intuition*
+|===
+|Scenario	|Model
+|Task scheduling	|Permutations
+|Feature selection	|Combinations
+|TSP routes	|Permutations
+|Subset generation	|Combinations
+|Password cracking	|Permutations / repetition
+|DNA position constraints	|Combinations
+|===
+
+*Computer Science Connection*
+|===
+|Problem	|Formula	|Model
+|Traveling Salesman	|n! |Permutations
+|Feature selection	|stem:[((n),(k))] |Combinations
+|Bit masks	|(stem:[((n),(k))]  |Combinations
+|Passwords (no repetition)	|P(n,r) 	|Permutations
+|===
+
+*One-Sentence Summary*
+
+* Permutations answer “In what order?”,Permutations arrange..
+* Combinations answer “Which ones?”,Combinations choose.
+
+
+*Example*: A musician is studying a scale
+with 13 different notes. She wants you to render all possi-
+ble melodies that use six notes only. Each note should play
+once per melody, and each six-note melody should play for
+one second. How much audio runtime is she asking for?
+
+
+1. Comparison with Combinations (Ignoring Order)
+
+What changes?
+
+Permutations: order matters → different melodies
+
+Combinations: order does not matter → same set of notes, regardless of order
+
+So:
+
+C–E–G–A–B–D is the same as D–B–A–G–E–C
+
+
+Counting Permutations
+
+Number of ways to choose 6 notes from 13 with order:  stem:[P(13,6)=((13!)/((13−6)!))=(13!)/(7!)=3×12×11×10×9×8=1,235,520]
+
+Counting combinations
+
+Number of ways to choose 6 notes from 13 without order: stem:[((13),(6))=(13!)/(6! × 7!)]=1716
+
+Runtime comparison
+|===
+|Model	|Count	|Runtime
+|Permutations	|1,235,520	|14.3 days
+|Combinations	|1,716	|~29 minutes
+|===
+(assuming 1 second per melody)
+
+Key insight: Order multiplies the search space by 6!=720
+
+2. What If Repetition Is Allowed?
+
+Now assume:
+
+* A melody has 6 positions
+* Each position can be any of the 13 notes
+* Notes may repeat
+
+This models free composition, not strict scales.
+
+Counting with repetition: stem:[13^6=4,826,809]=4,826,809 seconds ≈ 55.9 days of audio
+
+|===
+|Model	|Formula	|Count	|Time
+|Combinations	|stem:[((13),(6))]|1,716| 29 min
+|Permutations	|stem:[P(13,6)]| 1,235,520	|14.3 days
+|Repetition allowed	|stem:[13^6] |4,826,809	|55.9 days
+|===
+3. Relation to Algorithmic Complexity
+
+This example directly mirrors algorithmic complexity classes.
+
+Complexity growth
+|===
+|Model	|Growth Type	|Complexity Class
+|Combinations	|Polynomial-like	|O(n^k)(fixed k)
+|Repetition allowed	|Exponential	|O(k^n)
+|Permutations	|Factorial	|O(n!)
+|===
+Why this matters
+
+* Factorial growth (n!) is the worst here
+* Even small increases in input size explode runtime
+* Brute-force algorithms become infeasible very quickly
+
+Real CS parallels
+|===
+|Music Problem	|Computer Science Equivalent
+|Permutations	|Traveling Salesman Problem
+|Combinations	|Feature selection
+|Repetition allowed	|Password brute forcing
+|Melody generation	|State-space search
+|===
+
+So Most hard problems are hard because of how many possibilities they generate, not because each step is slow.
+
+Even with: 1 second per melody, Only 13 notes, You already hit weeks of computation.
+
+This is why:
+
+* We prune search spaces
+* We use heuristics
+* We approximate instead of enumerating
+* Complexity theory matters
+
+
+=== Advanced Counting
+==== Inclusion–Exclusion Principle
+==== Pigeonhole Principle
+
+== Probability
+
+=== Probability Fundamentals
+==== Sample Spaces
+==== Events
+
+=== Discrete Probability
+==== Probability Distributions
+==== Expected Value
+
+=== Conditional Probability
+==== Conditional Probability
+==== Independence
+==== Bayes’ Theorem
+
+== Recurrence Relations
+
+=== Definition and Examples
+==== Linear Recurrence Relations
+
+=== Solving Recurrences
+==== Iteration Method
+==== Characteristic Equations
+
+=== Divide-and-Conquer Recurrences
+==== Algorithm Analysis Examples
+
+== Graph Theory
+
+=== Graph Fundamentals
+==== Graphs and Digraphs
+==== Degree of Vertices
+
+=== Special Graphs
+==== Complete Graphs
+==== Bipartite Graphs
+==== Trees
+
+=== Graph Traversal
+==== Breadth-First Search
+==== Depth-First Search
+
+=== Connectivity
+==== Paths and Cycles
+==== Connected Components
+
+=== Trees
+==== Rooted Trees
+==== Spanning Trees
+==== Minimum Spanning Trees
+
+== Trees and Applications
+
+=== Tree Properties
+==== Binary Trees
+==== Tree Traversals
+
+=== Applications of Trees
+==== Expression Trees
+==== Heaps
+==== Decision Trees
+
+== Boolean Algebra
+
+=== Boolean Expressions
+==== Boolean Variables
+==== Boolean Functions
+
+=== Boolean Laws
+==== Identity Laws
+==== Domination Laws
+==== Idempotent Laws
+==== De Morgan’s Laws
+
+=== Logic Circuits
+==== AND, OR, NOT Gates
+==== Circuit Simplification
+
+== Finite Automata and Formal Languages
+
+=== Strings and Languages
+==== Alphabets
+==== Strings
+==== Languages
+
+=== Finite Automata
+==== Deterministic Finite Automata
+==== Nondeterministic Finite Automata
+
+=== Regular Expressions
+==== Language Representation
+
+== Discrete Mathematics in Computer Science
+
+=== Algorithm Analysis
+==== Time Complexity
+==== Space Complexity
+==== Big-O, Big-Ω, Big-Θ
+
+=== Data Structures Foundations
+==== Sets
+==== Trees
+==== Graphs
+
+=== Applications in Operating Systems and Networks
+==== Deadlock Graphs
+==== Scheduling and Counting
+
+== Advanced Topics
+
+=== Lattices
+=== Algebraic Structures
+=== Coding Theory
+=== Cryptographic Protocols

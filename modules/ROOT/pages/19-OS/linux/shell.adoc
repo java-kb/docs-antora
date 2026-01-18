@@ -1,0 +1,93 @@
+= Shell
+
+A shell is a special-purpose program designed to read commands typed by a user
+and execute appropriate programs in response to those commands. Such a pro-
+gram is sometimes known as a command interpreter.
+The term login shell is used to denote the process that is created to run a shell
+when the user first logs in.
+
+Whereas on some operating systems the command interpreter is an integral
+part of the kernel, on UNIX systems, the shell is a user process. Many different
+shells exist, and different users (or, for that matter, a single user) on the same com-
+puter can simultaneously use different shells. 
+
+Although it is not part of the operat-
+ing system, it makes heavy use of many operating system features and thus serves
+as a good example of how the system calls are used. It is also the main interface
+between a user sitting at his terminal and the operating system, unless the user is
+using a graphical user interface. Many shells exist, including sh, csh, ksh, bash, and
+zsh. All of them support the functionality described below, which derives from the
+original shell (sh).
+
+When any user logs in, a shell is started up. The shell has the terminal as stan-
+dard input and standard output. It starts out by typing the prompt, a character
+such as a dollar sign, which tells the user that the shell is waiting to accept a com-
+mand.
+
+A number of important shells have appeared over time:
+
+* Bourne shell (sh): This is the oldest of the widely used shells. It was the standard shell for Seventh Edition UNIX. The Bourne
+shell contains many of the features familiar in all shells: I/O redirection, pipe-
+lines, filename generation (globbing), variables, manipulation of environment
+variables, command substitution, background command execution, and func-
+tions. All later UNIX implementations include the Bourne shell in addition to
+any other shells they might provide.
+* C shell (csh):  The C shell
+provided several useful interactive features unavailable in the Bourne shell,
+including command history, command-line editing, job control, and aliases.
+The C shell was not backward compatible with the Bourne shell. Although the
+standard interactive shell on BSD was the C shell, shell scripts were usually written for the Bourne shell, so as to be portable across
+all UNIX implementations.
+* Korn shell (ksh): This shell was written as the successor to the Bourne shell. While maintaining backward compati-
+bility with the Bourne shell, it also incorporated interactive features similar to
+those provided by the C shell.
+* Bourne again shell (bash): This shell is the GNU project’s reimplementation of
+the Bourne shell. It supplies interactive features similar to those available
+in the C and Korn shells. The principal authors of bash are Brian Fox and Chet
+Ramey. Bash is probably the most widely used shell on Linux. (On Linux, the
+Bourne shell, sh, is actually provided by bash emulating sh as closely as possible.)
+
+POSIX.2-1992 specified a standard for the shell that was based on the then cur-
+rent version of the Korn shell. Nowadays, the Korn shell and bash both con-
+form to POSIX, but provide a number of extensions to the standard, and many
+of these extensions differ between the two shells
+
+The shells are designed not merely for interactive use, but also for the interpretation
+of shell scripts, which are text files containing shell commands. For this purpose,
+each of the shells has the facilities typically associated with programming lan-
+guages: variables, loop and conditional statements, I/O commands, and functions.
+
+if the user now types
+----
+date
+----
+for example, the shell creates a child process and runs the date program as the
+child. While the child process is running, the shell waits for it to finish. When the
+child finishes, the shell types the prompt again and tries to read the next input line.
+
+The user can specify that standard output be redirected to a file, for example,
+
+ date >file
+
+Similarly, standard input can be redirected, as in
+ 
+ sort <file1 >file2
+
+which invokes the sort program with input taken from file1 and output sent to file2.
+
+The output of one program can be used as the input for another program by
+connecting them with a pipe. Thus
+
+cat file1 file2 file3 | sort >/dev/lp
+
+invokes the cat program to concatenate three files and send the output to sort to
+arrange all the lines in alphabetical order. The output of sort is redirected to the file
+/dev/lp, typically the printer.
+
+If a user puts an ampersand after a command, the shell does not wait for it to
+complete. Instead it just gives a prompt immediately. Consequently,
+
+cat file1 file2 file3 | sort >/dev/lp &
+
+starts up the sort as a background job, allowing the user to continue working nor-
+mally while the sort is going on. 

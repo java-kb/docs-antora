@@ -595,6 +595,368 @@ it could be the difference that you and your team are looking for.
 It is important to bear in mind that this will not speed up the request to the backend. It will take the 
 same time as before, but the performance perception that your user will have may be impacted.
 
+=== Improving Backend Integrations: the Interceptor Pattern
+Angular Interceptor, which is a service of a specific type to handle the HTTP request flow. This 
+component is based on the design pattern of the same name, which aims to change a processing cycle.
+
+==== Authetication
+
+suupose we have AuthService service:
+[source,typescript,attributes]
+----
+export class AuthService {
+ private httpClient = inject(HttpClient);
+ private url = 'http://localhost:3000/auth/login';
+ #token?: Token;
+ login(loginForm: Partial<LoginForm>): Observable<Token> {
+ return this.httpClient
+ .post<Token>(this.url, loginForm)
+ .pipe(tap((token) => (this.#token = token)));
+ }
+ get isLogged() {
+  return this.#token ? true : false;
+ }
+ logout() {
+ this.#token = undefined;
+ }
+ get token() {
+ return this.#token?.access_token;
+ }}
+----
+and we have ExerciseSetsService service to send the token in the request that returns the diary items:
+[source,typescript,attributes]
+----
+private authService = inject(AuthService);
+private url = 'http://localhost:3000/diary';
+getInitialList(): Observable<ExerciseSetListAPI> {
+ const headers = new HttpHeaders({
+ Authorization: `Bearer ${this.authService.token}`,
+ });
+ return this.httpClient.get<ExerciseSetListAPI>(this.url, { headers 
+});
+}
+----
+Here, we create a header using the accessory class of Angular, HttpHeaders, passing the token 
+in the Authorization attribute. Then, we pass this header in the get method of Angular’s 
+HttpClient service.
+
+This approach has a problem, as we would need to replicate this operation for all of the service’s 
+methods, and as our application grows, we would need to remember to do this token handling.
+A good software architecture should think about new team members with different backgrounds and 
+even the creation of new teams as the project grows. Therefore, this type of transversal requirement 
+of our system must be treated in a more intelligent way.
+
+in the interceptor pattern, we have an Angular service in the middle of the request that can change both the 
+request and the return from the backend.
+[source,typescript,attributes]
+----
+import { Injectable, inject } from '@angular/core';
+import {
+    HttpRequest,
+    HttpHandler,
+    HttpEvent,
+    HttpInterceptor,
+    HttpHeaders,
+} from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { AuthService } from './auth';
+
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
+    private authService = inject(AuthService);
+
+    intercept(
+        request: HttpRequest<unknown>,
+        next: HttpHandler
+    ): Observable<HttpEvent<unknown>> {
+        const token = this.authService.token;
+
+        if (request.url.includes('auth')) {
+            return next.handle(request);
+        }
+
+        if (token) {
+            const reqAuth = request.clone({
+                headers: request.headers.set(`Authorization`, `Bearer ${token}`),
+            });
+            return next.handle(reqAuth);
+        }
+
+        return next.handle(request);
+    }
+}
+----
+The first thing we can notice is that the interceptor is a common Angular service, so it has the 
+@Injectable notation>
+
+This service implements the HttpInterceptor interface, which requires the class to have the 
+inject method. This method receives the request we want to handle and expects an observable as 
+a return. This signature indicates the characteristic of the interceptor because this class is always in 
+the middle of a flow between the component making the request and the backend.
+
+Therefore, the service receives information from the flow and must return the flow represented by 
+the observable. In our case, we use the AuthService service to get the token. The service cannot 
+attach the token to the login endpoint because that is where we will get the token, so we make an if
+statement by analyzing which URL the request is using.
+
+If we have a token, we clone the request, but this time, we inform the header with the token. The 
+reason we need to use the clone method to get a new object is that the request object is immutable – that is, it is not possible to change it; we need to create a new one, identical to the old one, but this 
+time, we put the header.
+
+Finally, the flow is returned but, this time, with the new request object. To configure the interceptor, 
+[source,typescript,attributes]
+----
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideZonelessChangeDetection(),
+    provideRouter(routes, withComponentInputBinding()),
+    provideHttpClient(),
+    {
+      provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi:
+        true
+    }
+  ]
+};
+----
+We’re including the AuthInterceptor service in the HTTP_INTERCEPTORS token. This tells 
+the framework to call the service whenever a component uses Angular’s HttpClient service. The 
+multi attribute informs the framework that we can have more than one interceptor because, by 
+default, Angular adds only one.
+
+==== Changing the request route
+[source,typescript,attributes]
+----
+@Injectable()
+export class HostInterceptor implements HttpInterceptor {
+ intercept(
+ request: HttpRequest<unknown>,
+ next: HttpHandler
+ ): Observable<HttpEvent<unknown>> {
+ const url = 'http://localhost:3000';
+ const resource = request.url;
+ if (request.url.includes('http')) {
+ return next.handle(request);
+ }
+ const urlsReq = request.clone({
+ url: `${url}/${resource}`,
+ });
+ return next.handle(urlsReq);
+ }}
+----
+In this function, we have the URL of the backend and, in the resource variable, we receive the 
+original URL of the request that we want to intercept and modify. We use an if statement next because 
+we want to avoid errors in case some service needs to call another API directly.
+Finally, we create a new request object (this time, with the URL changed) and we pass this new object to 
+the request flow. For this interceptor to be triggered by Angular, we need to add it to the providers
+array
+[source,typescript,attributes]
+----
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideZonelessChangeDetection(),
+    provideRouter(routes, withComponentInputBinding()),
+    provideHttpClient(),
+    {
+      provide: HTTP_INTERCEPTORS, useClass: HostInterceptor, multi:
+        true
+    }
+  ]
+};
+----
+We will refactor our service to only care about the features they need, starting with the 
+[source,typescript,attributes]
+----
+ExerciseSetsService service:
+export class ExerciseSetsService {
+ private httpClient = inject(HttpClient);
+ private url = 'diary';
+ . . .
+}
+----
+We can see that if we needed new services or changed the URL, the HTTP requests would not need 
+to be refactored, as we created an interceptor to work on that.
+
+==== Creating a loader
+In a frontend project, performance is not only about having faster requests but also improving the 
+user’s perception of the application. A blank screen without any feedback signals to the user that the 
+page did not load, that their internet is having a problem, or any other type of negative perception.
+That’s why we always need to signal that the action the user expects is being performed. One way to 
+show this is a loading indicator
+
+we may not notice the loading screen. However, for these cases, we can use a Chrome feature that simulates a slow 3G network.
+Open Chrome DevTools and, in the Network tab, use the throttling option
+[tabs]
+======
+
+Calaculator Example::
++
+[tabs]
+====
+
+Country.ts::
++
+[source, javascript]
+----
+----
+====
+
+Gym Diary::
+In the command line of our operating system, we will use the Angular CLI:
++
+ ng generate component loading-overlay
+ ng generate service loading-overlay/load
+ ng generate interceptor loading-overlay/load
++
+With that, we created the overlay component, the service that will control the loading state, and 
+the interceptor that will control the beginning and end of the loading based on HTTP requests.
++
+We will implement the LoadService service, which will maintain and control the loading state:
++
+We create two methods to turn the loading state on and off and a property to expose this state.
++
+The intercept method starts by turning on the loading state and returning requests without
+modifying anything in them.
+However, in the flow of the request, we placed the finalize operator from RxJs, which has the 
+characteristic of executing a function when an observable arrives in the complete state – here, turning 
+off the loading state.
++
+We want the overlay to be executed in the application as a whole, so we will include the overlay component in the AppComponent component.
++
+We just need to inject the LoadService service because that’s where we’ll have the loading state.
++
+Finally, let’s place the overlay component in the HTML template:
+[tabs]
+====
+frontend/src/app/loader/loader.service.ts::
+[source, typescript]
+----
+import { Injectable, signal, Signal } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class LoaderService {
+  private _isLoading = signal(false);
+
+  showLoader() {
+    this._isLoading.set(true);
+  }
+
+  hideLoader() {
+    this._isLoading.set(false);
+  }
+
+  get isLoading(): Signal<boolean> {
+    return this._isLoading;
+  }
+}
+
+----
+
+frontend/src/app/loader/loader-interceptor.ts::
+[source, typescript]
+----
+import { HttpInterceptorFn } from '@angular/common/http';
+import { LoaderService } from './loader.service';
+import { inject } from '@angular/core';
+import { finalize } from 'rxjs/operators';
+
+export const loaderInterceptor: HttpInterceptorFn = (req, next) => {
+  let loadService = inject(LoaderService);
+
+  if (req.headers.get('X-LOADING') === 'false') {
+    return next(req);
+  }
+
+  loadService.showLoader();
+  return next(req)
+    .pipe(finalize(() => loadService.hideLoader()));
+    
+};
+----
+
+frontend/src/app/loader/loading-overlay/loading-overlay::
+[source, html]
+----
+<div class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
+  <div class="text-white text-xl">Loading...</div>
+</div>
+----
+
+[source, typescript]
+----
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-loading-overlay',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './loading-overlay.html',
+  styleUrls: ['./loading-overlay.css'],
+})
+export class LoadingOverlay {}
+
+----
+
+frontend/src/app::
+[source, html]
+----
+  <main class="flex-1 bg-gray-200 p-4">
+    <app-loading-overlay *ngIf="loadService.isLoading()"></app-loading-overlay>
+    <router-outlet></router-outlet>
+  </main>
+----
+
+[source, typescript]
+----
+import { Component, inject, signal } from '@angular/core';
+import { RouterOutlet, RouterLink, Router } from '@angular/router';
+import { AuthService } from './login/services/auth';
+import { LoaderService } from './loader/loader.service';
+import { LoadingOverlay } from "./loader/loading-overlay/loading-overlay";
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [RouterOutlet, RouterLink, LoadingOverlay,CommonModule],
+  templateUrl: './app.html',
+  styleUrls: ['./app.css'],
+})
+export class App {
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  
+  loadService = inject(LoaderService);
+
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['./login']);
+  }
+}
+
+----
+
+[source, typescript]
+----
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideZonelessChangeDetection(),
+    provideRouter(routes, withComponentInputBinding()),
+    provideHttpClient(withInterceptorsFromDi(), withInterceptors([loaderInterceptor])),
+    {
+      provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi:
+        true
+    },
+  ]
+----
+====
+
+======
 == Anti-Patterns
 === Avoiding single module app
 Problem: Avoid having single-module app(AppModule), The problems we have here are as follows:

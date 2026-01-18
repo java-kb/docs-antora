@@ -1,0 +1,42 @@
+= client-server
+
+A client-server application is one that is broken into two component processes:
+
+* a client, which asks the server to carry out some service by sending it a request
+message; and
+* a server, which examines the client’s request, performs appropriate actions, and
+then sends a response message back to the client.
+
+Sometimes, the client and server may engage in an extended dialogue of requests
+and responses.
+
+Typically, the client application interacts with a user, while the server applica-
+tion provides access to some shared resource. Commonly, there are multiple
+instances of client processes communicating with one or a few instances of the
+server process.
+
+The client and server may reside on the same host computer or on separate
+hosts connected via a network. To communicate with one another, the client and
+server use the IPC mechanisms
+.
+
+Servers may implement a variety of services, such as:
+* providing access to a database or other shared information resource;
+* providing access to a remote file across a network;
+* encapsulating some business logic;
+* providing access to a shared hardware resource (e.g., a printer); or
+* serving web pages.
+
+Encapsulating a service within a single server is useful for a number of reasons,
+such as the following:
+
+* Efficiency: It may be cheaper to provide one instance of a resource (e.g., a
+printer) that is managed by a server than to provide the same resource locally
+on every computer.
+* Control, coordination, and security: By holding a resource (especially an informa-
+tion resource) at a single location, the server can coordinate access to the
+resource (e.g., so that two clients don’t simultaneously update the same piece
+of information) or secure it so that it is made available to only selected clients.
+* Operation in a heterogeneous environment: In a network, the various clients, and
+the server, can be running on different hardware and operating system
+platforms.

@@ -1,7 +1,6 @@
-= Data structures and Algorithms
+= Algorithms
 :figures: 11-development/00-software-development/data-structures-and-algorithms/algorithms
-
-== Algorithms
+:stem: latexmath
 
 An algorithm is a set of logical instructions to perform a particular task.
 
@@ -16,11 +15,4604 @@ as sorting a list of numbers, finding the shortest route, or word prediction
 are all correct. Big software applications, such as email clients or an
 operating system are improper examples.
 
-=== Complexities
+== Complexities
 
-== Data structures
+Algorithmic complexity is a way to describe the efficiency of an algorithm as a relation of its input. It can be used to describe various properties of our code, such as runtime speed or memory requirements. It's also a very important tool programmers should understand to write efficient software.
 
-A data structure is a way of organizing data so that it can be accessed and/or modified efficiently.
+When calculating the space complexity, the memory consumed for the
+input arguments should be ignored. Only memory allocated inside the
+algorithms should be considered.
 
+== Big O Notation
+There are two simple rules to follow when we want to express an algorithm using the big O notation.
+
+. drop any constants
++
+** n + 4 becomes n
+** 5 becomes 1 \-> O(1), also known as constant time complexity.
+. drop everything except the highest order
+** n + n2 + n3 becomes n3 \-> O(n3)
+
+|===
+| Expression | First Rule | Second Rule | big O notation
+
+| 3mn
+| 3mn
+| mn
+| O(mn)
+
+| 5n + 44n2+ 4
+| 5n + 44n2
+| n2
+| O(n2)
+
+| 4 + 5 log n
+| 5 log n
+| log n
+| O(log n)
+
+| 3{caret}n + 5n2 + 8
+| 3{caret}n + 5n2
+| 3{caret}n
+| O(3{caret}n)
+|===
+
+=== 1. Why Big-O is necessary but insufficient
+Why Big-O is necessary, Big-O tells you:
+
+* How an algorithm scales as input grows
+* What happens in the long run
+
+Without Big-O, you might pick an algorithm that looks fast at small sizes but becomes unusable later.
+
+Example
+
+* Algorithm A: O(n²)
+* Algorithm B: O(n log n)
+
+For very large n, B will always win, regardless of constants. so Big-O protects you from disaster at scale.
+
+Why Big-O is insufficient, Big-O hides important details:
+
+* Constant factors
+* Cache behavior
+* Input order
+* Probability of worst cases
+* Memory usage
+
+Example
+
+* Insertion Sort → O(n²)
+* Quick Sort → O(n log n)
+* For: 
+** n = 20
+** nearly sorted data
+
+Insertion Sort is faster, despite “worse” Big-O. Big-O tells you what can happen, not what usually happens.
+
+Big-O tells you what could happen in the worst case;
+real systems care about what usually happens and adjust accordingly
+
+Big-O describes growth limits, not real performance.
+
+Real performance = Big-O + data distribution + constants + hardware effects
+
+== Mathematics of Algorithms
+One of the most important factors for choosing an algorithm is the speed with
+which it is likely to complete. Characterizing the expected computation time of an
+algorithm is inherently a mathematical process.
+
+
+=== Size of a Problem Instance
+An instance of a problem is a particular input data set given to a program. 
+
+In most
+problems, the execution time of a program increases with the size of this data set. At
+the same time, Very compact or compressed representations (possibly using compression techni‐
+ques) may slow execution of a program due to extra processing. 
+
+It is
+difficult to define the optimal way to encode an instance because problems occur in
+the real world and must be translated into an appropriate representation to be
+solved by a program.
+
+When evaluating an algorithm, we want to assume the encoding
+of the problem instance is not the determining factor in whether the algorithm can
+be implemented efficiently(Algorithm analysis should minimize dependence on input encoding details.). 
+
+Your representation of a problem instance should
+depend just on the type and variety of operations that need to be performed(Performance comparisons should focus on the algorithm’s logic, not on clever or awkward representations.).
+
+Designing efficient algorithms often starts by selecting the proper data structures in
+which to represent the problem.
+
+Choose representations based on:
+
+* The types of operations required (e.g., search, insert, traverse)
+* The variety and frequency of those operations
+
+=== Rate of Growth of Functions
+We describe the behavior of an algorithm by representing the rate of growth of its
+execution time as a function of the size of the input problem instance.
+
+The rate of growth describes how an algorithm’s Running time, or Resource usage increases as the input size grows. It is usually expressed using asymptotic notation (e.g., O(n), O(n log n), O(n²)).
+
+When using the abstraction of the rate of growth to choose between algorithms,
+remember that:
+
+* *Constants matter*: That’s why we use supercomputers and upgrade our computers on a regular
+basis.
+* *Size of n is not always large*: for example the rate of growth of the execution time of Quick‐
+sort is less than the rate of growth of the execution time of Insertion Sort. Yet
+Insertion Sort outperforms Quicksort for small arrays on the same platform
+
+An algorithm’s rate of growth determines how it will perform on increasingly larger
+problem instances.
+
+For small inputs, different algorithms may perform similarly. For large inputs Algorithms with slower growth rates scale better. Algorithms with faster growth rates become impractical, even if they are fast for small inputs.
+
+Performance comparisons should focus on How fast costs grow, not exact running times. Long-term scalability, not short-term speed.
+
+Imagine sorting 10 items takes 1 second. Sorting 20 items might take 2 seconds for a fast algorithm, but 4 seconds for a slower one.
+
+Some algorithms grow slowly (good), like O(n log n). Some grow fast (bad), like O(n²).
+
+=== Analysis in the Best, Average, and Worst Cases
+algorithms are typically presented with three common
+cases in mind:
+
+* *Worst case*
++
+Defines a class of problem instances for which an algorithm exhibits its worst
+runtime behavior. Instead of trying to identify the specific input, algorithm
+designers typically describe properties of the input that prevent an algorithm
+from running efficiently.
+* *Average case*
++
+Defines the expected behavior when executing the algorithm on random prob‐
+lem instances. While some instances will require greater time to complete
+because of some special cases, the vast majority will not. This measure
+describes the expectation an average user of the algorithm should have
+* *Best case*
++
+Defines a class of problem instances for which an algorithm exhibits its best
+runtime behavior. For these instances, the algorithm does the least work. In
+reality, the best case rarely occurs.
+
+By knowing the performance of an algorithm under each of these cases, you can
+judge whether an algorithm is appropriate to use in your specific situation.
+
+no single optimal algorithm
+exists. There is no one algorithm that is always the best for every situation. An algorithm can be: Very fast in some cases,Slow or wasteful in others ,So “best” depends on what kind of problem you actually have. 
+
+for example in Sorting algorithms:
+
+* *Insertion Sort*
+** Very fast for small or almost sorted data
+** Very slow for large random data
+* *Quick Sort*
+** Very fast on average
+** Can be very slow in rare bad cases
+* *Merge Sort*
+** Predictable speed
+** Uses more memory
+
+Choosing an algorithm depends on:
+
+* *understanding the problem being solved*, Before picking an algorithm, you must understand:
+** What you are trying to do
+** What constraints matter (time, memory, simplicity, worst-case guarantees)
+** Example, If you need:
+*** Fast response in a real-time system → predictable algorithm (Merge Sort)
+*** Minimal memory usage → in-place algorithm (Quick Sort)
+*** Very small inputs → simple algorithm (Insertion Sort)
+*** Same task (sorting), different needs → different algorithm choice.
+* *the underlying probability distribution of the instances likely to be treated*:This refers to what inputs usually look like, not worst-case fantasy inputs. In plain words: “What kind of data do you expect most of the time?”
+** Examples
+*** Example 1: Sorted or almost sorted data
+**** User keeps adding items to a list
+**** Data is mostly already sorted
+**** Best choice: Insertion Sort (almost linear time)
+**** Bad choice: A complex algorithm with high overhead
+*** Example 2: Random data
+**** Strings, IDs, hashes, sensor values
+**** Best choice: Quick Sort (average-case excellent)
+**** Worst-case slowdowns are unlikely if the data is truly random.
+*** Example 3: Adversarial or untrusted data
+**** Data comes from users or the network
+**** Attackers may try to trigger worst-case behavior
+**** Best choice: Merge Sort or Heap Sort
+**** Predictable worst-case performance
+* *the behavior of the algorithms being considered*.You must understand how algorithms behave, not just their Big-O label.
+** Behavior includes:
+*** Best / average / worst case
+*** Memory usage
+*** Cache friendliness
+*** Sensitivity to input order
+** Example, Two algorithms both labeled O(n log n):
+*** One may be:
+**** Faster in practice
+**** Worse in worst-case
+*** Another may be:
+**** Slower on average
+**** More predictable
+** Big-O alone does not tell the full story.
+
+so There is no universally best algorithm. The right choice depends on:
+
+* What problem you are solving
+* What the data usually looks like
+* How each algorithm behaves in practice
+
+Choosing an algorithm is like choosing a vehicle:
+
+* Bicycle → best for short trips
+* Car → best for daily driving
+* Truck → best for heavy loads
+* Sports car → fast but risky in bad conditions
+
+There is no “best vehicle”, only the right one for the situation
+
+The following table provides Algorithms vs data distributions comparison table.
+
+This table shows why data shape matters as much as Big-O.
+[cols="2,2,2,3,3,3,3,3,3", options="header"]
+|===
+| Algorithm
+| Big-O (Average)
+| Big-O (Worst)
+| Best For Data That Is
+| Performs Poorly When
+| Typical Real-World Use
+| Kernel / System Use
+| Database Use
+| Notes
+
+| Insertion Sort
+| O(n)
+| O(n^2)
+| Small, nearly sorted
+| Large, random inputs
+| Small buffers, incremental updates
+| Small kernel lists, local adjustments
+| Sorting tiny result sets
+| Extremely low overhead; adaptive
+
+| Quick Sort
+| O(n log n)
+| O(n^2)
+| Random inputs
+| Adversarial or ordered inputs
+| Fast general-purpose sorting
+| Avoided (unbounded worst case)
+| User-space analytics, utilities
+| Cache-friendly; pivot choice critical
+
+| Merge Sort
+| O(n log n)
+| O(n log n)
+| Any distribution
+| Tight memory constraints
+| Stable sorting, external data
+| list_sort() for linked lists
+| External sort, merge join
+| Stable; predictable runtime
+
+| Heap Sort
+| O(n log n)
+| O(n log n)
+| Unknown or adversarial
+| Cache-sensitive workloads
+| Predictable in-place sorting
+| sort() in lib/sort.c
+| Rarely used
+| Guaranteed bounds; poor locality
+
+| TimSort
+| O(n)
+| O(n log n)
+| Real-world, partially sorted
+| Crafted pathological patterns
+| Language standard libraries
+| Not used (complexity, memory)
+| Client-side sorting
+| Hybrid; detects sorted runs
+
+| Radix Sort
+| O(n * k)
+| O(n * k)
+| Fixed-length keys
+| Variable-length or large alphabets
+| High-throughput classification
+| Networking, packet handling
+| Index building, analytics
+| Non-comparison based
+
+| Binary Search
+| O(log n)
+| O(log n)
+| Sorted data
+| Unsorted collections
+| Fast lookup
+| Kernel tables, sysfs
+| B-tree traversal
+| Requires total order
+
+| Hash Table
+| O(1)
+| O(n)
+| Uniform key distribution
+| Many collisions
+| Key-based lookup
+| Slab caches, dentry cache
+| Hash joins, hash indexes
+| Depends on hash quality
+
+| Red-Black Tree
+| O(log n)
+| O(log n)
+| Ordered dynamic data
+| When order not required
+| Balanced search structure
+| Scheduler, VMAs, timers
+| Index internals
+| Self-balancing BST
+
+| B-Tree
+| O(log n)
+| O(log n)
+| Disk-backed sorted data
+| In-memory-only workloads
+| Storage-friendly indexing
+| Rare (disk-oriented)
+| Primary DB indexes
+| Optimized for block I/O
+
+| Sequential Scan
+| O(n)
+| O(n)
+| High selectivity queries
+| Low selectivity queries
+| Full traversal
+| Linear kernel scans
+| Full table scan
+| Often underestimated
+
+| Merge Join
+| O(n + m)
+| O(n + m)
+| Pre-sorted inputs
+| Unsorted join inputs
+| Ordered data processing
+| Not typical
+| Range queries, analytics
+| Exploits ordering
+
+| Hash Join
+| O(n + m)
+| O(n * m)
+| Uniform join keys
+| Severe hash collisions
+| Fast equi-joins
+| Not typical
+| OLAP / OLTP joins
+| Memory-sensitive
+|===
+
+
+=== Worst Case
+For any particular value of n, the work done by an algorithm or program may vary
+dramatically over all the instances of size n(For a fixed input size n, not all inputs are equally hard. Some inputs make an algorithm fast Some make it slow,so Same input size ≠ same running time). For a given program and a given value
+n, the worst-case execution time is the maximum execution time, where the maxi‐
+mum is taken over all instances of size n(The worst case is the slowest possible input of that size).
+
+Worst-case execution time = the maximum time the algorithm could take on any input of size n(Worst case = slowest possible input of size n).
+
+For every possible input of size n, measure how long the algorithm takes. The worst case is the largest of those times.
+
+*Why do different inputs of the same size behave differently?*
+
+Even if two inputs have the same size n, their structure can be very different. Example: sorting n = 5 numbers
+
+* [1, 2, 3, 4, 5] (already sorted)
+* [5, 4, 3, 2, 1] (reverse sorted)
+
+Some algorithms treat these cases very differently.
+
+*Why do we care about worst-case behavior?*
+
+We are interested in the worst-case behavior of an algorithm because 
+
+* it often is the easiest case to analyze. 
+** Worst case often has clear patterns
+* Best and average cases may depend on probability assumptions
+* Worst case avoids guessing how “likely” inputs are
+* Safety guarantee: 
+** It also explains how slow the program could be in any situation. No matter what happens, the algorithm will never be slower than this
+** This is crucial for: Operating systems, Real-time systems, Databases, Security-critical code
+
+*Formal definition*
+
+if Sn is the set of instances si of size n, and t() is a function that meas‐
+ures the work done by an algorithm on each instance, then work done by an algo‐
+rithm on Sn in the worst case is the maximum of t(si) over all si ∈ Sn. Denoting this
+worst-case performance on Sn by Twc(n).
+
+So
+
+* Sₙ → the set of all possible inputs of size n
+* t(sᵢ) → how much work the algorithm does on one input sᵢ
+* Worst case T_wc(n) → the largest value of t(sᵢ) for all sᵢ ∈ Sₙ(T_wc(n) = maximum work over all inputs of size n).
+
+*worst-case complexity*
+
+the rate of growth of Twc(n) defines the worst-case complexity of the algorithm(how fast time grows as n grows,so Complexity depends on growth rate, not exact time). Examples:
+
+* T_wc(n) = 10n² + 3n + 5 → O(n²)
+* T_wc(n) = n log n → O(n log n)
+
+|===
+||Example 1: Linear search|Example 2: Bubble sort
+
+|*Problem*: |Find a value in an array of size n|Bubble sort repeatedly swaps adjacent elements.
+
+|*Best case*
+a|
+Value is at index 0
+
+Time ≈ 1 step
+a|
+Already sorted
+
+≈ n comparisons
+
+|*Worst case*
+a|
+Value is at the last position, or not present
+
+Time ≈ n steps
+a|
+Reverse sorted
+
+≈ n² comparisons
+
+|*Worst-case complexity*: |O(n)|O(n²)
+|===
+
+*Why not just measure it experimentally?*
+
+There are not enough resources to compute each individual instance si on which to
+run the algorithm to determine empirically the one that leads to worst-case perfor‐
+mance because
+
+* Number of possible inputs grows exponentially
+* For n = 100, the number of permutations is enormous
+* Impossible to test all cases
+
+Instead, an adversary crafts a worst-case problem instance given the
+description of the algorithm(“adversary” idea).
+
+So, Instead of testing all inputs, we imagine an adversary(Adversary thinking helps identify worst-case inputs):
+
+* The adversary knows the algorithm
+* It deliberately constructs the worst possible input
+
+This helps us reason: “If someone wanted to make this algorithm as slow as possible, what would they give it?” For Example: For quicksort with bad pivot choice → adversary gives already sorted input
+
+*Step-by-Step Adversary Example*
+
+We’ll use Quicksort (bad pivot choice) because it’s the classic adversary example.
+
+Algorithm (simplified quicksort), Assume this version of quicksort: Always chooses the first element as the pivot
+----
+quicksort(A):
+    pick A[0] as pivot
+    partition remaining elements into:
+        left  (≤ pivot)
+        right (> pivot)
+    recursively sort left and right
+----
+Step 1: What does the adversary know?
+
+The adversary knows:
+
+* How the algorithm works
+* That the pivot is always the first element
+* The adversary’s goal: Make quicksort as slow as possible
+
+Step 2: What input should the adversary choose?
+
+To hurt quicksort:
+
+* The pivot should be the smallest or largest element
+* That creates maximally unbalanced partitions
+
+So the adversary chooses: Already sorted input: [1, 2, 3, 4, 5, 6, 7]
+
+Step 3: Run the algorithm (n = 7)
+|===
+||First call(n = 7)|Second call (size = 6)|Third call (size = 5)
+
+|Pivot =| 1|2|3
+
+|Left =| []|[]|[]
+
+|Right =| [2, 3, 4, 5, 6, 7]|[3, 4, 5, 6, 7]|[4, 5, 6, 7]
+
+|Work done ≈| n comparisons|n-1|n-2
+|===
+Continues until size = 1
+
+Total work: *n + (n-1) + (n-2) + ... + 1*
+
+Step 4: Compute the total work
+
+That sum equals:Twc​(n)= stem:n(n+1)/2=O(n2)
+
+Step 5: Adversary conclusion
+
+The adversary has forced the algorithm into its worst possible behavior.
+
+Worst-case time complexity of this quicksort = O(n²)
+
+Conclustion
+
+Even though quicksort is usually fast, the adversary shows: “There exists an input of size n that makes it this slow.”
+
+=== Key takeaways (in one place)
+
+* Same input size ≠ same running time
+* Worst case = slowest possible input of size n
+* T_wc(n) = maximum work over all inputs of size n
+* Complexity depends on growth rate, not exact time
+* Worst case gives strong guarantees
+* Adversary thinking helps identify worst-case inputs
+
+=== Average Case
+*Why worst case is sometimes unrealistic*
+
+Consider a telephone system designed to support a large number n of telephones. In
+the worst case, it must be able to complete all calls where n/2 people pick up their
+phones and call the other n/2 people. Although this system will never crash because
+of overload, it would be prohibitively expensive to construct. In reality, the proba‐
+bility that each of n/2 people calls a unique member of the other n/2 people is
+exceedingly small. Instead, we could design a system that is cheaper to build and use
+mathematical tools to consider the probability of crash due to overload.
+
+so this telephone example explains why worst case can be misleading. for worst-case telephone system
+
+* n telephones
+* Worst case: n/2 people all call different n/2 people at the same time
+* System must support n/2 simultaneous calls
+
+This is possible, but extremely unlikely. If we design for this:
+
+* The system becomes very expensive
+* Most capacity is never used
+
+so Instead of asking: “What is the absolute worst that could happen?”. Average case asks: “What usually happens, considering how likely each situation is?” This matches real-world behavior much better.
+|===
+|Concept	    |Telephone system	            |Algorithm
+|Worst case	    |Everyone calls simultaneously	|Adversarial input
+|Probability	|Very small	                    |Rare input
+|Average case	|Typical call patterns	        |Typical inputs
+|Design goal	|Cheaper, reliable	            |Faster in practice
+|===
+*the average-case complexity of the algorithm*
+
+For the set of instances of size n, we associate a probability distribution Pr{si}, which
+assigns a probability between 0 and 1 to each instance si such that the sum of the
+probabilities over all instances of size n is 1. More formally, if Sn is the set of instances of size n, then:
+
+For inputs of size n:
+
+* Let Sₙ = all possible inputs of size n
+* Each input sᵢ has a probability Pr{sᵢ}
+* Rules:
+** 0 ≤ Pr{sᵢ} ≤ 1
+** All probabilities add up to 1, stem: ∑si∈SnPr{si}=1, This just means: “One of these inputs must occur.” 
+
+If t() measures the work done by an algorithm on each instance(Each input:Takes some time → t(sᵢ), Occurs with some probability → Pr{sᵢ}), then the average case work done by an algorithm on Sn is(Multiply how long an input takes by how likely it is, then add everything up.):
+
+stem:Tac(n) = ∑si ∈ Snt si Pr si
+
+Denoting this average-case work on Sn by Tac(n), then the rate of growth of Tac(n) defines the average-case
+complexity of the algorithm.
+
+*Why unlikely cases don’t matter much*
+
+the actual work done on instance si, t(si), is weighted with the probability
+that si will actually be presented as input. If Pr{si} = 0, then the actual value of t(si)
+does not impact the expected work done by the program. 
+
+So, If An input is very slow ,but Pr{sᵢ} = 0 (or extremely small),Then Its contribution to average time is zero (or negligible),So Rare worst-case inputs don’t dominate average performance.
+
+==== Examples
+*Example 1: Sequential (Linear) Search*
+
+*Problem*: Search for a value in an array of size n.
+
+*Assumptions*: Target is equally likely to be at any position, Or not present.
+
+*Cost per position*
+|===
+|Position	|Probes
+|1st	|1
+|2nd	|2
+|...	|...
+|nth	|n
+|Not found	|n
+|===
+*Average number of probes*
+
+Under these assumptions:
+
+Average probes=½n + ½
+
+*Conculsion*
+When analyzing growth rate, we:
+
+* Ignore constants (1/2, +1/2)
+* Focus on how it grows as n increases
+
+So we say: Tac(n)=O(n)
+
+Even though the exact average is ½n + ½, we just say linear time.
+
+*Example 1: quicksort*
+
+To make average-case analysis reasonable, we assume one of these equivalent models:
+
+* Pivot is chosen uniformly at random, or
+* Input is a random permutation, and pivot is first element
+
+These two give the same average behavior. This avoids adversarial inputs and lets 
+probability matter.
+
+*What “average case” means here*
+
+For input size n:
+
+* All n! permutations are equally likely
+* We compute the expected number of operations
+* We focus on: Comparisons (dominant cost)
+
+*One partition step (local view)*
+
+* Take an array of size n.
+* Choose pivot
+* Compare pivot to the other n − 1 elements
+* Partition into:
+** Left subarray of size k(k is random and can be anything from 0 to n − 1.)
+** Right subarray of size n − k − 1
+
+*Expected cost of the first step*
+
+Regardless of how the array splits:
+
+* Partition cost=n−1 comparisons
+
+This part is deterministic.
+
+*Expected recursive cost (key idea)*
+
+Let: T(n)=expected comparisons for size n
+
+After partitioning:
+
+* Left side size = k
+* Right side size = n - k - 1
+
+So: T(n)=(n−1)+E[T(k)+T(n−k−1)]
+
+*Where probability enters*
+
+Each element is equally likely to be the pivot.
+
+So: Each k ∈ {0, 1, ..., n−1} occurs with probability 1/n
+
+Thus:
+
+T(n)=(n−1)+(1/n)∑k=0n−1(T(k)+T(n−k−1))
+
+    =(n−1)+(n/2)​k=0∑n−1​T(k)
+
+This is the average-case recurrence.
+
+*Intuition before solving*
+
+What does this mean?
+
+* Each level of recursion processes all n elements once
+* Expected depth of recursion ≈ log n
+* So total work ≈ n × log n
+* This already suggests: T(n)=Θ(nlog⁡n)
+
+*Solving the recurrence (high level)*
+
+With standard techniques (telescoping or induction):
+
+T(n)=2(n+1)Hn−4n
+
+Where: Hₙ = harmonic number ≈ ln n + γ
+
+So: T(n)≈2nln⁡n
+
+gnoring constants: T(n)∈Θ(nlog⁡n)
+
+Average-case quicksort is Θ(n log n)
+
+*Visual intuition (recursion tree)*
+----
+Level 0:        n
+Level 1:     n/2   n/2
+Level 2:   n/4 n/4 n/4 n/4
+...
+----
+* Each level costs ≈ n
+* Number of levels ≈ log n
+* Total ≈ n log n
+
+*Why worst case doesn’t dominate the average*
+
+* Worst case:
+** Highly unbalanced splits every time
+** Probability ≈ 2 / n! (vanishingly small)
+* Average case:
+** Balanced-ish splits are far more likely
+** Rare bad cases don’t affect expectation much
+
+*Comparison summary*
+|===
+|Case	|Complexity	|Why
+
+|Best	|Θ(n log n)	|Perfect splits
+|Average	|Θ(n log n)	|Random splits
+|Worst	|Θ(n²)	|Adversarial splits
+|===
+
+*Key takeaway*
+
+* Average-case quicksort uses probability
+* Expected split is reasonably balanced
+* Total work spreads across log n levels
+* Result: Θ(n log n)
+
+=== Best Case
+For a fixed input size n, Best-case execution time = the smallest amount of work the algorithm can possibly do on any input of size n. It answers: “If everything goes perfectly, how fast could this algorithm be?”
+
+Knowing the best case for an algorithm is useful even though the situation rarely
+occurs in practice:
+
+* Insight: In many cases, Best case shows:
+** The optimal circumstances for an algorithm
+** Whether the algorithm can take advantage of good situations
+* Algorithm design quality: If the best case is still slow, the algorithm is inherently inefficient, even when lucky.
+
+Best case does not guarantee real-world speed. But it tells you what the algorithm is capable of. for Example: Binary search best case = O(1), Linear search best case = O(1), But their average and worst cases differ greatly.
+
+For example, the best case for Sequential Search is when it
+searches for a desired value, v, which ends up being the first element in the list.
+Consider a slightly different approach, which we’ll call Counting Search, that
+counts the number of times that v appears in a list. If the computed count is zero,
+then the item was not found, so it returns false; otherwise, it returns true. Note
+that Counting Search always searches through the entire list; therefore, even
+though its worst-case behavior is O(n)—the same as Sequential Search—its best-
+case behavior remains O(n), so it is unable to take advantage of either the best-case
+or average-case situations in which it could have performed better.
+
+==== Examples
+*Example 1: Sequential (Linear) Search*
+
+*Problem*: Search for a value v in a list of size n
+
+*Best case for Sequential Search*
+
+Input: [v, 12, 9, 20, 7]
+
+* v is the first element
+* Algorithm checks once and stops
+* Work done: 1 comparison
+* So: Tbest(n)=O(1)
+* Sequential Search can exit early.
+
+Worst case (for comparison)
+
+* v is last or not present
+* Must check all n elements
+* O(n)
+
+*Example 2: Counting Search (important contrast)*
+
+Counting Search idea:
+
+* Go through the entire list
+* Count how many times v appears
+* Return true if count > 0
+
+Key observation
+
+Counting Search:
+
+* Always scans the entire list
+* Never exits early
+* Even if: [v, 99, 3, 8, 1], It still: Checks every element Counts occurrences
+
+Best case for Counting Search
+
+* Still must inspect all n elements
+* No shortcut possible
+* So: Tbest(n)=O(n)
+
+*Why this is a big deal*
+
+* Both algorithms have: Worst case: O(n)
+* But:
++
+|===
+|Algorithm	|Best Case	|Can exploit good inputs?l
+
+|Sequential Search	|O(1)	| Yes
+|Counting Search	|O(n)	| No
+|===
+Same worst case ≠ same quality algorithm
+
+Counting Search: Best = Average = Worst = O(n)
+
+Sequential Search: Best = O(1), Average = O(n), Worst = O(n)
+
+*Sequential Search can take advantage of lucky situations, while Counting Search cannot.*
+
+So A good algorithm should benefit from favorable situations. Counting Search:
+
+* Is blind to best-case and average-case inputs
+* Always behaves like the worst case
+
+==== when best-case analysis is misleading
+//TODO: Show when best-case analysis is misleading
+
+=== Key takeaways
+
+* Average case considers how likely inputs are
+* Uses a probability distribution over inputs
+* Computes expected running time
+* Rare worst cases don’t dominate the average
+* Final complexity still focuses on growth rate
+* Example: Sequential search → average O(n)
+
+=== Lower and Upper Bounds
+These are mathematical notations used to describe how the running time of an algorithm grows as the input size n increases. where f(n) is most commonly a function such as n, n3, or 2n.
+
+. *O(f(n))* → Upper bound
+** Describes the worst-case scenario.
+** “The algorithm will take no more than roughly f(n) steps for large n.”
+. *Ω(f(n))* → Lower bound
+** Describes the best-case scenario.
+** “The algorithm will take at least roughly f(n) steps for large n.”
+. *Θ(f(n))* → Tight bound
+** Both the lower and upper bounds are proportional to f(n).
+** “The algorithm’s running time grows roughly like f(n), both in the best and worst cases.”
+
+*Formal Definition*
+
+Suppose an algorithm’s running time is t(n) for input size n:
+
+. *O(f(n))*: There exists a constant c>0 and n0 threshold problem size,such that t(n)≤c⋅f(n) for all n>n0 → Worst-case guarantee.
++
+assume there is an algorithm whose worst-case performance is never
+greater than directly proportional to the size of the input problem instance, once the
+size is “large enough.”
+. *Ω(f(n))*: There exists a different constant c>0 and a different threshold
+problem size, n0 such that t(n)≥c⋅f(n) for all n>n0 → Best-case guarantee.
++
+Assume that its best-case perfor‐
+mance is never smaller than directly proportional to the size of the input problem
+instance
+. *Θ(f(n))*: The running time is sandwiched: c1⋅f(n)≤t(n)≤c2⋅f(n)  for large n. → Tight bound, precise growth rate.
+
+*Why Both Upper and Lower Bounds Matter*
+
+* Upper bounds (O) tell you how slow the algorithm could get → useful for planning resources.
+* Lower bounds (Ω) tell you how fast it could go → useful to know if an algorithm can ever be really fast.
+* Θ is used when the algorithm’s growth rate is consistent in both best and worst cases.
+
+==== Examples
+. Linear Search (searching for a value in an array of n elements)
+** Best case: The value is the first element → checks 1 element → Ω(1)
+** Worst case: The value is the last element or not present → checks all n elements → O(n)
+** Average case: About half the elements → Θ(n) approximately for analysis
+. Binary Search (on a sorted array)
+** Best case: The middle element is the target → Ω(1)
+** Worst case: Target requires log₂(n) steps → O(log n)
+** Tight bound: Θ(log n) (since the number of steps is always proportional to log n)
+. Merge Sort
+** Best case: Already sorted array → O(n log n)
+** Worst case: Random or reverse-sorted → O(n log n)
+** Tight bound: Θ(n log n) (always grows like n log n)
+
+Analogy (Simple)
+
+* Think of O(f(n)) as the maximum time your commute could take.
+* Think of Ω(f(n)) as the minimum time your commute could take.
+* Think of Θ(f(n)) as the typical time, always roughly the same.
+
+
+=== Identifying the Best and Worst Performance of an Algorithm While Checking for Duplicates in an Array
+Assume that the inner loop results in eight operations every time it executes.
+For the outer loop, assume four operations:
+
+[,java]
+----
+public boolean containsDuplicates(int[] numbers) {
+    for (int i=0; i<numbers.length; i++) {
+        for (int j=0; j<numbers.length; j++) {
+            if (i != j && numbers[i] == numbers[j]) return true;
+        }
+    }
+    return false;
+}
+----
+
+*Outer lopp operations*
+|===
+|Operation name |Code| Count
+
+|Reading array length and comparing to pointer |i<numbers.length|2
+|Array pointer increment and assignment|i{pp}(i = i + 1)|2
+|Total||4
+|===
+*Inner lopp operations*
+|===
+|Operation name |Code| Count
+
+|Reading array length and comparing to pointer |j<numbers.length|2
+|Array pointer increment and assignment|j{pp}(j = j + 1)|2
+|int equality |i != j|1
+|Array access and equality|numbers[i] == numbers[j])|3
+|Total||8
+|===
+
+To do this, we should perform the following steps:
+
+. In the worst- case, we execute the inner loop n times (array length).
+. In the best case, we only execute the inner loop only twice.
+. The best case is when the duplicate numbers are in the front of the input array.
+The worst is when the array doesn't contain any duplicates.
+. The worst case is when the array doesn't contain duplicates and is of size n:
+ ** For the outer loop, we have 4*n operations
+ ** For the inner loop, we have n__(n__8) operations
+ ** In total, we have 4n + 8n2 operations
+. In the best case, the duplicates are the first two items in the array:
+ ** For the outer loop, we have 4 operations
+ ** For the inner loop, we have 2*8 operations as the inner loop executes twice to get to the second item in the array where the duplicate is located
+ ** In total, we have 20 operations
+
+=== Comparison of Worst-Case, Average-Case, and Best-Case Behavior Across Common Algorithms
+
+==== Searching Algorithms
+
+===== Linear (Sequential) Search
+
+[cols="1,1,3", options="header"]
+|===
+| Case | Time Complexity | Explanation
+| Best | O(1) | Target element is the first item in the list
+| Average | O(n) | Target is equally likely to be anywhere
+| Worst | O(n) | Target is last or not present
+|===
+
+Insight: Best case is rare; average and worst cases dominate real performance.
+
+===== Binary Search (Sorted Array)
+
+[cols="1,1,3", options="header"]
+|===
+| Case | Time Complexity | Explanation
+| Best | O(1) | Middle element matches target
+| Average | O(log n) | Search space halves each step
+| Worst | O(log n) | Target not present
+|===
+
+Insight: Best case is trivial; logarithmic growth defines efficiency.
+
+==== Sorting Algorithms
+
+===== Bubble Sort
+
+[cols="1,1,3", options="header"]
+|===
+| Case | Time Complexity | Explanation
+| Best | O(n) | Already sorted with early-exit optimization
+| Average | O(n^2) | Random input order
+| Worst | O(n^2) | Reverse sorted input
+|===
+
+Insight: Quadratic behavior dominates despite linear best case.
+
+===== Insertion Sort
+
+[cols="1,1,3", options="header"]
+|===
+| Case | Time Complexity | Explanation
+| Best | O(n) | Input already sorted
+| Average | O(n^2) | Random order
+| Worst | O(n^2) | Reverse sorted input
+|===
+
+Insight: Performs well on nearly sorted data.
+
+===== Merge Sort
+
+[cols="1,1,3", options="header"]
+|===
+| Case | Time Complexity | Explanation
+| Best | Θ(n log n) | Always divides evenly
+| Average | Θ(n log n) | Input order irrelevant
+| Worst | Θ(n log n) | Guaranteed bound
+|===
+
+Insight: Predictable performance in all cases.
+
+===== Quicksort (Random Pivot)
+
+[cols="1,1,3", options="header"]
+|===
+| Case | Time Complexity | Explanation
+| Best | Θ(n log n) | Perfectly balanced partitions
+| Average | Θ(n log n) | Randomized splits
+| Worst | Θ(n^2) | Extremely unbalanced partitions
+|===
+
+Insight: Excellent average performance; worst case exists without safeguards.
+
+==== Data Structures
+
+===== Hash Table (Good Hash Function)
+
+[cols="1,1,3", options="header"]
+|===
+| Case | Time Complexity | Explanation
+| Best | O(1) | Direct access, no collisions
+| Average | O(1) | Few collisions
+| Worst | O(n) | All keys collide
+|===
+
+Insight: Average case is excellent; worst case must be considered in security contexts.
+
+===== Binary Search Tree (Unbalanced)
+
+[cols="1,1,3", options="header"]
+|===
+| Case | Time Complexity | Explanation
+| Best | O(1) | Target at root
+| Average | O(log n) | Random insertions
+| Worst | O(n) | Tree degenerates into a list
+|===
+
+Insight: Structure heavily influences performance.
+
+===== Balanced Binary Search Tree (AVL, Red-Black)
+
+[cols="1,1,3", options="header"]
+|===
+| Case | Time Complexity | Explanation
+| Best | O(1) | Root access
+| Average | Θ(log n) | Height maintained
+| Worst | Θ(log n) | Guaranteed balance
+|===
+
+Insight: Worst-case guarantees outweigh fast best cases.
+
+==== Graph Algorithms
+
+===== Breadth-First Search (BFS)
+
+[cols="1,1,3", options="header"]
+|===
+| Case | Time Complexity | Explanation
+| Best | O(1) | Start node is target
+| Average | O(V + E) | Typical traversal
+| Worst | O(V + E) | Entire graph explored
+|===
+
+Insight: Best case irrelevant; traversal cost dominates.
+
+===== Dijkstra’s Algorithm (With Heap)
+
+[cols="1,1,3", options="header"]
+|===
+| Case | Time Complexity | Explanation
+| Best | O(E log V) | No shortcuts possible
+| Average | O(E log V) | Typical behavior
+| Worst | O(E log V) | Same asymptotic bound
+|===
+
+Insight: Input structure does not change asymptotic cost.
+
+==== Dynamic Programming
+
+===== Fibonacci (Naive Recursive)
+
+[cols="1,1,3", options="header"]
+|===
+| Case | Time Complexity | Explanation
+| Best | O(1) | n = 0 or 1
+| Average | O(2^n) | Exponential recursion
+| Worst | O(2^n) | Same behavior
+|===
+
+Insight: Best case is meaningless for scalability.
+
+===== Fibonacci (Dynamic Programming / Memoization)
+
+[cols="1,1,3", options="header"]
+|===
+| Case | Time Complexity | Explanation
+| Best | O(n) | Table computed once
+| Average | O(n) | Same
+| Worst | O(n) | Same
+|===
+
+Insight: Dynamic programming removes variability.
+
+==== Summary Insights
+
+Best case shows what is possible, not what is likely
+
+Average case models expected behavior
+
+Worst case provides guarantees
+
+Algorithms are primarily judged by average and worst-case growth, not best case
+
+== Performance Families
+
+We compare algorithms by evaluating 
+
+. their performance on problem instances of
+size n. By doing so, we can determine which algorithms scale to solve problems of a nontrivial size by evaluating the running time needed by
+the algorithm in relation to the size of the provided input.
+. A secondary performance
+evaluation is to consider how much memory or storage an algorithm needs
+
+// TODO shall I move it to Big O section
+When evaluating the performance of an algorithm, you must
+identify the most expensive computation within an algorithm to determine its clas‐
+sification. For example, consider an algorithm that is subdivided into two tasks, a
+task classified as linear followed by a task classified as quadratic. The overall perfor‐
+mance of the algorithm must therefore be classified as quadratic.
+
+When we analyze algorithms, we care about how fast the running time grows as the input size n becomes large, not how fast it runs for small inputs.
+
+An algorithm with better asymptotic growth (for example O(n log n)) will eventually outperform an algorithm with worse growth (for example O(n²)), even if the slower-growing algorithm has larger constant factors.
+
+So, An algorithm with better asymptotic growth will eventually execute faster than one
+with worse asymptotic growth, regardless of the actual constants.
+
+*Role of constants and break-even point*
+
+Suppose we have two algorithms:
+
+. Algorithm A: t₁(n) = 1000·n
+. Algorithm B: t₂(n) = n²
+
+For small values of n, Algorithm B might actually be faster:
+
+* n = 10 → n² = 100, 1000·n = 10,000
+* n = 100 → n² = 10,000, 1000·n = 100,000
+
+But eventually:
+
+n = 2000 → n² = 4,000,000, 1000·n = 2,000,000
+
+From this point onward, the linear algorithm is faster forever.
+
+This input size where one algorithm overtakes another is called the break-even point.
+Its exact value depends on constants, hardware, and implementation—but it always exists when asymptotic growth differs.
+
+Big-O notation deliberately ignores:
+
+* Constant multipliers
+* Low-order terms
+
+Because:
+
+* They only affect where the crossover happens
+* They do not affect which algorithm wins for large n
+
+This is why:
+----
+O(5n) = O(n)
+O(1000n log n) = O(n log n)
+----
+For this reason, if the number of
+operations for an algorithm can be computed as c*n3 + d*n*log(n), we would classify
+this algorithm as O(n3) because that is the dominant term that grows far more rap‐
+idly than n*log(n).
+
+As n grows large:
+
+* n³ grows much faster than n·log(n)
+* The n·log(n) term becomes insignificant by comparison
+
+For example:
+|===
+|n	|n³	|n·log₂(n)
+|10	|1,000	|~33
+|100	|1,000,000	|~664
+|1,000	|1,000,000,000	|~9,966
+|===
+The cubic term dominates completely.
+
+Therefore, we classify the algorithm as: O(n³), even though another term exists.
+
+This principle allows us to:
+
+* Compare algorithms independent of machine speed
+* Predict scalability
+* Avoid being misled by small-input benchmarks
+
+It explains why:
+
+* Quadratic algorithms become unusable at scale
+* Linearithmic algorithms dominate sorting
+* Exponential algorithms are avoided except for very small inputs
+---
+
+We use the following classifications, which are ordered by decreasing efficiency:
+
+=== Constant: O(1)
+In programming, we say an operation has constant behavior if the time it takes to finish doesn't change, even if the input gets larger.
+
+An operation is O(1) if its cost is bounded by a fixed constant, even if that constant is large—as long as it does not grow with the input size.
+
+When we say an operation has constant time, written as O(1), we mean: It takes the same amount of time no matter how big the input is. Not exactly the same number of CPU cycles, but:
+
+* It does not grow as the input size grows
+* It is bounded by a fixed limit
+
+Primitive operations are treated as constant, such as:
+
+* Comparing two numbers
+* Adding two numbers
+* Assigning a value to a variable
+* Accessing an array element by index
+
+These are assumed O(1).
+
+Example (32-bit integers)
+----
+if (x == y) {
+    // do something
+}
+----
+Here:
+
+* x and y are 32-bit integers
+* The CPU compares them in one machine instruction
+* Time does not depend on the values of x and y
+
+So this is O(1).
+
+*comparing bigger numbers*
+
+What about the performance of comparing two 256-bit numbers? Or two 1,024-bit
+numbers? 
+
+The time depends on how many bits the CPU must compare.
+
+* A 32-bit number → 1 machine word
+* A 256-bit number → 8 machine words (on a 32-bit word system)
+* A 1024-bit number → many machine words
+
+So physically:
+
+* The CPU must compare multiple chunks
+* More bits → more work
+
+we still call this O(1), Because of a crucial assumption: The size k of the numbers is fixed and cannot grow. If k is a constant, then 32-bit, 256-bit, 1024-bit … are all fixed sizes, not inputs that grow with the problem. So even though: Comparing 1024-bit numbers takes more time than 32-bit numbers. That extra work is bounded We treat it as:
+----
+Time = c × k   →   O(1)
+----
+Because k is constant.
+
+It turns out that for a predetermined fixed size k, you can compare two k-bit numbers in constant time. The key is that the problem size (i.e., the values x and
+y being compared) cannot grow beyond the fixed size k. We abstract the extra effort,
+which is multiplicative in terms of k, using the notation O(1). This means:
+
+* Yes, comparing larger fixed-size numbers costs more
+* But Big-O ignores constant multipliers
+
+We only care whether time grows with input size n
+
+So, comparing two numbers—even very large ones like 1,024-bit numbers—is still considered "constant" as long as there is a limit (k) that we don't cross.
+
+* *The Logic*: If your computer is designed to handle numbers up to 1,024 bits, it has the "machinery" ready to do that work. Whether you compare two 5-bit numbers or two 1,000-bit numbers, the computer uses that same "machinery" every time.
+* *The "Wait" Factor*: Even if comparing 1,024-bit numbers takes 10 times longer than 32-bit numbers, it’s still O(1) because that time stays the same every time you run the operation. It doesn't grow as you add more data to your overall program.
+
+while hardware makes a difference in actual speed (a supercomputer is faster than a calculator), in the world of Algorithms, we ignore those small hardware differences. If the work doesn't increase when the input increases, we call it O(1).
+
+Example: If an operation always takes at most 500 steps, it’s still O(1).
+
+Example: Compare a Constant operation vs. a Non-Constant operation:
+|===
+|Scenario	|Behavior	|Why?
+|*Checking the first letter of a word*	|*Constant O(1)*	|It doesn't matter if the word has 3 letters or 3 million letters; you only ever look at the very first spot.
+|*Counting all letters in a word*	|*Linear O(n)*	|As the word gets longer, the work increases. A 10-letter word takes twice as long as a 5-letter word.
+|*Comparing two 256-bit IDs*	|*Constant O(1)*	|Because 256 is a "fixed limit." The computer treats it as one "chunk" of work.
+|===
+
+*When Does Constant Time Not Apply?* it STOP being O(1) when
+
+* The number of bits depends on input size n
+* Comparison may require checking all bits
+
+line in Arbitrary-length integers
+----
+a = big_integer_with_n_bits
+b = big_integer_with_n_bits
+if a == b:
+    ...
+----
+⟶ Time is O(n)
+
+Rule of thumb
+|===
+|Data type	            |Size grows?  |Time
+|int, long	            |No	          |O(1)
+|Fixed 256-bit integer	|No	          |O(1)
+|BigInt / bignum	    |Yes	      |O(n)
+|===
+
+*How this assumption breaks in cryptography*
+
+Cryptography intentionally violates the “fixed k” assumption.
+
+Example: RSA key sizes
+
+* RSA-2048 → 2048-bit integers
+* RSA-4096 → 4096-bit integers
+
+Here:
+
+* Security depends on large k
+* Operations are defined in terms of k
+
+So:
+
+* k is not a constant
+* k is the input size
+
+Big-O now changes meaning
+
+Modular multiplication
+----
+O(k²)   (schoolbook)
+O(k^1.585) (Karatsuba)
+O(k log k) (FFT-based)
+----
+Modular exponentiation
+----
+O(k³) (naive)
+O(k² log e) (square-and-multiply)
+----
+So: In cryptography, integer operations are never O(1).
+
+General algorithm analysis assumes:
+
+* Numbers fit in machine words
+* Arithmetic is constant time
+
+Cryptography cannot make that assumption without becoming insecure.
+
+*CPU instructions and word size*
+
+*CPU word size*
+
+Modern CPUs:
+
+* 64-bit word size
+* Registers hold 64 bits
+
+Example x86-64 instruction
+----
+CMP RAX, RBX
+----
+* Compares two 64-bit values
+* Executes in 1–2 cycles
+
+so its O(1)
+
+*What if integers exceed word size?*
+
+256-bit integer (software-emulated), Stored as:
+----
+[ w0 | w1 | w2 | w3 ]   (4 × 64-bit words)
+----
+Comparison becomes:
+----
+if (w3 != v3) return;
+if (w2 != v2) return;
+if (w1 != v1) return;
+if (w0 != v0) return;
+----
+* Multiple instructions
+* Cost ∝ number of words
+
+If word count grows: Time ∝ words → O(k / word_size)
+
+neverthless, this still becomes O(1) in textbooks, Because:
+
+* Word count is fixed
+* Max words known at compile time
+
+So compilers and algorithms treat it as constant
+
+*O(1) vs O(log n) using integer sizes*
+
+For integer operations: n = number of bits in the integer. This is crucial and often misunderstood.
+
+. *O(1): Fixed-size machine integers*
++
+Example
++
+----
+uint64_t a, b;
+if (a == b) { }
+----
++
+Why O(1)?
++
+** uint64_t is always 64 bits
+** Fits in one CPU register
+** Comparison is one machine instruction
++
+Even though:
++
+** A 64-bit compare costs more than 32-bit
+** That cost is constant
++
+So: Time = constant → O(1)
+. *O(log n): Integers whose size grows with input*
++
+Now consider integers that scale with the problem.
++
+Example
++
+----
+a = 10**1000000
+b = 10**1000000
+a == b
+----
++
+Here:
++
+** The number of bits ≈ log₂(value)
+** Bigger numbers → more bits → more work
++
+Why O(log n)?
++
+If:
++
+** n = numeric value
+** Bits needed = ⌈log₂ n⌉
++
+Then: Comparison time ∝ number of bits → O(log n)
+
+*Summary table*
+|===
+|*Integer type*	|*Bit width*	|*Complexity*
+|int32, int64	|Fixed	|O(1)
+|256-bit fixed	|Fixed	|O(1)
+|Arbitrary precision	|Grows	|O(log n)
+|===
+
+
+*Why this matters in algorithm analysis*
+
+Algorithm analysis asks: “What happens when the input gets bigger?”, If an operation:
+
+* Has a fixed upper bound
+* Does not depend on input size n
+
+Then it does not affect scalability, and we safely call it O(1). This lets us focus on: Loops, Recursion, Data structure growth, instead of hardware details.
+
+*Real-world analogy*
+
+Think of it like flipping a light switch. It takes the same amount of effort to flip a switch in a tiny closet as it does in a massive ballroom. The "size" of the room doesn't change the time it takes to do that specific task.
+
+Comparing two IDs
+
+* Two passport numbers (fixed length)
+** → Constant time
+* Two entire books character by character
+** → Time grows with book length
+
+Same idea.
+
+
+=== Logarithmic: O(log n)
+An algorithm is O(log n) when each step cuts down the remaining problem by a constant factor — often by half — rather than scanning everything.
+
+The binary logarithm log₂(n) appears because many common divide-and-conquer strategies “halve” the search space every step.
+
+For example:
+
+* Searching a sorted list of size n by halving the search range → ~log₂(n) steps
+* Traversing a balanced binary tree of n nodes → ~log₂(n) height
+
+As n grows, the number of steps grows very slowly — much slower than linear (O(n)). That’s why O(log n) is considered very efficient.
+
+Suppose the secret number is between: 1 and n
+
+. At the start:
+** You have n possibilities
+** You know nothing except the bounds
+. After one good guess:
+** Half the numbers are impossible
+** Remaining possibilities ≈ n / 2
+. After two guesses:
+** Remaining possibilities ≈ n / 4
+. After i guesses:
+** Remaining possibilities ≈ n / 2ⁱ
+
+That “divide by 2 each time” behavior is exactly what creates log₂(n).
+
+*number of iterations*
+
+the guess stop when only one number is left. That happens when:
+
+stem:[n/2^k≤1]
+
+Solving for k:
+
+stem:[2^k≥n⇒k≥log⁡2(n)]
+
+So:
+
+At most stem:[1 + log₂(n)] guesses are needed — guaranteed,where the added one is: +1 → the final decisive guess
+
+==== Real-world parallels
+|===
+|Problem	|Strategy	|Complexity
+|Guessing a number	|Binary search	|O(log n)
+|Looking up a word	|Dictionary halves pages	|O(log n)
+|Database index lookup	|B-tree search	|O(log n)
+|CPU branch prediction |Decision tree |O(log n)
+|===
+
+==== Performance
+Logarithmic algorithms are extremely efficient because they rapidly converge on a
+solution. These algorithms succeed because they reduce the size of the problem by
+about half each time. The Guessing algorithm reaches a solution after at most k = 1
++ ⌊log2 (n)⌋ iterations, and at the ith iteration (0 < i ≤ k), the algorithm computes a
+guess that is known to be within ±ϵ = 2k–i – 1 from the actual hidden number. The
+quantity ϵ is considered the error, or uncertainty. After each iteration of the loop, ϵ
+is cut in half
+
+Logarithmic algorithms (like binary search / guessing games) are fast because:
+
+* They don’t try everything
+* Each step eliminates about half of the remaining possibilities
+* The uncertainty shrinks very quickly
+
+This is why they are described as rapidly converging.
+
+==== Why O(log n) matters in practice
+* *Large data sets*
++
+Searching through 1 million sorted items:
++
+Linear search → ~1 million comparisons (O(n))
++
+Binary search → ~20 comparisons (O(log₂(1,000,000)))
++
+That’s orders of magnitude faster as n grows.
+* *Balanced trees help for dynamic data*
++
+When data is constantly inserted and deleted, balanced trees like red-black trees keep lookups punchy, while worst-case trees would degrade to O(n).
+
+==== Examples
+*Example*: A bartender offers the following $10,000 bet to any patron: “I will choose a secret
+number from 1 to 1,000,000 and you will have 20 chances to guess my number.
+After each guess, I will either tell you Too Low, Too High, or You Win. If you guess
+my number in 20 or fewer questions, I give you $10,000. If none of your 20 guesses
+is my secret number you must give me $10,000.” Would you take this bet? 
+
+*Answer*
+
+The winning strategy is binary search. Instead of guessing randomly, you:
+
+* Guess the middle number
+* Use “Too Low” / “Too High” feedback
+* Eliminate half of the remaining possibilities each time
+
+In each round, depending upon the specific answers from the bartender, the size of
+the potential range containing the secret number is cut in about half each time.
+Eventually, the range of the secret number will be limited to just one possible num‐
+ber; this happens after 1 + ⌊log2 (n)⌋ rounds, where log2(x) computes the logarithm
+of x in base 2
+
+*Why 20 guesses is enough*
+
+Each guess cuts the search space in half. Starting range
+----
+1 to 1,000,000  →  1,000,000 possibilities
+----
+After each guess:
+[cols="1,1",options="header"]
+|===
+| Guess # | Max remaining numbers
+
+| 1 | 500,000
+| 2 | 250,000
+| 3 | 125,000
+| 4 | 62,500
+| 5 | 31,250
+| 6 | 15,625
+| 7 | 7,813
+| 8 | 3,907
+| 9 | 1,954
+| 10 | 977
+| 11 | 489
+| 12 | 245
+| 13 | 123
+| 14 | 62
+| 15 | 31
+| 16 | 16
+| 17 | 8
+| 18 | 4
+| 19 | 2
+| 20 | 1 ✅
+|===
+After 20 guesses, you are guaranteed to have exactly one number left.
+
+If there are 1,000,000 numbers, this algorithm will locate the number in at most 1 + ⌊log2
+(1,000,000)⌋ = 1 + ⌊19.93⌋, or 20 guesses (the worst case). Meaning It takes at most ⌈log₂ n⌉ guesses to find a number among n possibilities.
+
+*Why random guessing loses*
+
+If you guess randomly:
+
+* You get no systematic reduction
+* Probability of success in 20 guesses is: 20/1,000,000=0.002%
+
+You will almost certainly lose.
+
+Following Table shows a sample scenario for the range 1–8 that asks a series of questions, reducing the problem size by about half each time.
+
+[cols="1,3,3,3,3", options="header"]
+|===
+| Number | First Round | Second Round | Third Round | Fourth Round
+
+| 1
+a| Is it 4?  
+
+→Too High
+a| Is it 2?  
+
+→Too High
+a| Must be 1! 
+
+→ You Win
+| —
+
+| 2
+| Is it 4?  
+
+→Too High
+a| Is it 2? 
+
+→ You Win
+| —
+| —
+
+| 3
+| Is it 4?  
+
+→Too High
+a| Is it 2? 
+
+→ Too Low
+| Must be 3! 
+
+→ You Win
+| —
+
+| 4
+| Is it 4? 
+
+→ You Win
+| —
+| —
+| —
+
+| 5
+| Is it 4? 
+
+→ Too Low
+| Is it 6?  
++
+→Too High
+a| Must be 5! 
+
+→ You Win
+| —
+
+| 6
+| Is it 4? 
+
+→ Too Low
+| Is it 6? 
+
+→ You Win
+| —
+| —
+
+| 7
+| Is it 4? 
+
+→ Too Low
+| Is it 6? 
+
+→ Too Low
+| Is it 7? 
+
+→ You Win
+| —
+
+| 8
+| Is it 4? 
+
+→ Too Low
+| Is it 6? 
+
+→ Too Low
+| Is it 7? 
+
+→ Too Low
+| Must be 8! 
+
+→ You Win
+|===
+
+
+You should take the bet because binary search guarantees finding any number from 1 to 1,000,000 in at most 20 guesses, which is exactly O(log n) behavior.
+
+*Example: the Bisection algorithm*
+
+The bisection algorithm finds a solution to: stem:[f(x)=0]
+
+That solution is called a root. In plain words: We want to find the value of x where the function crosses the x-axis.
+
+*Why continuity and opposite signs matter*
+
+The method relies on a basic fact from calculus: If a function is continuous, and stem:[f(a)>0], stem:[f(b)<0] (or vice versa), then there must be at least one root between a and b.
+
+This is why the algorithm starts with two values a and b where the function has opposite signs.
+
+At every iteration, the bisection method maintains this guarantee: The true root lies somewhere in the interval [a, b]. This is true because: f(a) and f(b) have opposite signs. A continuous function that changes sign must cross zero (Intermediate Value Theorem)
+
+*How the algorithm works (step by step)*
+
+At every iteration:
+
+. Start with two values, a and b, for which f(a) and f(b)
+are opposite signs—that is, one is positive and one is negative
+. Compute the midpoint: c=(a+b)/2
+. Evaluate f(c)
+. Decide which half contains the root:
+** If 
+f(a)  and  f(c) have opposite signs → root is in [a, c]
+*  Otherwise → root is in [c, b]
+. Discard the other half
+. Estimate root
+** the root estimate at iteration i is simply the value c in that row.
+** The actual root is guaranteed to be within: [c − error, c + error]
+
+Each step:
+
+. Keeps the root inside the interval
+. Cuts the interval size in half
+. Cuts the error in half.
+
+*Why bisection is logarithmic (O(log n))*
+
+Let:
+
+* Initial interval length = b−a
+* After 1 step → interval length = (b−a)/2
+* After 2 steps → (b−a)/4
+* After k steps → (b−a)/2k
+
+To reach a desired precision 
+
+stem:[(b−a)/2^k≤ε⇒k≥log⁡2 ⁣((b−a)/ε)]
+
+So:
+
+The number of iterations grows logarithmically, not linearly.
+
+This is exactly the same efficiency idea as binary search.
+
+To find a root of f(x) = x*sin(x) – 5*x – cos(x), start with a = –1 and b = 1. As shown
+in Table, the algorithm converges on the solution of f(x) = 0, where x =
+–0.189302759 is a root of the function.
+[cols="1,2,2,2,3,3,2,2", options="header"]
+|===
+| Iteration | a | b | c | f(a) | f(c) | Interval size | Error
+
+| 1
+| -1.000000
+| 1.000000
+| 0.000000
+| 5.301169
+| -1.000000
+| 2.000000
+| 1.000000
+
+| 2
+| -1.000000
+| 0.000000
+| -0.500000
+| 5.301169
+| 1.862130
+| 1.000000
+| 0.500000
+
+| 3
+| -0.500000
+| 0.000000
+| -0.250000
+| 1.862130
+| 0.342939
+| 0.500000
+| 0.250000
+
+| 4
+| -0.250000
+| 0.000000
+| -0.125000
+| 0.342939
+| -0.351613
+| 0.250000
+| 0.125000
+
+| 5
+| -0.250000
+| -0.125000
+| -0.187500
+| 0.342939
+| -0.010023
+| 0.125000
+| 0.062500
+
+| 6
+| -0.250000
+| -0.187500
+| -0.218750
+| 0.342939
+| 0.165051
+| 0.062500
+| 0.031250
+
+| 7
+| -0.218750
+| -0.187500
+| -0.203125
+| 0.165051
+| 0.077161
+| 0.031250
+| 0.015625
+
+| 8
+| -0.203125
+| -0.187500
+| -0.195313
+| 0.077161
+| 0.033480
+| 0.015625
+| 0.007813
+
+| 9
+| -0.195313
+| -0.187500
+| -0.191406
+| 0.033480
+| 0.011709
+| 0.007813
+| 0.003906
+
+| 10
+| -0.191406
+| -0.187500
+| -0.189453
+| 0.011709
+| 0.000843
+| 0.003906
+| 0.001953
+
+| 11
+| -0.189453
+| -0.187500
+| -0.188477
+| 0.000843
+| -0.004589
+| 0.001953
+| 0.000977
+
+| 12
+| -0.189453
+| -0.188477
+| -0.188965
+| 0.000843
+| -0.001873
+| 0.000977
+| 0.000488
+
+| 13
+| -0.189453
+| -0.188965
+| -0.189209
+| 0.000843
+| -0.000515
+| 0.000488
+| 0.000244
+
+| 14
+| -0.189453
+| -0.189209
+| -0.189331
+| 0.000843
+| 0.000164
+| 0.000244
+| 0.000122
+
+| 15
+| -0.189331
+| -0.189209
+| -0.189270
+| 0.000164
+| -0.000176
+| 0.000122
+| 0.000061
+
+| 16
+| -0.189331
+| -0.189270
+| -0.189301
+| 0.000164
+| -0.000006
+| 0.000061
+| 0.000031
+
+| 17
+| -0.189331
+| -0.189301
+| -0.189316
+| 0.000164
+| 0.000079
+| 0.000031
+| 0.000015
+
+| 18
+| -0.189316
+| -0.189301
+| -0.189308
+| 0.000079
+| 0.000030
+| 0.000015
+| 0.000008
+
+| 19
+| -0.189308
+| -0.189301
+| -0.189304
+| 0.000030
+| 0.000009
+| 0.000008
+| 0.000004
+
+| 20
+| -0.189304
+| -0.189301
+| -0.189302
+| 0.000009
+| -0.000002
+| 0.000004
+| 0.000002
+|===
+
+Interval size = b−a
+
+Error = (b−a)2
+
+The bisection algorithm is logarithmically efficient because each iteration halves the uncertainty interval, guaranteeing convergence to a root in O(log n) steps.
+
+==== Real World examples
+*Example 1: Binary Search — used in glibc*
+
+bsearch() is a binary search function in the C standard library that looks for a key in a sorted array. Its time complexity is O(log n).
+[,C]
+----
+#include <stdlib.h>
+
+void *bsearch(
+    const void *key,
+    const void *base,
+    size_t nel,
+    size_t width,
+    int (*compar)(const void *, const void *)
+);
+----
+* base is a pointer to a sorted array
+* nel = number of elements
+* compar() is the comparator function
+
+Returns a pointer to the matched element or NULL if not found, You only need to compare key with the middle of the current range, reducing half of the remaining range every iteration.
+
+These follow the binary search logic: pick the mid index, call compar(), then adjust low/high accordingly — halving the search range each time.
+
+*What the code looks like (simplified)*
+
+https://github.com/lattera/glibc/blob/master/stdlib/bsearch.c
+
+https://github.com/walac/glibc/blob/master/bits/stdlib-bsearch.h
+
+Here’s the typical binary search pattern that glibc follows in that inline header:
+[,c]
+----
+size_t lo = 0;
+size_t hi = nmemb;
+
+while (lo < hi) {
+    size_t mid = lo + ((hi - lo) >> 1);
+    int cmp = compar(key, base + mid * width);
+    if (cmp < 0)
+        hi = mid;
+    else if (cmp > 0)
+        lo = mid + 1;
+    else
+        return base + mid * width;
+}
+return NULL; /* not found */
+----
+Why this is O(log n)
+
+* Each loop iteration halves the search interval (hi - lo).
+
+* So even for very large arrays, the number of comparisons grows only with log₂(n), not n itself.
+
+This code pattern is typical for binary search and is what bsearch() uses under the hood.
+
+
+*Example 2: Red-Black Trees in the Linux Kernel*
+
+In many parts of the kernel, ordered data must be looked up, inserted, or deleted efficiently. For this, Linux uses red-black trees, a kind of self-balancing binary search tree with O(log n) operations.
+
+Red-black trees are like binary search trees but keep themselves roughly balanced so that the tree height stays ~log₂(n). This guarantees:
+
+* Search: O(log n)
+* Insert: O(log n)
+* Delete: O(log n)
+
+for n nodes.
+
+Kernel code that uses rbtrees doesn’t usually call a general “search” API; instead it implements lookup by walking the tree manually (because function pointers would slow down hot paths).
+
+Red-black trees show up in multiple kernel subsystems:
+
+* Scheduler (CFS) uses rbtrees for tracking runnable processes
+* Timers use rbtrees for keeping timer events in order
+* File systems track metadata (like Virtual memory area (VMA) tracking) using rbtrees
+
+That means logarithmic performance in critical low-level code, scaling well even as the number of scheduled entities or timers grows.
+
+
+*What the code looks like (simplified)*
+
+include/linux/rbtree.h — basic definitions for node structure, links, and traversal macros/functions. 
+
+[,c]
+----
+struct mytype *my_search(struct rb_root *root, char *string)
+{
+    struct rb_node *node = root->rb_node;
+
+    while (node) {
+        struct mytype *data = container_of(node, struct mytype, node);
+        int result = strcmp(string, data->keystring);
+
+        if (result < 0)
+            node = node->rb_left;
+        else if (result > 0)
+            node = node->rb_right;
+        else
+            return data; /* Found it */
+    }
+    return NULL;
+}
+----
+Why this is O(log n)
+
+* A red-black tree remains roughly balanced as nodes are inserted and removed.
+* The tree height is at most about 2 × log₂(n) in the worst case.
+* Each comparison moves left or right by one level — so the number of comparisons is proportional to log₂(n) for n nodes.
+
+=== Sublinear: O(nd) for d < 1
+In some cases, the behavior of an algorithm is better than linear, yet not as efficient
+as logarithmic.
+
+This includes complexities like:
+
+* O(n^0.5)
+* O(n^0.9)
+* O(n/log⁡n)
+* Randomized versions with sampling
+
+This is strictly less than linear time and is only possible when the algorithm does not inspect every element of the input (in the worst case).
+
+When the exponent d<1, you see: stem:[O(n^d)] is sublinear time for large enough n
+
+This is different from logarithmic (e.g., O(log⁡n) , which is also sublinear but decreases even faster relative to n.
+
+*Why Sublinear is Possible*
+
+Sublinear time is achievable only if the algorithm:
+
+* Requires only a partial view of the input 
+* Uses sampling or sketches 
+* Has strong structural assumptions about the input 
+* Uses randomization with high expected success
+
+You can’t compute an exact answer that depends on all input items without seeing them all (that’s linear time or worse). But you can:
+
+* Approximate answers
+* Test properties
+* Estimate statistics
+
+* This is the heart of “sublinear algorithms” in theoretical computer science.
+
+==== Real Examples of Sublinear Behavior
+*Approximate Algorithms*
+
+In many big-data or streaming situations, you don’t need exact answers — just close enough. Sublinear methods often:
+
+* Sample a subset of the input
+* Build a sketch (compact summary)
+* Estimate a property with bounded error
+
+These techniques can achieve running times like O(n^0.9), O(n^0.5), or even lower.
+
+Example idea (theoretical): Estimate the number of distinct items in a huge dataset by hashing and sampling only a subset of elements.
+
+*Distributed Graph Algorithms*
+
+In distributed computing, clever algorithms can compute things like shortest paths in time sublinear in n under certain graph assumptions. These algorithms don’t traverse the entire input before producing answers — they only examine important parts.
+
+For example, an algorithm that solves shortest paths in: O((nlog⁡n)^5/6) is sublinear for large n.
+
+*When It Arises*
+|===
+|Domain	|Sublinear Example	|Why it’s sublinear
+|Theor|y	Approximate property testing	|Samples < n
+|Big data|	|Sketch/streaming algorithms	|Only subset processed
+|Distributed	|Shortest path approximations	|Doesn’t see all nodes
+|Kernel	HTree directory index	|Hash + multi-level |reduces work
+|Data structure	|Skip lists adaptive search	|Popular entries get fast paths
+|===
+
+=== Linear Algorithm Performance (O(n))
+Linear algorithms are the ones where the work done varies in direct proportion with the input size, that is, if you double the input size, you double the work done. These typically involve a single pass through the input and thus scale proportionally with the input size. 
+
+A linear-time algorithm is one whose running time grows in direct proportion to the size of the input n.
+If the input size doubles, the execution time approximately doubles.
+
+This behavior is written as O(n).
+
+Linear algorithms typically occur when:
+
+- Every element must be examined at least once
+- No shortcuts, indexing, or early termination is possible
+- Exact results are required
+
+This is often the best possible complexity for many problems.
+
+We can classify an algorithm as being linear with respect to its input size
+n. That is, there is some constant c > 0 such that t(n) ≤ c*n for “large enough” n, or
+more precisely, all n > n0. We don’t actually need to compute the actual value of c or
+n0; we just know they exist and they can be computed
+
+* After the input is “big enough” (larger than some fixed size n₀),
+* The running time grows proportionally to the number of digits
+* The algorithm never takes more than a constant amount of work per digit
+
+We do not care about the exact values of:
+
+* c (how fast your computer is)
+* n₀ (small input quirks)
+
+We only care that:
+
+* They exist
+* The growth trend is linear
+
+When you add two n-digit numbers:
+
+* You start from the least significant digit
+* You add digit by digit
+* You may propagate a carry
+
+Each digit requires:
+
+* One addition
+* Possibly handling a carry
+
+So:
+
+* 1 digit → constant work
+* n digits → n × constant work → O(n)
+
+**Intuitive Meaning**
+
+Imagine reading a book page by page.
+To know whether a word appears in the book, you may need to read every page.
+
+If the book has n pages, the work is proportional to n.
+
+That is linear behavior.
+
+*counting the number of occurrences of a particular character in a string.*
+
+The algorithm is linear because its runtime is directly proportional to the
+string length. If we take the string length to be n, the runtime complexity
+of this Java method is O(n). Notice the single loop varying according to
+the input size. This is very typical of linear runtime complexity
+algorithms, where a constant number of operations are performed for
+each input unit. The input unit in this example is each character in the
+string.
+
+// generate C,C++,Python versions of the following code
+[,c]
+----
+#include <stddef.h>
+
+int algorithm1(char c, const char *str) {
+    int count = 0;
+    for (size_t i = 0; str[i] != '\0'; ++i)
+        if (str[i] == c)
+            ++count;
+    return count;
+}
+----
+[,c++]
+----
+#include <string>
+
+int algorithm1(char c, const std::string &str) {
+    int count = 0;
+    for (size_t i = 0; i < str.size(); ++i)
+        if (str[i] == c)
+            ++count;
+    return count;
+}
+----
+[,java]
+----
+ public static int algorithm1(char c, String str) {
+     int count = 0;
+     for (int i = 0; i < str.length(); i++) {
+         if (str.charAt(i) == c)
+             count++;
+     }
+     return count;
+ }
+----
+
+**Simple Algorithm Example**
+
+Finding the maximum value in an array:
+
+[source,c]
+----
+int max(int *a, int n) {
+    int m = a[0];
+    for (int i = 1; i < n; i++) {
+        if (a[i] > m)
+            m = a[i];
+    }
+    return m;
+}
+----
+
+The loop runs exactly n−1 times.
+No matter what the values are, every element must be inspected.
+
+Time complexity: O(n)
+
+Space complexity: O(1)
+
+*add two n-digit numbers*
+.Code
+[%collapsible]
+======
+[tabs]
+=====
+Clang::
+[source, C]
+----
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <stdio.h>
+
+#include "report.h"
+
+/** Time before process starts.   */
+static struct timeval before;
+
+/** Time after process completes. */
+static struct timeval after;      
+
+/** Size of problem. */
+int n;
+
+/** Add implementation 1. */
+void add(int *n1, int *n2, int *sum) {
+  int b = n-1;
+  int carry = 0;
+  while (b >= 0) {
+    int s = n1[b] + n2[b] + carry;
+    sum[b+1] = s % 10;
+    if (s > 9) { carry = 1; } else { carry = 0; }
+    b--;
+  }
+  
+  sum[0] = carry;
+}
+	
+/** Add implementation 2. */
+void add2(int *n1, int *n2, int *sum) {
+  int b = n-1;
+  /* set carry bit */
+  sum[b+1]=0;  
+  while (b >= 0) {
+    int s = n1[b] + n2[b] + sum[b+1];
+    sum[b+1] = s % 10;
+    if (s > 9) { sum[b] = 1; } 
+    b--;
+  }
+}
+	
+/** Add implementation 3. */
+void alt(int *n1, int *n2, int *sum) {
+  int b = n;
+  /* set carry bit. */
+  sum[b]=0; 
+  while (--b >= 0) {
+    int s = n1[b] + n2[b] + sum[b+1];
+    sum[b+1] = s % 10;
+    sum[b] = s/10;
+  }
+}
+	
+/** Add implementation 4. */
+void last(int *n1, int *n2, int *sum) {
+  int b = n;
+  int carry = 0;
+  while (--b >= 0) {
+    int s = n1[b] + n2[b] + carry;
+    if (s > 9) {
+      sum[b+1] = s-10;
+      carry = 1;
+    } else {
+      sum[b+1] = s;
+      carry = 0;
+    }
+  }
+  
+  sum[0] = carry;
+}
+----
+
+C++::
+[source, C++]
+----
+----
+
+Java::
+[source, C++]
+----
+ /** Output number (for debugging). */
+	private static void output (int []n) {
+		for (int i : n) {
+			System.out.print(i);
+		}
+		System.out.println();
+	}
+	
+
+    /** Add implementation number 1. */
+	private static void add(int[] n1, int[] n2, int[] sum) {
+		int b = n1.length-1;
+		int carry = 0;
+		while (b >= 0) {
+			int s = n1[b] + n2[b] + carry;
+			sum[b+1] = s % 10;
+			if (s > 9) { carry = 1; } else { carry = 0; }
+			b--;
+		}
+		
+		sum[0] = carry;
+	}
+	
+    /** Add implementation number 2. */
+	private static void add2(int[] n1, int[] n2, int[] sum) {
+		int b = n1.length-1;
+		sum[b+1]=0;  // prime the carry bit
+		while (b >= 0) {
+			int s = n1[b] + n2[b] + sum[b+1];
+			sum[b+1] = s % 10;
+			if (s > 9) { sum[b] = 1; } 
+			b--;
+		}
+	}
+	
+    /** Add implementation number 3. */
+	private static void alt(int[] n1, int[] n2, int[] sum) {
+		int b = n1.length;
+		sum[b]=0; // prime the carry bit
+		while (--b >= 0) {
+			int s = n1[b] + n2[b] + sum[b+1];
+			sum[b+1] = s % 10;
+			sum[b] = s/10;
+		}
+	}
+	
+    /** Add implementation number 4. */
+	private static void last(int[] n1, int[] n2, int[] sum) {
+		int b = n1.length;
+		int carry = 0;
+		while (--b >= 0) {
+			int s = n1[b] + n2[b] + carry;
+			if (s > 9) {
+				sum[b+1] = s-10;
+				carry = 1;
+			} else {
+				sum[b+1] = s;
+				carry = 0;
+			}
+		}
+		
+		sum[0] = carry;
+	}
+----
+
+Python::
+[source, C++]
+----
+----
+=====
+======
+
+**Why Linear Time Is Often Unavoidable**
+
+Some problems have a lower bound of O(n):
+
+- Checking if an array contains a value
+- Computing a checksum
+- Copying memory
+- Counting items
+- Verifying correctness of input
+
+You cannot do better than O(n) because skipping elements risks missing critical data.
+
+
+**Linux Kernel Example: Linked List Traversal**
+
+The Linux kernel heavily uses linked lists (list_head).
+Traversing a list is linear because each node must be visited.
+
+Source:
+https://elixir.bootlin.com/linux/latest/source/include/linux/list.h
+
+[source,c]
+----
+#define list_for_each(pos, head)     for (pos = (head)->next; pos != (head); pos = pos->next)
+----
+
+Each iteration advances to the next element.
+If the list has n elements, the loop executes n times.
+
+Time complexity: O(n)
+
+
+**glibc Example: strlen**
+
+The C standard library function strlen is linear.
+
+Source:
+https://sourceware.org/git/?p=glibc.git
+
+[source,c]
+----
+size_t strlen(const char *s) {
+    const char *p = s;
+    while (*p)
+        p++;
+    return p - s;
+}
+----
+
+Each character is checked once until '\0' is found.
+
+Time complexity: O(n)
+
+
+**glibc Example: memcpy**
+
+Memory copying is linear in the number of bytes copied.
+
+[source,c]
+----
+void *memcpy(void *dst, const void *src, size_t n) {
+    for (size_t i = 0; i < n; i++)
+        dst[i] = src[i];
+    return dst;
+}
+----
+
+Each byte must be copied exactly once.
+
+Time complexity: O(n)
+
+
+**Key Takeaway**
+
+Linear algorithms touch each element once.
+They are unavoidable, efficient, and common in kernels, libraries, and systems code.
+
+=== Linearithmic (O(n log n)) Algorithm Performance
+Linearithmic algorithms arise when a problem of size n is repeatedly divided into smaller subproblems (usually by a constant factor) and each level of division performs linear work. The defining characteristic is that the total work is proportional to n multiplied by the number of times the problem can be halved, which is log n. Formally, the running time satisfies:
+
+T(n) = n log n
+
+This behavior is asymptotically faster than quadratic algorithms yet slower than purely linear ones. Linearithmic complexity is commonly the best achievable bound for comparison-based problems.
+
+To explain how this behavior occurs in practice, let’s define t(n) to represent
+the time an algorithm takes to solve an input problem instance of size n. Divide and
+Conquer is an efficient way to solve a problem in which a problem of size n is divi‐
+ded into (roughly equal) subproblems of size n/2, which are solved recursively. The
+solutions of these subproblems are combined together in linear time to solve the
+original problem of size n. Mathematically, this can be stated as:
+
+ t(n) = 2*t(n/2) + c*n
+
+where:
+
+* 2·t(n/2) represents the cost of solving the two subproblems
+* c·n represents the cost of combining their solutions
+* c is a constant independent of n
+
+That is, t(n) includes the cost of the two subproblems together with no more than a
+linear time cost (i.e., c*n) to merge the results. 
+
+Now, on the right side of the equation, t(n/2) is the time to solve a problem of size n/2; using the same logic, this
+can be represented as:
+
+ t(n/2) = 2*t(n/4) + c*n/2
+
+and so the original equation is now:
+
+ t(n) = 2*[2*t(n/4) + c*n/2] + c*n
+
+If we expand this out once more, we see that:
+
+ t(n) = 2*[2*[2*t(n/8) + c*n/4] + c*n/2] + c*n
+
+This last equation reduces to t(n) = 8*t(n/8) + 4*c*n/4 + 2*c*n/2 + c*n, which can be
+simplified as 
+
+ 8*t(n/8) + 3*c*n. 
+
+We can then say that t(n) = (2k)*t(n/2k) + k*c*n. 
+
+At each level, the problem size is halved:
+
+ n → n/2 → n/4 → … → 1
+
+The number of times n can be divided by 2 before reaching 1 is: log₂ n
+
+This
+expansion ends when 2k = n (i.e., when k = log(n)). 
+In the final base case when the
+problem size is 1, the performance t(1) is a constant d(the recursion continues until the base case t(1), which is constant time). 
+
+Thus, the closed-form formula for t(n) = n*d + c*n*log(n). Because c*n*log(n) is asymptotically greater than
+d*n for any fixed constants c and d, t(n) can be simply written as O(n log n)
+
+Since:
+
+* Each level costs Θ(n)
+* There are Θ(log n) levels
+
+The total running time is:
+
+ t(n) = Θ(n log n)
+
+Linearithmic behavior emerges naturally when:
+
+* Problems are divided recursively
+
+* Each division level requires linear processing
+
+* Comparisons or tree-based ordering are unavoidable
+
+As a result, O(n log n) algorithms form the backbone of performant systems software, from standard libraries to operating system kernels.
+
+Linearithmic time arises because:
+
+* Work is distributed evenly across recursion levels
+
+* No level dominates the cost
+
+* The logarithmic depth comes from repeated halving
+
+* The linear work comes from processing all elements at each level
+
+This explains why algorithms such as merge sort, quicksort (average case), and balanced tree construction naturally exhibit O(n log n) behavior.
+
+*Lower Bound Argument for Comparison Sorting*
+
+Any comparison-based sorting algorithm must perform Ω(n log n) comparisons in the worst case. This lower bound is derived from decision tree analysis, where sorting n elements requires distinguishing among n! possible permutations.
+
+Since: log2(n!) ≈ n log n
+
+No comparison-based algorithm can asymptotically beat O(n log n).
+
+*Why Linearithmic Algorithms Are Considered Efficient*
+
+Linearithmic algorithms scale well because:
+
+The logarithmic factor grows slowly
+
+The linear work per level ensures full utilization of memory bandwidth
+
+They often represent the theoretical lower bound
+
+For large inputs, replacing an O(n²) algorithm with an O(n log n) one often means the difference between infeasible and practical execution.
+
+==== Examples
+*Canonical Example: Merge Sort*
+
+Merge sort divides the input array into two halves, recursively sorts each half, and then merges the two sorted halves in linear time.
+
+At each recursion level:
+
+* The total cost of merging is O(n)
+
+* The number of recursion levels is O(log n)
+
+Thus, the total time complexity is O(n log n).
+
+.Code
+[%collapsible]
+======
+[tabs]
+=====
+Clang::
+[source, C]
+----
+#include <stdio.h>
+#include <stdlib.h>
+
+void merge(int arr[], int left, int mid, int right) {
+    int n1 = mid - left + 1;
+    int n2 = right - mid;
+
+    int *L = malloc(n1 * sizeof(int));
+    int *R = malloc(n2 * sizeof(int));
+
+    for (int i = 0; i < n1; i++)
+        L[i] = arr[left + i];
+    for (int j = 0; j < n2; j++)
+        R[j] = arr[mid + 1 + j];
+
+    int i = 0, j = 0, k = left;
+
+    while (i < n1 && j < n2) {
+        if (L[i] <= R[j])
+            arr[k++] = L[i++];
+        else
+            arr[k++] = R[j++];
+    }
+
+    while (i < n1)
+        arr[k++] = L[i++];
+    while (j < n2)
+        arr[k++] = R[j++];
+
+    free(L);
+    free(R);
+}
+
+void merge_sort(int arr[], int left, int right) {
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+
+        merge_sort(arr, left, mid);
+        merge_sort(arr, mid + 1, right);
+
+        // Linear-time merge step
+        merge(arr, left, mid, right);
+    }
+}
+
+----
+Why O(n log n)
+
+Each merge() scans all elements in the subarray → O(n) per level
+
+Recursion depth is log n
+
+C++::
+[source, C++]
+----
+#include <vector>
+
+void merge(std::vector<int>& a, int l, int m, int r) {
+    std::vector<int> left(a.begin() + l, a.begin() + m + 1);
+    std::vector<int> right(a.begin() + m + 1, a.begin() + r + 1);
+
+    int i = 0, j = 0, k = l;
+
+    while (i < left.size() && j < right.size())
+        a[k++] = (left[i] <= right[j]) ? left[i++] : right[j++];
+
+    while (i < left.size()) a[k++] = left[i++];
+    while (j < right.size()) a[k++] = right[j++];
+}
+
+void merge_sort(std::vector<int>& a, int l, int r) {
+    if (l < r) {
+        int m = l + (r - l) / 2;
+        merge_sort(a, l, m);
+        merge_sort(a, m + 1, r);
+        merge(a, l, m, r);
+    }
+}
+
+----
+Mapping to recurrence
+
+Two recursive calls → 2·t(n/2)
+
+merge() → c·n
+
+Java::
+[source,Java]
+----
+public class MergeSort {
+
+    public static void mergeSort(int[] arr, int left, int right) {
+        if (left < right) {
+            int mid = left + (right - left) / 2;
+
+            mergeSort(arr, left, mid);
+            mergeSort(arr, mid + 1, right);
+
+            merge(arr, left, mid, right);
+        }
+    }
+
+    private static void merge(int[] arr, int left, int mid, int right) {
+        int[] temp = new int[right - left + 1];
+
+        int i = left, j = mid + 1, k = 0;
+
+        while (i <= mid && j <= right)
+            temp[k++] = (arr[i] <= arr[j]) ? arr[i++] : arr[j++];
+
+        while (i <= mid) temp[k++] = arr[i++];
+        while (j <= right) temp[k++] = arr[j++];
+
+        System.arraycopy(temp, 0, arr, left, temp.length);
+    }
+}
+
+----
+mportant note
+Even though Java array access looks constant-time, the algorithmic cost comes from touching every element during merging.
+
+Python::
+[source, python]
+----
+def merge_sort(arr):
+    if len(arr) <= 1:
+        return arr
+
+    mid = len(arr) // 2
+    left = merge_sort(arr[:mid])
+    right = merge_sort(arr[mid:])
+
+    return merge(left, right)
+
+def merge(left, right):
+    result = []
+    i = j = 0
+
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            result.append(left[i])
+            i += 1
+        else:
+            result.append(right[j])
+            j += 1
+
+    result.extend(left[i:])
+    result.extend(right[j:])
+    return result
+
+----
+Why Python is still O(n log n)
+
+Slicing and merging traverse all elements
+
+Recursion depth is logarithmic
+
+Constants differ, asymptotic behavior does not
+=====
+======
+
+The merge operation touches each element once per level, which explains the linear factor.
+
+==== Real-World Example: 
+*glibc qsort*
+
+The GNU C Library implementation of qsort uses introsort, a hybrid algorithm:
+
+* Quicksort (average O(n log n))
+* Heapsort fallback (worst-case O(n log n))
+* Insertion sort for small partitions
+
+glibc source:
+https://sourceware.org/git/?p=glibc.git;a=blob;f=stdlib/qsort.c
+
+Excerpt:
+
+[source,c]
+if (n <= MAX_THRESH) {
+insertion_sort(base, n, size, cmp);
+return;
+}
+
+The dominant behavior remains O(n log n), even though constant-time optimizations are applied for small inputs.
+
+*Linux Kernel Red-Black Trees*
+
+The Linux kernel uses red-black trees for many subsystems, including:
+
+* Virtual memory areas
+* Completely Fair Scheduler (CFS)
+
+Epoll file descriptor management
+
+Operations such as insertion, deletion, and lookup all execute in O(log n). When iterating over all nodes, the combined behavior becomes O(n log n).
+
+Kernel source:
+https://elixir.bootlin.com/linux/latest/source/lib/rbtree.c
+
+Excerpt:
+
+[source,c]
+while (node) {
+parent = node;
+if (key < node->key)
+node = node->rb_left;
+else
+node = node->rb_right;
+}
+
+Each traversal step reduces the remaining search space by roughly half.
+
+*CFS Scheduler Entity Ordering*
+
+The Completely Fair Scheduler maintains runnable tasks in a red-black tree ordered by virtual runtime. Scheduling decisions involve:
+
+* O(log n) insertion/removal
+* O(1) selection of the leftmost node
+* O(n log n) behavior over many scheduling events
+
+Scheduler code: https://elixir.bootlin.com/linux/v6.18.5/source/kernel/sched/fair.c
+
+This design ensures fairness while scaling efficiently with the number of tasks.
+
+*External Sorting and Filesystems*
+
+When sorting data larger than memory:
+
+* Data is divided into chunks (linear pass)
+* Each chunk is sorted
+* Sorted chunks are merged in logarithmic passes
+
+Filesystems and databases rely heavily on this pattern, especially in:
+
+* Log-structured merge trees (LSM trees)
+* External merge sort in database engines
+
+This results in predictable O(n log n) I/O complexity.
+
+=== Quadratic Algorithm Performance (O(n²))
+Quadratic algorithms have a running time proportional to the square of the input size, n².
+
+This occurs when every element is compared or combined with every other element, such as in nested loops over the input.
+
+Quadratic algorithms are common for simple sorting, matrix operations, and pairwise comparisons, but they become inefficient for large inputs.
+
+Quadratic complexity algorithms are not very performant for large input sizes. The work done increases following a quadratic proportion as we increase our input size. 
+
+Let’s define t(n) to be
+the actual running time of the Quadratic algorithm on an input of size n. By
+this definition, there must be some constant c > 0 such that t(n) ≤ c*n2 for all n > n0.
+We don’t actually need to know the full details of the c and n0 values, just that they
+exist.
+
+==== Examples
+
+*finding the common elements contained in two arrays* 
+
+(assuming no
+duplicate values exist in each array), producing the intersection of the two inputs
++
+This results in a runtime complexity of O(mn), where m and n are the sizes of the first and second input arrays. If the input arrays are the same size as n elements, this results in a runtime of O(n2).
++
+[,java]
+----
+ public static List<Integer> algorithm1(int[] a, int[] b) {
+     List<Integer> result = new ArrayList<>(a.length);
+     for (int x : a) {
+         for (int y : b) {
+             if (x == y)
+                 result.add(x);
+         }
+     }
+     return result;
+ }
+----
++
+The amount of memory we use is dictated by the size of our result listed in our method.
+ The bigger this list, the more memory we're using.
++
+The best case is when we use the least amount of memory. This is when the list is empty, that is, when we have no common elements between the two arrays. Thus, this method has a best case space complexity of O(1), when there is no intersection.
++
+The worst case is just the opposite, when we have all the elements in both arrays. This can happen when the arrays are equal to each other, although the numbers may be in a different order. The memory in this case is equal to the size of one of our input arrays. In short, the worst space complexity of the method is O(n).
+
+*Digit Multiplication*
+
+.Code
+[%collapsible]
+======
+[tabs]
+=====
+Clang::
+[source, C]
+----
+----
+
+C++::
+[source, C++]
+----
+----
+
+Java::
+[source, Java]
+----
+package algs.chapter2.table4;
+
+/** 
+ * Launch application to generate results for Table 2-4 and Figure 2-4
+ *  
+ * @author George Heineman
+ * @version 2.0, 6/3/15
+ * @since 1.0
+ */
+public class Main {
+	
+	// computed tables.
+	public static int table[][];
+	public static int lookup2[][][][];
+	public static int lookup[][][];
+	public static int MaxLookup = 10;
+	
+	private static void output (int []n) {
+		for (int i : n) {
+			System.out.print(i);
+		}
+		System.out.println();
+	}
+
+	public static void mult (int[] n1, int[] n2, int[] result) {
+		int pos = result.length-1;
+
+		// clear all values
+		for (int i = 0; i < result.length; i++) { result[i] = 0; }
+		for (int m = n1.length-1; m>=0; m--) {
+			int off = n1.length-1 - m;
+
+			for (int n = n2.length-1; n>=0; n--, off++) {
+				int prod = n1[m]*n2[n];
+				
+				// compute partial total by carrying previous digit's position
+				result[pos-off] += prod % 10;
+				result[pos-off-1] += result[pos-off]/10 + prod/10;
+				result[pos-off] %= 10;
+			}
+		}
+	}
+
+	// generated code embedded within switch...
+	public static void times (int[] n1, int[] n2, int[] result) {
+		int pos = result.length-1;
+
+		// clear all values....
+		for (int i = 0; i < result.length; i++) { result[i] = 0; }
+
+		for (int m = n1.length-1; m>=0; m--) {
+			int iPos = pos - (n1.length-1 - m);
+			int iPosSubOne = iPos-1;
+			if (n1[m] == 0) {
+				continue; // skip zero multiplier! Won't affect total.
+			}
+
+			for (int n = n2.length-1; n>=0; n--, iPos--,iPosSubOne--) {
+				int prod = n1[m]*n2[n];
+				
+				// GENERATED-BEGIN
+				switch (prod) {
+				case 0: break;
+				case 1: result[iPos] += 1;break;
+				case 2: result[iPos] += 2;break;
+				case 3: result[iPos] += 3;break;
+				case 4: result[iPos] += 4;break;
+				case 5: result[iPos] += 5;break;
+				case 6: result[iPos] += 6;break;
+				case 7: result[iPos] += 7;break;
+				case 8: result[iPos] += 8;break;
+				case 9: result[iPos] += 9;break;
+				case 10: result[iPosSubOne] += 1;break;
+				case 11: result[iPos] += 1;result[iPosSubOne] += 1;break;
+				case 12: result[iPos] += 2;result[iPosSubOne] += 1;break;
+				case 13: result[iPos] += 3;result[iPosSubOne] += 1;break;
+				case 14: result[iPos] += 4;result[iPosSubOne] += 1;break;
+				case 15: result[iPos] += 5;result[iPosSubOne] += 1;break;
+				case 16: result[iPos] += 6;result[iPosSubOne] += 1;break;
+				case 17: result[iPos] += 7;result[iPosSubOne] += 1;break;
+				case 18: result[iPos] += 8;result[iPosSubOne] += 1;break;
+				case 19: result[iPos] += 9;result[iPosSubOne] += 1;break;
+				case 20: result[iPosSubOne] += 2;break;
+				case 21: result[iPos] += 1;result[iPosSubOne] += 2;break;
+				case 22: result[iPos] += 2;result[iPosSubOne] += 2;break;
+				case 23: result[iPos] += 3;result[iPosSubOne] += 2;break;
+				case 24: result[iPos] += 4;result[iPosSubOne] += 2;break;
+				case 25: result[iPos] += 5;result[iPosSubOne] += 2;break;
+				case 26: result[iPos] += 6;result[iPosSubOne] += 2;break;
+				case 27: result[iPos] += 7;result[iPosSubOne] += 2;break;
+				case 28: result[iPos] += 8;result[iPosSubOne] += 2;break;
+				case 29: result[iPos] += 9;result[iPosSubOne] += 2;break;
+				case 30: result[iPosSubOne] += 3;break;
+				case 31: result[iPos] += 1;result[iPosSubOne] += 3;break;
+				case 32: result[iPos] += 2;result[iPosSubOne] += 3;break;
+				case 33: result[iPos] += 3;result[iPosSubOne] += 3;break;
+				case 34: result[iPos] += 4;result[iPosSubOne] += 3;break;
+				case 35: result[iPos] += 5;result[iPosSubOne] += 3;break;
+				case 36: result[iPos] += 6;result[iPosSubOne] += 3;break;
+				case 37: result[iPos] += 7;result[iPosSubOne] += 3;break;
+				case 38: result[iPos] += 8;result[iPosSubOne] += 3;break;
+				case 39: result[iPos] += 9;result[iPosSubOne] += 3;break;
+				case 40: result[iPosSubOne] += 4;break;
+				case 41: result[iPos] += 1;result[iPosSubOne] += 4;break;
+				case 42: result[iPos] += 2;result[iPosSubOne] += 4;break;
+				case 43: result[iPos] += 3;result[iPosSubOne] += 4;break;
+				case 44: result[iPos] += 4;result[iPosSubOne] += 4;break;
+				case 45: result[iPos] += 5;result[iPosSubOne] += 4;break;
+				case 46: result[iPos] += 6;result[iPosSubOne] += 4;break;
+				case 47: result[iPos] += 7;result[iPosSubOne] += 4;break;
+				case 48: result[iPos] += 8;result[iPosSubOne] += 4;break;
+				case 49: result[iPos] += 9;result[iPosSubOne] += 4;break;
+				case 50: result[iPosSubOne] += 5;break;
+				case 51: result[iPos] += 1;result[iPosSubOne] += 5;break;
+				case 52: result[iPos] += 2;result[iPosSubOne] += 5;break;
+				case 53: result[iPos] += 3;result[iPosSubOne] += 5;break;
+				case 54: result[iPos] += 4;result[iPosSubOne] += 5;break;
+				case 55: result[iPos] += 5;result[iPosSubOne] += 5;break;
+				case 56: result[iPos] += 6;result[iPosSubOne] += 5;break;
+				case 57: result[iPos] += 7;result[iPosSubOne] += 5;break;
+				case 58: result[iPos] += 8;result[iPosSubOne] += 5;break;
+				case 59: result[iPos] += 9;result[iPosSubOne] += 5;break;
+				case 60: result[iPosSubOne] += 6;break;
+				case 61: result[iPos] += 1;result[iPosSubOne] += 6;break;
+				case 62: result[iPos] += 2;result[iPosSubOne] += 6;break;
+				case 63: result[iPos] += 3;result[iPosSubOne] += 6;break;
+				case 64: result[iPos] += 4;result[iPosSubOne] += 6;break;
+				case 65: result[iPos] += 5;result[iPosSubOne] += 6;break;
+				case 66: result[iPos] += 6;result[iPosSubOne] += 6;break;
+				case 67: result[iPos] += 7;result[iPosSubOne] += 6;break;
+				case 68: result[iPos] += 8;result[iPosSubOne] += 6;break;
+				case 69: result[iPos] += 9;result[iPosSubOne] += 6;break;
+				case 70: result[iPosSubOne] += 7;break;
+				case 71: result[iPos] += 1;result[iPosSubOne] += 7;break;
+				case 72: result[iPos] += 2;result[iPosSubOne] += 7;break;
+				case 73: result[iPos] += 3;result[iPosSubOne] += 7;break;
+				case 74: result[iPos] += 4;result[iPosSubOne] += 7;break;
+				case 75: result[iPos] += 5;result[iPosSubOne] += 7;break;
+				case 76: result[iPos] += 6;result[iPosSubOne] += 7;break;
+				case 77: result[iPos] += 7;result[iPosSubOne] += 7;break;
+				case 78: result[iPos] += 8;result[iPosSubOne] += 7;break;
+				case 79: result[iPos] += 9;result[iPosSubOne] += 7;break;
+				case 80: result[iPosSubOne] += 8;break;
+				case 81: result[iPos] += 1;result[iPosSubOne] += 8;break;
+				case 82: result[iPos] += 2;result[iPosSubOne] += 8;break;
+				case 83: result[iPos] += 3;result[iPosSubOne] += 8;break;
+				case 84: result[iPos] += 4;result[iPosSubOne] += 8;break;
+				case 85: result[iPos] += 5;result[iPosSubOne] += 8;break;
+				case 86: result[iPos] += 6;result[iPosSubOne] += 8;break;
+				case 87: result[iPos] += 7;result[iPosSubOne] += 8;break;
+				case 88: result[iPos] += 8;result[iPosSubOne] += 8;break;
+				case 89: result[iPos] += 9;result[iPosSubOne] += 8;break;
+				case 90: result[iPosSubOne] += 9;break;
+				case 91: result[iPos] += 1;result[iPosSubOne] += 9;break;
+				case 92: result[iPos] += 2;result[iPosSubOne] += 9;break;
+				case 93: result[iPos] += 3;result[iPosSubOne] += 9;break;
+				case 94: result[iPos] += 4;result[iPosSubOne] += 9;break;
+				case 95: result[iPos] += 5;result[iPosSubOne] += 9;break;
+				case 96: result[iPos] += 6;result[iPosSubOne] += 9;break;
+				case 97: result[iPos] += 7;result[iPosSubOne] += 9;break;
+				case 98: result[iPos] += 8;result[iPosSubOne] += 9;break;
+				case 99: result[iPos] += 9;result[iPosSubOne] += 9;break;
+				};
+				switch (result[iPos]) {
+				case 0: break; 
+				case 1: break; 
+				case 2: break; 
+				case 3: break; 
+				case 4: break; 
+				case 5: break; 
+				case 6: break; 
+				case 7: break; 
+				case 8: break; 
+				case 9: break; 
+				case 10: result[iPosSubOne] += 1; result[iPos] -= 10; break; 
+				case 11: result[iPosSubOne] += 1; result[iPos] -= 10; break; 
+				case 12: result[iPosSubOne] += 1; result[iPos] -= 10; break; 
+				case 13: result[iPosSubOne] += 1; result[iPos] -= 10; break; 
+				case 14: result[iPosSubOne] += 1; result[iPos] -= 10; break; 
+				case 15: result[iPosSubOne] += 1; result[iPos] -= 10; break; 
+				case 16: result[iPosSubOne] += 1; result[iPos] -= 10; break; 
+				case 17: result[iPosSubOne] += 1; result[iPos] -= 10; break; 
+				case 18: result[iPosSubOne] += 1; result[iPos] -= 10; break; 
+				case 19: result[iPosSubOne] += 1; result[iPos] -= 10; break; 
+				case 20: result[iPosSubOne] += 2; result[iPos] -= 20; break; 
+				case 21: result[iPosSubOne] += 2; result[iPos] -= 20; break; 
+				case 22: result[iPosSubOne] += 2; result[iPos] -= 20; break; 
+				case 23: result[iPosSubOne] += 2; result[iPos] -= 20; break; 
+				case 24: result[iPosSubOne] += 2; result[iPos] -= 20; break; 
+				case 25: result[iPosSubOne] += 2; result[iPos] -= 20; break; 
+				case 26: result[iPosSubOne] += 2; result[iPos] -= 20; break; 
+				case 27: result[iPosSubOne] += 2; result[iPos] -= 20; break; 
+				case 28: result[iPosSubOne] += 2; result[iPos] -= 20; break; 
+				case 29: result[iPosSubOne] += 2; result[iPos] -= 20; break; 
+				case 30: result[iPosSubOne] += 3; result[iPos] -= 30; break; 
+				case 31: result[iPosSubOne] += 3; result[iPos] -= 30; break; 
+				case 32: result[iPosSubOne] += 3; result[iPos] -= 30; break; 
+				case 33: result[iPosSubOne] += 3; result[iPos] -= 30; break; 
+				case 34: result[iPosSubOne] += 3; result[iPos] -= 30; break; 
+				case 35: result[iPosSubOne] += 3; result[iPos] -= 30; break; 
+				case 36: result[iPosSubOne] += 3; result[iPos] -= 30; break; 
+				case 37: result[iPosSubOne] += 3; result[iPos] -= 30; break; 
+				case 38: result[iPosSubOne] += 3; result[iPos] -= 30; break; 
+				case 39: result[iPosSubOne] += 3; result[iPos] -= 30; break; 
+				case 40: result[iPosSubOne] += 4; result[iPos] -= 40; break; 
+				case 41: result[iPosSubOne] += 4; result[iPos] -= 40; break; 
+				case 42: result[iPosSubOne] += 4; result[iPos] -= 40; break; 
+				case 43: result[iPosSubOne] += 4; result[iPos] -= 40; break; 
+				case 44: result[iPosSubOne] += 4; result[iPos] -= 40; break; 
+				case 45: result[iPosSubOne] += 4; result[iPos] -= 40; break; 
+				case 46: result[iPosSubOne] += 4; result[iPos] -= 40; break; 
+				case 47: result[iPosSubOne] += 4; result[iPos] -= 40; break; 
+				case 48: result[iPosSubOne] += 4; result[iPos] -= 40; break; 
+				case 49: result[iPosSubOne] += 4; result[iPos] -= 40; break; 
+				case 50: result[iPosSubOne] += 5; result[iPos] -= 50; break; 
+				case 51: result[iPosSubOne] += 5; result[iPos] -= 50; break; 
+				case 52: result[iPosSubOne] += 5; result[iPos] -= 50; break; 
+				case 53: result[iPosSubOne] += 5; result[iPos] -= 50; break; 
+				case 54: result[iPosSubOne] += 5; result[iPos] -= 50; break; 
+				case 55: result[iPosSubOne] += 5; result[iPos] -= 50; break; 
+				case 56: result[iPosSubOne] += 5; result[iPos] -= 50; break; 
+				case 57: result[iPosSubOne] += 5; result[iPos] -= 50; break; 
+				case 58: result[iPosSubOne] += 5; result[iPos] -= 50; break; 
+				case 59: result[iPosSubOne] += 5; result[iPos] -= 50; break; 
+				case 60: result[iPosSubOne] += 6; result[iPos] -= 60; break; 
+				case 61: result[iPosSubOne] += 6; result[iPos] -= 60; break; 
+				case 62: result[iPosSubOne] += 6; result[iPos] -= 60; break; 
+				case 63: result[iPosSubOne] += 6; result[iPos] -= 60; break; 
+				case 64: result[iPosSubOne] += 6; result[iPos] -= 60; break; 
+				case 65: result[iPosSubOne] += 6; result[iPos] -= 60; break; 
+				case 66: result[iPosSubOne] += 6; result[iPos] -= 60; break; 
+				case 67: result[iPosSubOne] += 6; result[iPos] -= 60; break; 
+				case 68: result[iPosSubOne] += 6; result[iPos] -= 60; break; 
+				case 69: result[iPosSubOne] += 6; result[iPos] -= 60; break; 
+				case 70: result[iPosSubOne] += 7; result[iPos] -= 70; break; 
+				case 71: result[iPosSubOne] += 7; result[iPos] -= 70; break; 
+				case 72: result[iPosSubOne] += 7; result[iPos] -= 70; break; 
+				case 73: result[iPosSubOne] += 7; result[iPos] -= 70; break; 
+				case 74: result[iPosSubOne] += 7; result[iPos] -= 70; break; 
+				case 75: result[iPosSubOne] += 7; result[iPos] -= 70; break; 
+				case 76: result[iPosSubOne] += 7; result[iPos] -= 70; break; 
+				case 77: result[iPosSubOne] += 7; result[iPos] -= 70; break; 
+				case 78: result[iPosSubOne] += 7; result[iPos] -= 70; break; 
+				case 79: result[iPosSubOne] += 7; result[iPos] -= 70; break; 
+				case 80: result[iPosSubOne] += 8; result[iPos] -= 80; break; 
+				case 81: result[iPosSubOne] += 8; result[iPos] -= 80; break; 
+				case 82: result[iPosSubOne] += 8; result[iPos] -= 80; break; 
+				case 83: result[iPosSubOne] += 8; result[iPos] -= 80; break; 
+				case 84: result[iPosSubOne] += 8; result[iPos] -= 80; break; 
+				case 85: result[iPosSubOne] += 8; result[iPos] -= 80; break; 
+				case 86: result[iPosSubOne] += 8; result[iPos] -= 80; break; 
+				case 87: result[iPosSubOne] += 8; result[iPos] -= 80; break; 
+				case 88: result[iPosSubOne] += 8; result[iPos] -= 80; break; 
+				case 89: result[iPosSubOne] += 8; result[iPos] -= 80; break; 
+				case 90: result[iPosSubOne] += 9; result[iPos] -= 90; break; 
+				case 91: result[iPosSubOne] += 9; result[iPos] -= 90; break; 
+				case 92: result[iPosSubOne] += 9; result[iPos] -= 90; break; 
+				case 93: result[iPosSubOne] += 9; result[iPos] -= 90; break; 
+				case 94: result[iPosSubOne] += 9; result[iPos] -= 90; break; 
+				case 95: result[iPosSubOne] += 9; result[iPos] -= 90; break; 
+				case 96: result[iPosSubOne] += 9; result[iPos] -= 90; break; 
+				case 97: result[iPosSubOne] += 9; result[iPos] -= 90; break; 
+				case 98: result[iPosSubOne] += 9; result[iPos] -= 90; break; 
+				case 99: result[iPosSubOne] += 9; result[iPos] -= 90; break; 
+				};
+				
+				// GENERATED-END
+			}
+		}
+	}
+
+	/**
+	 * Compute full multiplication table for digits 0 through 9.
+	 */
+	public static int[][] computeTable() {
+		int [][] ret = new int[10][10];
+		for (int m = 0; m < 10; m++) {
+			for (int n = 0; n < 10; n++) {
+				ret[m][n] = m*n;
+			}
+		}
+		return ret;
+	}	
+	
+	/**
+	 * This method will generate a block of code that is optimized logic that is 
+	 * inserted into the times method.
+	 */
+	public static void computeSwitch() { 
+		// result[pos-off] += prod % 10;
+		System.out.println ("switch (prod) {");
+		for (int i = 0; i < 100; i++) {
+			System.out.print ("case " + i + ": ");
+			if (i%10 != 0) {
+				System.out.print ("result[iPos] += " + (i%10) + ";");
+			}
+			if ((i / 10) != 0) {
+				System.out.print ("result[iPosSubOne] += " + (i/10) + ";");
+			}
+			System.out.println ("break;");
+		}
+		System.out.println ("};");
+		
+		// middle one
+//		if (result[pos-off] > 9) {   // carry internally
+//			do {
+//				result[pos-off] -= 10;
+//				result[pos-off-1]++;
+//			} while (result[pos-off] > 9);
+//		}
+		System.out.println ("switch (result[iPos]) {");
+		for (int i = 0; i < 100; i++) {
+			int tens = 10*(i/10);
+			if (tens == 0) {
+				System.out.println ("case " + i + ": break; ");
+			} else {
+				System.out.println ("case " + i + ": result[iPosSubOne] += " + (i/10) + "; result[iPos] -= " + tens + "; break; ");
+			}
+		}
+		System.out.println ("};");
+		
+		
+		
+	}
+	
+	/** 
+	 * Generate random number of size n directly into num
+	 * 
+	 * @param num 
+	 * @param n 
+	 */
+	public static void randomNumber (int[] num, int n) {
+		for (int j = 0;j < n; j++) {
+			num[j] = (int) (Math.random()*10);
+		}
+	}
+
+	public static void generateTable() {
+
+		// Trials
+		int n = 2;
+		int MAX_SIZE = 1024;   // have been able to run up to 1024 in the past.
+		int NUM_TRIALS = 10000;
+		table = computeTable();
+		
+		System.out.println("n\tbase\tmult\ttimes");
+		while (n < MAX_SIZE) {
+			// generate numbers and space for storage
+			int[] n1 = new int[n];
+			int[] n2 = new int[n];
+			randomNumber(n1, n);
+			randomNumber(n2, n);
+			int[] result = new int[2*n+1];
+
+			int[] copy1 = new int[n];
+			int[] copy2 = new int[n];
+			System.arraycopy(n1, 0, copy1, 0, n);
+			System.arraycopy(n2, 0, copy2, 0, n);
+
+			// BASELINE
+			System.gc();
+			long baseS = System.currentTimeMillis();
+			for (int i = 0; i < NUM_TRIALS; i++) {
+				// NOP
+
+				// circular shift.
+				int c = n1[0];
+				System.arraycopy(n1, 1, n1, 0, n-1);
+				n1[n-1] = c;
+				c = n2[0];
+				System.arraycopy(n2, 1, n2, 0, n-1);
+				n2[n-1] = c;
+			}
+			long baseE = System.currentTimeMillis();
+
+			// MULTIPLY
+			System.gc();
+			System.arraycopy(copy2, 0, n2, 0, n);
+			System.arraycopy(copy1, 0, n1, 0, n);
+			long multS = System.currentTimeMillis();
+			for (int i = 0; i < NUM_TRIALS; i++) {
+				mult(n1,n2,result);
+
+				// circular shift.
+				int c = n1[0];
+				System.arraycopy(n1, 1, n1, 0, n-1);
+				n1[n-1] = c;
+				c = n2[0];
+				System.arraycopy(n2, 1, n2, 0, n-1);
+				n2[n-1] = c;
+			}
+			long multE = System.currentTimeMillis();
+
+			// TIMES
+			System.gc();
+			System.arraycopy(copy2, 0, n2, 0, n);
+			System.arraycopy(copy1, 0, n1, 0, n);			
+			long timesS = System.currentTimeMillis();
+			for (int i = 0; i < NUM_TRIALS; i++) {
+				times(n1,n2,result);
+
+				// circular shift.
+				int c = n1[0];
+				System.arraycopy(n1, 1, n1, 0, n-1);
+				n1[n-1] = c;
+				c = n2[0];
+				System.arraycopy(n2, 1, n2, 0, n-1);
+				n2[n-1] = c;				
+			}
+			long timesE = System.currentTimeMillis();
+
+
+			long baseLine = (baseE - baseS);
+
+			// n , baseLine, Mult*, Times*
+			System.out.println(n + "\t" + baseLine + "\t" + (multE - multS-baseLine) + "\t" + (timesE - timesS-baseLine));
+
+			// advance
+			n = n * 2;
+		}
+	}
+	
+	public static void main (String []args) {
+		// If you want to generate the code found within times() method, uncomment the 
+		// next two lines
+		//table = computeTable();
+		//computeSwitch();
+		
+		// sample test (a few times)
+		for (int nt = 0; nt < 10; nt++) {
+			int t = 3;
+			int[] n1 = new int[t];
+			int[] n2 = new int[t];
+			int[] result = new int [2*t+1];
+			int[] result2 = new int [2*t+1];
+			randomNumber(n1, t);
+			randomNumber(n2, t);
+			mult (n1, n2, result);
+			times (n1, n2, result2);
+			
+			for (int i = 0; i < result.length; i++) {
+				if (result[i] != result2[i]) {
+					System.out.println("Error when multiplying n1,n2");
+					System.out.println("n1:"); output (n1);
+					System.out.println("n2:"); output (n2);
+					
+					System.out.print ("res :"); output (result);
+					System.out.print ("res2:"); output (result2);
+					System.exit(0);
+				}
+			}
+		}
+		
+		// here is the real table.
+		generateTable();
+	}
+}
+----
+
+Python::
+[source, Python]
+----
+----
+=====
+======
+
+*Bubble Sort*
+
+* Compare each element to every other element in the array
+* Swap elements to maintain order
+* Outer loop runs n times, inner loop runs n times → O(n²)
+
+
+.Code
+[%collapsible]
+======
+Why O(n²) occurs
+
+* Two nested loops over n elements → n * n = n² comparisons
+* Each comparison and swap is constant time → still O(n²)
+* Quadratic behavior becomes very expensive for large n (e.g., 10,000 elements → 100 million operations)
+
+[tabs]
+=====
+Clang::
+[source, C]
+----
+#include <stdio.h>
+
+// Bubble Sort function
+void bubble_sort(int arr[], int n) {
+    // Outer loop for each element
+    for (int i = 0; i < n - 1; i++) {
+        // Inner loop for comparing with remaining elements
+        for (int j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                // Swap elements if out of order
+                int temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+}
+
+// Testing the bubble sort
+int main() {
+    int arr[] = {5, 2, 9, 1, 5};
+    int n = sizeof(arr) / sizeof(arr[0]);
+
+    bubble_sort(arr, n);
+
+    printf("Sorted array: ");
+    for (int i = 0; i < n; i++)
+        printf("%d ", arr[i]);
+    printf("\n");
+
+    return 0;
+}
+
+----
+
+C++::
+[source, C++]
+----
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Bubble Sort function
+void bubbleSort(vector<int>& arr) {
+    int n = arr.size();
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                swap(arr[j], arr[j + 1]); // Built-in swap
+            }
+        }
+    }
+}
+
+// Testing the bubble sort
+int main() {
+    vector<int> arr = {5, 2, 9, 1, 5};
+
+    bubbleSort(arr);
+
+    cout << "Sorted array: ";
+    for (int num : arr) cout << num << " ";
+    cout << endl;
+
+    return 0;
+}
+
+----
+
+Java::
+[source, Java]
+----
+public class BubbleSort {
+
+    // Bubble Sort function
+    public static void bubbleSort(int[] arr) {
+        int n = arr.length;
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (arr[j] > arr[j + 1]) {
+                    // Swap arr[j] and arr[j + 1]
+                    int temp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
+                }
+            }
+        }
+    }
+
+    // Testing the bubble sort
+    public static void main(String[] args) {
+        int[] arr = {5, 2, 9, 1, 5};
+        bubbleSort(arr);
+
+        System.out.print("Sorted array: ");
+        for (int num : arr) System.out.print(num + " ");
+        System.out.println();
+    }
+}
+
+----
+
+Python::
+[source, Python]
+----
+# Bubble Sort function
+def bubble_sort(arr):
+    n = len(arr)
+    for i in range(n - 1):
+        for j in range(n - i - 1):
+            if arr[j] > arr[j + 1]:
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]  # Swap elements
+
+# Testing the bubble sort
+if __name__ == "__main__":
+    arr = [5, 2, 9, 1, 5]
+    bubble_sort(arr)
+    print("Sorted array:", arr)
+
+----
+=====
+======
+
+
+*selection sorting*
+
+==== Real-world examples
+
+* Simple comparison-based sorts like Bubble Sort, Insertion Sort, Selection Sort
+* Naive matrix multiplication: multiply two n × n matrices using triple nested loops → O(n³)
+* Checking all pairs of elements in a dataset
+* Kernel-level or glibc examples:
+** qsort worst-case (naive quicksort without introsort fallback)
+** memcmp with nested loops for multidimensional data
+
+=== Exponential: O(2^n)^
+Exponential algorithms are those whose running time doubles with each additional input element. Formally:
+
+t(n) = O(2^n)
+
+This happens when the algorithm explores all possible subsets, combinations, or sequences of n elements. Exponential complexity grows extremely quickly and becomes infeasible for even moderately large n.
+
+Exponential behavior is:
+* 
+* Acceptable only for very small n
+* 
+* Grows so quickly that n = 30 already produces over 1 billion combinations (2³⁰)
+* 
+* Typically replaced with dynamic programming, heuristics, or approximation in practice
+
+*Canonical Example: Subset Generation / Power Set*
+
+Given a set of size n, the number of possible subsets is 2ⁿ.
+
+An algorithm that explicitly enumerates all subsets is naturally O(2ⁿ).
+
+Each additional element doubles the number of subsets.
+
+*Mathematical Recurrence Example*
+
+A simple recursive function that generates all subsets satisfies:
+
+ subset(n) = subset(n-1) + subset(n-1)
+
+The first call excludes the nth element
+
+The second call includes the nth element
+
+Base case: empty set
+
+Total calls = 2ⁿ → exponential time
+
+*Why exponential algorithms appear in practice*
+
+*Brute-force combinatorial problems:
+
+** Traveling Salesman Problem (TSP)
+
+** Knapsack problem (without dynamic programming)
+
+** Boolean satisfiability (SAT) solvers exploring all assignments
+
+*Recursion over all possibilities without pruning → exponential growth
+
+==== Examples
+*Exponential Performance via the Lock Example*
+
+Consider a lock with three numeric dials in sequence, each of which contains the
+digits from 0 to 9. Each dial can be set independently to one of these 10 digits.
+Assume you have a found such a lock, but don’t have its combination; it is simply a
+matter of some manual labor to try each of the 1,000 possible combinations, from
+000 to 999.
+
+Consider a lock with three numeric dials, where each dial can take a value from 0 to 9.
+
+Each dial has 10 choices
+
+The dials are independent
+
+Total combinations:
+
+10 × 10 × 10 = 10³ = 1,000
+
+
+Trying every possible combination from 000 to 999 is a brute-force search.
+
+*Generalizing to n dials*
+
+If the lock has n dials, Each dial has 10 possible values, Total combinations: *10ⁿ*
+
+This means the time required to try all combinations grows exponentially with n. So the running time is: O(10ⁿ)
+
+*Why this is exponential*
+
+An algorithm is exponential when:
+
+* Each new unit of input multiplies the number of possibilities
+* Adding one dial increases work by a factor of 10
+
+Example growth:
+|===
+|Dials (n)	|Combinations
+|1	|10
+|2	|100
+|3	|1,000
+|6	|1,000,000
+|10	|10,000,000,000
+|===
+This growth is far faster than linear or polynomial growth.
+
+*Base of the exponent does not change the classification*
+
+Although many exponential algorithms are written as: O(2ⁿ), this is not required. Any base greater than 1 produces exponential growth:
+
+* O(2ⁿ) → subsets, bit combinations
+* 
+* O(10ⁿ) → numeric locks, PIN codes
+* 
+* O(bⁿ) for any b > 1 → exponential
+
+The base affects how fast it explodes, but not the classification.
+
+*Why exponential algorithms are impractical*
+
+Exponential algorithms are only feasible for very small n:
+
+* n = 3 → trivial
+* 
+* n = 10 → borderline
+* 
+* n = 30 → billions of operations
+* 
+* n = 60 → completely infeasible
+
+This is why brute-force attacks:
+
+* Fail against large key sizes
+
+* Are avoided in kernel and library code
+
+*Why some exponential algorithms are still used*
+
+Some algorithms have:
+
+* Exponential worst-case behavior
+* But excellent average-case performance
+//TODO link to Simplex algorithm
+A classic example is the Simplex algorithm for linear programming.
+
+---
+
+*Power Set / Subset Generation problem*
+
+Given an array of n elements, generate all possible subsets (the power set).
+
+Number of subsets = 2ⁿ
+
+A subset is any selection of elements from an array, where the order does not matter, and no element appears more than once. It can include any number of elements, from none (the empty subset) to all the elements of the array.
+
+Examples:
+
+Input: arr[] = [1, 2, 3]
+
+Output: [[], [1], [1, 2], [1, 2, 3], [1, 3], [2], [2, 3], [3]]
+
+.Code
+[%collapsible]
+======
+Why this is O(2ⁿ) (formal reasoning)
+
+At each level of recursion:
+
+* One branch includes the element
+
+* One branch excludes the element
+
+This produces the recurrence: T(n) = 2·T(n-1) + O(1)
+
+
+Solving it yields: T(n) = O(2ⁿ)
+[tabs]
+=====
+Clang::
+[source, C]
+----
+#include <stdio.h>
+
+// Recursive function to generate subsets
+void subsets(int arr[], int n, int index, int chosen[]) {
+    // Base case: all elements processed
+    if (index == n) {
+        printf("{ ");
+        for (int i = 0; i < n; i++) {
+            if (chosen[i])
+                printf("%d ", arr[i]);
+        }
+        printf("}\n");
+        return;
+    }
+
+    // Case 1: exclude current element
+    chosen[index] = 0;
+    subsets(arr, n, index + 1, chosen);
+
+    // Case 2: include current element
+    chosen[index] = 1;
+    subsets(arr, n, index + 1, chosen);
+}
+
+// Testing the exponential algorithm
+int main() {
+    int arr[] = {1, 2, 3};
+    int n = sizeof(arr) / sizeof(arr[0]);
+    int chosen[3] = {0};
+
+    subsets(arr, n, 0, chosen);
+    return 0;
+}
+
+----
+Why exponential
+
+Each element creates two recursive branches
+
+Total calls = 2ⁿ
+
+C++::
+[source, C++]
+----
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Recursive subset generator
+void subsets(const vector<int>& arr, int index, vector<int>& current) {
+    if (index == arr.size()) {
+        cout << "{ ";
+        for (int x : current) cout << x << " ";
+        cout << "}\n";
+        return;
+    }
+
+    // Exclude element
+    subsets(arr, index + 1, current);
+
+    // Include element
+    current.push_back(arr[index]);
+    subsets(arr, index + 1, current);
+    current.pop_back(); // backtrack
+}
+
+// Testing
+int main() {
+    vector<int> arr = {1, 2, 3};
+    vector<int> current;
+
+    subsets(arr, 0, current);
+    return 0;
+}
+
+----
+
+Java::
+[source, Java]
+----
+import java.util.*;
+
+public class PowerSet {
+
+    // Recursive subset generator
+    static void subsets(int[] arr, int index, List<Integer> current) {
+        if (index == arr.length) {
+            System.out.println(current);
+            return;
+        }
+
+        // Exclude element
+        subsets(arr, index + 1, current);
+
+        // Include element
+        current.add(arr[index]);
+        subsets(arr, index + 1, current);
+        current.remove(current.size() - 1); // backtrack
+    }
+
+    // Testing
+    public static void main(String[] args) {
+        int[] arr = {1, 2, 3};
+        subsets(arr, 0, new ArrayList<>());
+    }
+}
+
+----
+
+Python::
+[source, Python]
+----
+def subsets(arr, index, current):
+    # Base case
+    if index == len(arr):
+        print(current)
+        return
+
+    # Exclude element
+    subsets(arr, index + 1, current)
+
+    # Include element
+    subsets(arr, index + 1, current + [arr[index]])
+
+
+# Testing
+if __name__ == "__main__":
+    arr = [1, 2, 3]
+    subsets(arr, 0, [])
+
+----
+=====
+======
+
+
+==== Real-world examples
+While most kernel and glibc code avoids explicit exponential algorithms, there are situations where exponential-time behavior occurs if naive methods are used:
+
+*glibc Regex Matching (Backtracking NFA)*
+
+GNU regex engine (historically) uses backtracking for some patterns.
+
+Certain crafted regexes can cause exponential backtracking with respect to the input string length.
+[,c]
+// Backtracking recursive matcher (simplified)
+static int match(int state, const char *str) {
+    if (*str == '\0') return check_final(state);
+    // Explore all possible transitions recursively
+    return match(next_state1, str+1) || match(next_state2, str+1);
+}
+
+Source:https://sourceware.org/git/?p=glibc.git;a=blob;f=posix/regex/regex.c
+
+Here, each character may branch recursively → O(2ⁿ) in worst cases.
+
+*Kernel: Naive Scheduling Combinatorial Checks*
+
+* Suppose a scheduler or resource allocator attempts all combinations of n tasks for optimal placement.
+* 
+* Naive algorithms would consider all 2ⁿ subsets → infeasible for large n.
+* 
+* Kernel implementations avoid this by:
+* 
+** Using heuristics
+** Applying greedy or dynamic programming approaches
+
+Source (conceptual example, kernel scheduler):https://elixir.bootlin.com/linux/v6.18.5/source/kernel/sched/fair.c
+
+----
+// Pseudocode: exploring multiple task assignments (simplified)
+// naive recursive combination check
+for each subset of tasks:
+    compute score
+----
+
+*Exponential in Cryptography*
+
+* Some cryptographic attacks are exponential:
+* 
+** Brute-force key search: key size n bits → 2ⁿ keys
+** 
+** Cryptanalysis without shortcuts (meet-in-the-middle reduces cost, otherwise truly exponential)
+* 
+* Libraries like OpenSSL avoid exponential algorithms in normal usage, but key brute-force space is exponential by nature.
+
+|===
+| Complexity | Example Algorithm          | Real-World Context                           
+| O(2ⁿ)      | Subset generation          | Regex backtracking, combinatorial schedulers 
+| O(2ⁿ)      | Brute-force TSP            | Cryptography key search                      
+| O(2ⁿ)      | Naive recursive SAT solver | Puzzle solvers, kernel validation checks     
+|===
+
+== How real systems choose algorithms dynamically
+Real systems do not commit to one algorithm. They observe conditions and adapt.
+
+Real systems follow this rule: Use theory to avoid worst-case failure, use measurement and adaptation to get real-world speed.
+
+Real systems keep multiple algorithms and select based on:
+
+* Data structure
+* Input distribution
+* Predictability requirements
+* Memory constraints
+
+Big-O: Prevents algorithmic disasters
+
+Data awareness: Delivers actual performance
+
+Kernel / Database Mapping Table(how real systems choose different algorithms)
+[cols="2,2,3,3", options="header"]
+|===
+| Context
+| Data Structure
+| Algorithm Used
+| Reason
+
+| Linux Kernel
+| Generic arrays
+| Heap Sort (sort())
+| Guaranteed O(n log n); no worst-case surprise
+
+| Linux Kernel
+| Linked lists
+| Merge Sort (list_sort)
+| Efficient for lists; stable; no random access
+
+| Linux Kernel
+| Scheduler trees
+| Red-Black Tree
+| Balanced search; predictable latency
+
+| Linux Kernel
+| Memory caches
+| Hash tables
+| Fast average lookup
+
+| Database
+| Table scan
+| Sequential scan
+| Faster when most rows match
+
+| Database
+| Indexed lookup
+| B-tree search
+| Logarithmic lookup on sorted keys
+
+| Database
+| Join operation
+| Hash join
+| Fast when keys are uniformly distributed
+
+| Database
+| Ordered join / range queries
+| Merge join
+| Exploits pre-sorted inputs
+
+| Database
+| External sorting
+| Merge sort
+| Handles data larger than RAM
+|===
+
+
+=== Example 1: Linux (kernel)
+Sorting in the kernel,Linux provides multiple sorting routines:
+
+* Simple sorts for small arrays
+* More complex ones for large data
+
+Decision factors
+* Size of data
+* Memory availability
+* Predictability requirements
+
+Kernel code avoids algorithms with fragile worst-case behavior.
+
+actual examples from the Linux kernel source code that show the kernel includes multiple sorting routines
+
+. *sort()* — array sorting with heapsort
+** What it is: A generic sort function provided in the kernel for sorting arrays.
+** Algorithm used: Heapsort — which guarantees O(n log n) worst-case behavior.
++
+This is preferred in the kernel over the standard C library qsort() because it avoids the O(n²) worst case of qsort() and doesn’t require extra memory like merge sort might.
+** Where to view it: 
+*** https://www.kernel.org/doc/html/v4.17/core-api/kernel-api.html?utm_source=chatgpt.com#sorting
+*** https://elixir.bootlin.com/linux/v6.18.4/source/lib/sort.c#L333
+** The implementation details make this fit for kernel use, trading some average-case speed for robust worst-case behavior.
+. *list_sort()* — linked-list sorting with merge sort
+** What it is: A sort function for linked lists (struct list_head) used throughout the kernel.
+** Algorithm used: Merge sort, which has O(n log n) performance and preserves order.
+** Where to view it:
+*** https://www.kernel.org/doc/html/v4.17/core-api/kernel-api.html?utm_source=chatgpt.com#c.list_sort
+*** https://elixir.bootlin.com/linux/latest/source/lib/list_sort.c
+*** https://github.com/torvalds/linux/blob/master/lib/list_sort.c#L189
+** Why this matters: Linked lists cannot be sorted with classic array algorithms efficiently, so the kernel has a separate implementation tailored to linked structures.
+
+*Why Linux has multiple sorting routines*
+
+Linux doesn’t rely on a single sort because:
+
+* Kernel code needs predictable performance and can run in low-memory contexts.
+* Different data structures need different algorithms:
+** Arrays → sort() (heapsort)
+** Linked lists → list_sort() (merge sort)
+** Both ensure good performance on large inputs without pathological behavior.
+
+This mirrors the point that no one algorithm fits every case — the kernel explicitly choosing between sorting strategies based on use-case
+
+=== Example 2: Databases (PostgreSQL, MySQL, SQLite)
+Databases choose algorithms at runtime.
+
+*Query planning*
+
+For the same SQL query, the database may choose:
+
+* Index scan
+* Sequential scan
+* Hash join
+* Merge join
+* Nested loop
+
+Based on:
+
+* Table size
+* Index existence
+* Data distribution statistics
+* Estimated selectivity
+
+Example
+[,sql]
+----
+SELECT * FROM users WHERE age = 30;
+----
+* If 1% of users are 30 → use an index
+* If 90% are 30 → full table scan is faster
+
+Same query, different algorithm.
+
+=== Example 3: TimSort (Java, Python)
+TimSort is a hybrid adaptive sort. It:
+
+* Detects already-sorted runs
+* Uses Insertion Sort on small chunks
+* Switches to Merge Sort when needed
+
+Result:
+* Best-case ≈ O(n)
+* Worst-case = O(n log n)
+
+It exploits real-world data patterns, not theoretical worst cases.
+
+=== Example 4: Hash tables resizing
+Hash tables dynamically:
+
+* Resize when load factor grows
+* Rehash to reduce collisions
+
+This keeps:
+
+* Average-case O(1) operations
+* Worst-case behavior rare
+
+== Decision Tree for Choosing Algorithms
+
+=== Step 1: Do you need a guaranteed performance bound?
+
+*Question: Can the algorithm ever be allowed to behave badly?*
+
+* If *NO* (real-time systems, OS kernels, security-critical code):
+** Choose algorithms with tight worst-case bounds
+** Prefer Θ guarantees
+** Examples:
+*** Sorting → Merge Sort, Heap Sort (Θ(n log n))
+*** Searching → Binary Search (Θ(log n), requires sorted data)
+*** Trees → AVL / Red-Black Trees (Θ(log n))
+* If *YES* (occasional slow cases acceptable):
+** Proceed to Step 2
+
+=== Step 2: Is average-case performance more important than worst-case?
+
+*Question: Do typical inputs matter more than rare pathological ones?*
+
+* If YES:
+** Use algorithms with strong average-case behavior
+** Consider randomized algorithms
+** Examples:
+*** Sorting → Randomized Quicksort (average Θ(n log n))
+*** Hashing → Hash Tables (average O(1))
+*** Trees → Randomized BST / Treap
+* If NO:
+** Return to worst-case–guaranteed algorithms
+
+=== Step 3: Is the input data already structured?
+
+Question: Does the data have useful properties?
+
+If Sorted or Nearly Sorted:
+** Prefer adaptive algorithms
+
+Examples:
+
+Searching → Binary Search
+
+Sorting → Insertion Sort (best case O(n))
+
+Sorting → Timsort (adaptive, real-world standard)
+
+If Unsorted / Random:
+** Use general-purpose algorithms
+
+Examples:
+
+Sorting → Quicksort, Merge Sort
+
+Searching → Linear Search (small n)
+
+=== Step 4: How large is the input size (n)?
+
+Question: Will n grow large?
+
+If Small n:
+** Simplicity beats asymptotics
+
+Examples:
+
+Linear Search
+
+Insertion Sort
+
+Simple recursive solutions
+
+If Large n:
+** Favor optimal growth rates
+
+Examples:
+
+Searching → O(log n)
+
+Sorting → Θ(n log n)
+
+Graphs → O(V + E)
+
+=== Step 5: Is memory usage constrained?
+
+Question: Can you afford extra space?
+
+If YES (memory constrained):
+** Choose in-place or low-memory algorithms
+
+Examples:
+
+Quicksort (in-place)
+
+Heap Sort (O(1) extra space)
+
+Iterative DFS
+
+If NO (memory available):
+** Use space-for-speed tradeoffs
+
+Examples:
+
+Merge Sort (O(n) extra space)
+
+Hash Tables
+
+Dynamic Programming
+
+=== Step 6: Is predictability more important than speed?
+
+Question: Must execution time be stable?
+
+If YES:
+** Prefer algorithms with identical best/average/worst behavior
+
+Examples:
+
+Merge Sort
+
+BFS / DFS
+
+Dynamic Programming solutions
+
+If NO:
+** Fast average-case algorithms acceptable
+
+Examples:
+
+Quicksort
+
+Hash Tables
+
+=== Step 7: Can the algorithm exploit early termination?
+
+Question: Can it stop early on good inputs?
+
+If YES:
+** Prefer adaptive algorithms
+
+Examples:
+
+Linear Search (best case O(1))
+
+Insertion Sort
+
+Short-circuit graph searches
+
+If NO:
+** Accept uniform-cost algorithms
+
+Examples:
+
+Counting Search
+
+Full graph traversals
+
+=== Step 8: Is adversarial input possible?
+
+Question: Can someone deliberately craft bad inputs?
+
+If YES:
+** Avoid algorithms with fragile worst cases
+** Use randomization or strict bounds
+
+Examples:
+
+Randomized Quicksort
+
+Cryptographic hash functions
+
+Balanced trees
+
+If NO:
+** Average-case analysis may be sufficient
+
+=== Summary Decision Heuristics
+
+Need guarantees → Worst-case Θ bounds
+
+Need speed → Average-case optimized
+
+Data nearly sorted → Adaptive algorithms
+
+Large input → Optimal asymptotics
+
+Low memory → In-place algorithms
+
+Adversaries exist → Randomization or balance
+
+// TODO Convert this into Graphviz DOT for diagrams or other diagrams
+----
++--------------------------------------------------------------------+
+|                               START                                |
+|                        Choose an Algorithm                         |
++--------------------------------+-----------------------------------+
+                                 |
+                                 v
++--------------------------------------------------------------------+
+| Need STRICT WORST-CASE guarantees?                                 |
+| (Θ bounds required: real-time, kernel, security)                   |
++----------------------+---------------------------------------------+
+                       | YES                                         | NO
+                       v                                             v
+        +----------------------------------------------+   +---------------------------------------------+
+        | WORST-CASE SAFE (Θ guarantees)               |   | FAST AVERAGE-CASE more important?           |
+        | Sorting:                                     |   | (E[T(n)] acceptable)                        |
+        |  - Merge Sort   Θ(n log n)                   |   +------------------+--------------------------+
+        |  - Heap Sort    Θ(n log n)                   |                      | YES
+        | Trees:                                       |                      v
+        |  - AVL / Red-Black Tree Θ(log n)             |        +---------------------------------------------+
+        |                                              |        | AVERAGE-CASE OPTIMIZED                      |
+        | C++ STL:                                     |        | Randomized / probabilistic                  |
+        |  - std::stable_sort                          |        | Sorting:                                    |
+        |  - std::set / std::map                       |        |  - Quicksort  E[T]=Θ(n log n)               |
+        | Python:                                      |        | Hashing:                                    |
+        |  - heapq                                     |        |  - Hash table  E[T]=Θ(1)                    |
+        |                                              |        |                                             |
+        | Linux Kernel:                                |        | C++ STL:                                    |
+        |  - Completely Fair Scheduler (CFS) RB-tree   |        |  - std::sort                                |
+        |  - Deadline Scheduler (real-time tasks)      |        |  - std::unordered_map                       |
+        |                                              |        | Python:                                     |
+        |                                              |        |  - list.sort()                              |
+        |                                              |        |  - dict / set                               |
+        +----------------------+-----------------------+        +------------------+--------------------------+
+                               |                                             |
+                               v                                             v
++--------------------------------------------------------------------+
+| Is INPUT STRUCTURED or NEARLY SORTED?                              |
+| (Best-case Ω(n) exploitable)                                       |
++----------------------+---------------------------------------------+
+                       | YES                                         | NO
+                       v                                             v
+        +----------------------------------------------+   +---------------------------------------------+
+        | ADAPTIVE ALGORITHMS                          |   | GENERAL-PURPOSE ALGORITHMS                  |
+        |  - Insertion Sort  Ω(n), Θ(n²)               |   | Θ(n log n) typical                          |
+        |  - Timsort Ω(n), Θ(n log n)                  |   |  - Merge Sort                               |
+        |  - Binary Search Ω(1), Θ(log n)              |   |  - Quicksort                                |
+        | C++ STL:                                     |   |  - BFS / DFS                                |
+        |  - std::lower_bound                          |   | Python:                                     |
+        |  - std::stable_sort                          |   |  - list.sort()                              |
+        | Python:                                      |   |  - collections.deque                        |
+        |  - bisect                                    |   |                                             |
+        | Linux Kernel:                                |   | Kernel systems:                             |
+        |  - runqueue optimization (task ordering)     |   |  - VM page eviction                         |
+        |  - page cache readahead                      |   |  - Network packet queue sorting             |
+        +----------------------+-----------------------+   +------------------+--------------------------+
+                               |                                             |
+                               v                                             v
++--------------------------------------------------------------------+
+| Is MEMORY usage tightly constrained?                               |
+| (Space O(1)/O(log n) preferred)                                    |
++----------------------+---------------------------------------------+
+                       | YES                                         | NO
+                       v                                             v
+        +----------------------------------------------+   +---------------------------------------------+
+        | IN-PLACE / LOW-MEMORY                        |   | SPACE-FOR-SPEED                             |
+        |  - Quicksort (in-place)                      |   |  - Merge Sort                               |
+        |  - Heap Sort                                 |   |  - Hash Tables                              |
+        |  - Iterative DFS                             |   |  - Dynamic Programming                      |
+        | C++ STL:                                     |   | C++ STL:                                    |
+        |  - std::sort                                 |   |  - std::vector                              |
+        |  - std::priority_queue                       |   |  - std::unordered_map                       |
+        | Python:                                      |   | Python:                                     |
+        |  - heapq                                     |   |  - dict / set                               |
+        | Linux Kernel:                                |   | Kernel:                                     |
+        |  - slab allocator                            |   |  - page cache                               |
+        |  - per-CPU data                              |   |  - virtual memory management                |
+        +----------------------+-----------------------+   +------------------+--------------------------+
+                               |                                             |
+                               v                                             v
++--------------------------------------------------------------------+
+| Can INPUT be ADVERSARIAL?                                          |
+| (Users, network packets, attackers)                                |
++----------------------+---------------------------------------------+
+                       | YES                                         | NO
+                       v                                             v
+        +----------------------------------------------+   +---------------------------------------------+
+        | HARDENED / DEFENSIVE                         |   | AVERAGE-CASE OK                             |
+        |  - Randomized algorithms                     |   | Standard workloads                          |
+        |  - Balanced trees                            |   |                                             |
+        |  - Secure hashing                            |   | C++ STL:                                    |
+        | C++ STL:                                     |   |  - std::sort                                |
+        |  - std::map (RB-tree)                        |   |  - std::unordered_map                       |
+        | Python:                                      |   | Python:                                     |
+        |  - dict (hash randomization)                 |   |  - list.sort()                              |
+        | Linux Kernel:                                |   |  - dict / set                               |
+        |  - RCU + RB-trees                            |   | Kernel systems:                             |
+        |  - hash seed randomization                   |   |  - TCP packet queue handling                |
+        |  - scheduler hardening                       |   |  - load balancing algorithms                |
+        +----------------------+-----------------------+   +------------------+--------------------------+
+                               |                                             |
+                               v                                             v
++--------------------------------------------------------------------+
+|                             FINAL CHOICE                           |
+| Θ = guaranteed bounds | O = worst limit | Ω = best-case            |
+| Kernel subsystems favor Θ for predictability                       |
++--------------------------------------------------------------------+
+----
+
+*Kernel Subsystem Deep Dives Mapped to Algorithm Decisions*
+
+. Scheduler
+* CFS → Red-Black tree, guarantees O(log n) insert/remove
+* Deadline Scheduler → deterministic worst-case bounds
+* Runqueue optimization → adaptive ordering of structured input
+. Virtual Memory (VM)
+* Page cache → adaptive prefetch (Timsort-like), structured input
+* Slab allocator → in-place memory, low space overhead
+* Eviction policies → average-case optimized (LRU/ARC)
+. Networking
+* Packet queues → adaptive priority scheduling
+* Hash-based flow tables → average-case O(1) lookup, hardened with randomized seeds
+* Load balancing → defensive / hardened against adversarial traffic patterns
+
+=== Real-World Case Studies
+
+==== Case Study 1: Operating System Scheduler
+
+*Context: Linux kernel task scheduling*
+
+Constraints:
+
+** Real-time deadlines
+** Cannot tolerate unpredictable slowdowns
+
+Decision path:
+
+** Guaranteed bounds → YES
+** Predictability → YES
+
+Algorithm choice:
+
+Balanced trees (Red-Black Tree)
+
+O(log n) guaranteed insert/remove
+
+Lesson: Worst-case analysis dominates when failure is unacceptable.
+
+==== Case Study 2: Web Application Sorting User Data
+
+Context: Sorting user posts by timestamp
+
+Constraints:
+** Data often nearly sorted
+** Large datasets
+** Average speed matters
+
+Decision path:
+** Guaranteed bounds → NO
+** Average case acceptable → YES
+** Input structured → YES
+
+Algorithm choice:
+
+Timsort (Python, Java standard)
+
+Exploits runs → near O(n) in practice
+
+Lesson:
+Adaptive algorithms beat theoretically optimal ones on real data.
+
+==== Case Study 3: Database Indexing
+
+Context: Index lookup in a database
+
+Constraints:
+** Millions of queries
+** Worst-case latency matters
+** Adversarial input possible
+
+Decision path:
+** Guaranteed bounds → YES
+** Adversarial input → YES
+
+Algorithm choice:
+
+B-Trees / Balanced BSTs
+
+Lesson:
+Hash tables are fast on average, but trees provide safety guarantees.
+
+==== Case Study 4: Network Routing (Graphs)
+
+Context: Shortest path routing
+
+Constraints:
+** Graph size known
+** Edge weights non-negative
+** Predictable behavior required
+
+Decision path:
+** Guaranteed bounds → YES
+** Input structured → YES
+
+Algorithm choice:
+
+Dijkstra’s algorithm with heap
+
+O(E log V)
+
+Lesson:
+When asymptotics don’t vary, choose the clearest correct algorithm.
+
+==== Case Study 5: Cybersecurity (Hash Table Attacks)
+
+Context: User-supplied keys in hash tables
+
+Threat:
+** Adversarial collisions → O(n) behavior
+
+Decision path:
+** Adversarial input → YES
+
+Algorithm choice:
+
+Randomized hashing
+
+SipHash / cryptographic hashes
+
+Tree-based buckets (Java 8+)
+
+Lesson:
+Average-case algorithms must be hardened in hostile environments.
+
+==== Case Study 6: Embedded Systems (Low Memory)
+
+Context: Microcontroller firmware
+
+Constraints:
+** Tiny RAM
+** Predictable execution
+** Small input sizes
+
+Decision path:
+** Memory constrained → YES
+** Predictability → YES
+
+Algorithm choice:
+
+Insertion Sort
+
+Linear Search
+
+Lesson:
+Asymptotic optimality is irrelevant for small, constrained systems.
+
+=== Final Mental Model
+
+Worst case → safety
+
+Average case → speed
+
+Best case → insight only
+
+Structure + scale + threat model → final choice
 == Links
 * https://www.programiz.com/java-programming/examples

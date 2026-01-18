@@ -1,0 +1,16 @@
+/* Scoped to the .doc content area in Antora */
+.doc h1 { color: #1A237E; border-bottom: 2px solid #E8EAF6; padding-bottom: 0.3em; } /* Deep Navy */
+.doc h2 { color: #2E7D32; border-left: 5px solid #A5D6A7; padding-left: 10px; }   /* Forest Green */
+.doc h3 { color: #C62828; font-style: italic; }                                  /* Ruby Red */
+.doc h4 { color: #6A1B9A; text-transform: uppercase; letter-spacing: 1px; }      /* Royal Purple */
+.doc h5 { color: #EF6C00; font-weight: 700; }                                    /* Deep Orange */
+.doc h6 { color: #00838F; text-decoration: underline dotted; }                    /* Dark Teal */
+
+/* Level 7: Custom class for pseudo-headings */
+.doc .h7 { 
+    color: #455A64; 
+    font-size: 0.95rem; 
+    font-weight: bold; 
+    display: block; 
+    margin-top: 1rem;
+}

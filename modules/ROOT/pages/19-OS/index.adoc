@@ -1,0 +1,410 @@
+= Operating Systems
+:figures: 19-OS
+
+== OPERATING SYSTEM STRUCTURE
+The kernel is the core component of an operating system (OS) responsible for managing system resources and enabling communication between hardware and software. Based on how these services and components are organized, kernels are broadly classified into this archtictures.
+
+all serve the same goal of providing system-level functionality but differ significantly in architecture, performance and security.
+
+=== Monolithic Systems
+By far the most common organization, the monolithic approach is to run the
+entire operating system as a single program in kernel mode. The operating system
+is written as a collection of procedures, linked together into a single large
+executable binary program. When this technique is used, each procedure in the sys-
+tem is free to call any other one, if the latter provides some useful computation that
+the former needs. Being able to call any procedure you want is very efficient, but
+having thousands of procedures that can call each other without restriction may
+also lead to a system that is unwieldy and difficult to understand. Also, a crash in
+any of these procedures will take down the entire operating system.
+
+In a
+monolithic operating system, the entire operating system architecture is built into a single, large kernel that runs in a single address space (kernel space). All core services—including process management, memory management, file systems, and device drivers—are bundled into one large binary. 
+
+A monolithic kernel is an operating system kernel in which all the operating system services run in kernel space, meaning they all share the same memory space. This type of kernel is characterized by its tight integration of system services and its high performance. Below is the diagrammatic representation of the Monolithic Kernel: 
+
+image::{figures}/Monolithic-Architecture.png[]
+
+To construct the actual object program of the operating system when this ap-
+proach is used, one first compiles all the individual procedures (or the files con-
+taining the procedures) and then binds them all together into a single executable
+file using the system linker. In terms of information hiding, there is essentially
+none—every procedure is visible to every other procedure (as opposed to a struc-
+ture containing modules or packages, in which much of the information is hidden
+away inside modules, and only the officially designated entry points can be called
+from outside the module).
+
+Even in monolithic systems, however, it is possible to have some structure. The
+services (system calls) provided by the operating system are requested by putting
+the parameters in a well-defined place (e.g., on the stack) and then executing a trap
+instruction. This instruction switches the machine from user mode to kernel mode
+and transfers control to the operating system, shown as step 6 in Fig. 1-17. The
+operating system then fetches the parameters and determines which system call is
+to be carried out. After that, it indexes into a table that contains in slot k a pointer
+to the procedure that carries out system call k (step 7 in Fig. 1-17).
+
+This organization suggests a basic structure for the operating system:
+
+. A main program that invokes the requested service procedure.
+. A set of service procedures that carry out the system calls.
+. A set of utility procedures that help the service procedures.
+
+In this model, for each system call there is one service procedure that takes care of
+it and executes it. The utility procedures do things that are needed by several ser-
+vice procedures, such as fetching data from user programs
+
+In addition to the core operating system that is loaded when the computer is
+booted, many operating systems support loadable extensions, such as I/O device
+drivers and file systems. These components are loaded on demand. In UNIX they
+are called shared libraries.
+
+==== Key Characteristics
+* Single Address Space: All OS components, including device drivers and system services, execute with the same high-level privileges in kernel mode.
+* Direct System Calls: Communication between services occurs via direct function calls rather than complex message passing, leading to high performance.
+* Tight Integration: Components are highly interconnected and dependent on one another.
+* Uniform Interface: It provides a high-level virtual interface over the hardware, simplifying application development. 
+
+==== Advantages and Disadvantages
+[cols="1,1,1", options="header"]
+|===
+| Feature | Advantage | Disadvantage
+
+| Performance
+| High, due to minimal overhead from context switching and direct access to hardware.
+| Larger kernel size compared to microkernels.
+
+| Reliability
+| Simpler initial design and development for basic projects.
+| Low fault isolation; a single bug in a driver can crash the entire system.
+
+| Maintenance
+| Broad hardware support and unified debugging environment.
+| Modifying one service often requires recompiling and redeploying the entire kernel.
+|===
+
+Advantages of Monolithic Kernel
+
+* One of the major advantages of having a monolithic kernel is that it provides CPU scheduling, memory management, file management, and other operating system functions through system calls.
+* The other one is that it is a single large process running entirely in a single address space.
+* It is a single static binary file. Examples of some Monolithic Kernel-based OSs are Unix, Linux, Open VMS, XTS-400, z/TPF.
+* No need for complex inter-process communication (IPC), which speeds up system call execution.
+
+Disadvantages of Monolithic Kernel
+
+* Stability Issues: One of the major disadvantages of a monolithic kernel is that if anyone service fails it leads to an entire system failure.
+* Lack of Modularity: If the user has to add any new service. The user needs to modify the entire operating system.
+* Security Risks: A bug or vulnerability in any service can affect the entire system since all services run in kernel mode.
+* Large Size: The kernel can become very large and complex as more services are added.
+
+==== Popular Examples
+* Linux: Often described as a "modular monolithic" kernel because it can load and unload modules dynamically.
+* Unix & BSD: Traditional Unix and modern BSD variants (FreeBSD, OpenBSD) follow this model.
+* MS-DOS: A classic example of a simple monolithic structure with virtually no separation between the application and the OS.
+* Android: Uses the Linux kernel as its base, inheriting a monolithic foundation. 
+
+=== Layered Systems
+A generalization of the monolithic approach is to organize the operating sys-
+tem as a hierarchy of layers, each one constructed upon the one below it.
+
+The first
+system constructed in this way was the THE system six layers. Layer 0 dealt with allocation
+of the processor, switching between processes when interrupts occurred or timers
+expired. Above layer 0, the system consisted of sequential processes, each of which could be programmed without having to worry about the fact that multiple
+processes were running on a single processor. In other words, layer 0 provided the
+basic multiprogramming of the CPU.
+
+Layer 1 did the memory management. It allocated space for processes in main
+memory and on a 512K word drum(magnetic drum storage system utilized a magnetic drum as a secondary storage device to support some of the first implementations of virtual memory.) used for holding parts of processes (pages) for
+which there was no room in main memory. Above layer 1, processes did not have
+to worry about whether they were in memory or on the drum; the layer 1 software
+took care of making sure pages were brought into memory at the moment they
+were needed and removed when they were not needed.
+
+Layer 2 handled communication between each process and the operator con-
+sole (that is, the user). On top of this layer, each process effectively had its own
+operator console. 
+
+Layer 3 took care of managing the I/O devices and buffering the
+information streams to and from them. Above layer 3 each process could deal with
+abstract I/O devices with nice properties, instead of real devices with many pecu-
+liarities. 
+
+Layer 4 was where the user programs were found. They did not have to
+worry about process, memory, console, or I/O management. 
+
+The system operator
+process was located in layer 5, this process manages the human-system interface.
+
+A further generalization of the layering concept was present in the MULTICS
+system. Instead of layers, MULTICS was described as having a series of concentric
+rings, with the inner ones being more privileged than the outer ones (which is
+effectively the same thing). When a procedure in an outer ring wanted to call a
+procedure in an inner ring, it had to make the equivalent of a system call, that is, a
+TRAP instruction whose parameters were carefully checked for validity before the
+call was allowed to proceed. Although the entire operating system was part of the
+address space of each user process in MULTICS, the hardware made it possible to
+designate individual procedures (memory segments, actually) as protected against
+reading, writing, or executing.
+
+=== Microkernels
+With the layered approach, the designers have a choice where to draw the ker-
+nel-user boundary. Traditionally, all the layers went in the kernel, but that is not
+necessary. In fact, a strong case can be made for putting as little as possible in ker-
+nel mode because bugs in the kernel can bring down the system instantly. In con-
+trast, user processes have less power so that a bug there may not be fatal.
+
+A
+microkernel is a minimalist operating system architecture where only the most fundamental services—such as inter-process communication (IPC), basic memory management, and low-level scheduling—run in the privileged kernel space. All other traditional OS services, including device drivers, file systems, and network stacks, are moved to the user space, where they run as independent server processes. 
+
+The basic idea behind the microkernel design is to achieve high reliability by
+splitting the operating system up into small, well-defined modules, only one of
+which—the microkernel—runs in kernel mode and the rest run as relatively pow-
+erless ordinary user processes. In particular, by running each device driver and file
+system as a separate user process, a bug in one of these can crash that component,
+but cannot crash the entire system. Thus, a bug in the audio driver will cause the
+sound to be garbled or stop, but will not crash the computer. In contrast, in a
+monolithic system with all the drivers in the kernel, a buggy audio driver can easily
+reference an invalid memory address and bring the system to a grinding halt
+instantly.
+
+A microkernel is a type of operating system kernel in which only the most basic services run in kernel space, with other services running in user space. This type of kernel is characterized by its modularity, simplicity, and ability to run multiple operating systems on the same hardware. The microkernel itself typically includes only the most fundamental services, such as:
+
+* Inter-process Communication (IPC): Mechanisms for processes to communicate and synchronize with each other.
+* Basic Scheduling: Managing the execution of processes.
+* Minimal Memory Management: Essential functions for memory allocation and protection.
+
+image::{figures}/structure_of_a_micro_kernel.png[]
+
+Other functionalities that are often part of a monolithic kernel, like device drivers, file systems, and network protocols, are implemented in user space as separate processes. This contrasts with a monolithic kernel, where all these services run in kernel space.
+
+*Key Characteristics*
+
+* Minimalist Core: The kernel is kept as small as possible to reduce the "Trusted Computing Base" (TCB), enhancing system security.
+* Message Passing (IPC): Since components live in different address spaces, they communicate by sending messages through the kernel rather than using direct function calls.
+* Fault Isolation: If a non-essential service (like a printer driver) crashes, it does not take down the entire system, as it runs in an isolated user-space process.
+* High Modularity: Services can be added, removed, or updated without modifying or recompiling the core kernel. 
+
+*Advantages and Disadvantages*
+
+[cols="1,3,3", options="header"]
+|===
+| Feature | Advantage | Disadvantage
+
+| Security
+| Smaller attack surface; individual process vulnerabilities are contained.
+| Increased complexity in designing secure and efficient communication protocols.
+
+| Reliability
+| Fault tolerance; isolated components can be restarted without a full system reboot.
+| The overall system can be more complex to debug due to many interacting parts.
+
+| Performance
+| Ideal for real-time and embedded systems where predictability is key.
+| Higher overhead due to frequent context switching and message passing.
+|===
+
+*Popular Examples*
+With the exception of macOS, which is based on the Mach microkernel, common desktop operating systems do not use microkernels. However,
+they are dominant in real-time, industrial, avionics, and military applications that
+are mission critical and have very high reliability requirements. A few of the bet-
+ter-known microkernels include Integrity, K42, L4, PikeOS, QNX, Symbian, and
+MINIX 3.
+
+* QNX: Extensively used in mission-critical environments like automotive systems and medical devices due to its high reliability.
+* seL4: A formally verified microkernel often used in military and high-security infrastructure.
+* MINIX 3: A highly reliable, small-footprint microkernel frequently used for educational and embedded purposes.
+* Zircon (Google Fuchsia): A modern, message-passing kernel that powers various Google smart devices.
+* GNU Hurd: The GNU Project's replacement for the Unix kernel, built on the Mach microkernel. 
+ 
+
+=== Differences Between Monolithic Kernel and Microkernel
+[options="header"]
+|===
+| Basics | Micro Kernel | Monolithic Kernel
+
+| Size
+| Smaller(only essential services)
+| Larger as OS and both user lie in the same address space(includes all services).
+
+| Execution
+| Slower((due to IPC overhead))
+| Faster((direct calls, minimal overhead))
+
+| Extendible
+| Easily extendible
+| Complex to extend
+
+| Reliability
+| If the service crashes then there is no effect on working on the microkernel.
+| If the process/service crashes, the whole system crashes as both user and OS were in the same address space.
+
+| Code
+| More code is required to write a microkernel.
+| Less code is required to write a monolithic kernel.
+
+| Examples
+| L4Linux, macOS
+| Windows, Linux, BSD
+
+| Security (overall)
+| More secure because only essential services run in kernel mode
+| Susceptible to security vulnerabilities due to the amount of code running in kernel mode
+
+| Platform independence
+| More portable because most drivers and services run in user space
+| Less portable due to direct hardware access
+
+| Communication
+| Message passing between user-space servers
+| Direct function calls within kernel
+
+| Performance
+| Lower due to message passing and more overhead
+| High due to direct function calls and less overhead
+|===
+
+* On the Monolithic Kernel side, everything (drivers, file systems, memory management) runs inside the kernel space, which gives speed but lowers fault tolerance.
+* On the Microkernel side, only the essential services (IPC, scheduling, minimal memory mgmt) run in kernel space, and all other services run in user space, improving reliability and modularity.
+
+----
++-----------------------------+
+|        User Applications     |
++-----------------------------+
+|         System Calls         |
++-----------------------------+
+|       Device Drivers         |
+|       File System            |
+|       Memory Management      |
+|       Process Scheduler      |
++-----------------------------+
+|        Kernel Space          |
++-----------------------------+
+----
+
+[cols="1,1", options="header"]
+|===
+| Monolithic Kernel | Microkernel
+
+a| 
+----
++-----------------------------+
+|        User Applications     |
++-----------------------------+
+|         System Calls         |
++-----------------------------+
+|       Device Drivers         |
+|       File System            |
+|       Memory Management      |
+|       Process Scheduler      |
++-----------------------------+
+|        Kernel Space          |
++-----------------------------+
+----
+
+a| 
+----
++-----------------------------+
+|        User Applications     |
++-----------------------------+
+|        Device Drivers        |
+|        File System           |
+|        Network Stack         |
+|        Other Services        |
++-----------------------------+
+|         User Space           |
++-----------------------------+
+|         Microkernel          |
+|  - IPC (Inter-Process Comm)  |
+|  - Scheduling                |
+|  - Minimal Memory Mgmt       |
++-----------------------------+
+|         Kernel Space          |
++-----------------------------+
+----
+|===
+
+== OPERATING SYSTEM
+
+=== MINIX
+MINIX 3 is a POSIX-conformant, open source
+system freely available at www.minix3.org
+
+Intel
+adopted MINIX 3 for its management engine in virtually all its CPUs.
+
+The MINIX 3 microkernel is only about 15,000 lines of C and some 1400 lines
+of assembler for very low-level functions such as catching interrupts and switching
+processes. The C code manages and schedules processes, handles interprocess
+communication (by passing messages between processes), and offers a set of about
+40 kernel calls to allow the rest of the operating system to do its work. These calls
+perform functions like hooking handlers to interrupts, moving data between
+address spaces, and installing memory maps for new processes. The process struc-
+ture of MINIX 3 is shown in Fig. 1-26, with the kernel call handlers labeled Sys.
+The device driver for the clock is also in the kernel because the scheduler interacts
+closely with it. The other device drivers run as separate user processes.
+
+image::{figures}/MINIX-structure.png[Simplified structure of the MINIX system.]
+
+Outside the kernel, the system is structured as three layers of processes all run-
+ning in user mode. The lowest layer contains the device drivers. Since they run in
+user mode, they do not have physical access to the I/O port space and cannot issue
+I/O commands directly. Instead, to program an I/O device, the driver builds a struc-
+ture telling which values to write to which I/O ports and makes a kernel call telling
+the kernel to do the write. This approach means that the kernel can check to see
+that the driver is writing (or reading) from I/O it is authorized to use. Consequently
+(and unlike a monolithic design), a buggy audio driver cannot accidentally write on
+the SSD or disk.
+
+Above the drivers is another user-mode layer containing the servers, which do
+most of the work of the operating system. One or more file servers manage the file
+system(s), the process manager creates, destroys, and manages processes, and so
+on. User programs obtain operating system services by sending short messages to
+the servers asking for the POSIX system calls. For example, a process needing to
+do a read sends a message to one of the file servers telling it what to read.
+
+One interesting server is the reincarnation server, whose job is to check if the
+other servers and drivers are functioning correctly. In the event that a faulty one is
+detected, it is automatically replaced without any user intervention. In this way,
+the system is self-healing and can achieve high reliability.
+
+The system has many restrictions limiting the power of each process. As men-
+tioned, drivers can touch only authorized I/O ports, but access to kernel calls is also
+controlled on a per-process basis, as is the ability to send messages to other proc-
+esses. Processes can also grant limited permission for other processes to have the
+kernel access their address spaces. As an example, a file system can grant permis-
+sion for the disk driver to let the kernel put a newly read-in disk block at a specific
+address within the file system’s address space. The sum total of all these restric-
+tions is that each driver and server has exactly the power to do its work and nothing
+more, thus greatly limiting the damage a buggy component can do. Restricting
+what a component can do to exactly that what it needs to do its work is known as
+the POLA (Principle of Least Authority) an important design principle for build-
+ing secure systems.
+
+An idea somewhat related to having a minimal kernel is to put the mechanism
+for doing something in the kernel but not the policy. To make this point better,
+consider the scheduling of processes. A relatively simple scheduling algorithm is
+to assign a numerical priority to every process and then have the kernel run the
+highest-priority process that is runnable. The mechanism—in the kernel—is to
+look for the highest-priority process and run it. The policy—assigning priorities to
+processes—can be done by user-mode processes. In this way, policy and mechan-
+ism can be decoupled and the kernel can be made smaller.
+
+== The Model of Run Time
+Once the operating system binary has been linked, the computer can be
+rebooted and the new operating system started. Once running, it may dynamically
+load pieces that were not statically included in the binary such as device drivers
+and file systems. At run time, the operating system may consist of multiple seg-
+ments, for the text (the program code), the data, and the stack. 
+
+The text segment is
+normally immutable, not changing during execution. The data segment starts out
+at a certain size and initialized with certain values, but it can change and grow as
+need be. The stack is initially empty but grows and shrinks as functions are called
+and returned from. 
+
+Often the text segment is placed near the bottom of memory,
+the data segment just above it, with the ability to grow upward, and the stack seg-
+ment at a high virtual address, with the ability to grow downward, but different
+systems work differently.
+
+In all cases, the operating system code is directly executed by the hardware,
+with no interpreter and no just-in-time compilation, as is normal with Java
